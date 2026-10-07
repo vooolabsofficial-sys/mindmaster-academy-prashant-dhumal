@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindMaster Academy — Staff & Admin Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              electric: '#0B57D0',
+              hover: '#0842A0',
+              navy: '#0E1B3D',
+              grey: '#5A6478',
+              muted: '#8A94A6',
+              border: '#E4E8F8',
+              bg: '#F5F7FF',
+              card: '#FFFFFF',
+              lavender: '#5E35B1',
+              lavenderBg: '#E6E0FF',
+              sky: '#095ABA',
+              skyBg: '#DDEBFF',
+              mint: '#137333',
+              mintBg: '#DFF7EA',
+              peach: '#B06000',
+              peachBg: '#FFE8D6',
+              pink: '#C2185B',
+              pinkBg: '#FFDDE8',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"Fira Code"', 'monospace'],
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(11, 87, 208, 0.06), 0 2px 6px -1px rgba(14, 27, 61, 0.04)',
+            'card-lift': '0 12px 30px -4px rgba(11, 87, 208, 0.12), 0 4px 12px -2px rgba(14, 27, 61, 0.06)',
+            'glow-blue': '0 0 60px -10px rgba(11, 87, 208, 0.18)',
+            'glow-lavender': '0 0 70px -12px rgba(94, 53, 177, 0.16)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F5F7FF;
+      color: #5A6478;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    h1, h2, h3, h4 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-[#F5F7FF] text-[#5A6478] relative overflow-x-hidden flex flex-col justify-between">
+
+  <!-- Ambient Background Glows -->
+  <div class="absolute top-[-120px] left-1/2 -translate-x-1/2 w-[780px] h-[360px] bg-gradient-to-b from-[#DDEBFF] via-[#E6E0FF] to-transparent opacity-60 blur-3xl pointer-events-none -z-10"></div>
+  <div class="absolute top-[35%] left-[8%] w-[420px] h-[420px] bg-[#E6E0FF] opacity-35 blur-[90px] pointer-events-none -z-10"></div>
+  <div class="absolute top-[40%] right-[10%] w-[450px] h-[450px] bg-[#DDEBFF] opacity-40 blur-[100px] pointer-events-none -z-10"></div>
+
+  <!-- Minimal Top Header Bar -->
+  <header class="w-full border-b border-[#E4E8F8] bg-white/80 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-[1280px] mx-auto px-8 h-16 flex items-center justify-between">
+      <!-- Brand Logo & Title -->
+      <a href="#" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0B57D0] to-[#0842A0] flex items-center justify-center text-white shadow-md shadow-[#0B57D0]/20">
+          <!-- Brain / Academy Logo Icon -->
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-display font-bold text-lg text-[#0E1B3D] tracking-tight leading-tight">MindMaster</span>
+            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#E6E0FF] text-[#5E35B1]">Staff Portal</span>
+          </div>
+          <span class="text-xs text-[#8A94A6] block leading-none">ACADEMY LMS &bull; PWA RUNTIME</span>
+        </div>
+      </a>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center gap-4">
+        <!-- Centre Badge -->
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F5F7FF] border border-[#E4E8F8] text-xs font-medium text-[#0E1B3D]">
+          <span class="w-2 h-2 rounded-full bg-[#137333]"></span>
+          <span>Narhe Campus, Pune</span>
+        </div>
+
+        <!-- Switch to Student Login Link -->
+        <a href="#" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium text-[#0B57D0] hover:bg-[#DDEBFF]/50 border border-transparent hover:border-[#DDEBFF] transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+          </svg>
+          <span>Student App Login &rarr;</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-[1280px] w-full mx-auto px-6 py-10 flex items-center justify-center relative">
+
+    <div class="w-full max-w-[960px] grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
+
+      <!-- Left Column: Centered White Form Card (Col Span 7) -->
+      <div class="md:col-span-7 bg-white rounded-2xl border border-[#E4E8F8] shadow-soft p-8 md:p-10 flex flex-col justify-between relative overflow-hidden">
+        <!-- Subtle Top Accent Line -->
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#5E35B1] via-[#0B57D0] to-[#095ABA]"></div>
+
+        <div>
+          <!-- Badge Row -->
+          <div class="flex items-center justify-between mb-4">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E6E0FF] text-[#5E35B1] text-xs font-semibold tracking-wide">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              Staff Access
+            </span>
+            <span class="inline-flex items-center gap-1 text-[11px] font-medium text-[#8A94A6]">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#0B57D0] animate-pulse"></span>
+              Internal Network Only
+            </span>
+          </div>
+
+          <!-- Main Header & Subtitle -->
+          <h1 class="font-display text-2xl md:text-3xl font-bold text-[#0E1B3D] tracking-tight leading-tight mb-2">
+            Admin / Sub-Admin Login
+          </h1>
+          <p class="text-sm text-[#5A6478] mb-7 leading-relaxed">
+            Use your staff ID and password issued by the academy.
+          </p>
+
+          <!-- Login Form -->
+          <form class="space-y-4" onsubmit="event.preventDefault();">
+            <!-- Staff ID Field -->
+            <div>
+              <label class="block text-xs font-semibold text-[#0E1B3D] uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                <span>Staff ID</span>
+                <span class="text-[11px] font-normal text-[#8A94A6]">Format: MMA-XXX</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A94A6]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                  </svg>
+                </div>
+                <input 
+                  type="text" 
+                  value="MMA-001" 
+                  placeholder="MMA-001" 
+                  class="w-full pl-10 pr-4 py-3 bg-[#FFFFFF] border border-[#E4E8F8] rounded-xl text-sm font-mono font-medium text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:border-[#0B57D0] focus:ring-2 focus:ring-[#0B57D0]/20 transition-all shadow-sm"
+                />
+              </div>
+            </div>
+
+            <!-- Password Field with Eye Icon -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-[#0E1B3D] uppercase tracking-wider">
+                  Password
+                </label>
+                <a href="#" class="text-xs font-medium text-[#0B57D0] hover:text-[#0842A0] hover:underline transition-colors">
+                  Forgot password? Reset via SMS OTP
+                </a>
+              </div>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A94A6]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <input 
+                  type="password" 
+                  value="••••••••••••" 
+                  placeholder="Enter staff security key" 
+                  class="w-full pl-10 pr-11 py-3 bg-[#FFFFFF] border border-[#E4E8F8] rounded-xl text-sm text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:border-[#0B57D0] focus:ring-2 focus:ring-[#0B57D0]/20 transition-all shadow-sm"
+                />
+                <!-- Eye Icon Button -->
+                <button type="button" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#8A94A6] hover:text-[#0E1B3D] transition-colors focus:outline-none" aria-label="Toggle password visibility">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Keep Logged In Checkbox -->
+            <div class="flex items-center justify-between pt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" checked class="w-4 h-4 rounded text-[#0B57D0] border-[#E4E8F8] focus:ring-[#0B57D0] focus:ring-offset-0">
+                <span class="text-xs text-[#5A6478]">Keep device authenticated for 8 hours</span>
+              </label>
+              <span class="text-[11px] text-[#8A94A6] font-mono">IP: 192.168.1.104</span>
+            </div>
+
+            <!-- Blue Pill Action Button -->
+            <div class="pt-2">
+              <button 
+                type="submit" 
+                class="w-full py-3.5 px-6 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-150 flex items-center justify-center gap-2 group transform active:translate-y-0.5">
+                <span>Login</span>
+                <span class="text-base font-bold transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Student Login Distinction Note (Bottom of Card) -->
+        <div class="mt-6 pt-5 border-t border-[#E4E8F8]">
+          <div class="flex items-start gap-2.5 p-3 rounded-xl bg-[#F5F7FF] border border-[#E4E8F8]/60">
+            <svg class="w-4 h-4 text-[#0B57D0] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-xs text-[#5A6478] leading-relaxed">
+              <strong class="font-semibold text-[#0E1B3D]">Looking for student courses?</strong> Students use the app login with mobile OTP.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Info & Role Authority Card (Col Span 5) -->
+      <div class="md:col-span-5 flex flex-col gap-5 justify-center">
+
+        <!-- Role Permissions Card -->
+        <div class="bg-white rounded-2xl border border-[#E4E8F8] shadow-soft p-6 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-display font-bold text-base text-[#0E1B3D]">Staff Role Hierarchy</h3>
+            <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#DDEBFF] text-[#095ABA]">RBAC v2.4</span>
+          </div>
+
+          <div class="space-y-3.5">
+            <!-- Main Admin Row -->
+            <div class="p-3.5 rounded-xl bg-[#F5F7FF] border border-[#E4E8F8] hover:border-[#0B57D0]/40 transition-colors">
+              <div class="flex items-center gap-2.5 mb-1.5">
+                <span class="w-6 h-6 rounded-full bg-[#E6E0FF] text-[#5E35B1] flex items-center justify-center text-xs font-bold">
+                  👑
+                </span>
+                <span class="font-display font-bold text-sm text-[#0E1B3D]">Main Admin</span>
+                <span class="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#DFF7EA] text-[#137333]">Level 1</span>
+              </div>
+              <p class="text-xs text-[#5A6478] pl-8">
+                Full control over courses, batch enrollments, billing, educator access, and database audits.
+              </p>
+            </div>
+
+            <!-- Sub-Admin Row -->
+            <div class="p-3.5 rounded-xl bg-[#F5F7FF] border border-[#E4E8F8] hover:border-[#0B57D0]/40 transition-colors">
+              <div class="flex items-center gap-2.5 mb-1.5">
+                <span class="w-6 h-6 rounded-full bg-[#DDEBFF] text-[#095ABA] flex items-center justify-center text-xs font-bold">
+                  🛡️
+                </span>
+                <span class="font-display font-bold text-sm text-[#0E1B3D]">Sub-Admin</span>
+                <span class="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FFE8D6] text-[#B06000]">Level 2</span>
+              </div>
+              <p class="text-xs text-[#5A6478] pl-8">
+                Assigned modules only (lecture uploads, test evaluation, student attendance, and course notes).
+              </p>
+            </div>
+          </div>
+
+          <!-- Security Badges Footer Inside Card -->
+          <div class="mt-4 pt-3.5 border-t border-[#E4E8F8] flex items-center justify-between text-[11px] text-[#8A94A6]">
+            <span class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-[#137333]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              Audit logged sessions
+            </span>
+            <span class="font-mono">TLS 1.3 encrypted</span>
+          </div>
+        </div>
+
+        <!-- Academy Desk Direct Link Note -->
+        <div class="p-4 rounded-xl bg-white border border-[#E4E8F8] shadow-soft flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-[#DDEBFF] text-[#095ABA] flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-display font-semibold text-xs text-[#0E1B3D]">Narhe Center Academic Desk</h4>
+            <p class="text-[11px] text-[#5A6478]">Need credential reconfiguration? Visit System Admin in Room 102.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Universal Footer (Strict Design System Token Rule) -->
+  <footer class="w-full py-4 border-t border-[#E4E8F8] bg-white text-center text-xs text-[#5A6478] shrink-0">
+    <div class="max-w-[1280px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-2 text-left">
+        <span class="w-2 h-2 rounded-full bg-[#137333] shrink-0"></span>
+        <span>Single sign-on active across MindMaster domains (Portal, TestSeries, VideoPlayer)</span>
+      </div>
+      <div class="flex items-center gap-3 text-[#8A94A6] text-xs">
+        <a href="#" class="hover:text-[#0B57D0] transition-colors">Privacy Policy</a>
+        <span>&bull;</span>
+        <a href="#" class="hover:text-[#0B57D0] transition-colors">Terms of Service</a>
+        <span>&bull;</span>
+        <a href="#" class="hover:text-[#0B57D0] transition-colors">Narhe Centre Desk</a>
+        <span>&bull;</span>
+        <span class="font-mono text-[#5A6478]">v1.0.0</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

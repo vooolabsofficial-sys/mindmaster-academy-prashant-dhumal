@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1280, initial-scale=1.0">
+  <title>MindMaster Academy — Sub-Admin Student Finder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              blue: '#0B57D0',
+              hover: '#0842A0',
+              navy: '#0E1B3D',
+              grey: '#5A6478',
+              muted: '#8A94A6',
+              border: '#E4E8F8',
+              bg: '#F5F7FF',
+              card: '#FFFFFF'
+            },
+            status: {
+              mint: '#137333',
+              mintBg: '#DFF7EA',
+              peach: '#B06000',
+              peachBg: '#FFE8D6',
+              sky: '#095ABA',
+              skyBg: '#DDEBFF',
+              lavender: '#5E35B1',
+              lavenderBg: '#EDE8FF',
+              pink: '#C2185B',
+              pinkBg: '#FFD0E8'
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          boxShadow: {
+            card: '0 4px 20px -2px rgba(11, 87, 208, 0.06), 0 2px 6px -1px rgba(14, 27, 61, 0.04)',
+            cardHover: '0 12px 30px -4px rgba(11, 87, 208, 0.12), 0 4px 12px -2px rgba(14, 27, 61, 0.06)',
+            drawer: '-8px 0 32px rgba(14, 27, 61, 0.12)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F5F7FF;
+      color: #0E1B3D;
+      font-family: 'Inter', sans-serif;
+    }
+    h1, h2, h3, h4, .font-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #F5F7FF;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #D4DAF0;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+  <!-- Top App Navigation Chrome -->
+  <header class="bg-white border-b border-brand-border sticky top-0 z-30 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <!-- Academy Brand Glyph -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-brand-blue flex items-center justify-center text-white font-heading font-extrabold text-xl shadow-md shadow-brand-blue/20">
+          M
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-heading font-extrabold text-lg text-brand-navy tracking-tight">MindMaster</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-blue/10 text-brand-blue border border-brand-blue/20">LMS PWA</span>
+          </div>
+          <p class="text-[11px] text-brand-grey font-medium">Academic Sub-Admin Workspace</p>
+        </div>
+      </div>
+
+      <div class="h-6 w-px bg-brand-border mx-1"></div>
+
+      <!-- Scoped Breadcrumb & Route Meta -->
+      <div class="flex items-center space-x-2 text-xs">
+        <span class="text-brand-grey font-medium">Academic Console</span>
+        <span class="text-brand-muted">/</span>
+        <span class="text-brand-navy font-semibold">Student Finder</span>
+        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-status-lavenderBg text-status-lavender border border-status-lavender/30">students.view granted</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-mintBg text-status-mint border border-status-mint/30">
+          <span class="w-1.5 h-1.5 rounded-full bg-status-mint mr-1.5 animate-pulse"></span>
+          Narhe Hub Live (Room 102)
+        </span>
+      </div>
+    </div>
+
+    <!-- Right Top Chrome Utilities -->
+    <div class="flex items-center space-x-4">
+      <!-- Quick Record Finder -->
+      <div class="relative w-64">
+        <svg class="w-4 h-4 text-brand-muted absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input type="text" placeholder="Quick find... (⌘K)" class="w-full pl-9 pr-3 py-1.5 text-xs bg-brand-bg rounded-full border border-brand-border focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue text-brand-navy placeholder-brand-muted transition">
+      </div>
+
+      <!-- Notification Bell -->
+      <button class="relative p-2 text-brand-grey hover:text-brand-navy rounded-full hover:bg-brand-bg transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+        </svg>
+        <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-blue"></span>
+      </button>
+
+      <!-- Sub-Admin Staff Badge -->
+      <div class="flex items-center space-x-2.5 pl-2 border-l border-brand-border">
+        <div class="w-8 h-8 rounded-full bg-status-lavenderBg text-status-lavender font-heading font-bold text-xs flex items-center justify-center border border-status-lavender/30">
+          SK
+        </div>
+        <div class="text-left">
+          <div class="text-xs font-bold text-brand-navy leading-none">Sagar Kulkarni</div>
+          <div class="text-[10px] text-brand-grey font-mono mt-0.5">Sub-Admin • MMA-003</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- App Body Layout -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- Left Sidebar (Desktop Fixed 240px) -->
+    <aside class="w-60 bg-white border-r border-brand-border flex flex-col justify-between flex-shrink-0 z-20">
+      <div class="py-4 px-3 space-y-6">
+        <div>
+          <div class="px-3 pb-2 text-[10px] font-bold text-brand-muted uppercase tracking-wider">Academic Console</div>
+          <nav class="space-y-1">
+            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-brand-grey hover:text-brand-navy hover:bg-brand-bg rounded-xl transition">
+              <svg class="w-4 h-4 mr-3 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+              </svg>
+              Dashboard
+            </a>
+
+            <a href="#" class="flex items-center justify-between px-3 py-2 text-xs font-medium text-brand-grey hover:text-brand-navy hover:bg-brand-bg rounded-xl transition">
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mr-3 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                </svg>
+                Messages
+              </div>
+              <span class="px-1.5 py-0.5 text-[10px] font-bold bg-brand-blue/10 text-brand-blue rounded-full">7</span>
+            </a>
+
+            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-brand-grey hover:text-brand-navy hover:bg-brand-bg rounded-xl transition">
+              <svg class="w-4 h-4 mr-3 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+              Analytics
+            </a>
+
+            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-brand-grey hover:text-brand-navy hover:bg-brand-bg rounded-xl transition">
+              <svg class="w-4 h-4 mr-3 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+              </svg>
+              Courses
+            </a>
+
+            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-brand-grey hover:text-brand-navy hover:bg-brand-bg rounded-xl transition">
+              <svg class="w-4 h-4 mr-3 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Videos
+            </a>
+
+            <a href="#" class="flex items-center justify-between px-3 py-2 text-xs font-medium text-brand-grey hover:text-brand-navy hover:bg-brand-bg rounded-xl transition">
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mr-3 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+                </svg>
+                Coupons
+              </div>
+              <span class="px-1.5 py-0.5 text-[10px] font-bold bg-status-mintBg text-status-mint rounded-full">4 Active</span>
+            </a>
+
+            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-brand-grey hover:text-brand-navy hover:bg-brand-bg rounded-xl transition">
+              <svg class="w-4 h-4 mr-3 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Grants
+            </a>
+
+            <!-- ACTIVE TAB: Student Finder in Lavender Pill -->
+            <a href="#" class="flex items-center justify-between px-3 py-2 text-xs font-bold bg-status-lavenderBg text-status-lavender rounded-full border border-status-lavender/30 transition shadow-sm">
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mr-3 text-status-lavender" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                Student Finder
+              </div>
+              <span class="w-2 h-2 rounded-full bg-status-lavender"></span>
+            </a>
+
+            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-brand-grey hover:text-brand-navy hover:bg-brand-bg rounded-xl transition">
+              <svg class="w-4 h-4 mr-3 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+              </svg>
+              Books & Notes
+            </a>
+
+            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-brand-grey hover:text-brand-navy hover:bg-brand-bg rounded-xl transition">
+              <svg class="w-4 h-4 mr-3 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              My Activity
+            </a>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Scoped Operator Node Card -->
+      <div class="p-3 m-3 bg-brand-bg border border-brand-border rounded-xl">
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-status-mint animate-pulse"></span>
+          <span class="text-[11px] font-bold text-brand-navy">Narhe Hub Node</span>
+          <span class="text-[10px] font-mono text-status-mint bg-status-mintBg px-1 rounded">ONLINE</span>
+        </div>
+        <p class="text-[10px] text-brand-grey mt-1">Scoped to Pune-Narhe study centre learners. Actions audit-logged under MMA-003.</p>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Area: Split between Finder List & 360 Student Drawer -->
+    <main class="flex-1 flex overflow-hidden">
+
+      <!-- Center Pane: Filters & Student Records Table -->
+      <section class="flex-1 flex flex-col min-w-0 border-r border-brand-border bg-[#F5F7FF] overflow-y-auto custom-scrollbar p-6 space-y-5">
+        
+        <!-- Header Section -->
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="flex items-center space-x-3">
+              <h1 class="text-2xl font-heading font-extrabold text-brand-navy">Student Finder</h1>
+              <span class="px-3 py-1 rounded-full text-xs font-semibold bg-status-lavenderBg text-status-lavender border border-status-lavender/30">
+                1,420 Enrolled Learners
+              </span>
+            </div>
+            <p class="text-xs text-brand-grey mt-1">Search, inspect progress, and manage academic outreach across regional hubs.</p>
+          </div>
+
+          <!-- Quick Actions & Export -->
+          <div class="flex items-center space-x-3">
+            <button class="px-3.5 py-1.5 rounded-full text-xs font-semibold border border-brand-border bg-white text-brand-navy hover:bg-brand-bg hover:border-brand-blue flex items-center space-x-1.5 shadow-sm transition">
+              <svg class="w-3.5 h-3.5 text-brand-grey" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              <span>Export Roster CSV</span>
+            </button>
+            <button class="px-4 py-1.5 rounded-full text-xs font-semibold bg-brand-blue hover:bg-brand-hover text-white flex items-center space-x-1.5 shadow-md shadow-brand-blue/20 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              <span>Enroll In Person</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Multi-Tier Filter Card -->
+        <div class="bg-white rounded-2xl p-4 border border-brand-border shadow-card space-y-3">
+          <!-- Top Row: Search Input -->
+          <div class="relative">
+            <svg class="w-4 h-4 text-brand-muted absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input type="text" value="Aditi" placeholder="Search by Student Name, Phone (+91), Roll ID or Email..." class="w-full pl-10 pr-4 py-2 text-xs bg-brand-bg rounded-xl border border-brand-border focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue font-medium text-brand-navy">
+            <span class="absolute right-3 top-2 px-2 py-0.5 rounded text-[10px] font-mono bg-white border border-brand-border text-brand-muted">ESC to clear</span>
+          </div>
+
+          <!-- Bottom Row: Regional, Course & Progress Chips -->
+          <div class="flex items-center flex-wrap gap-2 pt-1 border-t border-brand-border/60 text-xs">
+            <span class="text-[11px] font-bold text-brand-muted uppercase mr-1">Filters:</span>
+
+            <!-- District Selector Chip -->
+            <div class="flex items-center bg-brand-bg hover:bg-white border border-brand-border rounded-full px-3 py-1 text-xs text-brand-navy font-medium cursor-pointer transition">
+              <span class="text-brand-muted mr-1.5">District:</span>
+              <span class="font-bold text-brand-blue">Pune (All)</span>
+              <svg class="w-3.5 h-3.5 ml-1 text-brand-grey" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+
+            <!-- Taluka Selector Chip -->
+            <div class="flex items-center bg-brand-bg hover:bg-white border border-brand-border rounded-full px-3 py-1 text-xs text-brand-navy font-medium cursor-pointer transition">
+              <span class="text-brand-muted mr-1.5">Taluka:</span>
+              <span class="font-semibold">Haveli</span>
+              <svg class="w-3.5 h-3.5 ml-1 text-brand-grey" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+
+            <!-- School Selector Chip -->
+            <div class="flex items-center bg-brand-bg hover:bg-white border border-brand-border rounded-full px-3 py-1 text-xs text-brand-navy font-medium cursor-pointer transition">
+              <span class="text-brand-muted mr-1.5">School:</span>
+              <span class="font-semibold">Narhe High School</span>
+              <svg class="w-3.5 h-3.5 ml-1 text-brand-grey" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+
+            <!-- Course Selector Chip -->
+            <div class="flex items-center bg-brand-bg hover:bg-white border border-brand-border rounded-full px-3 py-1 text-xs text-brand-navy font-medium cursor-pointer transition">
+              <span class="text-brand-muted mr-1.5">Course:</span>
+              <span class="font-semibold">Vedic Maths</span>
+              <svg class="w-3.5 h-3.5 ml-1 text-brand-grey" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+
+            <!-- Progress Range Chip -->
+            <div class="flex items-center bg-status-mintBg border border-status-mint/30 rounded-full px-3 py-1 text-xs text-status-mint font-semibold cursor-pointer transition">
+              <span class="mr-1">Progress:</span>
+              <span>All Completion</span>
+              <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+
+            <button class="text-xs text-brand-blue hover:underline ml-auto font-medium">Reset Filters</button>
+          </div>
+        </div>
+
+        <!-- Student Roster Records -->
+        <div class="bg-white rounded-2xl border border-brand-border shadow-card overflow-hidden">
+          <div class="px-5 py-3 border-b border-brand-border flex items-center justify-between bg-brand-bg/40">
+            <div class="text-xs font-bold text-brand-navy uppercase tracking-wider">Showing 5 Matched Students</div>
+            <div class="flex items-center space-x-2 text-xs text-brand-grey">
+              <span>Sort by:</span>
+              <select class="bg-white border border-brand-border rounded-lg px-2 py-0.5 text-xs text-brand-navy font-medium focus:outline-none focus:border-brand-blue">
+                <option>Recent Activity</option>
+                <option>Highest Progress</option>
+                <option>Name (A-Z)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="divide-y divide-brand-border">
+            
+            <!-- Row 1: SELECTED STUDENT (Aditi Kulkarni) -->
+            <div class="p-4 bg-brand-blue/[0.03] border-l-4 border-brand-blue flex items-center justify-between hover:bg-brand-blue/[0.06] transition cursor-pointer">
+              <div class="flex items-center space-x-3.5 min-w-0">
+                <!-- Avatar Initials -->
+                <div class="w-10 h-10 rounded-full bg-status-skyBg text-status-sky font-heading font-extrabold text-sm flex items-center justify-center border border-status-sky/30 flex-shrink-0">
+                  AK
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center space-x-2">
+                    <h3 class="text-sm font-heading font-bold text-brand-navy truncate">Aditi Kulkarni</h3>
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-medium rounded-full bg-brand-bg text-brand-grey border border-brand-border">MMA-STU-9921</span>
+                    <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-status-mintBg text-status-mint border border-status-mint/30">Verified</span>
+                  </div>
+                  <p class="text-xs text-brand-grey mt-0.5 truncate">
+                    Narhe Gaon • Haveli Taluka • Pune District • <span class="font-medium text-brand-navy">Narhe High School (Std 8)</span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Badges & Action -->
+              <div class="flex items-center space-x-3 flex-shrink-0 ml-4">
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-status-skyBg text-status-sky border border-status-sky/30">
+                  Vedic Maths Masterclass
+                </span>
+                <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-status-mintBg text-status-mint border border-status-mint/30">
+                  74% Progress
+                </span>
+                <span class="w-7 h-7 rounded-full bg-brand-blue text-white flex items-center justify-center shadow-sm">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            <!-- Row 2: Rohan Deshmukh -->
+            <div class="p-4 flex items-center justify-between hover:bg-brand-bg/60 transition cursor-pointer">
+              <div class="flex items-center space-x-3.5 min-w-0">
+                <div class="w-10 h-10 rounded-full bg-status-peachBg text-status-peach font-heading font-extrabold text-sm flex items-center justify-center border border-status-peach/30 flex-shrink-0">
+                  RD
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center space-x-2">
+                    <h3 class="text-sm font-heading font-bold text-brand-navy truncate">Rohan Deshmukh</h3>
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-medium rounded-full bg-brand-bg text-brand-grey border border-brand-border">MMA-STU-4410</span>
+                  </div>
+                  <p class="text-xs text-brand-grey mt-0.5 truncate">
+                    Dhayari • Haveli Taluka • Pune District • <span class="font-medium text-brand-navy">Sinhgad City School</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-3 flex-shrink-0 ml-4">
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-status-lavenderBg text-status-lavender border border-status-lavender/30">
+                  Police Bharti Arithmetic
+                </span>
+                <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-status-mintBg text-status-mint border border-status-mint/30">
+                  42% Progress
+                </span>
+                <span class="w-7 h-7 rounded-full bg-brand-bg text-brand-grey flex items-center justify-center">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            <!-- Row 3: Sneha Jadhav -->
+            <div class="p-4 flex items-center justify-between hover:bg-brand-bg/60 transition cursor-pointer">
+              <div class="flex items-center space-x-3.5 min-w-0">
+                <div class="w-10 h-10 rounded-full bg-status-mintBg text-status-mint font-heading font-extrabold text-sm flex items-center justify-center border border-status-mint/30 flex-shrink-0">
+                  SJ
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center space-x-2">
+                    <h3 class="text-sm font-heading font-bold text-brand-navy truncate">Sneha Jadhav</h3>
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-medium rounded-full bg-brand-bg text-brand-grey border border-brand-border">MMA-STU-6782</span>
+                  </div>
+                  <p class="text-xs text-brand-grey mt-0.5 truncate">
+                    Wadgaon Budruk • Haveli Taluka • Pune District • <span class="font-medium text-brand-navy">Z.P. High School</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-3 flex-shrink-0 ml-4">
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-status-skyBg text-status-sky border border-status-sky/30">
+                  Speed Maths Foundation
+                </span>
+                <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-status-mintBg text-status-mint border border-status-mint/30">
+                  91% Progress
+                </span>
+                <span class="w-7 h-7 rounded-full bg-brand-bg text-brand-grey flex items-center justify-center">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            <!-- Row 4: Omkar Shinde -->
+            <div class="p-4 flex items-center justify-between hover:bg-brand-bg/60 transition cursor-pointer">
+              <div class="flex items-center space-x-3.5 min-w-0">
+                <div class="w-10 h-10 rounded-full bg-status-lavenderBg text-status-lavender font-heading font-extrabold text-sm flex items-center justify-center border border-status-lavender/30 flex-shrink-0">
+                  OS
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center space-x-2">
+                    <h3 class="text-sm font-heading font-bold text-brand-navy truncate">Omkar Shinde</h3>
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-medium rounded-full bg-brand-bg text-brand-grey border border-brand-border">MMA-STU-1194</span>
+                  </div>
+                  <p class="text-xs text-brand-grey mt-0.5 truncate">
+                    Ambegaon BK • Haveli Taluka • Pune District • <span class="font-medium text-brand-navy">Abhinav English Medium</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-3 flex-shrink-0 ml-4">
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-status-pinkBg text-status-pink border border-status-pink/30">
+                  Memory Palace Techniques
+                </span>
+                <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-status-peachBg text-status-peach border border-status-peach/30">
+                  18% Progress
+                </span>
+                <span class="w-7 h-7 rounded-full bg-brand-bg text-brand-grey flex items-center justify-center">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            <!-- Row 5: Pooja More -->
+            <div class="p-4 flex items-center justify-between hover:bg-brand-bg/60 transition cursor-pointer">
+              <div class="flex items-center space-x-3.5 min-w-0">
+                <div class="w-10 h-10 rounded-full bg-status-skyBg text-status-sky font-heading font-extrabold text-sm flex items-center justify-center border border-status-sky/30 flex-shrink-0">
+                  PM
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center space-x-2">
+                    <h3 class="text-sm font-heading font-bold text-brand-navy truncate">Pooja More</h3>
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-medium rounded-full bg-brand-bg text-brand-grey border border-brand-border">MMA-STU-8022</span>
+                  </div>
+                  <p class="text-xs text-brand-grey mt-0.5 truncate">
+                    Katraj • Haveli Taluka • Pune District • <span class="font-medium text-brand-navy">Kashibai Navale Vidyalaya</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-3 flex-shrink-0 ml-4">
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-status-skyBg text-status-sky border border-status-sky/30">
+                  Vedic Maths Masterclass
+                </span>
+                <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-status-mintBg text-status-mint border border-status-mint/30">
+                  58% Progress
+                </span>
+                <span class="w-7 h-7 rounded-full bg-brand-bg text-brand-grey flex items-center justify-center">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Audit Guard Footer inside Table -->
+          <div class="px-5 py-3 bg-brand-bg border-t border-brand-border flex items-center justify-between text-xs text-brand-grey">
+            <div class="flex items-center space-x-2">
+              <svg class="w-4 h-4 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+              <span><strong>System Policy:</strong> You cannot edit student data. Every view is logged for the Main Admin.</span>
+            </div>
+            <span class="font-mono text-[11px] text-brand-muted">HMAC: 8f2c-narhe-audit</span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Right Pane: 360 Student Inspection Drawer (Width ~440px) -->
+      <aside class="w-[440px] bg-white border-l border-brand-border flex flex-col flex-shrink-0 shadow-drawer overflow-y-auto custom-scrollbar">
+        
+        <!-- Drawer Header -->
+        <div class="p-5 border-b border-brand-border bg-white sticky top-0 z-10 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-blue/10 text-brand-blue border border-brand-blue/20">
+              360° Profile View
+            </span>
+            <span class="text-xs text-brand-grey">• View Only</span>
+          </div>
+          <button class="p-1.5 rounded-full hover:bg-brand-bg text-brand-grey hover:text-brand-navy transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-5 space-y-5">
+
+          <!-- Student Profile Summary Card -->
+          <div class="bg-brand-bg/60 rounded-2xl p-4 border border-brand-border flex items-start space-x-4">
+            <div class="w-14 h-14 rounded-2xl bg-brand-blue text-white font-heading font-extrabold text-xl flex items-center justify-center shadow-md shadow-brand-blue/20 flex-shrink-0">
+              AK
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <h2 class="text-base font-heading font-extrabold text-brand-navy truncate">Aditi Kulkarni</h2>
+                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-status-mintBg text-status-mint border border-status-mint/30">Active</span>
+              </div>
+              <p class="text-xs font-mono text-brand-grey mt-0.5">ID: MMA-STU-9921</p>
+              <div class="flex items-center space-x-2 mt-2">
+                <span class="text-[11px] text-brand-grey">Std 8 • Roll #24</span>
+                <span class="text-brand-muted">•</span>
+                <span class="text-[11px] text-brand-grey">Narhe Study Node</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons: Message & Call -->
+          <div class="grid grid-cols-2 gap-3">
+            <button class="w-full py-2.5 px-3 rounded-full text-xs font-semibold bg-brand-blue hover:bg-brand-hover text-white flex items-center justify-center space-x-2 shadow-md shadow-brand-blue/20 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+              </svg>
+              <span>Message</span>
+            </button>
+            <button class="w-full py-2.5 px-3 rounded-full text-xs font-semibold bg-white hover:bg-brand-bg text-brand-navy border border-brand-border flex items-center justify-center space-x-2 transition shadow-sm">
+              <svg class="w-4 h-4 text-brand-grey" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+              </svg>
+              <span>Call Student</span>
+            </button>
+          </div>
+          <p class="text-[10px] text-brand-muted text-center -mt-2">"Message" opens support thread pre-selected under Messages tab.</p>
+
+          <!-- 1. Registration Details Card -->
+          <div class="bg-white rounded-2xl p-4 border border-brand-border space-y-3">
+            <h4 class="text-xs font-heading font-bold text-brand-navy uppercase tracking-wider flex items-center justify-between">
+              <span>Registration Details</span>
+              <span class="text-[10px] text-brand-muted font-normal">SSO Synchronized</span>
+            </h4>
+            
+            <div class="grid grid-cols-2 gap-y-2.5 gap-x-3 text-xs">
+              <div>
+                <div class="text-[10px] text-brand-muted font-medium">Registered Phone</div>
+                <div class="font-mono font-semibold text-brand-navy mt-0.5">+91 98234-51092</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-brand-muted font-medium">Registered Email</div>
+                <div class="font-medium text-brand-navy truncate mt-0.5">aditi.k@mindmaster.in</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-brand-muted font-medium">Enrolled Date</div>
+                <div class="font-medium text-brand-navy mt-0.5">14 Aug 2024</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-brand-muted font-medium">Parent / Guardian</div>
+                <div class="font-medium text-brand-navy mt-0.5">Kedar Kulkarni (Father)</div>
+              </div>
+              <div class="col-span-2 pt-1 border-t border-brand-border/60">
+                <div class="text-[10px] text-brand-muted font-medium">Regional Location</div>
+                <div class="font-medium text-brand-navy mt-0.5">
+                  Narhe Gaon, Taluka Haveli, Pune District, Maharashtra 411041
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Courses Taken Section -->
+          <div class="bg-white rounded-2xl p-4 border border-brand-border space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-heading font-bold text-brand-navy uppercase tracking-wider">
+                Courses Taken (2)
+              </h4>
+              <span class="text-[10px] text-brand-blue font-semibold">Active Subscriptions</span>
+            </div>
+
+            <!-- Course Row 1: Vedic Maths -->
+            <div class="p-3 bg-brand-bg rounded-xl border border-brand-border space-y-2.5">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="text-xs font-heading font-bold text-brand-navy">Vedic Maths Masterclass</div>
+                  <div class="text-[10px] text-brand-grey mt-0.5">Purchased: 12 Sep 2024 (Razorpay)</div>
+                </div>
+                <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-status-peachBg text-status-peach border border-status-peach/30">
+                  Expires in 45 days
+                </span>
+              </div>
+
+              <!-- Overall Blue Progress Bar -->
+              <div>
+                <div class="flex items-center justify-between text-[11px] mb-1">
+                  <span class="text-brand-grey font-medium">Curriculum Progress</span>
+                  <span class="font-heading font-bold text-brand-blue">74%</span>
+                </div>
+                <div class="w-full h-2 bg-brand-border rounded-full overflow-hidden">
+                  <div class="h-full bg-brand-blue rounded-full transition-all duration-500" style="width: 74%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Course Row 2: Speed Maths Foundation -->
+            <div class="p-3 bg-brand-bg rounded-xl border border-brand-border space-y-2.5">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="text-xs font-heading font-bold text-brand-navy">Speed Maths Foundation</div>
+                  <div class="text-[10px] text-brand-grey mt-0.5">Granted: 10 Oct 2024 (Free Grant)</div>
+                </div>
+                <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-status-mintBg text-status-mint border border-status-mint/30">
+                  Expires 10 Oct 2027
+                </span>
+              </div>
+
+              <!-- Overall Blue Progress Bar -->
+              <div>
+                <div class="flex items-center justify-between text-[11px] mb-1">
+                  <span class="text-brand-grey font-medium">Curriculum Progress</span>
+                  <span class="font-heading font-bold text-brand-blue">100% (Completed)</span>
+                </div>
+                <div class="w-full h-2 bg-brand-border rounded-full overflow-hidden">
+                  <div class="h-full bg-status-mint rounded-full" style="width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Overall Activity Section (NO per-lesson watch tracking) -->
+          <div class="bg-white rounded-2xl p-4 border border-brand-border space-y-3">
+            <h4 class="text-xs font-heading font-bold text-brand-navy uppercase tracking-wider">
+              Academic Activity
+            </h4>
+
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center justify-between py-2 border-b border-brand-border/60">
+                <span class="text-brand-grey font-medium">Last Login</span>
+                <span class="font-semibold text-brand-navy">Today at 10:14 am (PWA Desktop)</span>
+              </div>
+              <div class="flex items-center justify-between py-2 border-b border-brand-border/60">
+                <span class="text-brand-grey font-medium">Lessons Watched</span>
+                <span class="font-heading font-bold text-brand-blue">32 of 44 Total Lessons</span>
+              </div>
+              <div class="flex items-center justify-between py-2 border-b border-brand-border/60">
+                <span class="text-brand-grey font-medium">Practice Tests Taken</span>
+                <span class="font-semibold text-brand-navy">8 Mock Quizzes (Avg 88%)</span>
+              </div>
+              <div class="flex items-center justify-between py-2">
+                <span class="text-brand-grey font-medium">Certificates Earned</span>
+                <span class="font-semibold text-status-mint">1 Verified Certificate</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Strict Sub-Admin Constraints Note -->
+          <div class="p-3.5 bg-status-lavenderBg/60 border border-status-lavender/30 rounded-2xl space-y-1.5">
+            <div class="flex items-center space-x-2 text-status-lavender font-bold text-xs">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Sub-Admin Scope & Privacy Notice</span>
+            </div>
+            <p class="text-[11px] text-brand-grey leading-relaxed">
+              • <strong>You cannot edit student data:</strong> All demographic and credential changes are restricted to Main Admin.<br>
+              • <strong>Audit Ledger:</strong> Every student profile inspection is logged under your operator badge (MMA-003) for the Main Admin.<br>
+              • <strong>Privacy Protected:</strong> Detailed per-lesson watch telemetry and IP logs are restricted to Main Admin.
+            </p>
+          </div>
+
+        </div>
+      </aside>
+
+    </main>
+  </div>
+
+  <!-- Universal Footer -->
+  <footer class="bg-white border-t border-brand-border px-6 py-3 text-xs text-brand-grey flex items-center justify-between z-30">
+    <div class="flex items-center space-x-2">
+      <span class="w-2 h-2 rounded-full bg-status-mint"></span>
+      <span>Single sign-on active across MindMaster domains (Portal, TestSeries, VideoPlayer)</span>
+    </div>
+    <div class="flex items-center space-x-4">
+      <a href="#" class="hover:text-brand-blue transition">Privacy Policy</a>
+      <span class="text-brand-border">•</span>
+      <a href="#" class="hover:text-brand-blue transition">Terms of Service</a>
+      <span class="text-brand-border">•</span>
+      <span class="font-medium text-brand-navy">Narhe Centre Desk</span>
+      <span class="text-brand-border">•</span>
+      <span class="font-mono text-brand-muted">v1.0.0</span>
+    </div>
+  </footer>
+
+</body>
+</html>

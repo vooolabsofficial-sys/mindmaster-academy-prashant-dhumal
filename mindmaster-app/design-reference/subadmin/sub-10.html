@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindMaster Academy — Sub-Admin Free Grants Manager</title>
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            heading: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              blue: '#0B57D0',
+              'blue-hover': '#0842A0',
+              navy: '#0E1B3D',
+              grey: '#5A6478',
+              'muted-grey': '#8A94A6',
+              border: '#E4E8F8',
+              bg: '#F5F7FF',
+              card: '#FFFFFF',
+              mint: '#137333',
+              'mint-bg': '#DFF7EA',
+              peach: '#B06000',
+              'peach-bg': '#FFE8D6',
+              sky: '#095ABA',
+              'sky-bg': '#DDEBFF',
+              lavender: '#5E35B1',
+              'lavender-bg': '#EDE8FF',
+              pink: '#C2185B',
+              'pink-bg': '#FFD0E8',
+              locked: '#5F6368',
+              'locked-bg': '#EEF1FB',
+            }
+          },
+          boxShadow: {
+            card: '0 4px 20px -2px rgba(11, 87, 208, 0.06), 0 2px 6px -1px rgba(14, 27, 61, 0.04)',
+            hover: '0 12px 30px -4px rgba(11, 87, 208, 0.12), 0 4px 12px -2px rgba(14, 27, 61, 0.06)',
+            drawer: '-8px 0 30px rgba(14, 27, 61, 0.08)',
+            modal: '0 24px 48px -12px rgba(14, 27, 61, 0.25)',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#F5F7FF] text-[#0E1B3D] font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Top App Navigation Bar -->
+  <header class="h-16 bg-white border-b border-[#E4E8F8] px-6 flex items-center justify-between sticky top-0 z-30">
+    <div class="flex items-center space-x-6">
+      <!-- Logo Branding -->
+      <div class="flex items-center space-x-2.5">
+        <div class="w-9 h-9 rounded-xl bg-[#0B57D0] flex items-center justify-center text-white shadow-sm font-heading font-extrabold text-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <div>
+          <span class="font-heading font-bold text-lg text-[#0E1B3D] tracking-tight">MindMaster</span>
+          <span class="text-xs font-semibold text-[#0B57D0] bg-[#DDEBFF] px-1.5 py-0.5 rounded ml-1">LMS</span>
+        </div>
+      </div>
+
+      <!-- Breadcrumbs & System Route -->
+      <div class="hidden md:flex items-center space-x-2 text-sm">
+        <span class="text-[#5A6478]">Sub-Admin Portal</span>
+        <span class="text-[#8A94A6]">/</span>
+        <span class="text-[#5A6478]">Academic Workspace</span>
+        <span class="text-[#8A94A6]">/</span>
+        <span class="font-semibold text-[#0E1B3D]">Free Grants</span>
+        <span class="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-[#EDE8FF] text-[#5E35B1] border border-[#E4E8F8] ml-1">freegrant.manage</span>
+      </div>
+    </div>
+
+    <!-- Right Controls: Live Node & Sub-Admin Profile -->
+    <div class="flex items-center space-x-4">
+      <div class="hidden lg:flex items-center space-x-2 px-3 py-1 rounded-full bg-[#DFF7EA] border border-[#C2E8D2] text-[#137333] text-xs font-medium">
+        <span class="w-2 h-2 rounded-full bg-[#137333] animate-pulse"></span>
+        <span>Narhe Hub Live (Room 102)</span>
+      </div>
+
+      <!-- Quick Search Bar -->
+      <div class="relative hidden sm:block w-56">
+        <input type="text" placeholder="Quick find... (⌘K)" class="w-full bg-[#F5F7FF] border border-[#E4E8F8] rounded-full pl-8 pr-3 py-1.5 text-xs text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0] focus:ring-1 focus:ring-[#0B57D0] transition">
+        <svg class="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#8A94A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+
+      <!-- Sub-Admin Staff ID Badge -->
+      <div class="flex items-center space-x-2.5 pl-2 border-l border-[#E4E8F8]">
+        <div class="w-8 h-8 rounded-full bg-[#EDE8FF] border border-[#D5CCFF] text-[#5E35B1] font-heading font-bold text-xs flex items-center justify-center">
+          SK
+        </div>
+        <div class="hidden sm:block text-left text-xs">
+          <div class="font-semibold text-[#0E1B3D] leading-tight">Sagar Kulkarni</div>
+          <div class="text-[10px] text-[#5A6478]">Sub-Admin • MMA-003</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container: Sidebar + Central Workspace + Drawer -->
+  <div class="flex-1 flex max-w-[1600px] w-full mx-auto relative overflow-hidden">
+    
+    <!-- Light White Sidebar (Strictly Permitted Sub-Admin Modules) -->
+    <aside class="w-60 bg-white border-r border-[#E4E8F8] flex flex-col justify-between shrink-0 py-5 px-3 min-h-[calc(100vh-64px)]">
+      <div>
+        <div class="px-3 mb-2 text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider">Academic Console</div>
+        <nav class="space-y-1">
+          <a href="#" class="flex items-center space-x-3 px-3.5 py-2 rounded-full text-sm font-medium text-[#5A6478] hover:bg-[#F5F7FF] hover:text-[#0E1B3D] transition">
+            <svg class="w-4 h-4 text-[#8A94A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3.5 py-2 rounded-full text-sm font-medium text-[#5A6478] hover:bg-[#F5F7FF] hover:text-[#0E1B3D] transition justify-between">
+            <div class="flex items-center space-x-3">
+              <svg class="w-4 h-4 text-[#8A94A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+              <span>Messages</span>
+            </div>
+            <span class="text-[11px] bg-[#DDEBFF] text-[#0B57D0] px-1.5 py-0.2 rounded-full font-semibold">7</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3.5 py-2 rounded-full text-sm font-medium text-[#5A6478] hover:bg-[#F5F7FF] hover:text-[#0E1B3D] transition">
+            <svg class="w-4 h-4 text-[#8A94A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span>Analytics</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3.5 py-2 rounded-full text-sm font-medium text-[#5A6478] hover:bg-[#F5F7FF] hover:text-[#0E1B3D] transition">
+            <svg class="w-4 h-4 text-[#8A94A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            <span>Courses</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3.5 py-2 rounded-full text-sm font-medium text-[#5A6478] hover:bg-[#F5F7FF] hover:text-[#0E1B3D] transition">
+            <svg class="w-4 h-4 text-[#8A94A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Videos</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3.5 py-2 rounded-full text-sm font-medium text-[#5A6478] hover:bg-[#F5F7FF] hover:text-[#0E1B3D] transition justify-between">
+            <div class="flex items-center space-x-3">
+              <svg class="w-4 h-4 text-[#8A94A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+              <span>Coupons</span>
+            </div>
+            <span class="text-[11px] bg-[#DFF7EA] text-[#137333] px-1.5 py-0.2 rounded-full font-semibold">4 Active</span>
+          </a>
+
+          <!-- ACTIVE TAB: Free Grants (Highlighted with Lavender active pill) -->
+          <a href="#" class="flex items-center space-x-3 px-3.5 py-2 rounded-full text-sm font-semibold bg-[#EDE8FF] text-[#5E35B1] transition border border-[#D5CCFF]">
+            <svg class="w-4 h-4 text-[#5E35B1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+            </svg>
+            <span class="flex-1">Grants</span>
+            <span class="w-2 h-2 rounded-full bg-[#5E35B1]"></span>
+          </a>
+
+          <a href="#" class="flex items-center space-x-3 px-3.5 py-2 rounded-full text-sm font-medium text-[#5A6478] hover:bg-[#F5F7FF] hover:text-[#0E1B3D] transition">
+            <svg class="w-4 h-4 text-[#8A94A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            <span>Student Finder</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3.5 py-2 rounded-full text-sm font-medium text-[#5A6478] hover:bg-[#F5F7FF] hover:text-[#0E1B3D] transition">
+            <svg class="w-4 h-4 text-[#8A94A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            <span>Books & Notes</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3.5 py-2 rounded-full text-sm font-medium text-[#5A6478] hover:bg-[#F5F7FF] hover:text-[#0E1B3D] transition">
+            <svg class="w-4 h-4 text-[#8A94A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>My Activity</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Scoped Node Footer Card -->
+      <div class="p-3 bg-[#F5F7FF] rounded-xl border border-[#E4E8F8] text-[11px] text-[#5A6478]">
+        <div class="flex items-center space-x-1.5 font-semibold text-[#0E1B3D] mb-0.5">
+          <span class="w-2 h-2 rounded-full bg-[#137333]"></span>
+          <span>Narhe Hub Node</span>
+          <span class="text-[9px] bg-[#DFF7EA] text-[#137333] px-1 rounded font-bold">ONLINE</span>
+        </div>
+        <div>Scoped to Pune-Narhe study centre learners. Actions audit-logged under MMA-003.</div>
+      </div>
+    </aside>
+
+    <!-- Center Workspace: Free Grants Table & Management -->
+    <main class="flex-1 p-6 overflow-y-auto space-y-6">
+      
+      <!-- Page Header: Title + Action Button + Metrics -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-3">
+            <h1 class="font-heading font-extrabold text-2xl text-[#0E1B3D] tracking-tight">Free Grants Management</h1>
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#DFF7EA] text-[#137333] border border-[#C2E8D2]">
+              18 Active Grants
+            </span>
+          </div>
+          <p class="text-xs text-[#5A6478] mt-1">
+            Grant 100% course fee waivers for targeted students, rural colleges, or special regional academic cohorts.
+          </p>
+        </div>
+
+        <!-- Blue Pill "New Grant +" Button -->
+        <button class="inline-flex items-center space-x-2 bg-[#0B57D0] hover:bg-[#0842A0] text-white px-5 py-2.5 rounded-full font-heading font-semibold text-xs shadow-md transition transform hover:-translate-y-0.5 active:translate-y-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>New Grant +</span>
+        </button>
+      </div>
+
+      <!-- Financial & Scoping KPI Badges -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-card flex items-center justify-between">
+          <div>
+            <span class="text-xs font-medium text-[#5A6478]">Total Beneficiaries</span>
+            <div class="font-heading font-extrabold text-xl text-[#0E1B3D] mt-0.5">384 Students</div>
+            <span class="text-[11px] text-[#137333] font-medium">● 148 Nashik + 236 Z.P. Pune</span>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-[#DDEBFF] text-[#095ABA] flex items-center justify-center font-bold">
+            🎓
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-card flex items-center justify-between">
+          <div>
+            <span class="text-xs font-medium text-[#5A6478]">Waived Revenue (LMS Subsidy)</span>
+            <div class="font-heading font-extrabold text-xl text-[#5E35B1] mt-0.5">₹5,75,616</div>
+            <span class="text-[11px] text-[#8A94A6]">Logged to Zonal CSR & Grants Ledger</span>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-[#EDE8FF] text-[#5E35B1] flex items-center justify-center font-bold">
+            ₹
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-card flex items-center justify-between">
+          <div>
+            <span class="text-xs font-medium text-[#5A6478]">Monthly Sub-Admin Grant Quota</span>
+            <div class="font-heading font-extrabold text-xl text-[#137333] mt-0.5">₹24,500 <span class="text-xs font-normal text-[#5A6478]">left</span></div>
+            <span class="text-[11px] text-[#5A6478]">Cap of 500 total seat grants/month</span>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-[#DFF7EA] text-[#137333] flex items-center justify-center font-bold">
+            ✓
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters Row: Status Chips + Scope Chips -->
+      <div class="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-card space-y-3">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          
+          <!-- Status Filter Pills -->
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-semibold text-[#5A6478] mr-1">Status:</span>
+            <button class="px-3 py-1 rounded-full text-xs font-semibold bg-[#0B57D0] text-white shadow-sm transition">
+              Active (18)
+            </button>
+            <button class="px-3 py-1 rounded-full text-xs font-medium text-[#5A6478] bg-[#F5F7FF] hover:bg-[#EEF4FF] hover:text-[#0B57D0] transition">
+              Revoked (3)
+            </button>
+            <button class="px-3 py-1 rounded-full text-xs font-medium text-[#5A6478] bg-[#F5F7FF] hover:bg-[#EEF4FF] hover:text-[#0B57D0] transition">
+              Expired (9)
+            </button>
+          </div>
+
+          <!-- Scope Filter Chips -->
+          <div class="flex items-center flex-wrap gap-1.5">
+            <span class="text-xs font-semibold text-[#5A6478] mr-1">Scope:</span>
+            <button class="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#0E1B3D] text-white">
+              All Scopes
+            </button>
+            <button class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#DDEBFF] text-[#095ABA] hover:bg-[#CCDFFF] transition">
+              Student (1)
+            </button>
+            <button class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#EDE8FF] text-[#5E35B1] hover:bg-[#DDD2FF] transition">
+              Course
+            </button>
+            <button class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#FFE8D6] text-[#B06000] hover:bg-[#FED8B8] transition">
+              District
+            </button>
+            <button class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#DFF7EA] text-[#137333] hover:bg-[#C9F3DB] transition">
+              All Students
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Free Grants Records Table -->
+      <div class="bg-white rounded-2xl border border-[#E4E8F8] shadow-card overflow-hidden">
+        <div class="px-6 py-4 border-b border-[#E4E8F8] flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <h3 class="font-heading font-bold text-sm text-[#0E1B3D]">Active & Recorded Grant Allocations</h3>
+            <span class="text-xs text-[#8A94A6]">• Scoped to Narhe Study Node</span>
+          </div>
+          <span class="text-xs text-[#5A6478]">Showing 5 of 30 grants</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-[#F5F7FF] border-b border-[#E4E8F8] text-[#5A6478] font-semibold">
+                <th class="py-3 px-5">Target Scope</th>
+                <th class="py-3 px-5">Allocation Mapping</th>
+                <th class="py-3 px-5">Duration & Reason</th>
+                <th class="py-3 px-5">Granted By</th>
+                <th class="py-3 px-5">Status</th>
+                <th class="py-3 px-5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#E4E8F8]">
+              
+              <!-- Row 1: Sky 1 Student -->
+              <tr class="hover:bg-[#F9FAFF] transition">
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#DDEBFF] text-[#095ABA] border border-[#BFDAFF]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#095ABA] mr-1.5"></span>
+                    1 Student
+                  </span>
+                </td>
+                <td class="py-3.5 px-5">
+                  <div class="font-heading font-bold text-sm text-[#0E1B3D]">Aditi K. → Vedic Maths</div>
+                  <div class="text-[11px] text-[#5A6478]">ID: MMA-STU-9921 • Standard 8 (Narhe High School)</div>
+                </td>
+                <td class="py-3.5 px-5">
+                  <div class="text-[#0E1B3D] font-medium">3 months • until 12 Dec 2026</div>
+                  <div class="text-[11px] text-[#5A6478]">reason: <span class="text-[#0E1B3D] font-semibold">college event</span></div>
+                </td>
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-[#EDE8FF] text-[#5E35B1]">
+                    MMA-003 (Sagar K.)
+                  </span>
+                </td>
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#DFF7EA] text-[#137333]">
+                    ● Active
+                  </span>
+                </td>
+                <td class="py-3.5 px-5 text-right">
+                  <!-- Revoke Action Icon triggering modal -->
+                  <button onclick="document.getElementById('revokeModal').classList.remove('hidden')" class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full border border-[#FFD0E8] bg-[#FFF5FA] text-[#C2185B] hover:bg-[#FFD0E8] font-medium transition text-[11px]" title="Revoke Free Grant">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                    <span>Revoke</span>
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Row 2: Peach Nashik District -->
+              <tr class="hover:bg-[#F9FAFF] transition bg-[#FFFDFB]">
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#FFE8D6] text-[#B06000] border border-[#FCD4B4]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#B06000] mr-1.5"></span>
+                    Nashik District
+                  </span>
+                </td>
+                <td class="py-3.5 px-5">
+                  <div class="font-heading font-bold text-sm text-[#0E1B3D]">148 Students → Vedic Maths Masterclass</div>
+                  <div class="text-[11px] text-[#5A6478]">Zonal rural schools cohort • Auto-enrolled via Narhe Node</div>
+                </td>
+                <td class="py-3.5 px-5">
+                  <div class="text-[#0E1B3D] font-medium">3 months • until 15 Jan 2027</div>
+                  <div class="text-[11px] text-[#5A6478]">reason: <span class="text-[#0E1B3D] font-semibold">Rural Talent Search Camp</span></div>
+                </td>
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-[#EDE8FF] text-[#5E35B1]">
+                    MMA-003 (Sagar K.)
+                  </span>
+                </td>
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#DFF7EA] text-[#137333]">
+                    ● Active
+                  </span>
+                </td>
+                <td class="py-3.5 px-5 text-right">
+                  <button onclick="document.getElementById('revokeModal').classList.remove('hidden')" class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full border border-[#FFD0E8] bg-[#FFF5FA] text-[#C2185B] hover:bg-[#FFD0E8] font-medium transition text-[11px]">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                    <span>Revoke</span>
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Row 3: Lavender 1 Course -->
+              <tr class="hover:bg-[#F9FAFF] transition">
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#EDE8FF] text-[#5E35B1] border border-[#DDD2FF]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#5E35B1] mr-1.5"></span>
+                    1 Course
+                  </span>
+                </td>
+                <td class="py-3.5 px-5">
+                  <div class="font-heading font-bold text-sm text-[#0E1B3D]">Memory Palace Techniques → Haveli Taluka</div>
+                  <div class="text-[11px] text-[#5A6478]">65 Enrolled students • Prerequisite waiver grant</div>
+                </td>
+                <td class="py-3.5 px-5">
+                  <div class="text-[#0E1B3D] font-medium">6 months • until 28 Feb 2027</div>
+                  <div class="text-[11px] text-[#5A6478]">reason: <span class="text-[#0E1B3D] font-semibold">State Board Merit Incentive</span></div>
+                </td>
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-[#EDE8FF] text-[#5E35B1]">
+                    MMA-001 (Admin Desk)
+                  </span>
+                </td>
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#DFF7EA] text-[#137333]">
+                    ● Active
+                  </span>
+                </td>
+                <td class="py-3.5 px-5 text-right">
+                  <button onclick="document.getElementById('revokeModal').classList.remove('hidden')" class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full border border-[#FFD0E8] bg-[#FFF5FA] text-[#C2185B] hover:bg-[#FFD0E8] font-medium transition text-[11px]">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                    <span>Revoke</span>
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Row 4: Mint All Students -->
+              <tr class="hover:bg-[#F9FAFF] transition">
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#DFF7EA] text-[#137333] border border-[#C2E8D2]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#137333] mr-1.5"></span>
+                    All Students
+                  </span>
+                </td>
+                <td class="py-3.5 px-5">
+                  <div class="font-heading font-bold text-sm text-[#0E1B3D]">Speed Maths Foundation → Public Cohort</div>
+                  <div class="text-[11px] text-[#5A6478]">Universal Free workshop unlock (Batch 2026)</div>
+                </td>
+                <td class="py-3.5 px-5">
+                  <div class="text-[#0E1B3D] font-medium">12 months • until 10 Oct 2027</div>
+                  <div class="text-[11px] text-[#5A6478]">reason: <span class="text-[#0E1B3D] font-semibold">Community Academy Outreach</span></div>
+                </td>
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-[#EDE8FF] text-[#5E35B1]">
+                    MMA-003 (Sagar K.)
+                  </span>
+                </td>
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#DFF7EA] text-[#137333]">
+                    ● Active
+                  </span>
+                </td>
+                <td class="py-3.5 px-5 text-right">
+                  <button onclick="document.getElementById('revokeModal').classList.remove('hidden')" class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full border border-[#FFD0E8] bg-[#FFF5FA] text-[#C2185B] hover:bg-[#FFD0E8] font-medium transition text-[11px]">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                    <span>Revoke</span>
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Row 5: Pink All Courses (Historical / Revoked) -->
+              <tr class="hover:bg-[#F9FAFF] transition bg-[#FFF9FA]">
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#FFD0E8] text-[#C2185B] border border-[#F8B8DA]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#C2185B] mr-1.5"></span>
+                    All Courses
+                  </span>
+                </td>
+                <td class="py-3.5 px-5">
+                  <div class="font-heading font-bold text-sm text-[#0E1B3D] line-through opacity-80">Rohan Deshmukh → Full Academy Pass</div>
+                  <div class="text-[11px] text-[#5A6478]">ID: MMA-STU-4410 • Revocation logged 18 Oct 2026</div>
+                </td>
+                <td class="py-3.5 px-5">
+                  <div class="text-[#8A94A6]">Terminated early</div>
+                  <div class="text-[11px] text-[#5A6478]">reason: <span class="text-[#5A6478]">Scholarship quota transfer</span></div>
+                </td>
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-[#EEF1FB] text-[#5F6368]">
+                    MMA-003 (Sagar K.)
+                  </span>
+                </td>
+                <td class="py-3.5 px-5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#FFD0E8] text-[#C2185B]">
+                    ✕ Revoked
+                  </span>
+                </td>
+                <td class="py-3.5 px-5 text-right">
+                  <span class="text-[11px] text-[#8A94A6] italic">Revoked</span>
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Strict RBAC Governance Notice Footnote -->
+        <div class="p-4 bg-[#F5F7FF] border-t border-[#E4E8F8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-[#5A6478]">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-[#8A94A6] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            <span><strong>System Rule:</strong> Every grant is logged and visible to Main Admin. Grants show in analytics as waived revenue.</span>
+          </div>
+          <div class="text-[11px] font-mono text-[#8A94A6]">HMAC: 9e88fa2-narhe-ledger</div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Right Drawer: 4-Step Create Free Grant Form (~440px) -->
+    <aside class="w-[430px] bg-white border-l border-[#E4E8F8] flex flex-col shrink-0 shadow-drawer z-20">
+      
+      <!-- Drawer Header -->
+      <div class="p-5 border-b border-[#E4E8F8] flex items-center justify-between bg-white sticky top-0">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 class="font-heading font-bold text-base text-[#0E1B3D]">Create Free Grant</h2>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EDE8FF] text-[#5E35B1]">SUB-ADMIN ALLOCATOR</span>
+          </div>
+          <p class="text-xs text-[#5A6478] mt-0.5">Waive 100% fees for students or cohort</p>
+        </div>
+        <button class="text-xs font-semibold text-[#8A94A6] hover:text-[#0E1B3D] transition">Reset</button>
+      </div>
+
+      <!-- Drawer Body: 4 Steps Form -->
+      <div class="flex-1 p-5 overflow-y-auto space-y-6">
+        
+        <!-- STEP 1: WHO -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="w-5 h-5 rounded-full bg-[#0B57D0] text-white text-[11px] font-bold flex items-center justify-center">1</span>
+              <label class="font-heading font-bold text-xs uppercase tracking-wider text-[#0E1B3D]">Who (Target Recipients)</label>
+            </div>
+            <span class="text-[11px] text-[#0B57D0] font-medium">District Selected</span>
+          </div>
+
+          <!-- Scope Target Segment Selection Chips -->
+          <div class="grid grid-cols-2 gap-1.5 text-xs">
+            <label class="flex items-center space-x-2 p-2 rounded-xl border border-[#E4E8F8] cursor-pointer hover:bg-[#F5F7FF] transition">
+              <input type="radio" name="grant_who" class="text-[#0B57D0] focus:ring-0">
+              <span class="font-medium text-[#0E1B3D]">One Student</span>
+            </label>
+            <label class="flex items-center space-x-2 p-2 rounded-xl border border-[#E4E8F8] cursor-pointer hover:bg-[#F5F7FF] transition">
+              <input type="radio" name="grant_who" class="text-[#0B57D0] focus:ring-0">
+              <span class="font-medium text-[#0E1B3D]">All Students</span>
+            </label>
+            <label class="flex items-center space-x-2 p-2 rounded-xl border-2 border-[#0B57D0] bg-[#EEF4FF] cursor-pointer transition">
+              <input type="radio" name="grant_who" checked class="text-[#0B57D0] focus:ring-0">
+              <span class="font-bold text-[#0B57D0]">District</span>
+            </label>
+            <label class="flex items-center space-x-2 p-2 rounded-xl border border-[#E4E8F8] cursor-pointer hover:bg-[#F5F7FF] transition">
+              <input type="radio" name="grant_who" class="text-[#0B57D0] focus:ring-0">
+              <span class="font-medium text-[#0E1B3D]">Taluka</span>
+            </label>
+            <label class="flex items-center space-x-2 p-2 rounded-xl border border-[#E4E8F8] cursor-pointer hover:bg-[#F5F7FF] transition col-span-2">
+              <input type="radio" name="grant_who" class="text-[#0B57D0] focus:ring-0">
+              <span class="font-medium text-[#0E1B3D]">School / Affiliated Institute</span>
+            </label>
+          </div>
+
+          <!-- Active Selection Sub-Field: District Chosen -->
+          <div class="bg-[#F5F7FF] p-3 rounded-xl border border-[#E4E8F8] space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-medium text-[#5A6478]">Select District:</span>
+              <span class="text-[11px] text-[#137333] font-semibold">148 Students Verified</span>
+            </div>
+            <select class="w-full bg-white border border-[#E4E8F8] rounded-lg px-3 py-2 text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]">
+              <option value="nashik" selected>Nashik District (Rural Z.P. Camp)</option>
+              <option value="pune">Pune District (Narhe Node)</option>
+              <option value="satara">Satara District</option>
+              <option value="ahmednagar">Ahmednagar District</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- STEP 2: WHAT -->
+        <div class="space-y-3 pt-2 border-t border-[#E4E8F8]">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="w-5 h-5 rounded-full bg-[#0B57D0] text-white text-[11px] font-bold flex items-center justify-center">2</span>
+              <label class="font-heading font-bold text-xs uppercase tracking-wider text-[#0E1B3D]">What (Course Scope)</label>
+            </div>
+            <span class="text-[11px] text-[#5E35B1] font-medium">1 Course</span>
+          </div>
+
+          <!-- Segmented Choice: One Course vs All Courses -->
+          <div class="flex p-1 bg-[#F5F7FF] rounded-xl border border-[#E4E8F8] text-xs">
+            <button class="flex-1 py-1.5 rounded-lg bg-white font-bold text-[#0B57D0] shadow-sm">
+              One Course
+            </button>
+            <button class="flex-1 py-1.5 rounded-lg font-medium text-[#5A6478] hover:text-[#0E1B3D]">
+              All Courses (Full Pass)
+            </button>
+          </div>
+
+          <!-- Course Selector Dropdown -->
+          <div class="space-y-1">
+            <label class="text-[11px] font-semibold text-[#5A6478]">Select Target Course</label>
+            <select class="w-full bg-white border border-[#E4E8F8] rounded-lg px-3 py-2 text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]">
+              <option selected>Vedic Maths Masterclass (Level 1 Foundation)</option>
+              <option>Speed Maths Foundation (Shortcuts & Tricks)</option>
+              <option>Memory Palace & Mnemonic Peg Lists</option>
+              <option>Police Bharti Arithmetic & Aptitude Speed Drill</option>
+              <option>Navodaya 2025 Comprehensive Prep</option>
+            </select>
+            <div class="flex items-center justify-between text-[11px] text-[#5A6478] pt-1">
+              <span>Standard Price: <strong>₹1,499 / student</strong></span>
+              <span class="text-[#137333] font-semibold">100% Waived</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: HOW LONG -->
+        <div class="space-y-3 pt-2 border-t border-[#E4E8F8]">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="w-5 h-5 rounded-full bg-[#0B57D0] text-white text-[11px] font-bold flex items-center justify-center">3</span>
+              <label class="font-heading font-bold text-xs uppercase tracking-wider text-[#0E1B3D]">How Long (Duration)</label>
+            </div>
+            <span class="text-xs font-bold text-[#0B57D0] bg-[#DDEBFF] px-2 py-0.5 rounded-full">3 Months</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Months Stepper -->
+            <div class="bg-[#F5F7FF] p-2.5 rounded-xl border border-[#E4E8F8]">
+              <label class="text-[11px] font-medium text-[#5A6478] block mb-1">Access Duration</label>
+              <div class="flex items-center justify-between bg-white rounded-lg border border-[#E4E8F8] p-1">
+                <button class="w-7 h-7 rounded-md bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0E1B3D] font-bold text-sm flex items-center justify-center">−</button>
+                <span class="font-heading font-bold text-sm text-[#0E1B3D]">3 Months</span>
+                <button class="w-7 h-7 rounded-md bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0E1B3D] font-bold text-sm flex items-center justify-center">+</button>
+              </div>
+            </div>
+
+            <!-- Optional End Date -->
+            <div class="bg-[#F5F7FF] p-2.5 rounded-xl border border-[#E4E8F8]">
+              <label class="text-[11px] font-medium text-[#5A6478] block mb-1">Optional End Date</label>
+              <input type="date" value="2027-01-15" class="w-full bg-white border border-[#E4E8F8] rounded-lg px-2 py-1.5 text-xs text-[#0E1B3D] font-medium focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: REASON -->
+        <div class="space-y-2 pt-2 border-t border-[#E4E8F8]">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="w-5 h-5 rounded-full bg-[#0B57D0] text-white text-[11px] font-bold flex items-center justify-center">4</span>
+              <label class="font-heading font-bold text-xs uppercase tracking-wider text-[#0E1B3D]">Reason (Required for Audit)</label>
+            </div>
+            <span class="text-[11px] text-[#8A94A6]">Audit Logged</span>
+          </div>
+
+          <textarea rows="2" placeholder="e.g. Rural outreach camp, meritorious college event, regional study grant..." class="w-full bg-white border border-[#E4E8F8] rounded-xl p-3 text-xs text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0] focus:ring-1 focus:ring-[#0B57D0] transition">Rural Talent Search Camp — Nashik Regional Education Outreach</textarea>
+        </div>
+
+        <!-- MINT SUMMARY CARD -->
+        <div class="p-4 rounded-2xl bg-[#DFF7EA] border border-[#B6EAC8] text-[#137333] shadow-sm space-y-1.5">
+          <div class="flex items-center space-x-2">
+            <svg class="w-5 h-5 text-[#137333] shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="font-heading font-bold text-xs uppercase tracking-wide">Grant Summary Preview</span>
+          </div>
+          <p class="text-xs font-semibold leading-relaxed">
+            "Will grant free access to 148 students of Nashik district for Vedic Maths for 3 months"
+          </p>
+          <div class="text-[11px] opacity-90 pt-1 border-t border-[#C3ECCF] flex justify-between">
+            <span>Total Waived Value: ₹2,21,852</span>
+            <span>Fee: ₹0 (100% Free)</span>
+          </div>
+        </div>
+
+        <!-- BLUE PILL "Create Grant" Action Button -->
+        <div class="pt-2 space-y-2">
+          <button class="w-full py-3 px-6 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white font-heading font-bold text-sm shadow-md transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span>Create Grant</span>
+          </button>
+          
+          <button class="w-full py-2 px-4 rounded-full text-xs font-medium text-[#5A6478] hover:bg-[#F5F7FF] transition">
+            Discard & Clear Fields
+          </button>
+        </div>
+
+        <!-- Grey Notes: Governance & Analytics -->
+        <div class="p-3 bg-[#F5F7FF] rounded-xl border border-[#E4E8F8] space-y-1.5 text-[11px] text-[#5A6478]">
+          <div class="flex items-start space-x-2">
+            <svg class="w-3.5 h-3.5 text-[#8A94A6] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Every grant is logged and visible to Main Admin.</span>
+          </div>
+          <div class="flex items-start space-x-2">
+            <svg class="w-3.5 h-3.5 text-[#8A94A6] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span>Grants show in analytics as waived revenue.</span>
+          </div>
+        </div>
+
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- REVOKE CONFIRMATION MODAL (Clean, Dismissible) -->
+  <div id="revokeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-[#0E1B3D]/40 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full border border-[#E4E8F8] shadow-modal overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="p-6 text-center space-y-3">
+        <div class="w-12 h-12 rounded-full bg-[#FFD0E8] text-[#C2185B] mx-auto flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <h3 class="font-heading font-extrabold text-lg text-[#0E1B3D]">Revoke Free Grant Access?</h3>
+        <p class="text-xs text-[#5A6478] leading-relaxed">
+          Are you sure you want to revoke free course access for <strong class="text-[#0E1B3D]">Aditi K. (Vedic Maths)</strong>? Their course token will be locked immediately and recorded in the audit log under <code class="text-[#5E35B1]">MMA-003</code>.
+        </p>
+
+        <div class="p-3 bg-[#F5F7FF] rounded-xl text-left text-xs border border-[#E4E8F8] space-y-1">
+          <div class="text-[#5A6478]">Action: <strong class="text-[#C2185B]">Instant Access Deprovisioning</strong></div>
+          <div class="text-[#5A6478]">Refund/Adjustment: <strong>₹0.00 (Waived grant)</strong></div>
+        </div>
+
+        <div class="flex items-center space-x-3 pt-2">
+          <button onclick="document.getElementById('revokeModal').classList.add('hidden')" class="flex-1 py-2.5 rounded-full border border-[#E4E8F8] text-xs font-semibold text-[#5A6478] hover:bg-[#F5F7FF] transition">
+            Cancel Keep Active
+          </button>
+          <button onclick="document.getElementById('revokeModal').classList.add('hidden')" class="flex-1 py-2.5 rounded-full bg-[#C2185B] hover:bg-[#A3134B] text-white text-xs font-semibold shadow-sm transition">
+            Confirm Revocation
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Universal SSO Footer (Strict Brand Standard) -->
+  <footer class="bg-white border-t border-[#E4E8F8] py-3.5 px-6 text-center text-xs text-[#5A6478] shrink-0">
+    <div class="flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-3">
+      <span class="flex items-center">
+        <span class="w-2 h-2 rounded-full bg-[#137333] mr-2"></span>
+        Single sign-on active across MindMaster domains (Portal, TestSeries, VideoPlayer)
+      </span>
+      <span class="hidden sm:inline text-[#8A94A6]">|</span>
+      <span>Privacy Policy</span>
+      <span class="text-[#8A94A6]">•</span>
+      <span>Terms of Service</span>
+      <span class="text-[#8A94A6]">•</span>
+      <span>Narhe Centre Desk</span>
+      <span class="text-[#8A94A6]">•</span>
+      <span class="font-mono text-[#8A94A6]">v1.0.0</span>
+    </div>
+  </footer>
+
+</body>
+</html>

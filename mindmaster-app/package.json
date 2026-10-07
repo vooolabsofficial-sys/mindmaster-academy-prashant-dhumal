@@ -1,0 +1,53 @@
+{
+  "name": "mindmaster-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test:all": "npx tsx scripts/test-all.mjs",
+    "test:notes-pwa": "npx tsx scripts/test-notes-pwa.mjs",
+    "test:admin-courses": "npx tsx scripts/test-admin-courses-coupons.mjs",
+    "test:finder-messaging": "npx tsx scripts/test-finder-messaging-grants.mjs",
+    "test:permissions": "npx tsx scripts/test-permission-lock.mjs",
+    "test:staff-auth": "npx tsx scripts/test-staff-auth.mjs",
+    "test:student-auth": "npx tsx scripts/test-student-auth.mjs",
+    "test:checkout": "npx tsx scripts/test-checkout.mjs",
+    "test:watch": "npx tsx scripts/test-watch.mjs",
+    "test:grants": "npx tsx scripts/test-grants.mjs",
+    "test:analytics": "npx tsx scripts/test-analytics.mjs",
+    "test:subadmin": "npx tsx scripts/test-subadmin.mjs",
+    "test:migrations": "npx tsx scripts/test-migrations.mjs",
+    "test:language": "npx tsx scripts/test-multilingual-support.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.6.0",
+    "@supabase/supabase-js": "^2.49.1",
+    "canvas-confetti": "^1.9.4",
+    "fuse.js": "^7.5.0",
+    "hash-wasm": "^4.12.0",
+    "idb": "^8.0.3",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "lucide-react": "^1.16.0",
+    "next": "16.3.4",
+    "razorpay": "^2.9.8",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "sonner": "^2.0.8",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
