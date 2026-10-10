@@ -29,7 +29,7 @@ const TINT_ICON: Record<HeaderTint, string> = {
   locked: "🔒",
 };
 
-export default function CourseManagerPage({ initialOpen = false }: { initialOpen?: boolean } = {}) {
+export default function CourseManagerPage() {
   const pathname = usePathname();
   const [courses, setCourses] = useState<Course[]>([]);
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
@@ -40,7 +40,7 @@ export default function CourseManagerPage({ initialOpen = false }: { initialOpen
   const [typeFilter, setTypeFilter] = useState<"all" | "free" | "paid">("all");
 
   // Drawer State
-  const [isDrawerOpen, setIsDrawerOpen] = useState(initialOpen || pathname?.includes("builder"));
+  const [isDrawerOpen, setIsDrawerOpen] = useState(pathname?.includes("builder"));
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
   // Form Fields State
@@ -61,6 +61,23 @@ export default function CourseManagerPage({ initialOpen = false }: { initialOpen
   const [segmentTaluka, setSegmentTaluka] = useState("Haveli");
   const [segmentSchool, setSegmentSchool] = useState("ZP High School");
   const [segmentCoursePrereq, setSegmentCoursePrereq] = useState("MM-01");
+
+  // Standards (Class 5 to 12 + Open to All) State
+  const [standards, setStandards] = useState<number[]>([]);
+
+  const handleToggleAllStandards = () => {
+    setStandards([]);
+  };
+
+  const handleToggleStandard = (std: number) => {
+    setStandards((prev) => {
+      if (prev.includes(std)) {
+        return prev.filter((s) => s !== std);
+      } else {
+        return [...prev, std].sort((a, b) => a - b);
+      }
+    });
+  };
 
   const reload = () => {
     setCourses(getStaffCourses());
@@ -92,6 +109,7 @@ export default function CourseManagerPage({ initialOpen = false }: { initialOpen
     setSegmentTaluka("Haveli");
     setSegmentSchool("ZP High School");
     setSegmentCoursePrereq("MM-01");
+    setStandards([]);
     setIsDrawerOpen(true);
   };
 
@@ -118,6 +136,8 @@ export default function CourseManagerPage({ initialOpen = false }: { initialOpen
     } else {
       setSegmentType("all");
     }
+
+    setStandards(c.standards && Array.isArray(c.standards) ? [...c.standards] : []);
 
     setIsDrawerOpen(true);
   };
@@ -176,6 +196,7 @@ export default function CourseManagerPage({ initialOpen = false }: { initialOpen
       features: editingCourse ? editingCourse.features : ["Video Lectures", "Course PDF Notes", "Completion Certificate"],
       targetSegment: "general",
       targetSegmentConfig: targetConfig,
+      standards: standards.length > 0 ? [...standards].sort((a, b) => a - b) : undefined,
       publishAt: publishAt ? new Date(publishAt).toISOString() : new Date().toISOString(),
       removeAt: removeAt ? new Date(removeAt).toISOString() : null,
     };
@@ -359,6 +380,15 @@ export default function CourseManagerPage({ initialOpen = false }: { initialOpen
                           {/* Target Segment Chip */}
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
                             🎯 {targetLabel}
+                          </span>
+
+                          {/* Standards Chip */}
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            🎓 {course.standards && course.standards.length > 0
+                              ? (course.standards.length === 8
+                                  ? "Class 5th - 12th"
+                                  : `${course.standards.map((s: number) => `${s}th`).join(", ")} Std`)
+                              : "All Standards"}
                           </span>
 
                           {/* Publish Date */}
@@ -589,6 +619,64 @@ export default function CourseManagerPage({ initialOpen = false }: { initialOpen
                           </select>
                         </div>
                       )}
+                    </div>
+
+                    {/* STANDARDS (CLASS 5 TO 12 + OPEN TO ALL) CHECKBOXES */}
+                    <div className="p-4 bg-gradient-to-r from-indigo-50/40 to-blue-50/40 border border-indigo-200/60 rounded-2xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="font-bold text-[#0E1B3D] flex items-center gap-1.5 text-xs">
+                          <span>🎓</span> Target Standards (Class 5 to 12)
+                        </label>
+                        <span className="text-[10px] text-[#0B57D0] font-bold">
+                          {standards.length === 0 ? "Open to All" : `${standards.length} Selected`}
+                        </span>
+                      </div>
+
+                      {/* All Standards Option */}
+                      <div className="pt-0.5">
+                        <label className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
+                          standards.length === 0
+                            ? "bg-[#0B57D0] text-white border-[#0B57D0] shadow-2xs"
+                            : "bg-white text-[#5A6478] border-[#E4E8F8] hover:border-[#0B57D0]"
+                        }`}>
+                          <input
+                            type="checkbox"
+                            checked={standards.length === 0}
+                            onChange={handleToggleAllStandards}
+                            className="w-3.5 h-3.5 rounded accent-[#0B57D0]"
+                          />
+                          <span>Open to All (No Specific Standard)</span>
+                        </label>
+                      </div>
+
+                      {/* Specific Standard Checkboxes 5 to 12 */}
+                      <div className="grid grid-cols-4 gap-2 pt-1">
+                        {[5, 6, 7, 8, 9, 10, 11, 12].map((std) => {
+                          const isChecked = standards.includes(std);
+                          return (
+                            <label
+                              key={std}
+                              className={`flex items-center gap-2 p-2 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
+                                isChecked
+                                  ? "bg-blue-50 border-blue-400 text-[#0B57D0] font-bold shadow-2xs"
+                                  : "bg-white border-[#E4E8F8] text-[#5A6478] hover:border-blue-200"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleToggleStandard(std)}
+                                className="w-3.5 h-3.5 rounded accent-[#0B57D0]"
+                              />
+                              <span>{std}th</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+
+                      <p className="text-[11px] text-[#5A6478]">
+                        * Note: Leaving "Open to All" selected allows this course to be available to all learners and general tracks.
+                      </p>
                     </div>
 
                     {/* Free / Paid Toggle & Price */}

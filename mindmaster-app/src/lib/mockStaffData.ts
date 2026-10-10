@@ -245,6 +245,28 @@ export const INITIAL_COUPONS: Coupon[] = [
     is_active: true,
     createdAt: "2026-08-10",
   },
+  {
+    id: "cpn-8",
+    code: "ABHINAVA100",
+    description: "Exclusive ₹100 discount for Abhinava Vidyalaya students",
+    school: "Abhinava Vidyalaya, Pune",
+    discountType: "flat",
+    discountValue: 10000,
+    appliesTo: "all",
+    applies_all: true,
+    selectedCourseIds: [],
+    usageLimitPerUser: "once",
+    per_user_usage: "once",
+    validityType: "days",
+    validDays: 60,
+    maxTotalUses: 150,
+    usage_limit: 150,
+    totalUsed: 12,
+    used_count: 12,
+    status: "active",
+    is_active: true,
+    createdAt: "2026-09-01",
+  },
 ];
 
 // ==========================================

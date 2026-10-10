@@ -4,23 +4,22 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { 
-  Search, 
   BookOpen, 
   Clock, 
   ArrowRight, 
-  CheckCircle2, 
-  Sparkles,
-  ShieldCheck,
-  Brain,
-  Calculator,
-  Calendar,
-  Award,
-  Layers,
-  Zap,
-  Landmark,
-  Compass
+  Sparkles, 
+  ShieldCheck, 
+  Brain, 
+  Calculator, 
+  Calendar, 
+  Landmark, 
+  Zap 
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
+import FilterChips, { StandardFilter } from "@/components/courses/FilterChips";
+import { isCourseVisibleToStudent } from "@/lib/courseVisibility";
+import { getStaffCourses, getStaffStudents } from "@/lib/staffStore";
+import EmptyState from "@/components/common/EmptyState";
 
 type FilterType = "All" | "Free" | "Paid" | "Memory" | "Vedic Maths" | "Police Bharti" | "Calendar Technique";
 
@@ -49,6 +48,7 @@ interface CatalogCourse {
   category: "Memory" | "Vedic Maths" | "Police Bharti" | "Calendar Technique";
   imageSrc: string;
   icon: any;
+  standards?: number[]; // [5,6,7...]; empty/undefined = for all / other courses
 }
 
 const CATALOG_COURSES: CatalogCourse[] = [
@@ -65,6 +65,7 @@ const CATALOG_COURSES: CatalogCourse[] = [
     isFree: true,
     tint: "mint",
     category: "Memory",
+    standards: [5, 6, 7, 8, 9, 10, 11, 12],
     imageSrc: "/assets/images/student_mindmaps_notebook.png",
     icon: Brain,
   },
@@ -81,6 +82,7 @@ const CATALOG_COURSES: CatalogCourse[] = [
     isFree: false,
     tint: "sky",
     category: "Vedic Maths",
+    standards: [5, 6, 7, 8, 9, 10, 11, 12],
     imageSrc: "/assets/images/vedic_maths_abacus_3d.png",
     icon: Calculator,
   },
@@ -97,6 +99,7 @@ const CATALOG_COURSES: CatalogCourse[] = [
     isFree: true,
     tint: "lavender",
     category: "Calendar Technique",
+    standards: [5, 6, 7, 8, 9, 10, 11, 12],
     imageSrc: "/assets/images/superfast_calendar_3d.png",
     icon: Calendar,
   },
@@ -113,6 +116,7 @@ const CATALOG_COURSES: CatalogCourse[] = [
     isFree: false,
     tint: "peach",
     category: "Police Bharti",
+    // Recruitment course - no school standards (इतर कोर्स)
     imageSrc: "/assets/images/police_bharti_prep_3d.png",
     icon: ShieldCheck,
   },
@@ -129,6 +133,7 @@ const CATALOG_COURSES: CatalogCourse[] = [
     isFree: false,
     tint: "purple",
     category: "Memory",
+    // Trainer certification - no school standards (इतर कोर्स)
     imageSrc: "/assets/images/memory_seminar_brain_3d.png",
     icon: Landmark,
   },
@@ -145,6 +150,7 @@ const CATALOG_COURSES: CatalogCourse[] = [
     isFree: true,
     tint: "mint",
     category: "Memory",
+    standards: [5, 6, 7, 8, 9, 10, 11, 12],
     imageSrc: "/assets/images/classroom_memory_drills.png",
     icon: Zap,
   },
@@ -183,18 +189,51 @@ const TINT_STYLES = {
   },
 };
 
-import { isCourseVisibleToStudent } from "@/lib/courseVisibility";
-import { getStaffCourses } from "@/lib/staffStore";
-import EmptyState from "@/components/common/EmptyState";
+function extractStandardNumber(val: any): number | null {
+  if (!val) return null;
+  if (typeof val === "number" && val >= 5 && val <= 12) return val;
+  const str = String(val);
+  const match = str.match(/\b(5|6|7|8|9|10|11|12)\b/);
+  if (match) return parseInt(match[1], 10);
+  const digits = str.match(/\d+/);
+  if (digits) {
+    const n = parseInt(digits[0], 10);
+    if (n >= 5 && n <= 12) return n;
+  }
+  return null;
+}
 
 export default function CoursesCatalogPage() {
+  const [activeStandard, setActiveStandard] = useState<StandardFilter>("all");
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [studentProfile, setStudentProfile] = useState<any>(null);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem("mindmaster_user_profile");
-      if (raw) setStudentProfile(JSON.parse(raw));
+      if (raw) {
+        const profile = JSON.parse(raw);
+        setStudentProfile(profile);
+
+        // Pre-select student's enrolled/recorded standard if available
+        const stdRaw = profile.standard || profile.target_standard || profile.grade;
+        let stdFound: number | null = extractStandardNumber(stdRaw);
+
+        if (!stdFound && profile.phone) {
+          const staffStudents = getStaffStudents();
+          const cleanPhone = profile.phone.replace(/\D/g, "");
+          const match = staffStudents.find(
+            (s) => s.phone.replace(/\D/g, "") === cleanPhone
+          );
+          if (match?.standard) {
+            stdFound = extractStandardNumber(match.standard);
+          }
+        }
+
+        if (stdFound && stdFound >= 5 && stdFound <= 12) {
+          setActiveStandard(stdFound as StandardFilter);
+        }
+      }
     } catch {}
   }, []);
 
@@ -211,6 +250,23 @@ export default function CoursesCatalogPage() {
   });
 
   const filteredCourses = visibleCourses.filter((course) => {
+    const staffMatch = staffCourses.find(
+      (sc) => sc.code === course.code || sc.id === course.id
+    );
+    const courseStandards = staffMatch?.standards ?? course.standards;
+
+    // 1. Standard Filter ("सर्व", "5वी"..."12वी", "इतर कोर्स")
+    if (activeStandard !== "all") {
+      if (activeStandard === "other") {
+        if (courseStandards && courseStandards.length > 0) return false;
+      } else {
+        if (!courseStandards || !courseStandards.includes(Number(activeStandard))) {
+          return false;
+        }
+      }
+    }
+
+    // 2. Category / Pricing Filter
     if (activeFilter === "All") return true;
     if (activeFilter === "Free") return course.isFree;
     if (activeFilter === "Paid") return !course.isFree;
@@ -244,8 +300,29 @@ export default function CoursesCatalogPage() {
           </p>
         </div>
 
-        {/* Filter Chips Bar - 40px+ Touch Targets */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-none touch-pan-x" role="tablist" aria-label="Course categories">
+        {/* 1. Primary Filter: Standard Chips ("All", "5th"…"12th", "Other Courses") */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between text-xs text-slate-600 font-medium px-0.5">
+            <span className="flex items-center gap-1.5 font-bold text-slate-800">
+              <span>🎓</span> Select Standard:
+            </span>
+            {activeStandard !== "all" && (
+              <button
+                onClick={() => setActiveStandard("all")}
+                className="text-[11px] text-blue-600 hover:underline font-bold cursor-pointer"
+              >
+                Show All (Reset)
+              </button>
+            )}
+          </div>
+          <FilterChips
+            activeStandard={activeStandard}
+            onSelect={(std) => setActiveStandard(std)}
+          />
+        </div>
+
+        {/* 2. Secondary Filter: Course Track & Fee Categories */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none touch-pan-x" role="tablist" aria-label="Course categories">
           {FILTER_CHIPS.map((chip) => {
             const isActive = activeFilter === chip;
             return (
@@ -254,10 +331,10 @@ export default function CoursesCatalogPage() {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveFilter(chip)}
-                className={`min-h-[40px] px-4 py-2 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 border cursor-pointer active:scale-95 touch-manipulation flex items-center justify-center ${
+                className={`min-h-[36px] px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 border cursor-pointer active:scale-95 touch-manipulation flex items-center justify-center ${
                   isActive
-                    ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/25 font-bold"
-                    : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:text-slate-900 hover:bg-slate-50"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-sm font-bold"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900 hover:bg-slate-50"
                 }`}
               >
                 {chip}
@@ -270,14 +347,21 @@ export default function CoursesCatalogPage() {
         {filteredCourses.length === 0 ? (
           <EmptyState
             icon={BookOpen}
-            title="कोणताही कोर्स सापडला नाही (No Courses Found)"
-            description="निवडलेल्या वर्गवारीनुसार सध्या कोणताही कोर्स उपलब्ध नाही. सर्व कोर्सेस पाहण्यासाठी खालील बटण दाबा."
-            actionText="सर्व कोर्सेस पहा (Show All)"
-            onAction={() => setActiveFilter("All")}
+            title="No Courses Found"
+            description="No courses available for the selected standard and category filter. Click below to show all courses."
+            actionText="Show All Courses"
+            onAction={() => {
+              setActiveStandard("all");
+              setActiveFilter("All");
+            }}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course) => {
+              const staffMatch = staffCourses.find(
+                (sc) => sc.code === course.code || sc.id === course.id
+              );
+              const courseStandards = staffMatch?.standards ?? course.standards;
               const tint = TINT_STYLES[course.tint];
               const Icon = course.icon;
 
@@ -288,10 +372,20 @@ export default function CoursesCatalogPage() {
                 >
                   {/* Tint Header with 3D Thumbnail */}
                   <div className={`p-5 border-b ${tint.header} flex flex-col gap-3 relative`}>
-                    <div className="flex items-center justify-between">
-                      <span className={`text-[10px] font-extrabold uppercase tracking-wider bg-white px-2.5 py-0.5 rounded-full border ${tint.badgeBg} ${tint.badgeText} shadow-2xs`}>
-                        {course.badge}
-                      </span>
+                    <div className="flex items-center justify-between flex-wrap gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-[10px] font-extrabold uppercase tracking-wider bg-white px-2.5 py-0.5 rounded-full border ${tint.badgeBg} ${tint.badgeText} shadow-2xs`}>
+                          {course.badge}
+                        </span>
+
+                        {/* Standard Tag Badge */}
+                        <span className="text-[10px] font-bold bg-white text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full shadow-2xs">
+                          {courseStandards && courseStandards.length > 0
+                            ? (courseStandards.length === 8 ? "Class 5th - 12th" : `${courseStandards.map((s: number) => `${s}th`).join(", ")} Std`)
+                            : "All Standards"}
+                        </span>
+                      </div>
+
                       <span className="text-[10px] text-slate-700 bg-white/90 px-2.5 py-0.5 rounded-full font-bold shadow-2xs">
                         {course.subBadge}
                       </span>

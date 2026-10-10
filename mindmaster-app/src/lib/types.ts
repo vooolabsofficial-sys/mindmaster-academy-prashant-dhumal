@@ -58,6 +58,7 @@ export interface Course {
   targetSegmentConfig?: TargetSegmentConfig;
   publishAt?: string; // ISO string
   removeAt?: string | null; // ISO string
+  standards?: number[]; // e.g. [5,6,7]; empty/undefined = for all (other courses)
 }
 
 export interface Note {
@@ -177,6 +178,7 @@ export interface Coupon {
   id: string;
   code: string;
   description: string;
+  school?: string; // school name; if set, only students whose profile school matches can use this coupon
   discountType: "percentage" | "flat" | "percent";
   discountValue: number; // percentage (e.g. 25) or paise (e.g. 50000 = ₹500)
   appliesTo: "all" | "selected";

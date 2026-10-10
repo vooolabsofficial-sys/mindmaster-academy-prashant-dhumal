@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Extract playlist ID from various YouTube URL formats
-export function extractPlaylistId(urlOrId: string): string | null {
+function extractPlaylistId(urlOrId: string): string | null {
   if (!urlOrId) return null;
   const trimmed = urlOrId.trim();
 
@@ -24,7 +24,7 @@ export function extractPlaylistId(urlOrId: string): string | null {
 }
 
 // Convert ISO 8601 duration (e.g. PT1H15M33S) to total seconds
-export function parseIso8601Duration(duration: string): number {
+function parseIso8601Duration(duration: string): number {
   if (!duration) return 0;
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!match) return 0;
@@ -34,7 +34,7 @@ export function parseIso8601Duration(duration: string): number {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-export function formatDuration(sec: number): string {
+function formatDuration(sec: number): string {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
   const s = sec % 60;

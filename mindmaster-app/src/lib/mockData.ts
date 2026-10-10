@@ -31,7 +31,8 @@ export const MOCK_COURSES: Course[] = [
       "Self-Practice Quizzes After Every Lesson",
       "3 Months Unlimited Access & Mobile App Support",
       "Official E-Certificate of Completion"
-    ]
+    ],
+    standards: [5, 6, 7, 8, 9, 10, 11, 12]
   },
   {
     id: "c-mm-02",
@@ -124,7 +125,8 @@ export const MOCK_COURSES: Course[] = [
       "Century and Month Code Formula Cheatsheets",
       "Live Drill Practice Session Recordings",
       "3 Months Unlimited Access"
-    ]
+    ],
+    standards: [5, 6, 7, 8, 9, 10, 11, 12]
   },
   {
     id: "c-mm-05",
@@ -155,7 +157,8 @@ export const MOCK_COURSES: Course[] = [
       "Workbooks & 200+ Solved Practice Problems (PDF)",
       "Speed Calculation Shortcuts & Mental Proofs",
       "3 Months Validity"
-    ]
+    ],
+    standards: [5, 6, 7, 8, 9, 10, 11, 12]
   }
 ];
 

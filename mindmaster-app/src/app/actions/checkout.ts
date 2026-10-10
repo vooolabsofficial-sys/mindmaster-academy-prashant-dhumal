@@ -5,8 +5,8 @@ import Razorpay from "razorpay";
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MOCK_COURSES, COURSE_ID_MAP } from "@/lib/mockData";
-import { INITIAL_COUPONS } from "@/lib/mockStaffData";
-import { getStaffCoupons } from "@/lib/staffStore";
+import { INITIAL_COUPONS, INITIAL_STUDENTS } from "@/lib/mockStaffData";
+import { getStaffCoupons, getStaffStudents } from "@/lib/staffStore";
 import { hasUserRedeemedCoupon, recordCouponRedemption } from "@/lib/couponRedemptionStore";
 
 export interface CouponValidationResult {
@@ -52,7 +52,8 @@ export interface PaymentVerificationResult {
 export async function validateCoupon(
   code: string,
   courseId: string,
-  userId?: string
+  userId?: string,
+  studentSchool?: string
 ): Promise<CouponValidationResult> {
   const cleanCode = code.trim().toUpperCase();
   if (!cleanCode) {
@@ -86,6 +87,40 @@ export async function validateCoupon(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("dummy.supabase.co");
 
+  // Helper to resolve student's school field
+  const resolveStudentSchool = async (): Promise<string> => {
+    if (studentSchool !== undefined) {
+      return studentSchool.trim();
+    }
+    // Check Supabase profile if configured
+    if (isSupabaseConfigured && studentUserId) {
+      try {
+        const supabase = createAdminClient();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("school_name, school")
+          .eq("id", studentUserId)
+          .maybeSingle();
+        if (profile?.school_name || profile?.school) {
+          return (profile.school_name || profile.school).trim();
+        }
+      } catch {}
+    }
+    // Check StudentRecord in staffStore / INITIAL_STUDENTS
+    const students = getStaffStudents ? getStaffStudents() : INITIAL_STUDENTS;
+    const digits = (studentUserId || "").replace(/\D/g, "");
+    const match = students.find(
+      (s) =>
+        s.id === studentUserId ||
+        s.phone === studentUserId ||
+        (digits.length >= 10 && s.phone.replace(/\D/g, "").includes(digits))
+    );
+    if (match?.school) {
+      return match.school.trim();
+    }
+    return "";
+  };
+
   if (isSupabaseConfigured) {
     try {
       const supabase = createAdminClient();
@@ -114,6 +149,18 @@ export async function validateCoupon(
       const usedCount = coupon.used_count || coupon.total_used || coupon.totalUsed || 0;
       if (usageLimit && usedCount >= usageLimit) {
         return { success: false, error: "This coupon has reached its maximum usage limit." };
+      }
+
+      // Check: School restriction
+      const requiredSchool = (coupon.school || "").trim();
+      if (requiredSchool) {
+        const currentStudentSchool = await resolveStudentSchool();
+        if (currentStudentSchool.toLowerCase() !== requiredSchool.toLowerCase()) {
+          return {
+            success: false,
+            error: `हा कूपन फक्त ${requiredSchool} च्या विद्यार्थ्यांसाठी आहे.`,
+          };
+        }
       }
 
       // Check 4: applies_all or Course mapping via coupon_courses
@@ -240,6 +287,18 @@ export async function validateCoupon(
       return { success: false, error: "This coupon has reached its maximum redemption limit." };
     }
 
+    // School restriction check
+    const mockSchool = (mockCoupon.school || "").trim();
+    if (mockSchool) {
+      const currentStudentSchool = await resolveStudentSchool();
+      if (currentStudentSchool.toLowerCase() !== mockSchool.toLowerCase()) {
+        return {
+          success: false,
+          error: `हा कूपन फक्त ${mockSchool} च्या विद्यार्थ्यांसाठी आहे.`,
+        };
+      }
+    }
+
     // 4. Applies_all or course in coupon_courses
     const appliesAll =
       mockCoupon.applies_all !== false &&
@@ -319,12 +378,14 @@ export async function createRazorpayOrder({
   studentMobile,
   studentName,
   userId,
+  studentSchool,
 }: {
   courseId: string;
   couponCode?: string;
   studentMobile: string;
   studentName: string;
   userId?: string;
+  studentSchool?: string;
 }): Promise<RazorpayOrderResult> {
   let studentUserId = userId;
   if (!studentUserId) {
@@ -340,7 +401,7 @@ export async function createRazorpayOrder({
   let finalPaise = course.pricePaise;
 
   if (couponCode) {
-    const couponValidation = await validateCoupon(couponCode, courseId, studentUserId);
+    const couponValidation = await validateCoupon(couponCode, courseId, studentUserId, studentSchool);
     if (couponValidation.success && couponValidation.coupon) {
       finalPaise = Math.max(100, course.pricePaise - couponValidation.coupon.discountAmountPaise);
     }

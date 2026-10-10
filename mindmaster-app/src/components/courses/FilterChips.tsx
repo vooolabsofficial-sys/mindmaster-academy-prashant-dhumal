@@ -2,35 +2,61 @@
 
 import React from "react";
 
-export type FilterCategory = "all" | "free" | "memory" | "vedic" | "police" | "calendar";
+export type StandardFilter = "all" | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "other";
 
-interface FilterChipsProps {
-  activeCategory: FilterCategory;
-  onSelect: (cat: FilterCategory) => void;
+export interface FilterChipItem {
+  id: StandardFilter;
+  label: string;
 }
 
-const CHIPS: { id: FilterCategory; label: string }[] = [
-  { id: "all", label: "All Courses" },
-  { id: "free", label: "Free Demo" },
-  { id: "memory", label: "Memory Science" },
-  { id: "vedic", label: "Vedic Maths" },
-  { id: "police", label: "Police Bharti / MPSC" },
-  { id: "calendar", label: "Calendar Tricks" },
+export const STANDARD_CHIPS: FilterChipItem[] = [
+  { id: "all", label: "All" },
+  { id: 5, label: "5th" },
+  { id: 6, label: "6th" },
+  { id: 7, label: "7th" },
+  { id: 8, label: "8th" },
+  { id: 9, label: "9th" },
+  { id: 10, label: "10th" },
+  { id: 11, label: "11th" },
+  { id: 12, label: "12th" },
+  { id: "other", label: "Other Courses" },
 ];
 
-export default function FilterChips({ activeCategory, onSelect }: FilterChipsProps) {
+export interface FilterChipsProps {
+  activeStandard?: StandardFilter;
+  activeCategory?: any; // Backwards compatibility
+  onSelect: (val: any) => void;
+  chips?: FilterChipItem[];
+  className?: string;
+}
+
+export default function FilterChips({
+  activeStandard,
+  activeCategory,
+  onSelect,
+  chips = STANDARD_CHIPS,
+  className = "",
+}: FilterChipsProps) {
+  const currentActive = activeStandard !== undefined ? activeStandard : (activeCategory ?? "all");
+
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none no-scrollbar">
-      {CHIPS.map((chip) => {
-        const isActive = activeCategory === chip.id;
+    <div
+      className={`flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-none no-scrollbar touch-pan-x ${className}`}
+      role="tablist"
+      aria-label="Course standard filters"
+    >
+      {chips.map((chip) => {
+        const isActive = currentActive === chip.id;
         return (
           <button
-            key={chip.id}
+            key={String(chip.id)}
+            role="tab"
+            aria-selected={isActive}
             onClick={() => onSelect(chip.id)}
-            className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all duration-200 border ${
+            className={`min-h-[40px] px-4 py-2 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 border cursor-pointer active:scale-95 touch-manipulation flex items-center justify-center ${
               isActive
-                ? "bg-[#0B57D0] text-white border-[#0B57D0] shadow-sm shadow-[#0B57D0]/30 scale-105"
-                : "bg-white text-[#5A6478] border-[#E4E8F8] hover:border-[#0B57D0]/40 hover:text-[#0E1B3D]"
+                ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/25 font-bold"
+                : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:text-slate-900 hover:bg-slate-50"
             }`}
           >
             {chip.label}
@@ -40,3 +66,6 @@ export default function FilterChips({ activeCategory, onSelect }: FilterChipsPro
     </div>
   );
 }
+
+// Backwards-compatible export
+export type FilterCategory = "all" | "free" | "memory" | "vedic" | "police" | "calendar";

@@ -395,7 +395,7 @@ export function saveStaffCoupon(coupon: Coupon): void {
     "coupon",
     coupon.id,
     coupon.code,
-    `Saved coupon: Scope=${coupon.appliesTo}, UsageLimit=${coupon.usageLimitPerUser}, Validity=${coupon.validityType}`
+    `Saved coupon: Scope=${coupon.appliesTo}, UsageLimit=${coupon.usageLimitPerUser}, Validity=${coupon.validityType}${coupon.school ? `, School=${coupon.school}` : ""}`
   );
 }
 

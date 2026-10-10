@@ -26,6 +26,7 @@ export default function CouponManagerPage() {
   // Form Fields
   const [formCode, setFormCode] = useState("");
   const [formDesc, setFormDesc] = useState("");
+  const [formSchool, setFormSchool] = useState("");
   const [formDiscountType, setFormDiscountType] = useState<"percentage" | "flat">("percentage");
   const [formValue, setFormValue] = useState(25);
   const [formAppliesAll, setFormAppliesAll] = useState(true);
@@ -60,6 +61,7 @@ export default function CouponManagerPage() {
     setEditingCoupon(null);
     setFormCode("");
     setFormDesc("");
+    setFormSchool("");
     setFormDiscountType("percentage");
     setFormValue(20);
     setFormAppliesAll(true);
@@ -80,6 +82,7 @@ export default function CouponManagerPage() {
     setEditingCoupon(cpn);
     setFormCode(cpn.code);
     setFormDesc(cpn.description || "");
+    setFormSchool(cpn.school || "");
     setFormDiscountType(cpn.discountType === "percentage" || cpn.discountType === "percent" ? "percentage" : "flat");
     setFormValue(
       cpn.discountType === "percentage" || cpn.discountType === "percent"
@@ -139,6 +142,7 @@ export default function CouponManagerPage() {
       id: editingCoupon ? editingCoupon.id : `cpn-${Date.now()}`,
       code: cleanedCode,
       description: formDesc.trim(),
+      school: formSchool.trim() || undefined,
       discountType: formDiscountType,
       discountValue: valueInPaiseOrPct,
       appliesTo: formAppliesAll ? "all" : "selected",
@@ -237,7 +241,8 @@ export default function CouponManagerPage() {
     const matchesSearch =
       query === "" ||
       c.code.toLowerCase().includes(query) ||
-      (c.description && c.description.toLowerCase().includes(query));
+      (c.description && c.description.toLowerCase().includes(query)) ||
+      (c.school && c.school.toLowerCase().includes(query));
 
     // Status Filter
     let matchesStatus = true;
@@ -433,10 +438,15 @@ export default function CouponManagerPage() {
                         <tr key={c.id} className="hover:bg-[#F9FAFF] transition-colors group">
                           {/* Mono Code & Description */}
                           <td className="py-4 pl-3">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-mono font-extrabold text-xs tracking-wider text-[#0B57D0] px-2.5 py-1 bg-[#EEF4FF] border border-[#D0E2FF] rounded-md shadow-xs">
                                 {c.code}
                               </span>
+                              {c.school && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                                  🏫 {c.school}
+                                </span>
+                              )}
                             </div>
                             {c.description && (
                               <p className="text-[#5A6478] text-[11px] mt-1 max-w-xs line-clamp-1">
@@ -632,6 +642,25 @@ export default function CouponManagerPage() {
                         placeholder="e.g. Special festival rebate for rural students"
                         className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                       />
+                    </div>
+
+                    {/* School Name (Optional) */}
+                    <div>
+                      <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                        शाळेचे नाव (optional — blank = सर्वांसाठी)
+                      </label>
+                      <input
+                        type="text"
+                        value={formSchool}
+                        onChange={(e) => setFormSchool(e.target.value)}
+                        placeholder="उदा. आदर्श विद्यालय / Abhinava Vidyalaya"
+                        className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                      />
+                      <p className="text-[11px] text-[#5A6478] mt-1">
+                        {formSchool.trim()
+                          ? `फक्त "${formSchool.trim()}" मधील विद्यार्थ्यांनाच हा कूपन कोड लागू होईल.`
+                          : "रिकामे ठेवल्यास सर्व शाळांमधील विद्यार्थ्यांसाठी लागू राहील."}
+                      </p>
                     </div>
 
                     {/* 2. Percent / Flat Segmented + Value */}
@@ -895,10 +924,15 @@ export default function CouponManagerPage() {
 
                       <div className="p-4 bg-gradient-to-r from-[#F9FAFF] to-white border border-[#D0E2FF] rounded-2xl shadow-xs space-y-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-mono font-black text-xs tracking-wider text-[#0B57D0] px-2.5 py-1 bg-[#EEF4FF] border border-[#D0E2FF] rounded-md shadow-xs">
                               {formCode.trim().toUpperCase() || "CODE_PREVIEW"}
                             </span>
+                            {formSchool.trim() && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                                🏫 {formSchool.trim()}
+                              </span>
+                            )}
                             <span className="text-xs font-black text-[#0E1B3D]">
                               {formDiscountType === "percentage" ? `${formValue}% OFF` : `₹${formValue} OFF`}
                             </span>

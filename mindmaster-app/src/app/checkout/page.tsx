@@ -35,6 +35,7 @@ import {
 } from "@/app/actions/checkout";
 import { triggerCourseUnlockConfetti } from "@/lib/celebration";
 import { generateFeeReceiptPdf } from "@/lib/pdfGenerator";
+import { getStaffStudents } from "@/lib/staffStore";
 import { toast } from "sonner";
 
 declare global {
@@ -61,18 +62,31 @@ function CheckoutContent() {
   const [studentName, setStudentName] = useState("Student");
   const [studentMobile, setStudentMobile] = useState("98XXXXXXXX");
   const [district, setDistrict] = useState("Pune");
+  const [studentSchool, setStudentSchool] = useState("");
 
   useEffect(() => {
     try {
+      let schoolVal = "";
       const raw = localStorage.getItem("mindmaster_user_profile");
       if (raw) {
         const p = JSON.parse(raw);
         if (p.full_name) setStudentName(p.full_name);
         if (p.phone) setStudentMobile(p.phone.replace(/\D/g, "").slice(-10));
         if (p.district) setDistrict(p.district);
+        schoolVal = p.school_name || p.school || "";
       }
       const verifiedPhone = localStorage.getItem("mindmaster_verified_phone");
       if (verifiedPhone) setStudentMobile(verifiedPhone.replace(/\D/g, "").slice(-10));
+
+      if (!schoolVal) {
+        const students = getStaffStudents();
+        const cleanPhone = (verifiedPhone || "").replace(/\D/g, "").slice(-10);
+        const matched = students.find(
+          (s) => s.phone && cleanPhone && s.phone.replace(/\D/g, "").includes(cleanPhone)
+        );
+        if (matched?.school) schoolVal = matched.school;
+      }
+      if (schoolVal) setStudentSchool(schoolVal);
     } catch {}
   }, []);
 
@@ -132,7 +146,26 @@ function CheckoutContent() {
     setCouponFeedback(null);
 
     try {
-      const result = await validateCoupon(codeToValidate, course.id);
+      let currentSchool = studentSchool;
+      if (!currentSchool) {
+        try {
+          const raw = localStorage.getItem("mindmaster_user_profile");
+          if (raw) {
+            const p = JSON.parse(raw);
+            currentSchool = p.school_name || p.school || "";
+          }
+          if (!currentSchool) {
+            const students = getStaffStudents();
+            const cleanPhone = studentMobile.replace(/\D/g, "").slice(-10);
+            const matched = students.find(
+              (s) => s.phone && cleanPhone && s.phone.replace(/\D/g, "").includes(cleanPhone)
+            );
+            if (matched?.school) currentSchool = matched.school;
+          }
+        } catch {}
+      }
+
+      const result = await validateCoupon(codeToValidate, course.id, undefined, currentSchool);
       if (result.success && result.coupon) {
         setAppliedCoupon(result.coupon);
         setCouponInput(result.coupon.code);
@@ -179,6 +212,7 @@ function CheckoutContent() {
         couponCode: appliedCoupon?.code,
         studentMobile,
         studentName,
+        studentSchool,
       });
 
       if (!orderResult.success || !orderResult.orderId) {
