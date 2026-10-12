@@ -3,8 +3,8 @@ import crypto from "crypto";
 import fs from "fs";
 import { validateCoupon, createRazorpayOrder, verifyRazorpayPayment } from "../src/app/actions/checkout.js";
 import { MOCK_COURSES, COURSE_ID_MAP } from "../src/lib/mockData.js";
-import { recordCouponRedemption } from "../src/lib/couponRedemptionStore.js";
-import { saveStaffCoupon } from "../src/lib/staffStore.js";
+import { recordCouponRedemption, clearAllRedemptions } from "../src/lib/couponRedemptionStore.js";
+import { saveStaffCoupon, clearAllStaffCoupons } from "../src/lib/staffStore.js";
 
 console.log("================================================================================");
 console.log("💳 VERIFYING CHECKOUT, COUPON VALIDATION & RAZORPAY FLOW");
@@ -333,6 +333,9 @@ async function runTests() {
     assert(watchPageSrc.includes("hasLocalAccess"), "hasLocalAccess evaluation missing");
     assert(watchPageSrc.includes("setHasAccess(true)"), "setHasAccess(true) missing");
   });
+
+  clearAllStaffCoupons();
+  clearAllRedemptions();
 
   console.log("\n================================================================================");
   if (failed === 0) {

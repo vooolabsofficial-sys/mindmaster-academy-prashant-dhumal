@@ -4,10 +4,12 @@ import {
   getStaffCoupons,
   saveStaffCoupon,
   toggleStaffCouponStatus,
+  clearAllStaffCoupons,
 } from "../src/lib/staffStore.ts";
 import {
   getRedemptionsByCoupon,
   recordCouponRedemption,
+  clearAllRedemptions,
 } from "../src/lib/couponRedemptionStore.ts";
 
 async function run() {
@@ -122,6 +124,8 @@ async function run() {
   assert.strictEqual(latest.discountPaise, 19980, "Should store exact discount amount");
   console.log("✓ Rich redemption student audit log successfully verified");
 
+  clearAllStaffCoupons();
+  clearAllRedemptions();
   console.log("🎉 ALL PROFESSIONAL COUPON MANAGEMENT TESTS PASSED!");
 }
 

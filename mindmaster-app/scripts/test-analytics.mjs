@@ -164,6 +164,11 @@ async function runTests() {
   if (watchStats.length < 3) throw new Error("Expected at least 3 watch stat entries");
   console.log("✓ TEST 10 PASSED: Watch statistics accurately track views and avg watched %");
 
+  const { clearAllStaffCoupons } = await import("../src/lib/staffStore.ts");
+  const { clearAllRedemptions } = await import("../src/lib/couponRedemptionStore.ts");
+  clearAllStaffCoupons();
+  clearAllRedemptions();
+
   console.log("\n=======================================================");
   console.log("🎉 ALL 10 STAFF ANALYTICS HUB TESTS PASSED!");
   console.log("=======================================================\n");

@@ -1,6 +1,6 @@
 import assert from "assert";
 import { validateCoupon } from "../src/app/actions/checkout.ts";
-import { saveStaffCoupon } from "../src/lib/staffStore.ts";
+import { saveStaffCoupon, clearAllStaffCoupons } from "../src/lib/staffStore.ts";
 
 async function run() {
   console.log("=== Testing School Restricted Coupon Logic ===");
@@ -62,6 +62,7 @@ async function run() {
   assert.strictEqual(resStudentRecord.success, true, "Should resolve school from StudentRecord");
   console.log("✓ School resolved automatically from StudentRecord");
 
+  clearAllStaffCoupons();
   console.log("🎉 ALL SCHOOL COUPON TESTS PASSED!");
 }
 

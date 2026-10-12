@@ -250,7 +250,7 @@ export async function validateCoupon(
   }
 }
 
-  // In-Memory / Store Validation (supports WELCOME50, VEDIC300, POLICEBHARTI, FESTIVE25, SUMMER99, PRASHANT50)
+  // Admin-Created Store / In-Memory Coupon Validation
   const storeCoupons = getStaffCoupons ? getStaffCoupons() : INITIAL_COUPONS;
   const mockCoupon = storeCoupons.find((c) => c.code.toUpperCase() === cleanCode);
 

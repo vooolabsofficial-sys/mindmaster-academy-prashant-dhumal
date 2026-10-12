@@ -23,6 +23,7 @@ import {
   getStaffCoupons,
   saveStaffCoupon,
   deleteStaffCoupon,
+  clearAllStaffCoupons,
 } from "../src/lib/staffStore.js";
 import { GET as cronCleanupGet } from "../src/app/api/cron/cleanup-expired/route.js";
 
@@ -184,82 +185,9 @@ async function runTests() {
   // Coupon Manager & Checkout Validation
   console.log("\n--- Coupon Manager & Checkout Validation ---");
 
-  // Seed test coupon fixtures for verification run
-  saveStaffCoupon({
-    id: "cpn-test-welcome",
-    code: "WELCOME50",
-    description: "50% Welcome",
-    discountType: "percentage",
-    discountValue: 50,
-    appliesTo: "all",
-    applies_all: true,
-    selectedCourseIds: [],
-    usageLimitPerUser: "once",
-    validityType: "date_range",
-    validFrom: "2026-10-01",
-    validUntil: "2026-12-31",
-    starts_at: "2026-10-01T00:00:00Z",
-    ends_at: "2026-12-31T23:59:59Z",
-    maxTotalUses: 100,
-    totalUsed: 0,
-    status: "active",
-    is_active: true,
-  });
-  saveStaffCoupon({
-    id: "cpn-test-summer",
-    code: "SUMMER99",
-    description: "Expired coupon",
-    discountType: "flat",
-    discountValue: 10000,
-    appliesTo: "all",
-    applies_all: true,
-    validityType: "date_range",
-    validFrom: "2025-01-01",
-    validUntil: "2025-02-01",
-    starts_at: "2025-01-01T00:00:00Z",
-    ends_at: "2025-02-01T23:59:59Z",
-    status: "expired",
-    is_active: true,
-  });
-  saveStaffCoupon({
-    id: "cpn-test-disabled",
-    code: "DISABLED10",
-    description: "Disabled coupon",
-    discountType: "percentage",
-    discountValue: 10,
-    appliesTo: "all",
-    applies_all: true,
-    status: "disabled",
-    is_active: false,
-  });
-  saveStaffCoupon({
-    id: "cpn-test-festive",
-    code: "FESTIVE25",
-    description: "Future scheduled coupon",
-    discountType: "percentage",
-    discountValue: 25,
-    appliesTo: "all",
-    applies_all: true,
-    validityType: "date_range",
-    validFrom: "2029-01-01",
-    validUntil: "2029-02-01",
-    starts_at: "2029-01-01T00:00:00Z",
-    ends_at: "2029-02-01T23:59:59Z",
-    status: "scheduled",
-    is_active: true,
-  });
-  saveStaffCoupon({
-    id: "cpn-test-police",
-    code: "POLICEBHARTI",
-    description: "Course restricted",
-    discountType: "flat",
-    discountValue: 50000,
-    appliesTo: "selected",
-    applies_all: false,
-    selectedCourseIds: ["c-mm-04", "c4"],
-    usageLimitPerUser: "once",
-    status: "active",
-    is_active: true,
+  await test("System starts with 0 coupons (Clean Slate blank app)", () => {
+    clearAllStaffCoupons();
+    assert.strictEqual(getStaffCoupons().length, 0, "Expected 0 coupons in clean slate");
   });
 
   await test("Coupon manager page has complete CRUD fields, drawer, and delete modal", () => {
@@ -272,27 +200,91 @@ async function runTests() {
     assert(couponPageSrc.includes("deleteModalCoupon"), "Delete modal missing");
   });
 
-  await test("validateCoupon: Applies valid percent coupon to all courses", async () => {
-    const res = await validateCoupon("WELCOME50", "c-mm-01", "student-all-courses-01");
+  await test("validateCoupon: Applies valid percent coupon and cleans up", async () => {
+    saveStaffCoupon({
+      id: "temp-percent-test",
+      code: "TEMPPERCENT",
+      discountType: "percentage",
+      discountValue: 50,
+      appliesTo: "all",
+      applies_all: true,
+      selectedCourseIds: [],
+      usageLimitPerUser: "once",
+      status: "active",
+      is_active: true,
+    });
+    const res = await validateCoupon("TEMPPERCENT", "c-mm-01", "student-all-courses-01");
     assert(res.success, `Expected success, got: ${res.error}`);
     assert.strictEqual(res.coupon.discountType, "percent");
     assert.strictEqual(res.coupon.discountAmountPaise, 49950);
+    deleteStaffCoupon("temp-percent-test");
+    clearAllStaffCoupons();
   });
 
-  await test("validateCoupon: Rejects expired coupon (SUMMER99)", async () => {
-    const res = await validateCoupon("SUMMER99", "c-mm-01", "student-expired-test");
+  await test("validateCoupon: Rejects expired coupon and cleans up", async () => {
+    saveStaffCoupon({
+      id: "temp-expired-test",
+      code: "TEMPEXPIRED",
+      discountType: "flat",
+      discountValue: 10000,
+      appliesTo: "all",
+      applies_all: true,
+      validityType: "date_range",
+      validFrom: "2025-01-01",
+      validUntil: "2025-02-01",
+      starts_at: "2025-01-01T00:00:00Z",
+      ends_at: "2025-02-01T23:59:59Z",
+      status: "expired",
+      is_active: true,
+    });
+    const res = await validateCoupon("TEMPEXPIRED", "c-mm-01", "student-expired-test");
     assert.strictEqual(res.success, false);
-    assert(res.error.toLowerCase().includes("expired"), `Expected expired error, got: ${res.error}`);
+    assert(
+      res.error.toLowerCase().includes("expired") || res.error.includes("मुदत संपलेली"),
+      `Expected expired error, got: ${res.error}`
+    );
+    deleteStaffCoupon("temp-expired-test");
+    clearAllStaffCoupons();
   });
 
-  await test("validateCoupon: Rejects inactive / disabled coupon (DISABLED10)", async () => {
-    const res = await validateCoupon("DISABLED10", "c-mm-01", "student-disabled-test");
+  await test("validateCoupon: Rejects inactive / disabled coupon and cleans up", async () => {
+    saveStaffCoupon({
+      id: "temp-disabled-test",
+      code: "TEMPDISABLED",
+      discountType: "percentage",
+      discountValue: 10,
+      appliesTo: "all",
+      applies_all: true,
+      status: "disabled",
+      is_active: false,
+    });
+    const res = await validateCoupon("TEMPDISABLED", "c-mm-01", "student-disabled-test");
     assert.strictEqual(res.success, false);
-    assert(res.error.toLowerCase().includes("inactive"), `Expected inactive error, got: ${res.error}`);
+    assert(
+      res.error.toLowerCase().includes("inactive") || res.error.includes("तात्पुरता बंद"),
+      `Expected inactive error, got: ${res.error}`
+    );
+    deleteStaffCoupon("temp-disabled-test");
+    clearAllStaffCoupons();
   });
 
-  await test("validateCoupon: Rejects scheduled / future coupon (FESTIVE25)", async () => {
-    const res = await validateCoupon("FESTIVE25", "c-mm-01", "student-scheduled-test");
+  await test("validateCoupon: Rejects scheduled / future coupon and cleans up", async () => {
+    saveStaffCoupon({
+      id: "temp-future-test",
+      code: "TEMPFUTURE",
+      discountType: "percentage",
+      discountValue: 25,
+      appliesTo: "all",
+      applies_all: true,
+      validityType: "date_range",
+      validFrom: "2029-01-01",
+      validUntil: "2029-02-01",
+      starts_at: "2029-01-01T00:00:00Z",
+      ends_at: "2029-02-01T23:59:59Z",
+      status: "scheduled",
+      is_active: true,
+    });
+    const res = await validateCoupon("TEMPFUTURE", "c-mm-01", "student-scheduled-test");
     assert.strictEqual(res.success, false);
     assert(
       res.error.toLowerCase().includes("scheduled") ||
@@ -300,30 +292,66 @@ async function runTests() {
         res.error.includes("अद्याप सुरू झालेला नाही"),
       `Expected scheduled error, got: ${res.error}`
     );
+    deleteStaffCoupon("temp-future-test");
+    clearAllStaffCoupons();
   });
 
   await test("validateCoupon: Course-restricted coupon rejected on non-eligible course", async () => {
-    const res = await validateCoupon("POLICEBHARTI", "c-mm-01", "student-restricted-test");
+    saveStaffCoupon({
+      id: "temp-restricted-test",
+      code: "TEMPRESTRICT",
+      discountType: "flat",
+      discountValue: 50000,
+      appliesTo: "selected",
+      applies_all: false,
+      selectedCourseIds: ["c-mm-04", "c4"],
+      status: "active",
+      is_active: true,
+    });
+    const res = await validateCoupon("TEMPRESTRICT", "c-mm-01", "student-restricted-test");
     assert.strictEqual(res.success, false);
-    assert(res.error.toLowerCase().includes("not applicable"), `Expected not applicable error, got: ${res.error}`);
+    assert(
+      res.error.toLowerCase().includes("not applicable") || res.error.includes("लागू नाही"),
+      `Expected not applicable error, got: ${res.error}`
+    );
   });
 
-  await test("validateCoupon: Course-restricted coupon accepted on eligible course", async () => {
-    const res = await validateCoupon("POLICEBHARTI", "c-mm-04", "student-restricted-eligible");
+  await test("validateCoupon: Course-restricted coupon accepted on eligible course and cleans up", async () => {
+    const res = await validateCoupon("TEMPRESTRICT", "c-mm-04", "student-restricted-eligible");
     assert(res.success, `Expected success on eligible course, got: ${res.error}`);
     assert.strictEqual(res.coupon.discountType, "flat");
+    deleteStaffCoupon("temp-restricted-test");
+    clearAllStaffCoupons();
   });
 
-  await test("validateCoupon: Enforces single-use per student limit", async () => {
+  await test("validateCoupon: Enforces single-use per student limit and restores clean slate (0 coupons)", async () => {
+    saveStaffCoupon({
+      id: "temp-single-use",
+      code: "TEMPSINGLE",
+      discountType: "percentage",
+      discountValue: 50,
+      appliesTo: "all",
+      applies_all: true,
+      selectedCourseIds: [],
+      usageLimitPerUser: "once",
+      status: "active",
+      is_active: true,
+    });
     const studentId = `std-limit-test-${Date.now()}`;
-    const firstUse = await validateCoupon("WELCOME50", "c-mm-01", studentId);
+    const firstUse = await validateCoupon("TEMPSINGLE", "c-mm-01", studentId);
     assert(firstUse.success, "First validation should succeed");
 
-    recordCouponRedemption(studentId, "cpn-1", "WELCOME50");
+    recordCouponRedemption(studentId, "temp-single-use", "TEMPSINGLE");
 
-    const secondUse = await validateCoupon("WELCOME50", "c-mm-01", studentId);
+    const secondUse = await validateCoupon("TEMPSINGLE", "c-mm-01", studentId);
     assert.strictEqual(secondUse.success, false);
-    assert(secondUse.error.toLowerCase().includes("already used"), `Expected already used error, got: ${secondUse.error}`);
+    assert(
+      secondUse.error.toLowerCase().includes("already used") || secondUse.error.includes("वापर केला आहे"),
+      `Expected already used error, got: ${secondUse.error}`
+    );
+    deleteStaffCoupon("temp-single-use");
+    clearAllStaffCoupons();
+    assert.strictEqual(getStaffCoupons().length, 0, "System cleanly restored to 0 coupons");
   });
 
   console.log("\n================================================================================");

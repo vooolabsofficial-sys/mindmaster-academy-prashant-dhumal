@@ -371,17 +371,51 @@ export function deleteStaffCourse(courseId: string): void {
 // ----------------------------------------------------
 // ADVANCED COUPONS
 // ----------------------------------------------------
+const LEGACY_MOCK_CODES = new Set([
+  "WELCOME50",
+  "POLICEBHARTI",
+  "VEDIC300",
+  "PRASHANT50",
+  "ABHINAVA100",
+  "SUMMER99",
+  "FESTIVE25",
+  "DISABLED10",
+]);
+
 export function getStaffCoupons(): Coupon[] {
   if (typeof window !== "undefined") {
     try {
-      if (localStorage.getItem("mma_mock_coupons_purged_v3") !== "true") {
-        localStorage.removeItem(KEYS.COUPONS);
-        localStorage.removeItem("mma_coupon_redemptions");
-        localStorage.setItem("mma_mock_coupons_purged_v3", "true");
+      const raw = localStorage.getItem(KEYS.COUPONS);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Coupon[];
+        const filtered = (parsed || []).filter(
+          (c) =>
+            !LEGACY_MOCK_CODES.has(c.code?.toUpperCase()) &&
+            !c.id?.startsWith("cpn-test") &&
+            !c.id?.startsWith("cpn-1") &&
+            !c.id?.startsWith("cpn-2") &&
+            !c.id?.startsWith("cpn-3") &&
+            !c.id?.startsWith("cpn-4") &&
+            !c.id?.startsWith("cpn-5")
+        );
+        if (filtered.length !== parsed.length) {
+          localStorage.setItem(KEYS.COUPONS, JSON.stringify(filtered));
+        }
+        return filtered;
       }
     } catch {}
   }
-  return safeGetItem<Coupon[]>(KEYS.COUPONS, INITIAL_COUPONS);
+  const rawList = safeGetItem<Coupon[]>(KEYS.COUPONS, INITIAL_COUPONS);
+  return (rawList || []).filter(
+    (c) =>
+      !LEGACY_MOCK_CODES.has(c.code?.toUpperCase()) &&
+      !c.id?.startsWith("cpn-test") &&
+      !c.id?.startsWith("cpn-1") &&
+      !c.id?.startsWith("cpn-2") &&
+      !c.id?.startsWith("cpn-3") &&
+      !c.id?.startsWith("cpn-4") &&
+      !c.id?.startsWith("cpn-5")
+  );
 }
 
 export function clearAllStaffCoupons(): void {
