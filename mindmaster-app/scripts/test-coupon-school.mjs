@@ -1,8 +1,38 @@
 import assert from "assert";
 import { validateCoupon } from "../src/app/actions/checkout.ts";
+import { saveStaffCoupon } from "../src/lib/staffStore.ts";
 
 async function run() {
   console.log("=== Testing School Restricted Coupon Logic ===");
+
+  saveStaffCoupon({
+    id: "cpn-5",
+    code: "ABHINAVA100",
+    description: "Abhinava Vidyalaya special",
+    school: "Abhinava Vidyalaya, Pune",
+    discountType: "flat",
+    discountValue: 10000,
+    appliesTo: "all",
+    applies_all: true,
+    selectedCourseIds: [],
+    usageLimitPerUser: "once",
+    status: "active",
+    is_active: true,
+  });
+
+  saveStaffCoupon({
+    id: "cpn-1",
+    code: "WELCOME50",
+    description: "Welcome 50%",
+    discountType: "percentage",
+    discountValue: 50,
+    appliesTo: "all",
+    applies_all: true,
+    selectedCourseIds: [],
+    usageLimitPerUser: "once",
+    status: "active",
+    is_active: true,
+  });
 
   // 1. Matching school (case-insensitive) -> Success
   const resMatch = await validateCoupon("ABHINAVA100", "c-mm-01", "any-id", "abhinava vidyalaya, pune");

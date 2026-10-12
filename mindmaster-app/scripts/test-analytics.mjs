@@ -14,6 +14,36 @@
 console.log("=== RUNNING STAFF ANALYTICS HUB TEST SUITE ===");
 
 async function runTests() {
+  const { saveStaffCoupon } = await import("../src/lib/staffStore.ts");
+  saveStaffCoupon({
+    id: "cpn-1",
+    code: "WELCOME50",
+    description: "Welcome 50%",
+    discountType: "percentage",
+    discountValue: 50,
+    appliesTo: "all",
+    applies_all: true,
+    selectedCourseIds: [],
+    usageLimitPerUser: "once",
+    totalUsed: 10,
+    status: "active",
+    is_active: true,
+  });
+  saveStaffCoupon({
+    id: "cpn-2",
+    code: "POLICEBHARTI",
+    description: "Police Bharti Special",
+    discountType: "flat",
+    discountValue: 50000,
+    appliesTo: "all",
+    applies_all: true,
+    selectedCourseIds: [],
+    usageLimitPerUser: "once",
+    totalUsed: 8,
+    status: "active",
+    is_active: true,
+  });
+
   const { computeAnalyticsData } = await import("../src/lib/analyticsEngine.ts");
 
   // TEST 1: 30 Days Date Range (Default)

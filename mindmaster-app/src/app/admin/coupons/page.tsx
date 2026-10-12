@@ -606,12 +606,30 @@ export default function CouponManagerPage() {
 
           {/* Coupons Master Table */}
           <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-xs overflow-hidden">
-            {filteredCoupons.length === 0 ? (
+            {coupons.length === 0 ? (
+              <div className="py-16 text-center max-w-md mx-auto">
+                <div className="w-16 h-16 rounded-full bg-[#EEF4FF] border border-[#D0E2FF] flex items-center justify-center mx-auto text-3xl shadow-xs">
+                  🎟️
+                </div>
+                <h3 className="text-base font-black text-[#0E1B3D] mt-3">
+                  कोणताही कूपन कोड उपलब्ध नाही (Clean Slate)
+                </h3>
+                <p className="text-xs text-[#5A6478] mt-1.5 leading-relaxed">
+                  सर्व जुने व मॉक कूपन्स पूर्णपणे काढून टाकले आहेत. ऍडमिन किंवा सब-ऍडमिनने स्वतः तयार केलेले प्रत्यक्ष कूपन्स येथे दिसतील.
+                </p>
+                <button
+                  onClick={handleOpenAdd}
+                  className="mt-5 px-5 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-bold text-xs rounded-full shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <span>➕</span> पहिले कूपन तयार करा
+                </button>
+              </div>
+            ) : filteredCoupons.length === 0 ? (
               <div className="py-14 text-center">
-                <span className="text-4xl">🎟️</span>
-                <h3 className="text-base font-bold text-[#0E1B3D] mt-2">कोणताही कूपन कोड सापडला नाही</h3>
+                <span className="text-4xl">🔍</span>
+                <h3 className="text-base font-bold text-[#0E1B3D] mt-2">सर्च परिणामांत कूपन सापडले नाही</h3>
                 <p className="text-xs text-[#5A6478] mt-1">
-                  सर्च क्वेरी बदला किंवा नवीन कूपन तयार करण्यासाठी वरील बटणावर क्लिक करा.
+                  सर्च क्वेरी किंवा फिल्टर्स बदला अथवा रीसेट करा.
                 </p>
                 <button
                   onClick={() => {

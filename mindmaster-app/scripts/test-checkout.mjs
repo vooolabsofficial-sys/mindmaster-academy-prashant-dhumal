@@ -4,6 +4,7 @@ import fs from "fs";
 import { validateCoupon, createRazorpayOrder, verifyRazorpayPayment } from "../src/app/actions/checkout.js";
 import { MOCK_COURSES, COURSE_ID_MAP } from "../src/lib/mockData.js";
 import { recordCouponRedemption } from "../src/lib/couponRedemptionStore.js";
+import { saveStaffCoupon } from "../src/lib/staffStore.js";
 
 console.log("================================================================================");
 console.log("💳 VERIFYING CHECKOUT, COUPON VALIDATION & RAZORPAY FLOW");
@@ -12,6 +13,104 @@ console.log("===================================================================
 async function runTests() {
   let passed = 0;
   let failed = 0;
+
+  // Seed test coupons for checkout validation
+  saveStaffCoupon({
+    id: "cpn-test-welcome",
+    code: "WELCOME50",
+    description: "50% Welcome",
+    discountType: "percentage",
+    discountValue: 50,
+    appliesTo: "all",
+    applies_all: true,
+    selectedCourseIds: [],
+    usageLimitPerUser: "once",
+    validityType: "date_range",
+    validFrom: "2026-10-01",
+    validUntil: "2026-12-31",
+    starts_at: "2026-10-01T00:00:00Z",
+    ends_at: "2026-12-31T23:59:59Z",
+    maxTotalUses: 100,
+    totalUsed: 0,
+    status: "active",
+    is_active: true,
+  });
+  saveStaffCoupon({
+    id: "cpn-test-vedic",
+    code: "VEDIC300",
+    description: "Flat ₹300",
+    discountType: "flat",
+    discountValue: 30000,
+    appliesTo: "all",
+    applies_all: true,
+    selectedCourseIds: [],
+    usageLimitPerUser: "once",
+    validityType: "date_range",
+    validFrom: "2026-10-01",
+    validUntil: "2026-12-31",
+    starts_at: "2026-10-01T00:00:00Z",
+    ends_at: "2026-12-31T23:59:59Z",
+    maxTotalUses: 100,
+    totalUsed: 0,
+    status: "active",
+    is_active: true,
+  });
+  saveStaffCoupon({
+    id: "cpn-test-disabled",
+    code: "DISABLED10",
+    description: "Disabled coupon",
+    discountType: "percentage",
+    discountValue: 10,
+    appliesTo: "all",
+    applies_all: true,
+    status: "disabled",
+    is_active: false,
+  });
+  saveStaffCoupon({
+    id: "cpn-test-festive",
+    code: "FESTIVE25",
+    description: "Future coupon",
+    discountType: "percentage",
+    discountValue: 25,
+    appliesTo: "all",
+    applies_all: true,
+    validityType: "date_range",
+    validFrom: "2029-01-01",
+    validUntil: "2029-02-01",
+    starts_at: "2029-01-01T00:00:00Z",
+    ends_at: "2029-02-01T23:59:59Z",
+    status: "scheduled",
+    is_active: true,
+  });
+  saveStaffCoupon({
+    id: "cpn-test-summer",
+    code: "SUMMER99",
+    description: "Expired coupon",
+    discountType: "flat",
+    discountValue: 10000,
+    appliesTo: "all",
+    applies_all: true,
+    validityType: "date_range",
+    validFrom: "2025-01-01",
+    validUntil: "2025-02-01",
+    starts_at: "2025-01-01T00:00:00Z",
+    ends_at: "2025-02-01T23:59:59Z",
+    status: "expired",
+    is_active: true,
+  });
+  saveStaffCoupon({
+    id: "cpn-test-police",
+    code: "POLICEBHARTI",
+    description: "Course restricted",
+    discountType: "flat",
+    discountValue: 50000,
+    appliesTo: "selected",
+    applies_all: false,
+    selectedCourseIds: ["c-mm-04", "c4"],
+    usageLimitPerUser: "once",
+    status: "active",
+    is_active: true,
+  });
 
   async function test(desc, fn) {
     try {
@@ -46,25 +145,39 @@ async function runTests() {
   await test("Disabled coupon is rejected (DISABLED10)", async () => {
     const res = await validateCoupon("DISABLED10", "c-mm-01", "test-user-fresh-03");
     assert(!res.success, "Disabled coupon should not succeed");
-    assert(res.error?.includes("inactive"), `Expected inactive error, got: ${res.error}`);
+    assert(
+      res.error?.toLowerCase().includes("inactive") || res.error?.includes("तात्पुरता बंद"),
+      `Expected inactive error, got: ${res.error}`
+    );
   });
 
   await test("Scheduled coupon is rejected (FESTIVE25)", async () => {
     const res = await validateCoupon("FESTIVE25", "c-mm-01", "test-user-fresh-04");
     assert(!res.success, "Scheduled coupon should not succeed");
-    assert(res.error?.includes("scheduled") || res.error?.includes("not started"), `Expected scheduled error, got: ${res.error}`);
+    assert(
+      res.error?.toLowerCase().includes("scheduled") ||
+        res.error?.toLowerCase().includes("not started") ||
+        res.error?.includes("अद्याप सुरू झालेला नाही"),
+      `Expected scheduled error, got: ${res.error}`
+    );
   });
 
   await test("Expired coupon is rejected (SUMMER99)", async () => {
     const res = await validateCoupon("SUMMER99", "c-mm-01", "test-user-fresh-05");
     assert(!res.success, "Expired coupon should not succeed");
-    assert(res.error?.includes("expired"), `Expected expired error, got: ${res.error}`);
+    assert(
+      res.error?.toLowerCase().includes("expired") || res.error?.includes("मुदत संपलेली"),
+      `Expected expired error, got: ${res.error}`
+    );
   });
 
   await test("Course-restricted coupon on wrong course is rejected (POLICEBHARTI on c-mm-01)", async () => {
     const res = await validateCoupon("POLICEBHARTI", "c-mm-01", "test-user-fresh-06");
     assert(!res.success, "Restricted coupon should not apply to non-eligible course");
-    assert(res.error?.includes("not applicable"), `Expected not applicable error, got: ${res.error}`);
+    assert(
+      res.error?.toLowerCase().includes("not applicable") || res.error?.includes("लागू नाही"),
+      `Expected not applicable error, got: ${res.error}`
+    );
   });
 
   await test("Single-use per student rule prevents re-use", async () => {
@@ -76,7 +189,10 @@ async function runTests() {
 
     const second = await validateCoupon("WELCOME50", "c-mm-01", studentId);
     assert(!second.success, "Second use of once-per-student coupon should fail");
-    assert(second.error?.includes("already used"), `Expected already used error, got: ${second.error}`);
+    assert(
+      second.error?.toLowerCase().includes("already used") || second.error?.includes("वापर केला आहे"),
+      `Expected already used error, got: ${second.error}`
+    );
   });
 
   // 2. RAZORPAY ORDER CREATION
@@ -185,7 +301,7 @@ async function runTests() {
   test("Webhook handler verifies HMAC SHA-256 signature", () => {
     assert(webhookSrc.includes("x-razorpay-signature"), "x-razorpay-signature header check missing");
     assert(webhookSrc.includes("createHmac(\"sha256\""), "createHmac sha256 missing");
-    assert(webhookSrc.includes("expectedSignature !== signature"), "Signature equality check missing");
+    assert(webhookSrc.includes("timingSafeEqual") || webhookSrc.includes("expectedSignature !== signature"), "Signature equality check missing");
   });
 
   test("Webhook handles payment.captured and order.paid events", () => {

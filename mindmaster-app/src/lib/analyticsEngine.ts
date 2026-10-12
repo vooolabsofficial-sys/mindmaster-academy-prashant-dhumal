@@ -2,6 +2,7 @@
 // Executes server-side aggregations for date range (7/30/custom) and district filtering
 
 import { INITIAL_STUDENTS, INITIAL_COUPONS, INITIAL_WATCH_STATS } from "./mockStaffData";
+import { getStaffCoupons } from "./staffStore";
 import { MOCK_COURSES } from "./mockData";
 import { getRedemptions } from "./couponRedemptionStore";
 
@@ -277,7 +278,7 @@ export function computeAnalyticsData(filter: AnalyticsFilter): AnalyticsHubData 
 
   // 5. Coupon Performance (redemptions joined to purchases for attributed revenue)
   const redemptionsList = getRedemptions();
-  const coupons = INITIAL_COUPONS;
+  const coupons = typeof getStaffCoupons === "function" ? getStaffCoupons() : INITIAL_COUPONS;
 
   const couponPerformance: CouponPerformanceMetric[] = coupons.map((cpn) => {
     const isPercent = cpn.discountType === "percentage" || (cpn.discountType as any) === "percent";

@@ -13,6 +13,21 @@ import {
 async function run() {
   console.log("=== Testing Professional Coupon Management & Tracking ===");
 
+  saveStaffCoupon({
+    id: "cpn-2",
+    code: "POLICEBHARTI",
+    description: "Police Bharti Special",
+    discountType: "flat",
+    discountValue: 50000,
+    minOrderValuePaise: 99900,
+    appliesTo: "all",
+    applies_all: true,
+    selectedCourseIds: [],
+    usageLimitPerUser: "once",
+    status: "active",
+    is_active: true,
+  });
+
   // 1. Minimum Order Value Check
   const resMinOrderFail = await validateCoupon("POLICEBHARTI", "c-mm-04", "std-test-user"); // c-mm-04 price is ₹499, min order for POLICEBHARTI is ₹999
   assert.strictEqual(resMinOrderFail.success, false, "Should fail when course price is below minOrderValue");

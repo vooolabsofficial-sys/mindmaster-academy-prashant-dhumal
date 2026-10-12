@@ -137,11 +137,11 @@ export default function AdminTopbar() {
                   <span className="text-[10px] text-[#8A94A6]">10 mins ago</span>
                 </div>
                 <div className="p-2.5 rounded-xl bg-[#F5F7FF] border border-[#E4E8F8]">
-                  <p className="font-semibold text-[#0E1B3D]">Coupon Redeemed</p>
+                  <p className="font-semibold text-[#0E1B3D]">कूपन व्यवस्थापन सज्ज</p>
                   <p className="text-[#5A6478] text-[11px] mt-0.5">
-                    Code WELCOME50 applied by student Rahul Shinde.
+                    नवीन कूपन कोड आणि विद्यार्थी सवलती तयार करण्यासाठी सिस्टीम सज्ज आहे.
                   </p>
-                  <span className="text-[10px] text-[#8A94A6]">25 mins ago</span>
+                  <span className="text-[10px] text-[#8A94A6]">सिस्टीम अद्यतन</span>
                 </div>
               </div>
             </div>

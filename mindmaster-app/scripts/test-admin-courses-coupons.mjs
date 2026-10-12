@@ -184,6 +184,84 @@ async function runTests() {
   // Coupon Manager & Checkout Validation
   console.log("\n--- Coupon Manager & Checkout Validation ---");
 
+  // Seed test coupon fixtures for verification run
+  saveStaffCoupon({
+    id: "cpn-test-welcome",
+    code: "WELCOME50",
+    description: "50% Welcome",
+    discountType: "percentage",
+    discountValue: 50,
+    appliesTo: "all",
+    applies_all: true,
+    selectedCourseIds: [],
+    usageLimitPerUser: "once",
+    validityType: "date_range",
+    validFrom: "2026-10-01",
+    validUntil: "2026-12-31",
+    starts_at: "2026-10-01T00:00:00Z",
+    ends_at: "2026-12-31T23:59:59Z",
+    maxTotalUses: 100,
+    totalUsed: 0,
+    status: "active",
+    is_active: true,
+  });
+  saveStaffCoupon({
+    id: "cpn-test-summer",
+    code: "SUMMER99",
+    description: "Expired coupon",
+    discountType: "flat",
+    discountValue: 10000,
+    appliesTo: "all",
+    applies_all: true,
+    validityType: "date_range",
+    validFrom: "2025-01-01",
+    validUntil: "2025-02-01",
+    starts_at: "2025-01-01T00:00:00Z",
+    ends_at: "2025-02-01T23:59:59Z",
+    status: "expired",
+    is_active: true,
+  });
+  saveStaffCoupon({
+    id: "cpn-test-disabled",
+    code: "DISABLED10",
+    description: "Disabled coupon",
+    discountType: "percentage",
+    discountValue: 10,
+    appliesTo: "all",
+    applies_all: true,
+    status: "disabled",
+    is_active: false,
+  });
+  saveStaffCoupon({
+    id: "cpn-test-festive",
+    code: "FESTIVE25",
+    description: "Future scheduled coupon",
+    discountType: "percentage",
+    discountValue: 25,
+    appliesTo: "all",
+    applies_all: true,
+    validityType: "date_range",
+    validFrom: "2029-01-01",
+    validUntil: "2029-02-01",
+    starts_at: "2029-01-01T00:00:00Z",
+    ends_at: "2029-02-01T23:59:59Z",
+    status: "scheduled",
+    is_active: true,
+  });
+  saveStaffCoupon({
+    id: "cpn-test-police",
+    code: "POLICEBHARTI",
+    description: "Course restricted",
+    discountType: "flat",
+    discountValue: 50000,
+    appliesTo: "selected",
+    applies_all: false,
+    selectedCourseIds: ["c-mm-04", "c4"],
+    usageLimitPerUser: "once",
+    status: "active",
+    is_active: true,
+  });
+
   await test("Coupon manager page has complete CRUD fields, drawer, and delete modal", () => {
     const couponPageSrc = fs.readFileSync("src/app/admin/coupons/page.tsx", "utf-8");
     assert(couponPageSrc.includes("formCode"), "Coupon code input missing");
@@ -217,7 +295,9 @@ async function runTests() {
     const res = await validateCoupon("FESTIVE25", "c-mm-01", "student-scheduled-test");
     assert.strictEqual(res.success, false);
     assert(
-      res.error.toLowerCase().includes("scheduled") || res.error.toLowerCase().includes("not started"),
+      res.error.toLowerCase().includes("scheduled") ||
+        res.error.toLowerCase().includes("not started") ||
+        res.error.includes("अद्याप सुरू झालेला नाही"),
       `Expected scheduled error, got: ${res.error}`
     );
   });

@@ -8,81 +8,11 @@ declare global {
   var _mma_server_coupon_redemptions: CouponRedemptionRecord[] | undefined;
 }
 
-const SEED_REDEMPTIONS: CouponRedemptionRecord[] = [
-  {
-    id: "red-01",
-    userId: "std-pune-02",
-    couponId: "cpn-5",
-    couponCode: "ABHINAVA100",
-    studentName: "तन्वी देशपांडे",
-    studentMobile: "+91 98221 00001",
-    courseId: "c-mm-01",
-    courseTitle: "Memory Technique Seminar",
-    originalPricePaise: 99900,
-    discountPaise: 10000,
-    paidPaise: 89900,
-    at: "2026-10-08T10:15:00Z",
-  },
-  {
-    id: "red-02",
-    userId: "std-active",
-    couponId: "cpn-2",
-    couponCode: "POLICEBHARTI",
-    studentName: "विशाल पाटील",
-    studentMobile: "+91 98221 00002",
-    courseId: "c-mm-03",
-    courseTitle: "Police Bharti 100% Prep",
-    originalPricePaise: 129900,
-    discountPaise: 50000,
-    paidPaise: 79900,
-    at: "2026-10-09T14:30:00Z",
-  },
-  {
-    id: "red-03",
-    userId: "std-pune-01",
-    couponId: "cpn-1",
-    couponCode: "WELCOME50",
-    studentName: "रोहन कुलकर्णी",
-    studentMobile: "+91 98221 11223",
-    courseId: "c-mm-01",
-    courseTitle: "Memory Technique Seminar",
-    originalPricePaise: 99900,
-    discountPaise: 49950,
-    paidPaise: 49950,
-    at: "2026-10-10T11:20:00Z",
-  },
-  {
-    id: "red-04",
-    userId: "std-satara-01",
-    couponId: "cpn-4",
-    couponCode: "PRASHANT50",
-    studentName: "गणेश कदम",
-    studentMobile: "+91 98811 55667",
-    courseId: "c-mm-04",
-    courseTitle: "Superfast 500-Yr Calendar",
-    originalPricePaise: 49900,
-    discountPaise: 20000,
-    paidPaise: 29900,
-    at: "2026-10-11T09:45:00Z",
-  },
-  {
-    id: "red-05",
-    userId: "std-sangli-01",
-    couponId: "cpn-3",
-    couponCode: "VEDIC300",
-    studentName: "कविता माने",
-    studentMobile: "+91 98901 22334",
-    courseId: "c-mm-05",
-    courseTitle: "Vedic Maths Speed System",
-    originalPricePaise: 79900,
-    discountPaise: 30000,
-    paidPaise: 49900,
-    at: "2026-10-11T16:00:00Z",
-  },
-];
+// Clean slate for production: no mock redemptions
+const SEED_REDEMPTIONS: CouponRedemptionRecord[] = [];
 
 if (!globalThis._mma_server_coupon_redemptions) {
-  globalThis._mma_server_coupon_redemptions = [...SEED_REDEMPTIONS];
+  globalThis._mma_server_coupon_redemptions = [];
 }
 
 export function hasUserRedeemedCoupon(userId: string, couponIdentifier: string): boolean {
@@ -145,11 +75,23 @@ export function recordCouponRedemption(
 export function getRedemptions(): CouponRedemptionRecord[] {
   if (typeof window !== "undefined") {
     try {
+      if (localStorage.getItem("mma_mock_coupons_purged_v3") !== "true") {
+        localStorage.removeItem("mma_coupon_redemptions");
+      }
       const raw = localStorage.getItem("mma_coupon_redemptions");
       if (raw) return JSON.parse(raw);
     } catch {}
   }
   return globalThis._mma_server_coupon_redemptions || SEED_REDEMPTIONS;
+}
+
+export function clearAllRedemptions(): void {
+  globalThis._mma_server_coupon_redemptions = [];
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.removeItem("mma_coupon_redemptions");
+    } catch {}
+  }
 }
 
 export function getRedemptionsByCoupon(couponIdOrCode: string): CouponRedemptionRecord[] {

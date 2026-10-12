@@ -372,7 +372,25 @@ export function deleteStaffCourse(courseId: string): void {
 // ADVANCED COUPONS
 // ----------------------------------------------------
 export function getStaffCoupons(): Coupon[] {
+  if (typeof window !== "undefined") {
+    try {
+      if (localStorage.getItem("mma_mock_coupons_purged_v3") !== "true") {
+        localStorage.removeItem(KEYS.COUPONS);
+        localStorage.removeItem("mma_coupon_redemptions");
+        localStorage.setItem("mma_mock_coupons_purged_v3", "true");
+      }
+    } catch {}
+  }
   return safeGetItem<Coupon[]>(KEYS.COUPONS, INITIAL_COUPONS);
+}
+
+export function clearAllStaffCoupons(): void {
+  safeSetItem(KEYS.COUPONS, []);
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.removeItem("mma_coupon_redemptions");
+    } catch {}
+  }
 }
 
 export function saveStaffCoupon(coupon: Coupon): void {
