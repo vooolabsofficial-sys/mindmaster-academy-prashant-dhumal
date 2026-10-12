@@ -230,6 +230,8 @@ function CheckoutContent() {
             courseId: course.id,
             couponCode: appliedCoupon?.code,
             amountPaise: orderResult.amountPaise || course.pricePaise,
+            studentName,
+            studentMobile,
           });
 
           if (verification.success) {
@@ -272,6 +274,8 @@ function CheckoutContent() {
               courseId: course.id,
               couponCode: appliedCoupon?.code,
               amountPaise: orderResult.amountPaise || course.pricePaise,
+              studentName,
+              studentMobile,
             });
 
             if (verifyResult.success) {

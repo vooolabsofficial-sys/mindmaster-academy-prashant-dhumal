@@ -181,6 +181,7 @@ export interface Coupon {
   school?: string; // school name; if set, only students whose profile school matches can use this coupon
   discountType: "percentage" | "flat" | "percent";
   discountValue: number; // percentage (e.g. 25) or paise (e.g. 50000 = ₹500)
+  minOrderValuePaise?: number; // minimum course price required in paise (e.g. 99900 = ₹999)
   appliesTo: "all" | "selected";
   applies_all?: boolean;
   selectedCourseIds: string[];
@@ -196,9 +197,24 @@ export interface Coupon {
   usage_limit?: number;
   totalUsed: number;
   used_count?: number;
-  status: "active" | "expired" | "scheduled" | "disabled";
+  status: "active" | "expired" | "scheduled" | "disabled" | "paused";
   is_active?: boolean;
   createdAt: string;
+}
+
+export interface CouponRedemptionRecord {
+  id: string;
+  userId: string;
+  couponId: string;
+  couponCode: string;
+  at: string;
+  studentName?: string;
+  studentMobile?: string;
+  courseId?: string;
+  courseTitle?: string;
+  originalPricePaise?: number;
+  discountPaise?: number;
+  paidPaise?: number;
 }
 
 export interface LessonWatchStat {

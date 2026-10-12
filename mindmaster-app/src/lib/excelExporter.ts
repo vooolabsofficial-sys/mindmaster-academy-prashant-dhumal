@@ -99,3 +99,109 @@ export function exportRevenueToExcel(records: RevenueExportRecord[], filename = 
   const today = new Date().toISOString().split("T")[0];
   XLSX.writeFile(workbook, `${filename}_${today}.xlsx`);
 }
+
+export interface CouponRedemptionExportRow {
+  couponCode: string;
+  studentName: string;
+  studentMobile: string;
+  courseTitle: string;
+  originalPrice: number;
+  discountReceived: number;
+  finalPaid: number;
+  redeemedAt: string;
+}
+
+/**
+ * Exports coupon redemptions to an official Microsoft Excel (.xlsx) file
+ */
+export function exportCouponRedemptionsToExcel(
+  records: CouponRedemptionExportRow[],
+  couponCode: string
+) {
+  const worksheet = XLSX.utils.json_to_sheet(
+    records.map((r, idx) => ({
+      "Sr.": idx + 1,
+      "Coupon Code": r.couponCode,
+      "Student Name": r.studentName,
+      "Mobile Number": r.studentMobile,
+      "Course Enrolled": r.courseTitle,
+      "Original Fee (₹)": r.originalPrice,
+      "Discount Given (₹)": r.discountReceived,
+      "Final Paid (₹)": r.finalPaid,
+      "Redeemed Date & Time": r.redeemedAt,
+    }))
+  );
+
+  worksheet["!cols"] = [
+    { wch: 6 },
+    { wch: 18 },
+    { wch: 24 },
+    { wch: 18 },
+    { wch: 32 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 16 },
+    { wch: 24 },
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, `Redemptions_${couponCode}`);
+
+  const today = new Date().toISOString().split("T")[0];
+  XLSX.writeFile(workbook, `MindMaster_Coupon_${couponCode}_Redemptions_${today}.xlsx`);
+}
+
+export interface CouponMasterExportRow {
+  code: string;
+  description: string;
+  school: string;
+  discount: string;
+  scope: string;
+  validity: string;
+  quotaLimit: number;
+  usedCount: number;
+  remainingQuota: number;
+  status: string;
+}
+
+export function exportCouponsMasterToExcel(
+  coupons: CouponMasterExportRow[],
+  filename = "MindMaster_Coupons_Master_Report"
+) {
+  const worksheet = XLSX.utils.json_to_sheet(
+    coupons.map((c, idx) => ({
+      "Sr.": idx + 1,
+      "Coupon Code": c.code,
+      "Campaign / Description": c.description,
+      "School Restriction": c.school || "Open for All",
+      "Discount Value": c.discount,
+      "Course Scope": c.scope,
+      "Validity Window": c.validity,
+      "Total Quota Limit": c.quotaLimit,
+      "Used Count": c.usedCount,
+      "Remaining Quota": c.remainingQuota,
+      "Current Status": c.status,
+    }))
+  );
+
+  worksheet["!cols"] = [
+    { wch: 6 },
+    { wch: 18 },
+    { wch: 32 },
+    { wch: 26 },
+    { wch: 16 },
+    { wch: 24 },
+    { wch: 28 },
+    { wch: 18 },
+    { wch: 14 },
+    { wch: 16 },
+    { wch: 14 },
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Coupons Summary");
+
+  const today = new Date().toISOString().split("T")[0];
+  XLSX.writeFile(workbook, `${filename}_${today}.xlsx`);
+}
+

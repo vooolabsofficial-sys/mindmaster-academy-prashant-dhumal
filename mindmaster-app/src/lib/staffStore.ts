@@ -399,6 +399,22 @@ export function saveStaffCoupon(coupon: Coupon): void {
   );
 }
 
+export function toggleStaffCouponStatus(couponId: string): Coupon | undefined {
+  const coupons = getStaffCoupons();
+  const target = coupons.find((c) => c.id === couponId);
+  if (!target) return undefined;
+
+  const newStatus = target.status === "active" ? "paused" : "active";
+  const updatedCoupon: Coupon = {
+    ...target,
+    status: newStatus,
+    is_active: newStatus === "active",
+  };
+
+  saveStaffCoupon(updatedCoupon);
+  return updatedCoupon;
+}
+
 export function deleteStaffCoupon(couponId: string): void {
   const current = getCurrentStaff();
   if (current.role !== "main_admin") {

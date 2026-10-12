@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MOCK_COURSES, COURSE_ID_MAP } from "@/lib/mockData";
 import { INITIAL_COUPONS, INITIAL_STUDENTS } from "@/lib/mockStaffData";
-import { getStaffCoupons, getStaffStudents } from "@/lib/staffStore";
+import { getStaffCoupons, getStaffStudents, saveStaffCoupon } from "@/lib/staffStore";
 import { hasUserRedeemedCoupon, recordCouponRedemption } from "@/lib/couponRedemptionStore";
 
 export interface CouponValidationResult {
@@ -256,35 +256,43 @@ export async function validateCoupon(
 
   if (mockCoupon) {
     // 1. Active Check
-    if (mockCoupon.status === "disabled" || mockCoupon.is_active === false) {
-      return { success: false, error: "This coupon code is currently inactive." };
+    if (mockCoupon.status === "disabled" || mockCoupon.status === "paused" || mockCoupon.is_active === false) {
+      return { success: false, error: "हा कूपन कोड सध्या तात्पुरता बंद आहे (Inactive / Paused)." };
     }
 
     // 2. Starts_at & Ends_at / Validity check
     if (mockCoupon.status === "scheduled") {
-      return { success: false, error: "This coupon is scheduled and has not started yet." };
+      return { success: false, error: "हा कूपन कोड अद्याप सुरू झालेला नाही." };
     }
     if (mockCoupon.status === "expired") {
-      return { success: false, error: "This coupon code has expired." };
+      return { success: false, error: "या कूपन कोडची मुदत संपलेली (Expired) आहे." };
     }
     if (mockCoupon.starts_at && new Date(mockCoupon.starts_at) > now) {
-      return { success: false, error: "This coupon is scheduled and has not started yet." };
+      return { success: false, error: "हा कूपन कोड अद्याप सुरू झालेला नाही." };
     }
     if (mockCoupon.ends_at && new Date(mockCoupon.ends_at) < now) {
-      return { success: false, error: "This coupon code has expired." };
+      return { success: false, error: "या कूपन कोडची मुदत संपलेली (Expired) आहे." };
     }
     if (mockCoupon.validFrom && new Date(mockCoupon.validFrom) > now) {
-      return { success: false, error: "This coupon is scheduled and has not started yet." };
+      return { success: false, error: "हा कूपन कोड अद्याप सुरू झालेला नाही." };
     }
     if (mockCoupon.validUntil && new Date(mockCoupon.validUntil) < now) {
-      return { success: false, error: "This coupon code has expired." };
+      return { success: false, error: "या कूपन कोडची मुदत संपलेली (Expired) आहे." };
     }
 
-    // 3. Total Limit Left Check
+    // 3. Minimum Order Value Check
+    if (mockCoupon.minOrderValuePaise && course.pricePaise < mockCoupon.minOrderValuePaise) {
+      return {
+        success: false,
+        error: `हा कूपन कोड किमान ₹${Math.round(mockCoupon.minOrderValuePaise / 100)} च्या खरेदीवरच लागू आहे.`,
+      };
+    }
+
+    // 4. Total Limit Left Check (e.g. 100 students)
     const maxUses = mockCoupon.maxTotalUses || mockCoupon.usage_limit || 500;
     const totalUsed = mockCoupon.totalUsed || mockCoupon.used_count || 0;
     if (totalUsed >= maxUses) {
-      return { success: false, error: "This coupon has reached its maximum redemption limit." };
+      return { success: false, error: "या कूपन कोडची वापर मर्यादा (Quota) समाप्त झाली आहे." };
     }
 
     // School restriction check
@@ -475,6 +483,8 @@ export async function verifyRazorpayPayment({
   couponCode,
   amountPaise,
   userId,
+  studentName,
+  studentMobile,
 }: {
   razorpay_order_id: string;
   razorpay_payment_id: string;
@@ -483,6 +493,8 @@ export async function verifyRazorpayPayment({
   couponCode?: string;
   amountPaise: number;
   userId?: string;
+  studentName?: string;
+  studentMobile?: string;
 }): Promise<PaymentVerificationResult> {
   const course = MOCK_COURSES.find((c) => c.id === courseId) || MOCK_COURSES[0];
   const accessMonths = course.accessMonths || 3;
@@ -517,6 +529,45 @@ export async function verifyRazorpayPayment({
 
   let finalUserId = userId || "22222222-2222-2222-2222-222222222201";
 
+  // Helper to record coupon redemption and increment counters
+  const handleCouponFulfillment = async (couponId: string | null) => {
+    if (!couponCode) return;
+    const cleanCode = couponCode.trim().toUpperCase();
+    const discountAmountPaise = Math.max(0, course.pricePaise - amountPaise);
+
+    // 1. Update staff store coupon counter
+    try {
+      const staffCoupons = getStaffCoupons();
+      const cpn = staffCoupons.find((c) => c.code.toUpperCase() === cleanCode);
+      if (cpn) {
+        const newUsed = (cpn.used_count || cpn.totalUsed || 0) + 1;
+        const isNowFull = newUsed >= (cpn.usage_limit || cpn.maxTotalUses || 500);
+        saveStaffCoupon({
+          ...cpn,
+          totalUsed: newUsed,
+          used_count: newUsed,
+          status: isNowFull ? "expired" : cpn.status,
+        });
+      }
+    } catch {}
+
+    // 2. Record rich redemption in redemption store
+    recordCouponRedemption(
+      finalUserId,
+      couponId || cleanCode,
+      cleanCode,
+      {
+        studentName: studentName || "Student",
+        studentMobile: studentMobile || "",
+        courseId: course.id,
+        courseTitle: course.title,
+        originalPricePaise: course.pricePaise,
+        discountPaise: discountAmountPaise,
+        paidPaise: amountPaise,
+      }
+    );
+  };
+
   if (isSupabaseConfigured) {
     try {
       const supabase = createAdminClient();
@@ -529,59 +580,54 @@ export async function verifyRazorpayPayment({
         } catch {}
       }
 
-    // 2. Fetch coupon ID if applied
-    let couponId: string | null = null;
-    if (couponCode) {
-      const { data: cp } = await supabase
-        .from("coupons")
-        .select("id, used_count")
-        .ilike("code", couponCode.trim())
-        .maybeSingle();
-
-      if (cp) {
-        couponId = cp.id;
-        // Increment coupon used_count in Supabase
-        await supabase
+      // 2. Fetch coupon ID if applied
+      let couponId: string | null = null;
+      if (couponCode) {
+        const { data: cp } = await supabase
           .from("coupons")
-          .update({ used_count: (cp.used_count || 0) + 1 })
-          .eq("id", cp.id);
+          .select("id, used_count")
+          .ilike("code", couponCode.trim())
+          .maybeSingle();
 
-        // Insert redemption record into coupon_redemptions table
-        await supabase
-          .from("coupon_redemptions")
-          .insert({
+        if (cp) {
+          couponId = cp.id;
+          await supabase
+            .from("coupons")
+            .update({ used_count: (cp.used_count || 0) + 1 })
+            .eq("id", cp.id);
+
+          await supabase
+            .from("coupon_redemptions")
+            .insert({
+              user_id: finalUserId,
+              coupon_id: cp.id,
+              at: new Date().toISOString(),
+            });
+        }
+
+        await handleCouponFulfillment(couponId);
+      }
+
+      // 3. Upsert into purchases table
+      const { data: purchase } = await supabase
+        .from("purchases")
+        .upsert(
+          {
             user_id: finalUserId,
-            coupon_id: cp.id,
-            at: new Date().toISOString(),
-          });
-      }
-
-      // Record in redemption store for local/preview consistency
-      if (finalUserId) {
-        recordCouponRedemption(finalUserId, couponId || couponCode.trim().toUpperCase(), couponCode.trim().toUpperCase());
-      }
-    }
-
-    // 3. Upsert into purchases table
-    const { data: purchase, error: purchaseError } = await supabase
-      .from("purchases")
-      .upsert(
-        {
-          user_id: finalUserId,
-          course_id: dbCourseUuid,
-          amount_paise: amountPaise,
-          coupon_id: couponId,
-          razorpay_order_id,
-          razorpay_payment_id,
-          razorpay_signature,
-          status: "success",
-          purchased_at: new Date().toISOString(),
-          expires_at: expiresAtIso,
-        },
-        { onConflict: "user_id,course_id" }
-      )
-      .select("id")
-      .single();
+            course_id: dbCourseUuid,
+            amount_paise: amountPaise,
+            coupon_id: couponId,
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            status: "success",
+            purchased_at: new Date().toISOString(),
+            expires_at: expiresAtIso,
+          },
+          { onConflict: "user_id,course_id" }
+        )
+        .select("id")
+        .single();
 
       return {
         success: true,
@@ -594,9 +640,9 @@ export async function verifyRazorpayPayment({
     }
   }
 
-  // Local store redemption fallback
-  if (couponCode && finalUserId) {
-    recordCouponRedemption(finalUserId, couponCode.trim().toUpperCase(), couponCode.trim().toUpperCase());
+  // Local store redemption fulfillment
+  if (couponCode) {
+    await handleCouponFulfillment(null);
   }
 
   return {
