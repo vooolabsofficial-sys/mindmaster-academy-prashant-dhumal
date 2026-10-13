@@ -14,10 +14,10 @@ async function runTests() {
   let passed = 0;
   let failed = 0;
 
-  // Seed test coupons for checkout validation
+  // Seed isolated test coupons for checkout validation
   saveStaffCoupon({
-    id: "cpn-test-welcome",
-    code: "WELCOME50",
+    id: "chk-test-welcome",
+    code: "CHKWELCOME50",
     description: "50% Welcome",
     discountType: "percentage",
     discountValue: 50,
@@ -36,8 +36,8 @@ async function runTests() {
     is_active: true,
   });
   saveStaffCoupon({
-    id: "cpn-test-vedic",
-    code: "VEDIC300",
+    id: "chk-test-vedic",
+    code: "CHKVEDIC300",
     description: "Flat ₹300",
     discountType: "flat",
     discountValue: 30000,
@@ -56,8 +56,8 @@ async function runTests() {
     is_active: true,
   });
   saveStaffCoupon({
-    id: "cpn-test-disabled",
-    code: "DISABLED10",
+    id: "chk-test-disabled",
+    code: "CHKDISABLED10",
     description: "Disabled coupon",
     discountType: "percentage",
     discountValue: 10,
@@ -67,8 +67,8 @@ async function runTests() {
     is_active: false,
   });
   saveStaffCoupon({
-    id: "cpn-test-festive",
-    code: "FESTIVE25",
+    id: "chk-test-festive",
+    code: "CHKFESTIVE25",
     description: "Future coupon",
     discountType: "percentage",
     discountValue: 25,
@@ -83,8 +83,8 @@ async function runTests() {
     is_active: true,
   });
   saveStaffCoupon({
-    id: "cpn-test-summer",
-    code: "SUMMER99",
+    id: "chk-test-summer",
+    code: "CHKSUMMER99",
     description: "Expired coupon",
     discountType: "flat",
     discountValue: 10000,
@@ -99,8 +99,8 @@ async function runTests() {
     is_active: true,
   });
   saveStaffCoupon({
-    id: "cpn-test-police",
-    code: "POLICEBHARTI",
+    id: "chk-test-police",
+    code: "CHKPOLICE",
     description: "Course restricted",
     discountType: "flat",
     discountValue: 50000,
@@ -126,24 +126,24 @@ async function runTests() {
   // 1. SERVER-SIDE validateCoupon
   console.log("--- 1. SERVER-SIDE validateCoupon ---");
 
-  await test("Valid percent coupon applies correctly (WELCOME50 on c-mm-01)", async () => {
-    const res = await validateCoupon("WELCOME50", "c-mm-01", "test-user-fresh-01");
+  await test("Valid percent coupon applies correctly (CHKWELCOME50 on c-mm-01)", async () => {
+    const res = await validateCoupon("CHKWELCOME50", "c-mm-01", "test-user-fresh-01");
     assert(res.success, `Expected success, got: ${res.error}`);
     assert(res.coupon, "Coupon details missing");
     assert(res.coupon.discountType === "percent", "Discount type should be percent");
     assert(res.coupon.discountAmountPaise === 49950, `Expected 49950 discount, got ${res.coupon.discountAmountPaise}`);
   });
 
-  await test("Valid flat coupon applies correctly (VEDIC300 on c-mm-02)", async () => {
-    const res = await validateCoupon("VEDIC300", "c-mm-02", "test-user-fresh-02");
+  await test("Valid flat coupon applies correctly (CHKVEDIC300 on c-mm-02)", async () => {
+    const res = await validateCoupon("CHKVEDIC300", "c-mm-02", "test-user-fresh-02");
     assert(res.success, `Expected success, got: ${res.error}`);
     assert(res.coupon, "Coupon details missing");
     assert(res.coupon.discountType === "flat", "Discount type should be flat");
     assert(res.coupon.discountAmountPaise === 30000, `Expected 30000 discount, got ${res.coupon.discountAmountPaise}`);
   });
 
-  await test("Disabled coupon is rejected (DISABLED10)", async () => {
-    const res = await validateCoupon("DISABLED10", "c-mm-01", "test-user-fresh-03");
+  await test("Disabled coupon is rejected (CHKDISABLED10)", async () => {
+    const res = await validateCoupon("CHKDISABLED10", "c-mm-01", "test-user-fresh-03");
     assert(!res.success, "Disabled coupon should not succeed");
     assert(
       res.error?.toLowerCase().includes("inactive") || res.error?.includes("तात्पुरता बंद"),
@@ -151,8 +151,8 @@ async function runTests() {
     );
   });
 
-  await test("Scheduled coupon is rejected (FESTIVE25)", async () => {
-    const res = await validateCoupon("FESTIVE25", "c-mm-01", "test-user-fresh-04");
+  await test("Scheduled coupon is rejected (CHKFESTIVE25)", async () => {
+    const res = await validateCoupon("CHKFESTIVE25", "c-mm-01", "test-user-fresh-04");
     assert(!res.success, "Scheduled coupon should not succeed");
     assert(
       res.error?.toLowerCase().includes("scheduled") ||
@@ -162,8 +162,8 @@ async function runTests() {
     );
   });
 
-  await test("Expired coupon is rejected (SUMMER99)", async () => {
-    const res = await validateCoupon("SUMMER99", "c-mm-01", "test-user-fresh-05");
+  await test("Expired coupon is rejected (CHKSUMMER99)", async () => {
+    const res = await validateCoupon("CHKSUMMER99", "c-mm-01", "test-user-fresh-05");
     assert(!res.success, "Expired coupon should not succeed");
     assert(
       res.error?.toLowerCase().includes("expired") || res.error?.includes("मुदत संपलेली"),
@@ -171,8 +171,8 @@ async function runTests() {
     );
   });
 
-  await test("Course-restricted coupon on wrong course is rejected (POLICEBHARTI on c-mm-01)", async () => {
-    const res = await validateCoupon("POLICEBHARTI", "c-mm-01", "test-user-fresh-06");
+  await test("Course-restricted coupon on wrong course is rejected (CHKPOLICE on c-mm-01)", async () => {
+    const res = await validateCoupon("CHKPOLICE", "c-mm-01", "test-user-fresh-06");
     assert(!res.success, "Restricted coupon should not apply to non-eligible course");
     assert(
       res.error?.toLowerCase().includes("not applicable") || res.error?.includes("लागू नाही"),
@@ -182,12 +182,12 @@ async function runTests() {
 
   await test("Single-use per student rule prevents re-use", async () => {
     const studentId = `student-single-use-${Date.now()}`;
-    const first = await validateCoupon("WELCOME50", "c-mm-01", studentId);
+    const first = await validateCoupon("CHKWELCOME50", "c-mm-01", studentId);
     assert(first.success, "First use should succeed");
 
-    recordCouponRedemption(studentId, "cpn-1", "WELCOME50");
+    recordCouponRedemption(studentId, "chk-test-welcome", "CHKWELCOME50");
 
-    const second = await validateCoupon("WELCOME50", "c-mm-01", studentId);
+    const second = await validateCoupon("CHKWELCOME50", "c-mm-01", studentId);
     assert(!second.success, "Second use of once-per-student coupon should fail");
     assert(
       second.error?.toLowerCase().includes("already used") || second.error?.includes("वापर केला आहे"),
@@ -214,7 +214,7 @@ async function runTests() {
   await test("createRazorpayOrder applies coupon discount to order amount", async () => {
     const res = await createRazorpayOrder({
       courseId: "c-mm-01",
-      couponCode: "WELCOME50",
+      couponCode: "CHKWELCOME50",
       studentMobile: "9876543210",
       studentName: "Rahul Shinde",
       userId: "test-user-order-02",
