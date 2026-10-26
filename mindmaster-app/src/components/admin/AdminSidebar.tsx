@@ -52,7 +52,7 @@ export default function AdminSidebar() {
     { label: "Student Finder", href: "/admin/students", icon: "🎓", permission: "students.view" },
     { label: "Messages", href: "/admin/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
     { label: "Analytics Hub", href: "/admin/reports", icon: "📈", permission: "reports.view" },
-    { label: "Books & Notes", href: "/admin/notes", icon: "📖", permission: "notes.books.manage" },
+    { label: "Digital Books Manager", href: "/admin/notes", icon: "📖", permission: "notes.books.manage" },
     { label: "My Activity", href: "/admin/my-activity", icon: "⏱️" },
     { label: "Settings", href: "/admin/settings", icon: "⚙️", badge: "Config", adminOnly: true },
     { label: "Audit Trail", href: "/admin/audit", icon: "📜", adminOnly: true },
@@ -63,6 +63,7 @@ export default function AdminSidebar() {
     { label: "Dashboard", href: "/sub", icon: "📊" },
     { label: "Messages", href: "/sub/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
     { label: "Student Finder", href: "/sub/students", icon: "🎓", permission: "students.view" },
+    { label: "Offline Grants", href: "/sub/grants", icon: "🎁", permission: "freegrant.manage" },
     { label: "My Activity", href: "/sub/activity", icon: "⏱️" },
   ];
 

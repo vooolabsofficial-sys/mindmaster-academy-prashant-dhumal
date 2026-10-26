@@ -1,17 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Download, Brain, Globe } from "lucide-react";
+import { Search, Brain, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
 import StudentNotificationBell from "@/components/notifications/StudentNotificationBell";
 import { useLanguage } from "@/lib/LanguageContext";
 import LanguageModal from "@/components/common/LanguageModal";
 
 export default function TopBar() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
-  const [studentName, setStudentName] = useState("Aditi Kulkarni");
-  const [studentGrade, setStudentGrade] = useState("Grade 10 • Maharashtra");
+  const [studentName, setStudentName] = useState("Student");
+  const [studentGrade, setStudentGrade] = useState("MindMaster Academy");
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
 
   const { languageInfo, t } = useLanguage();
@@ -34,39 +32,20 @@ export default function TopBar() {
     .slice(0, 2)
     .toUpperCase() || "MM";
 
-  useEffect(() => {
-    const handler = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setIsInstallable(true);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") {
-      setIsInstallable(false);
-    }
-  };
-
   return (
-    <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-3.5 transition-all select-none shadow-[0_2px_12px_rgba(15,23,42,0.03)] touch-manipulation">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 md:gap-6">
+    <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3 sm:px-4 md:px-8 py-2.5 sm:py-3.5 transition-all select-none shadow-[0_2px_12px_rgba(15,23,42,0.03)] touch-manipulation">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4 md:gap-6">
         {/* Left: Mobile Brand & Centre Badge */}
-        <div className="flex items-center gap-3 md:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
           <Link
             href="/home"
             aria-label="MindMaster Home"
-            className="lg:hidden flex items-center gap-2.5 touch-target-44 active:scale-95 transition"
+            className="lg:hidden flex items-center gap-2 touch-target-44 active:scale-95 transition"
           >
-            <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/25">
-              <Brain className="w-5 h-5 stroke-[2.2]" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/25 shrink-0">
+              <Brain className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
             </div>
-            <span className="font-black text-base text-slate-900 tracking-tight">MindMaster</span>
+            <span className="font-black text-sm sm:text-base text-slate-900 tracking-tight">MindMaster</span>
           </Link>
 
           {/* Centre Badge - Prominent */}
@@ -93,30 +72,18 @@ export default function TopBar() {
         </div>
 
         {/* Right: Actions - Larger & Touch-Friendly */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Quick Language Picker Pill */}
           <button
             type="button"
             onClick={() => setIsLangModalOpen(true)}
-            className="touch-target-44 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition flex items-center gap-1.5 active:scale-95 cursor-pointer border border-slate-200 shadow-2xs"
+            className="touch-target-44 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition flex items-center gap-1 sm:gap-1.5 active:scale-95 cursor-pointer border border-slate-200 shadow-2xs"
             title={languageInfo.englishName}
             aria-label={`Language: ${languageInfo.englishName}. Click to change language.`}
           >
-            <Globe className="w-3.5 h-3.5 text-blue-600" />
-            <span className="font-extrabold">{languageInfo.nativeName}</span>
+            <Globe className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span className="font-extrabold text-[11px] sm:text-xs">{languageInfo.nativeName}</span>
           </button>
-
-          {isInstallable && (
-            <button
-              onClick={handleInstallClick}
-              aria-label="Install App"
-              title="Install App"
-              className="touch-target-44 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-4 py-2 rounded-full shadow-sm shadow-blue-500/25 transition cursor-pointer"
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">{t("topbar.installApp") || "Install App"}</span>
-            </button>
-          )}
 
           {/* In-App Notifications Bell Dropdown */}
           <StudentNotificationBell />

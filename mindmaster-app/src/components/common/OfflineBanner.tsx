@@ -47,25 +47,25 @@ export default function OfflineBanner() {
           <div className="flex items-center gap-2.5 max-w-4xl mx-auto flex-1 min-w-0">
             <WifiOff className="w-5 h-5 shrink-0 text-amber-950" />
             <div className="text-xs sm:text-sm font-semibold truncate">
-              <span>ऑफलाइन मोड: इंटरनेट बंद आहे. </span>
+              <span>Offline Mode: No internet connection. </span>
               <span className="font-normal hidden sm:inline text-amber-900">
-                डाउनलोड केलेले नोट्स आणि सेव्ह केलेले धडे उपलब्ध आहेत.
+                Saved offline notes and cached handbooks remain accessible.
               </span>
             </div>
           </div>
           <button
             onClick={() => window.location.reload()}
             className="touch-target-44 px-3 py-1 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer"
-            aria-label="पुन्हा प्रयत्न करा (Retry connection)"
+            aria-label="Retry connection"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>पुन्हा तपासा</span>
+            <span>Retry</span>
           </button>
         </div>
       ) : (
         <div className="bg-emerald-600 text-white px-4 py-2 shadow-md flex items-center justify-center gap-2 text-xs sm:text-sm font-bold animate-in fade-in duration-200">
           <CheckCircle2 className="w-4 h-4" />
-          <span>इंटरनेट कनेक्शन पूर्ववत झाले आहे (Online)!</span>
+          <span>Internet connection restored (Back Online)!</span>
         </div>
       )}
     </div>

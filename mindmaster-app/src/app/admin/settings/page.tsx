@@ -34,8 +34,8 @@ export default function AdminSettingsPage() {
   const [academyName, setAcademyName] = useState("MindMaster Academy");
   const [founderName, setFounderName] = useState("Prashant Dhumal");
   const [centreAddress, setCentreAddress] = useState("Narhe Centre Desk, Pune, Maharashtra 411041");
-  const [supportPhone, setSupportPhone] = useState("+91 98220 12345");
-  const [supportEmail, setSupportEmail] = useState("contact@mindmasteracademy.in");
+  const [supportPhone, setSupportPhone] = useState("+91 84593 44077");
+  const [supportEmail, setSupportEmail] = useState("mindmasterdhumal@gmail.com");
 
   // 6. Maintenance Card State
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
@@ -47,19 +47,69 @@ export default function AdminSettingsPage() {
   // Toast / Save State
   const [savedToast, setSavedToast] = useState(false);
 
-  // Load from store on mount
+  // Load from Supabase API / store on mount
   useEffect(() => {
-    const s = getPlatformSettings();
-    if (s) {
-      setMaxSubAdmins(s.max_sub_admins ?? 50);
-      setDefaultAccessMonths(s.default_access_months ?? 3);
-      setDefaultVideoLiveDays(s.default_video_live_days ?? 30);
-      setDefaultCouponDays(s.default_coupon_days ?? 7);
-      setRenewalPercent(s.renewal_coupon_percent ?? 50);
-      if (s.reminder_template) setReminderTemplate(s.reminder_template);
-      setIsMaintenanceMode(Boolean(s.maintenance));
-      setYoutubeApiKey(s.youtube_api_key || "");
+    let mounted = true;
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const json = await res.json();
+          if (mounted && json.settings) {
+            const s = json.settings;
+            if (s.razorpay_key_id) setRazorpayKeyId(s.razorpay_key_id);
+            if (s.razorpay_key_secret) setRazorpaySecret(s.razorpay_key_secret);
+            if (s.razorpay_mode) setIsTestMode(s.razorpay_mode === "test");
+            if (s.default_access_months !== undefined) setDefaultAccessMonths(s.default_access_months);
+            if (s.default_video_live_days !== undefined) setDefaultVideoLiveDays(s.default_video_live_days);
+            if (s.default_coupon_days !== undefined) setDefaultCouponDays(s.default_coupon_days);
+            if (s.max_sub_admins !== undefined) setMaxSubAdmins(s.max_sub_admins);
+            if (s.concurrent_devices !== undefined) setMaxDevicesPerStudent(s.concurrent_devices);
+            if (s.renewal_coupon_percent !== undefined) setRenewalPercent(s.renewal_coupon_percent);
+            if (s.auto_send_reminders !== undefined) setAutoSendNotifications(Boolean(s.auto_send_reminders));
+            if (s.reminder_template) setReminderTemplate(s.reminder_template);
+            if (s.academy_title) setAcademyName(s.academy_title);
+            if (s.founder_name) setFounderName(s.founder_name);
+            if (s.centre_address) setCentreAddress(s.centre_address);
+            if (s.support_phone) setSupportPhone(s.support_phone);
+            if (s.support_email) setSupportEmail(s.support_email);
+            if (s.maintenance !== undefined) setIsMaintenanceMode(Boolean(s.maintenance));
+            if (s.youtube_api_key) setYoutubeApiKey(s.youtube_api_key);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to load settings from API, falling back to local store:", err);
+      }
+
+      if (mounted) {
+        const s = getPlatformSettings();
+        if (s) {
+          if (s.razorpay_key_id) setRazorpayKeyId(s.razorpay_key_id);
+          if (s.razorpay_key_secret) setRazorpaySecret(s.razorpay_key_secret);
+          if (s.razorpay_mode) setIsTestMode(s.razorpay_mode === "test");
+          if (s.max_sub_admins !== undefined) setMaxSubAdmins(s.max_sub_admins);
+          if (s.default_access_months !== undefined) setDefaultAccessMonths(s.default_access_months);
+          if (s.default_video_live_days !== undefined) setDefaultVideoLiveDays(s.default_video_live_days);
+          if (s.default_coupon_days !== undefined) setDefaultCouponDays(s.default_coupon_days);
+          if (s.concurrent_devices !== undefined) setMaxDevicesPerStudent(s.concurrent_devices);
+          if (s.renewal_coupon_percent !== undefined) setRenewalPercent(s.renewal_coupon_percent);
+          if (s.auto_send_reminders !== undefined) setAutoSendNotifications(Boolean(s.auto_send_reminders));
+          if (s.reminder_template) setReminderTemplate(s.reminder_template);
+          if (s.academy_title) setAcademyName(s.academy_title);
+          if (s.founder_name) setFounderName(s.founder_name);
+          if (s.centre_address) setCentreAddress(s.centre_address);
+          if (s.support_phone) setSupportPhone(s.support_phone);
+          if (s.support_email) setSupportEmail(s.support_email);
+          if (s.maintenance !== undefined) setIsMaintenanceMode(Boolean(s.maintenance));
+          if (s.youtube_api_key) setYoutubeApiKey(s.youtube_api_key || "");
+        }
+      }
     }
+    loadSettings();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Helper to mask key: rzp_live_••••••••••••9482
@@ -76,20 +126,43 @@ export default function AdminSettingsPage() {
     .replace("{days}", "3")
     .replace("{percent}", renewalPercent.toString());
 
-  const handleSaveAll = (e: React.FormEvent) => {
+  const handleSaveAll = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Persist to store and notify listeners
-    savePlatformSettings({
+    const payload = {
+      razorpay_key_id: razorpayKeyId.trim(),
+      razorpay_key_secret: razorpaySecret.trim(),
+      razorpay_mode: (isTestMode ? "test" : "live") as "live" | "test",
+      concurrent_devices: maxDevicesPerStudent,
+      auto_send_reminders: autoSendNotifications,
       max_sub_admins: maxSubAdmins,
       default_access_months: defaultAccessMonths,
       default_video_live_days: defaultVideoLiveDays,
       default_coupon_days: defaultCouponDays,
       renewal_coupon_percent: renewalPercent,
       reminder_template: reminderTemplate,
+      academy_title: academyName.trim(),
+      founder_name: founderName.trim(),
+      centre_address: centreAddress.trim(),
+      support_phone: supportPhone.trim(),
+      support_email: supportEmail.trim(),
       maintenance: isMaintenanceMode,
       youtube_api_key: youtubeApiKey.trim(),
-    });
+    };
+
+    // Save to live Supabase via POST /api/settings
+    try {
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.warn("Error calling POST /api/settings:", err);
+    }
+
+    // Persist to store and notify listeners
+    savePlatformSettings(payload);
 
     logStaffAction(
       "SETTINGS_UPDATE",

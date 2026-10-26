@@ -1,8 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
-import { INITIAL_WATCH_STATS } from "@/lib/mockStaffData";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { LessonWatchStat } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const lessonId = searchParams.get("lesson_id");
+    const requestedUserId = searchParams.get("user_id");
+
+    // Case 1: Student querying their own progress for a lesson (auto-resume sync)
+    if (lessonId) {
+      let studentId = requestedUserId;
+      if (!studentId) {
+        const studentCookie = req.cookies.get("mma_student_session")?.value;
+        if (studentCookie) {
+          try {
+            const session = JSON.parse(studentCookie);
+            studentId = session.userId || session.id || session.user_id;
+          } catch {}
+        }
+      }
+
+      if (!studentId) {
+        try {
+          const supabase = createAdminClient();
+          const authHeader = req.headers.get("authorization");
+          if (authHeader) {
+            const token = authHeader.replace("Bearer ", "");
+            const { data: { user } } = await supabase.auth.getUser(token);
+            if (user) studentId = user.id;
+          }
+        } catch {}
+      }
+
+      if (!studentId) {
+        return NextResponse.json(
+          { error: "Unauthorized: student session or user_id required" },
+          { status: 401 }
+        );
+      }
+
+      const supabase = createAdminClient();
+      const { data: prog, error: progErr } = await supabase
+        .from("progress")
+        .select("position_sec, completed, updated_at")
+        .eq("user_id", studentId)
+        .eq("lesson_id", lessonId)
+        .maybeSingle();
+
+      if (progErr) {
+        return NextResponse.json({ error: progErr.message }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        lesson_id: lessonId,
+        progress: prog || null,
+      });
+    }
+
+    // Case 2: Staff / Admin viewing aggregated analytics
     // Check staff session
     const staffCookie = req.cookies.get("mma_staff_session")?.value;
     let staffSession: any = null;
@@ -19,14 +76,135 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    let stats: LessonWatchStat[] = [];
+    try {
+      const supabase = createAdminClient();
+      const { data: lessons } = await supabase
+        .from("lessons")
+        .select("id, title, course_id, duration_sec, courses(id, title)");
+
+      if (lessons && lessons.length > 0) {
+        const { data: progressRows } = await supabase
+          .from("progress")
+          .select("user_id, lesson_id, position_sec, completed, updated_at, profiles(full_name, phone)");
+
+        stats = lessons.map((les: any) => {
+          const relatedProgress = (progressRows || []).filter((p: any) => p.lesson_id === les.id);
+          const totalViews = relatedProgress.length;
+          const uniqueStudents = new Set(relatedProgress.map((p: any) => p.user_id)).size;
+          const completedCount = relatedProgress.filter((p: any) => p.completed).length;
+          const totalWatchedSec = relatedProgress.reduce((sum: number, p: any) => sum + (p.position_sec || 0), 0);
+          const duration = les.duration_sec || 1;
+          const avgPct = totalViews > 0 ? Math.min(100, Math.round((totalWatchedSec / (totalViews * duration)) * 100)) : 0;
+          const completionRate = totalViews > 0 ? Math.round((completedCount / totalViews) * 100) : 0;
+
+          return {
+            lessonId: les.id,
+            lessonTitle: les.title,
+            courseId: les.course_id,
+            courseTitle: les.courses?.title || "Course",
+            durationSec: les.duration_sec || 0,
+            totalViews,
+            uniqueStudents,
+            avgWatchPercentage: avgPct,
+            completionRate,
+            totalWatchHours: Number((totalWatchedSec / 3600).toFixed(1)),
+            recentWatches: relatedProgress.slice(-5).map((p: any) => ({
+              studentName: p.profiles?.full_name || "Student",
+              studentPhone: p.profiles?.phone || "",
+              watchedSec: p.position_sec || 0,
+              completionPct: Math.min(100, Math.round(((p.position_sec || 0) / duration) * 100)),
+              lastWatchedAt: p.updated_at || new Date().toISOString(),
+            })),
+          };
+        });
+      }
+    } catch (dbErr) {
+      console.warn("Error querying watch stats from DB:", dbErr);
+    }
+
     return NextResponse.json({
       success: true,
-      watchStats: INITIAL_WATCH_STATS,
-      count: INITIAL_WATCH_STATS.length,
+      watchStats: stats,
+      count: stats.length,
     });
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || "Failed to load watch statistics" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { lesson_id, position_sec, completed, user_id } = body;
+
+    if (!lesson_id || typeof position_sec !== "number") {
+      return NextResponse.json(
+        { error: "Invalid payload: lesson_id and position_sec are required" },
+        { status: 400 }
+      );
+    }
+
+    // Determine student ID: from cookie, request body, or auth token
+    let studentId = user_id;
+    if (!studentId) {
+      const studentCookie = req.cookies.get("mma_student_session")?.value;
+      if (studentCookie) {
+        try {
+          const session = JSON.parse(studentCookie);
+          studentId = session.userId || session.id || session.user_id;
+        } catch {}
+      }
+    }
+
+    if (!studentId) {
+      try {
+        const supabase = createAdminClient();
+        const authHeader = req.headers.get("authorization");
+        if (authHeader) {
+          const token = authHeader.replace("Bearer ", "");
+          const { data: { user } } = await supabase.auth.getUser(token);
+          if (user) studentId = user.id;
+        }
+      } catch {}
+    }
+
+    if (!studentId) {
+      return NextResponse.json(
+        { error: "Unauthorized: student session required to save progress" },
+        { status: 401 }
+      );
+    }
+
+    const supabase = createAdminClient();
+    const { error: upsertErr } = await supabase.from("progress").upsert(
+      {
+        user_id: studentId,
+        lesson_id,
+        position_sec: Math.max(0, Math.floor(position_sec)),
+        completed: Boolean(completed),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,lesson_id" }
+    );
+
+    if (upsertErr) {
+      console.warn("Error saving watch progress to Supabase:", upsertErr);
+      return NextResponse.json({ error: upsertErr.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      lesson_id,
+      position_sec: Math.floor(position_sec),
+      completed: Boolean(completed),
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err?.message || "Failed to save watch progress" },
       { status: 500 }
     );
   }

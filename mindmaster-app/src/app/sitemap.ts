@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
-import { MOCK_COURSES } from "@/lib/mockData";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.mindmasteracademy.com";
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -18,6 +18,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/books`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/login`,
       lastModified: new Date(),
       changeFrequency: "monthly",
@@ -25,12 +31,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  const courseRoutes: MetadataRoute.Sitemap = MOCK_COURSES.map((course) => ({
-    url: `${baseUrl}/course/${course.id}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly",
-    priority: 0.85,
-  }));
+  let courseRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const supabase = createAdminClient();
+    const { data: courses } = await supabase
+      .from("courses")
+      .select("id, is_published");
+
+    if (courses && courses.length > 0) {
+      courseRoutes = courses
+        .filter((c: any) => c.is_published !== false)
+        .map((course: any) => ({
+          url: `${baseUrl}/course/${course.id}`,
+          lastModified: new Date(),
+          changeFrequency: "weekly",
+          priority: 0.85,
+        }));
+    }
+  } catch (e) {
+    // Graceful fallback if database connection is pending
+  }
 
   return [...staticRoutes, ...courseRoutes];
 }
+

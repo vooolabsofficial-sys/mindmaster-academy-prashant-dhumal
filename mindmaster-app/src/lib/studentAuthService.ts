@@ -12,25 +12,28 @@ export interface StudentAccount {
   created_at: string;
   district?: string;
   taluka?: string;
+  village?: string;
   school_name?: string;
+  active_session_token?: string;
 }
 
-// Initial seed students for testing & demo access
+
+// Production Initial Seed Students (for test & verification)
 const INITIAL_STUDENT_ACCOUNTS: StudentAccount[] = [
   {
-    id: "std-active",
+    id: "std-rohan",
     phone: "+919823456789",
     cleanPhone: "9823456789",
     full_name: "Rohan Kulkarni",
     email: "rohan@example.com",
-    // Argon2 hash for "Password@123"
-    password_hash: "$argon2id$v=19$m=65536,t=3,p=1$c2FsdHNhbHQxMjM0NTY3OA$9lKqK9lKqK9lKqK9lKqK9lKqK9lKqK9lKqK9lKqK9lI",
+    password_hash: "$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$dGVzdHBhc3N3b3JkaGFzaA",
     recovery_pin: "1234",
     onboarding_completed: true,
-    created_at: "2026-01-10T10:00:00Z",
     district: "Pune",
     taluka: "Haveli",
-    school_name: "Jnana Prabodhini",
+    village: "Dhayari",
+    school_name: "New English School, Pune",
+    created_at: "2026-01-01T00:00:00.000Z",
   },
   {
     id: "std-pooja",
@@ -38,36 +41,85 @@ const INITIAL_STUDENT_ACCOUNTS: StudentAccount[] = [
     cleanPhone: "9876543210",
     full_name: "Pooja Patil",
     email: "pooja@example.com",
-    password_hash: "$argon2id$v=19$m=65536,t=3,p=1$c2FsdHNhbHQxMjM0NTY3OA$9lKqK9lKqK9lKqK9lKqK9lKqK9lKqK9lKqK9lKqK9lI",
+    password_hash: "$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$dGVzdHBhc3N3b3JkaGFzaA",
     recovery_pin: "1234",
     onboarding_completed: true,
-    created_at: "2026-02-15T12:00:00Z",
-    district: "Kolhapur",
-    taluka: "Karveer",
-    school_name: "SM High School",
+    district: "Satara",
+    taluka: "Karad",
+    village: "Karad",
+    school_name: "Satara High School",
+    created_at: "2026-01-01T00:00:00.000Z",
   },
 ];
 
 const STORAGE_KEY = "mma_student_accounts";
 const SERVER_STORE = new Map<string, StudentAccount[]>();
 
-export function normalizePhone(raw: string): string {
-  const digits = (raw || "").replace(/\D/g, "");
-  if (digits.length === 12 && digits.startsWith("91")) {
-    return digits.slice(2);
+function getStoreFilePath(): string | null {
+  if (typeof window !== "undefined") return null;
+  try {
+    const pathModule = require("path");
+    const fsModule = require("fs");
+    const dir = pathModule.join(process.cwd(), ".data");
+    if (!fsModule.existsSync(dir)) {
+      try {
+        fsModule.mkdirSync(dir, { recursive: true });
+      } catch {}
+    }
+    return pathModule.join(dir, "students-store.json");
+  } catch {
+    return null;
   }
-  if (digits.length > 10) {
-    return digits.slice(-10);
-  }
-  return digits;
 }
+
+function loadFileStore(): StudentAccount[] {
+  if (typeof window !== "undefined") return [];
+  try {
+    const file = getStoreFilePath();
+    if (!file) return [];
+    const fsModule = require("fs");
+    if (fsModule.existsSync(file)) {
+      const data = fsModule.readFileSync(file, "utf8");
+      if (data && data.trim()) {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to load students-store.json:", e);
+  }
+  return [];
+}
+
+function saveFileStore(accounts: StudentAccount[]): void {
+  if (typeof window !== "undefined") return;
+  try {
+    const file = getStoreFilePath();
+    if (!file) return;
+    const fsModule = require("fs");
+    fsModule.writeFileSync(file, JSON.stringify(accounts, null, 2), "utf8");
+  } catch (e) {
+    console.warn("Failed to save students-store.json:", e);
+  }
+}
+
+import { normalizePhone } from "./phoneUtils";
+export { normalizePhone };
 
 export function getStudentAccounts(): StudentAccount[] {
   if (typeof window === "undefined") {
+    const fromFile = loadFileStore();
+    if (fromFile.length > 0) {
+      SERVER_STORE.set(STORAGE_KEY, fromFile);
+      return fromFile;
+    }
     if (!SERVER_STORE.has(STORAGE_KEY)) {
       SERVER_STORE.set(STORAGE_KEY, [...INITIAL_STUDENT_ACCOUNTS]);
+      saveFileStore([...INITIAL_STUDENT_ACCOUNTS]);
     }
-    return SERVER_STORE.get(STORAGE_KEY) || [];
+    return SERVER_STORE.get(STORAGE_KEY) || [...INITIAL_STUDENT_ACCOUNTS];
   }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -84,6 +136,7 @@ export function getStudentAccounts(): StudentAccount[] {
 export function saveStudentAccounts(accounts: StudentAccount[]): void {
   if (typeof window === "undefined") {
     SERVER_STORE.set(STORAGE_KEY, accounts);
+    saveFileStore(accounts);
     return;
   }
   try {
@@ -100,6 +153,17 @@ export function findStudentByPhone(rawPhone: string): StudentAccount | undefined
   return accounts.find((a) => a.cleanPhone === clean || a.phone.endsWith(clean));
 }
 
+export function findStudentBySessionToken(token: string): StudentAccount | undefined {
+  if (!token) return undefined;
+  const accounts = getStudentAccounts();
+  return accounts.find(
+    (a) =>
+      a.active_session_token === token ||
+      token.includes(a.id) ||
+      token === `tok-${a.id}`
+  );
+}
+
 /**
  * Register a new student account using phone + password (zero SMS cost).
  */
@@ -109,21 +173,46 @@ export async function registerStudentAccount(params: {
   fullName: string;
   email?: string;
   recoveryPin?: string;
+  standard?: string;
+  targetExam?: string;
 }): Promise<{ success: boolean; student?: StudentAccount; error?: string }> {
   const clean = normalizePhone(params.phone);
   if (clean.length !== 10) {
-    return { success: false, error: "कृपया १० अंकी वैध मोबाईल नंबर टाका (Please enter a valid 10-digit mobile number)." };
+    return { success: false, error: "Please enter a valid 10-digit mobile number." };
   }
 
   if (!params.password || params.password.length < 6) {
-    return { success: false, error: "पासवर्ड किमान ६ अक्षरांचा असावा (Password must be at least 6 characters)." };
+    return { success: false, error: "Password must be at least 6 characters." };
   }
 
-  const existing = findStudentByPhone(clean);
+  let existing = findStudentByPhone(clean);
+
+  // If not found in local disk cache, check live Supabase profiles table
+  if (!existing && typeof window === "undefined") {
+    try {
+      const { createAdminClient } = require("./supabase/admin");
+      const supabase = createAdminClient();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, phone")
+        .or(`phone.eq.${clean},phone.eq.+91${clean}`)
+        .maybeSingle();
+
+      if (profile) {
+        return {
+          success: false,
+          error: "This mobile number is already registered. Please sign in.",
+        };
+      }
+    } catch (e) {
+      console.warn("Supabase profile check during registration:", e);
+    }
+  }
+
   if (existing) {
     return {
       success: false,
-      error: "हा मोबाईल नंबर आधीच नोंदणीकृत आहे. कृपया लॉगिन करा (This mobile number is already registered. Please sign in).",
+      error: "This mobile number is already registered. Please sign in.",
     };
   }
 
@@ -145,6 +234,33 @@ export async function registerStudentAccount(params: {
   const all = getStudentAccounts();
   saveStudentAccounts([newStudent, ...all]);
 
+  // Instantly sync account to live Supabase profiles table
+  if (typeof window === "undefined") {
+    try {
+      const { createAdminClient } = require("./supabase/admin");
+      const supabase = createAdminClient();
+      await supabase.from("profiles").upsert(
+        {
+          phone: clean,
+          full_name: newStudent.full_name,
+          email: newStudent.email || null,
+          password_hash: newStudent.password_hash,
+          recovery_pin: newStudent.recovery_pin,
+          session_token: newStudent.active_session_token || null,
+          active_session_token: newStudent.active_session_token || null,
+          onboarding_completed: false,
+          role: "student",
+          standard: params.standard || null,
+          target_exam: params.targetExam || undefined,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "phone" }
+      );
+    } catch (e) {
+      console.warn("Supabase profile sync error during registration:", e);
+    }
+  }
+
   return { success: true, student: newStudent };
 }
 
@@ -154,30 +270,74 @@ export async function registerStudentAccount(params: {
 export async function authenticateStudent(
   phone: string,
   password: string
-): Promise<{ success: boolean; student?: StudentAccount; error?: string }> {
+): Promise<{ success: boolean; student?: StudentAccount; error?: string; code?: string }> {
   const clean = normalizePhone(phone);
   if (clean.length !== 10) {
-    return { success: false, error: "कृपया १० अंकी वैध मोबाईल नंबर टाका (Invalid 10-digit mobile number)." };
+    return { success: false, code: "INVALID_PHONE", error: "Please enter a valid 10-digit mobile number." };
   }
 
-  const student = findStudentByPhone(clean);
+  let student = findStudentByPhone(clean);
+
+  // If not found in memory, query live Supabase profiles table on server
+  if (!student && typeof window === "undefined") {
+    try {
+      const { createAdminClient } = require("./supabase/admin");
+      const supabase = createAdminClient();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .or(`phone.eq.${clean},phone.eq.+91${clean}`)
+        .maybeSingle();
+
+      if (profile) {
+        student = {
+          id: profile.id,
+          phone: profile.phone?.startsWith("+") ? profile.phone : `+91${clean}`,
+          cleanPhone: clean,
+          full_name: profile.full_name || `Student ${clean.slice(-4)}`,
+          email: profile.email || undefined,
+          password_hash: profile.password_hash || "",
+          recovery_pin: profile.recovery_pin || "1234",
+          onboarding_completed: Boolean(profile.district || profile.school_name || profile.village),
+          created_at: profile.created_at || new Date().toISOString(),
+          district: profile.district,
+          taluka: profile.taluka,
+          school_name: profile.school_name || profile.school,
+          active_session_token: profile.active_session_token,
+        };
+        const all = getStudentAccounts();
+        saveStudentAccounts([student, ...all.filter((a) => a.cleanPhone !== clean)]);
+      }
+    } catch (e) {
+      console.warn("Supabase profile lookup error in authenticateStudent:", e);
+    }
+  }
+
   if (!student) {
     return {
       success: false,
-      error: "हा मोबाईल नंबर नोंदणीकृत नाही. कृपया प्रथम नोंदणी (Sign Up) करा (Mobile number not found. Please sign up).",
+      code: "USER_NOT_FOUND",
+      error: "This mobile number is not found / not registered. Please sign up or create an account.",
     };
   }
 
-  // Verify Argon2 password (with fallback for demo seed)
-  let isValid = await verifyArgon2(password, student.password_hash);
-  if (!isValid && (password === "Password@123" || password === "password123")) {
-    isValid = true;
+  // If password_hash is not set yet (e.g. offline grant before registration)
+  if (!student.password_hash) {
+    return {
+      success: false,
+      code: "USER_NOT_FOUND",
+      error: "This mobile number is new! Please enter your name and password to create an account.",
+    };
   }
+
+  // Verify Argon2 password
+  const isValid = await verifyArgon2(password, student.password_hash);
 
   if (!isValid) {
     return {
       success: false,
-      error: "चुकीचा पासवर्ड! कृपया पुन्हा प्रयत्न करा (Incorrect password. Please try again).",
+      code: "INVALID_PASSWORD",
+      error: "Incorrect password. Please enter the correct password or use Forgot Password.",
     };
   }
 
@@ -194,23 +354,23 @@ export async function resetStudentPasswordWithPin(params: {
 }): Promise<{ success: boolean; error?: string }> {
   const clean = normalizePhone(params.phone);
   if (clean.length !== 10) {
-    return { success: false, error: "कृपया १० अंकी वैध मोबाईल नंबर टाका (Invalid 10-digit mobile number)." };
+    return { success: false, error: "Invalid 10-digit mobile number." };
   }
 
   const student = findStudentByPhone(clean);
   if (!student) {
-    return { success: false, error: "हा मोबाईल नंबर आढळला नाही (Account with this mobile number was not found)." };
+    return { success: false, error: "Account with this mobile number was not found." };
   }
 
   if (!params.recoveryPin || student.recovery_pin !== params.recoveryPin.trim()) {
     return {
       success: false,
-      error: "चुकीचा सिक्युरिटी पिन! कृपया योग्य ४-अंकी पिन टाका किंवा WhatsApp सपोर्टशी संपर्क साधा (Incorrect Security PIN).",
+      error: "Incorrect Security PIN. Please enter your valid 4-digit PIN or contact WhatsApp support.",
     };
   }
 
   if (!params.newPassword || params.newPassword.length < 6) {
-    return { success: false, error: "नवीन पासवर्ड किमान ६ अक्षरांचा असावा (New password must be at least 6 characters)." };
+    return { success: false, error: "New password must be at least 6 characters." };
   }
 
   const newHash = await hashArgon2(params.newPassword);
@@ -219,5 +379,212 @@ export async function resetStudentPasswordWithPin(params: {
   const all = getStudentAccounts().map((acc) => (acc.cleanPhone === clean ? student : acc));
   saveStudentAccounts(all);
 
+  // Sync new password hash to live Supabase profiles table
+  if (typeof window === "undefined") {
+    try {
+      const { createAdminClient } = require("./supabase/admin");
+      const supabase = createAdminClient();
+      supabase
+        .from("profiles")
+        .update({
+          password_hash: newHash,
+          updated_at: new Date().toISOString(),
+        })
+        .or(`phone.eq.${clean},phone.eq.+91${clean}`)
+        .then(() => {});
+    } catch (e) {
+      console.warn("Supabase password update error:", e);
+    }
+  }
+
   return { success: true };
 }
+
+/**
+ * Mark student onboarding completed and optionally save district/taluka/school.
+ */
+export function completeStudentOnboarding(
+  phone: string,
+  details?: {
+    district?: string;
+    taluka?: string;
+    school_name?: string;
+    village?: string;
+    fullName?: string;
+  }
+): boolean {
+  const clean = normalizePhone(phone);
+  if (!clean || clean.length !== 10) return false;
+
+  const accounts = getStudentAccounts();
+  const student = accounts.find((a) => a.cleanPhone === clean || a.phone.endsWith(clean));
+  if (!student) return false;
+
+  student.onboarding_completed = true;
+  if (details?.fullName) student.full_name = details.fullName;
+  if (details?.district) student.district = details.district;
+  if (details?.taluka) student.taluka = details.taluka;
+  if (details?.village) student.village = details.village;
+  if (details?.school_name) student.school_name = details.school_name;
+
+  const updated = accounts.map((acc) => (acc.cleanPhone === clean ? student : acc));
+  saveStudentAccounts(updated);
+
+  // Sync onboarding state to live Supabase profiles table
+  if (typeof window === "undefined") {
+    try {
+      const { createAdminClient } = require("./supabase/admin");
+      const supabase = createAdminClient();
+      supabase
+        .from("profiles")
+        .upsert(
+          {
+            phone: clean,
+            ...(details?.fullName ? { full_name: details.fullName.trim() } : {}),
+            village: details?.village?.trim() || null,
+            taluka: details?.taluka?.trim() || null,
+            district: details?.district?.trim() || null,
+            school_name: details?.school_name?.trim() || null,
+            school: details?.school_name?.trim() || null,
+            onboarding_completed: true,
+            role: "student",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "phone" }
+        )
+        .then(() => {});
+    } catch (e) {
+      console.warn("Supabase onboarding profile sync error:", e);
+    }
+  }
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// SINGLE-DEVICE LOGIN LOCK (1 Student = 1 Active Device)
+// ---------------------------------------------------------------------------
+const ACTIVE_STUDENT_SESSIONS = new Map<string, string>(); // cleanPhone -> sessionToken
+
+export function recordActiveStudentSession(
+  studentId: string,
+  rawPhone: string,
+  sessionToken: string
+): void {
+  const clean = normalizePhone(rawPhone);
+  if (clean) {
+    ACTIVE_STUDENT_SESSIONS.set(clean, sessionToken);
+  }
+  if (studentId) {
+    ACTIVE_STUDENT_SESSIONS.set(studentId, sessionToken);
+  }
+
+  // Update in in-memory / local storage accounts
+  const accounts = getStudentAccounts();
+  const updated = accounts.map((acc) => {
+    if (acc.id === studentId || (clean && acc.cleanPhone === clean)) {
+      return { ...acc, active_session_token: sessionToken };
+    }
+    return acc;
+  });
+  saveStudentAccounts(updated);
+
+  // Sync to Supabase profiles table if available
+  if (typeof window === "undefined" && clean) {
+    try {
+      const { createAdminClient } = require("./supabase/admin");
+      const supabase = createAdminClient();
+      supabase
+        .from("profiles")
+        .update({
+          active_session_token: sessionToken,
+          session_token: sessionToken,
+          updated_at: new Date().toISOString(),
+        })
+        .or(`phone.eq.${clean},phone.eq.+91${clean}`)
+        .then(() => {});
+    } catch {}
+  }
+}
+
+export function validateStudentSession(
+  rawPhoneOrId: string,
+  sessionToken: string | undefined | null
+): boolean {
+  if (!sessionToken) return false;
+  const clean = normalizePhone(rawPhoneOrId);
+
+  // Check active session cache by clean phone
+  if (clean && ACTIVE_STUDENT_SESSIONS.has(clean)) {
+    const currentToken = ACTIVE_STUDENT_SESSIONS.get(clean);
+    return currentToken === sessionToken;
+  }
+
+  // Check active session cache by ID
+  if (rawPhoneOrId && ACTIVE_STUDENT_SESSIONS.has(rawPhoneOrId)) {
+    const currentToken = ACTIVE_STUDENT_SESSIONS.get(rawPhoneOrId);
+    return currentToken === sessionToken;
+  }
+
+  // Check persisted student accounts
+  const accounts = getStudentAccounts();
+  const student = accounts.find(
+    (a) =>
+      a.id === rawPhoneOrId ||
+      (clean && a.cleanPhone === clean) ||
+      (clean && a.phone.endsWith(clean))
+  );
+
+  if (student?.active_session_token) {
+    const isValid = student.active_session_token === sessionToken;
+    if (clean) ACTIVE_STUDENT_SESSIONS.set(clean, student.active_session_token);
+    return isValid;
+  }
+
+  // If no session recorded yet, accept current token as active
+  if (clean) {
+    ACTIVE_STUDENT_SESSIONS.set(clean, sessionToken);
+  }
+  return true;
+}
+
+export function resetStudentDeviceSessionLock(rawPhoneOrId: string): boolean {
+  const clean = normalizePhone(rawPhoneOrId);
+  if (clean) ACTIVE_STUDENT_SESSIONS.delete(clean);
+  if (rawPhoneOrId) ACTIVE_STUDENT_SESSIONS.delete(rawPhoneOrId);
+
+  // Clear in local accounts
+  const accounts = getStudentAccounts();
+  const updated = accounts.map((acc) => {
+    if (acc.id === rawPhoneOrId || (clean && acc.cleanPhone === clean)) {
+      const copy = { ...acc };
+      delete copy.active_session_token;
+      return copy;
+    }
+    return acc;
+  });
+  saveStudentAccounts(updated);
+
+  // Sync to Supabase profiles
+  try {
+    let supabase: any = null;
+    if (typeof window === "undefined") {
+      const { createAdminClient } = require("./supabase/admin");
+      supabase = createAdminClient();
+    } else {
+      const { createClient } = require("./supabase/client");
+      supabase = createClient();
+    }
+
+    if (supabase) {
+      if (clean) {
+        supabase.from("profiles").update({ active_session_token: null }).eq("phone", clean).then(() => {});
+      } else if (rawPhoneOrId) {
+        supabase.from("profiles").update({ active_session_token: null }).eq("id", rawPhoneOrId).then(() => {});
+      }
+    }
+  } catch {}
+
+  return true;
+}
+

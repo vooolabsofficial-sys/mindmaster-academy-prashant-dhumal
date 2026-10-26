@@ -6,6 +6,7 @@ import {
   resetStudentPasswordWithPin,
   findStudentByPhone,
   normalizePhone,
+  completeStudentOnboarding,
 } from "../src/lib/studentAuthService.ts";
 import { POST as studentAuthApiPost } from "../src/app/api/student/auth/route.ts";
 import { middleware } from "../src/middleware.ts";
@@ -56,7 +57,7 @@ async function runAllTests() {
   // ---------------------------------------------------------------------------
   console.log("\n--- 2. Student Registration Flow ---");
 
-  const testPhone = "9988776655";
+  const testPhone = "99" + Date.now().toString().slice(-8);
   await test("Register new student with phone, password, full_name and recovery_pin", async () => {
     const res = await registerStudentAccount({
       phone: testPhone,
@@ -81,7 +82,7 @@ async function runAllTests() {
     });
 
     assert.strictEqual(res.success, false);
-    assert(res.error.includes("आधीच नोंदणीकृत"), "Expected duplicate registration error");
+    assert(res.error.includes("already registered") || res.error.includes("आधीच नोंदणीकृत"), "Expected duplicate registration error");
   });
 
   await test("Registration rejects invalid phone numbers (< 10 digits)", async () => {
@@ -92,7 +93,7 @@ async function runAllTests() {
     });
 
     assert.strictEqual(res.success, false);
-    assert(res.error.includes("१० अंकी"), "Expected 10-digit validation error");
+    assert(res.error.includes("10-digit") || res.error.includes("१० अंकी"), "Expected 10-digit validation error");
   });
 
   // ---------------------------------------------------------------------------
@@ -110,13 +111,13 @@ async function runAllTests() {
   await test("Authentication fails on incorrect password", async () => {
     const res = await authenticateStudent(testPhone, "WrongPassword");
     assert.strictEqual(res.success, false);
-    assert(res.error.includes("चुकीचा पासवर्ड"), "Expected incorrect password error");
+    assert(res.error.includes("Incorrect password") || res.error.includes("चुकीचा पासवर्ड"), "Expected incorrect password error");
   });
 
   await test("Authentication fails for non-existent mobile number", async () => {
     const res = await authenticateStudent("9000000000", "SomePassword123");
     assert.strictEqual(res.success, false);
-    assert(res.error.includes("नोंदणीकृत नाही"), "Expected not registered error");
+    assert(res.error.includes("not found") || res.error.includes("Please sign up") || res.error.includes("नोंदणीकृत नाही"), "Expected not registered error");
   });
 
   // ---------------------------------------------------------------------------
@@ -150,7 +151,7 @@ async function runAllTests() {
     });
 
     assert.strictEqual(res.success, false);
-    assert(res.error.includes("चुकीचा सिक्युरिटी पिन"), "Expected wrong pin error");
+    assert(res.error.includes("Incorrect Security PIN") || res.error.includes("चुकीचा सिक्युरिटी पिन"), "Expected wrong pin error");
   });
 
   // ---------------------------------------------------------------------------
@@ -197,7 +198,7 @@ async function runAllTests() {
     assert.strictEqual(res.status, 200);
     const data = await res.json();
     assert.strictEqual(data.success, true);
-    assert(data.message.includes("यशस्वीरित्या बदलला"), "Success message missing");
+    assert(data.message.includes("Password reset successful") || data.message.includes("यशस्वीरित्या बदलला"), "Success message missing");
   });
 
   // ---------------------------------------------------------------------------
@@ -209,9 +210,9 @@ async function runAllTests() {
     const loginSrc = fs.readFileSync("src/app/login/page.tsx", "utf-8");
     assert(loginSrc.includes("signInWithOAuth"), "signInWithOAuth missing");
     assert(loginSrc.includes("provider: \"google\"") || loginSrc.includes("provider: 'google'"), "Google provider missing");
-    assert(loginSrc.includes("Google ने लॉगिन करा"), "Google button text missing");
-    assert(loginSrc.includes("लॉगिन करा (Sign In)"), "Sign In tab missing");
-    assert(loginSrc.includes("नवीन नोंदणी (Sign Up)"), "Sign Up tab missing");
+    assert(loginSrc.includes("Continue with Google") || loginSrc.includes("Google ने लॉगिन करा"), "Google button text missing");
+    assert(loginSrc.includes("Sign In"), "Sign In tab missing");
+    assert(loginSrc.includes("Sign Up"), "Sign Up tab missing");
     assert(loginSrc.includes("href=\"/forgot-password\""), "Forgot password link missing");
     assert(loginSrc.includes("wa.me/91"), "WhatsApp help link missing");
   });
@@ -219,10 +220,31 @@ async function runAllTests() {
   await test("forgot-password/page.tsx includes PIN reset, Email option and WhatsApp card", () => {
     assert(fs.existsSync("src/app/forgot-password/page.tsx"), "forgot-password/page.tsx does not exist");
     const fpSrc = fs.readFileSync("src/app/forgot-password/page.tsx", "utf-8");
-    assert(fpSrc.includes("सिक्युरिटी पिनने बदला"), "PIN method missing");
-    assert(fpSrc.includes("ईमेलने लिंक मागवा"), "Email method missing");
+    assert(fpSrc.includes("Reset via Security PIN") || fpSrc.includes("सिक्युरिटी पिनने बदला"), "PIN method missing");
+    assert(fpSrc.includes("Request Email Link") || fpSrc.includes("ईमेलने लिंक मागवा"), "Email method missing");
     assert(fpSrc.includes("resetPasswordForEmail"), "Supabase email reset missing");
-    assert(fpSrc.includes("WhatsApp वर थेट मदत मिळवा"), "WhatsApp support missing");
+    assert(fpSrc.includes("Get Direct Help on WhatsApp") || fpSrc.includes("WhatsApp वर थेट मदत मिळवा"), "WhatsApp support missing");
+  });
+
+  await test("complete-onboarding API action marks onboarding completed and clears cookie", async () => {
+    const dummyReq = new Request("http://localhost:3000/api/student/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "complete-onboarding",
+        phone: testPhone,
+        district: "Satara",
+        taluka: "Karad",
+        schoolName: "Test Vidya Mandir",
+      }),
+    });
+    const res = await studentAuthApiPost(dummyReq);
+    const data = await res.json();
+    assert.strictEqual(data.success, true);
+
+    const student = findStudentByPhone(testPhone);
+    assert.strictEqual(student.onboarding_completed, true);
+    assert.strictEqual(student.district, "Satara");
   });
 
   // ---------------------------------------------------------------------------
@@ -236,6 +258,41 @@ async function runAllTests() {
     assert.strictEqual(res.status, 307);
     const location = res.headers.get("location") || "";
     assert(location.includes("/login") && location.includes("next=%2Fhome"));
+  });
+
+  await test("Unauthenticated visit to protected student routes (/my-courses, /watch, /notes, /profile, /checkout, /) redirect to /login", async () => {
+    const routes = ["/my-courses", "/watch/1", "/books", "/profile", "/checkout/c-memory", "/"];
+    for (const r of routes) {
+      const req = new Request(`http://localhost:3000${r}`);
+      const res = await middleware(req);
+      assert.strictEqual(res.status, 307, `Expected 307 redirect for unauthenticated route: ${r}`);
+      const loc = res.headers.get("location") || "";
+      assert(loc.includes("/login"), `Expected redirect to /login for route: ${r}`);
+    }
+  });
+
+  await test("Unauthenticated visit to staff routes (/admin, /sub) redirects to /staff/login", async () => {
+    for (const r of ["/admin", "/sub"]) {
+      const req = new Request(`http://localhost:3000${r}`);
+      const res = await middleware(req);
+      assert.strictEqual(res.status, 307, `Expected 307 redirect for staff route: ${r}`);
+      const loc = res.headers.get("location") || "";
+      assert(loc.includes("/staff/login"), `Expected redirect to /staff/login for route: ${r}`);
+    }
+  });
+
+  await test("Sub-admin session attempting /admin route is strictly forbidden (403)", async () => {
+    const subSession = JSON.stringify({
+      staff_id: "MMA-001",
+      role: "sub_admin",
+      permissions: ["students.view"],
+      status: "active",
+    });
+    const req = new Request("http://localhost:3000/admin", {
+      headers: { Cookie: `mma_staff_session=${encodeURIComponent(subSession)}` },
+    });
+    const res = await middleware(req);
+    assert.strictEqual(res.status, 403);
   });
 
   await test("Authenticated visit with sb-mindmaster-auth-token allows access to /home", async () => {

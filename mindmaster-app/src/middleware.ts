@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { recordServerAuditLog } from "@/lib/auditLogger";
+import { verifyStaffSession } from "@/lib/staffSession";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // Permission mapping for /sub/* routes per specifications:
 // videos -> videos.manage
@@ -37,6 +39,13 @@ export async function middleware(req: NextRequest | Request) {
   const method = (req.method || "GET").toUpperCase();
   const isMutating = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
 
+  // Redirect obsolete /notes route seamlessly to /books
+  if (pathname === "/notes" || pathname.startsWith("/notes/")) {
+    const booksUrl = new URL(pathname.replace(/^\/notes/, "/books"), req.url);
+    booksUrl.search = search;
+    return NextResponse.redirect(booksUrl, 308);
+  }
+
   // =========================================================================
   // 1. STUDENT ROUTES (UNCHANGED)
   // =========================================================================
@@ -48,7 +57,6 @@ export async function middleware(req: NextRequest | Request) {
     pathname.startsWith("/checkout") ||
     pathname.startsWith("/my-courses") ||
     pathname.startsWith("/watch") ||
-    pathname.startsWith("/notes") ||
     pathname.startsWith("/books") ||
     pathname.startsWith("/notifications") ||
     pathname.startsWith("/support") ||
@@ -68,11 +76,12 @@ export async function middleware(req: NextRequest | Request) {
             c.value &&
             c.value.length > 5
         ) || (req as any).cookies.has("mindmaster_session");
-      onboardingPending = (req as any).cookies.get("mindmaster_onboarding_pending")?.value === "true";
+      const onboardingCookie = (req as any).cookies.get("mindmaster_onboarding_pending")?.value;
+      onboardingPending = onboardingCookie === "true";
     } else {
       const cookieHeader = req.headers.get("cookie") || "";
       hasAuthToken = cookieHeader.includes("mindmaster_session") || cookieHeader.includes("auth-token");
-      onboardingPending = cookieHeader.includes("mindmaster_onboarding_pending=true");
+      onboardingPending = /(?:^|;\s*)mindmaster_onboarding_pending=true(?:\s*;|$)/.test(cookieHeader);
     }
 
     // Rule 1: No session -> redirect to /login?next=<current path>
@@ -105,12 +114,27 @@ export async function middleware(req: NextRequest | Request) {
 
   if (staffCookie) {
     try {
-      staffSession = JSON.parse(staffCookie);
+      staffSession = verifyStaffSession(staffCookie);
       // Data migration check: sanitize sub-admin permissions
       if (staffSession && staffSession.role === "sub_admin") {
         staffSession.permissions = (staffSession.permissions || []).filter(
-          (p: string) => p === "messages.manage" || p === "students.view"
+          (p: string) => p === "messages.manage" || p === "students.view" || p === "freegrant.manage"
         );
+        // Instant Live DB check: verify account is still active in staff_accounts
+        try {
+          const supabase = createAdminClient();
+          const staffIdentifier = staffSession.staff_id || staffSession.id;
+          const { data: dbStaff } = await supabase
+            .from("staff_accounts")
+            .select("status")
+            .or(`id.eq.${staffIdentifier},staff_id.eq.${staffIdentifier}`)
+            .maybeSingle();
+          if (dbStaff && dbStaff.status !== "active") {
+            staffSession.status = "suspended";
+          }
+        } catch {
+          // If network / Supabase temporarily unreachable, rely on signed token status
+        }
       }
     } catch {
       // Cookie corrupted
@@ -252,11 +276,25 @@ export async function middleware(req: NextRequest | Request) {
         pathname.startsWith("/api/books"));
 
     if (isCatalogMutation) {
-      if (!staffSession || staffSession.role !== "main_admin") {
-        return NextResponse.json(
-          { error: "Forbidden: Curriculum and marketing write operations require main_admin authority" },
-          { status: 403 }
-        );
+      if (pathname.startsWith("/api/grants")) {
+        const canManageGrants =
+          staffSession &&
+          (staffSession.role === "main_admin" ||
+            (staffSession.role === "sub_admin" &&
+              (staffSession.permissions || []).includes("freegrant.manage")));
+        if (!canManageGrants) {
+          return NextResponse.json(
+            { error: "Forbidden: Offline grants require freegrant.manage authority" },
+            { status: 403 }
+          );
+        }
+      } else {
+        if (!staffSession || staffSession.role !== "main_admin") {
+          return NextResponse.json(
+            { error: "Forbidden: Curriculum and marketing write operations require main_admin authority" },
+            { status: 403 }
+          );
+        }
       }
     }
 
@@ -349,7 +387,19 @@ export async function middleware(req: NextRequest | Request) {
         return NextResponse.next();
       }
 
-      // 5. Any other /sub/* route (courses, videos, coupons, grants, books, analytics, etc.)
+      // 5. /sub/grants requires freegrant.manage
+      if (pathname.startsWith("/sub/grants")) {
+        const userPermissions: string[] = staffSession.permissions || [];
+        if (!userPermissions.includes("freegrant.manage")) {
+          return NextResponse.rewrite(
+            new URL("/forbidden?perm=freegrant.manage", req.url),
+            { status: 403 }
+          );
+        }
+        return NextResponse.next();
+      }
+
+      // 6. Any other /sub/* route (courses, videos, coupons, books, analytics, etc.)
       // is strictly forbidden per final authority model.
       return NextResponse.rewrite(
         new URL("/forbidden?reason=sub_route_unauthorized", req.url),
@@ -364,6 +414,7 @@ export async function middleware(req: NextRequest | Request) {
 export const config = {
   matcher: [
     // Student protected routes
+    "/",
     "/home/:path*",
     "/courses/:path*",
     "/course/:path*",
@@ -372,8 +423,11 @@ export const config = {
     "/watch/:path*",
     "/notes/:path*",
     "/books/:path*",
+    "/notifications/:path*",
+    "/support/:path*",
     "/profile/:path*",
     // Staff & Admin console routes
+    "/admin",
     "/admin/:path*",
     "/sub/:path*",
     "/sub",

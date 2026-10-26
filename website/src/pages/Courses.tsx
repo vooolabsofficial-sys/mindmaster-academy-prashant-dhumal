@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { SyllabusModal, CourseSyllabusData } from '../components/SyllabusModal';
-import { getAppUrl, getAppCourseCheckoutUrl } from '../config/appConfig';
+import {
+  getAppUrl,
+  getAppCourseCheckoutUrl,
+  fetchLiveCoursesFromApp,
+  LiveDbCourse,
+  getWhatsAppPreBookUrl,
+} from '../config/appConfig';
 
 const COURSES_DATA: CourseSyllabusData[] = [
   {
@@ -108,7 +114,7 @@ const COURSES_DATA: CourseSyllabusData[] = [
         title: 'Business Execution & Academy Setup',
         topics: [
           'Hosting high-converting school demo workshops',
-          'Practical teaching practicum supervised by Sagar Dhumal',
+          'Practical teaching practicum supervised by Prashant Dhumal Sir',
           'Final written viva, live demo exam, and convocation ceremony'
         ]
       }
@@ -164,7 +170,7 @@ const COURSES_DATA: CourseSyllabusData[] = [
         topics: [
           'Synchronizing physical stamina with psychological calm',
           '5 full-length real-time simulated exams under strict exam timers',
-          'One-on-one personal interview and physical exam briefing with Sagar Sir'
+          'One-on-one personal interview and physical exam briefing with Prashant Sir'
         ]
       }
     ]
@@ -241,11 +247,66 @@ const COURSES_DATA: CourseSyllabusData[] = [
       },
       {
         week: 'Weeks 5–6',
-        title: 'Square Roots, Cube Roots & Algebraic Shortcuts',
+        title: 'Roots & Mental Algebra Mastery',
         topics: [
           'Instant mental extraction of perfect cube roots in 1 second',
           'Square roots of non-perfect squares to two decimal places',
           'Solving linear equations mentally and competitive time-saving strategies'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'mm-06',
+    code: 'MM-06',
+    title: 'School Foundation & Scholarship (5th & 8th)',
+    badge: 'FOUNDATION & SCHOLARSHIP',
+    duration: '8 Weeks • Online + Classroom',
+    audience: 'Students Grade 4–8',
+    description: 'Comprehensive cognitive foundation, intelligence test shortcuts, scholarship paper solving, and speed reading for school toppers.',
+    examFocus: '5th & 8th Scholarship, NMMS, Navodaya, Olympiads',
+    pdfDownloadName: 'MindMaster_MM06_Scholarship_Foundation_Syllabus',
+    includedKits: [
+      'Scholarship Intelligence Test Visual Peg Cards',
+      'Mental Aptitude & Pattern Recognition Matrix',
+      'Previous 5 Years Solved Scholarship Model Papers',
+      'Daily 15-Minute Brain Gymnastics Drill Chart'
+    ],
+    curriculum: [
+      {
+        week: 'Weeks 1–2',
+        title: 'Intelligence & Pattern Recognition Tricks',
+        topics: [
+          'Odd-man-out, series completion, and analogy fast recognition',
+          'Direction sense and clock-calendar shortcuts for kids',
+          'Eliminating confusion in visual figure puzzles'
+        ]
+      },
+      {
+        week: 'Weeks 3–4',
+        title: 'Marathi & English Language Memory Tools',
+        topics: [
+          'Marathi grammar rules, Synonyms, and Antonyms story pegs',
+          'Vocabulary expansion through sensory mental images',
+          'Speed reading comprehension without regression'
+        ]
+      },
+      {
+        week: 'Weeks 5–6',
+        title: 'Maths Quick Calculation & Problem Solving',
+        topics: [
+          'Vedic tables up to 100 and mental percentage shortcuts',
+          'Fractions, decimals and LCM/HCF mental methods',
+          'Avoiding calculation traps and silly mistakes under pressure'
+        ]
+      },
+      {
+        week: 'Weeks 7–8',
+        title: 'Mock Paper Simulation & Exam Temperament',
+        topics: [
+          'OMR sheet time-budgeting and bubble-filling speed training',
+          'Full-length simulated scholarship exam under timed conditions',
+          'Individual student weak-point analysis and revision blueprint'
         ]
       }
     ]
@@ -262,6 +323,13 @@ export const Courses: React.FC = () => {
   const [selectedCourseForSyllabus, setSelectedCourseForSyllabus] = useState<CourseSyllabusData | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'school' | 'police' | 'maths' | 'trainer'>(initialCategory);
   const [downloadToast, setDownloadToast] = useState<string | null>(null);
+  const [liveDbCourses, setLiveDbCourses] = useState<LiveDbCourse[]>([]);
+
+  useEffect(() => {
+    fetchLiveCoursesFromApp().then((courses) => {
+      setLiveDbCourses(courses);
+    });
+  }, []);
 
   useEffect(() => {
     const cat = searchParams.get('category') || searchParams.get('filter');
@@ -278,7 +346,7 @@ export const Courses: React.FC = () => {
 
   const filteredCourses = COURSES_DATA.filter((course) => {
     if (categoryFilter === 'all') return true;
-    if (categoryFilter === 'school') return course.id === 'mm-01' || course.id === 'mm-05';
+    if (categoryFilter === 'school') return course.id === 'mm-01' || course.id === 'mm-05' || course.id === 'mm-06';
     if (categoryFilter === 'police') return course.id === 'mm-03';
     if (categoryFilter === 'maths') return course.id === 'mm-04' || course.id === 'mm-05';
     if (categoryFilter === 'trainer') return course.id === 'mm-02';
@@ -286,7 +354,8 @@ export const Courses: React.FC = () => {
   });
 
   const handleFreeDownload = (resourceName: string, fileName: string) => {
-    const textContent = `MINDMASTER ACADEMY — FREE STUDY RESOURCE\n\nTitle: ${resourceName}\nAuthor: Sagar Dhumal\nWebsite: http://localhost:3000\nHelpline: +91 84593 44077\n\nEnjoy this high-value cognitive acceleration guide from MindMaster Academy!`;
+    const webOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://mindmasteracademy.in';
+    const textContent = `MINDMASTER ACADEMY — FREE STUDY RESOURCE\n\nTitle: ${resourceName}\nMentor: Prashant Dhumal Sir\nWebsite: ${webOrigin}\nHelpline: +91 84593 44077\n\nEnjoy this high-value cognitive acceleration guide from MindMaster Academy!`;
     const element = document.createElement('a');
     const file = new Blob([textContent], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
@@ -370,7 +439,7 @@ export const Courses: React.FC = () => {
               </span>
             </h1>
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
-              Practical memory systems, competitive GK retention, Vedic arithmetic, and certified coach training created by Sagar Dhumal.
+              Practical memory systems, competitive GK retention, Vedic arithmetic, and certified coach training created by Prashant Dhumal Sir.
             </p>
 
             {/* Course Category Filter Pills */}
@@ -439,6 +508,11 @@ export const Courses: React.FC = () => {
           <div className="max-w-container-max mx-auto px-gutter-desktop">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-xl mb-space-xl">
               {filteredCourses.map((course) => {
+                const liveMatch = liveDbCourses.find(
+                  (lc) => lc.code.toUpperCase() === course.code.toUpperCase() || lc.id === course.id
+                );
+                const isLive = Boolean(liveMatch);
+
                 let imgPath = '/assets/images/memory_seminar_brain_3d.png';
                 let icon = 'psychology';
                 if (course.id === 'mm-02') {
@@ -453,6 +527,9 @@ export const Courses: React.FC = () => {
                 } else if (course.id === 'mm-05') {
                   imgPath = '/assets/images/vedic_maths_abacus_3d.png';
                   icon = 'calculate';
+                } else if (course.id === 'mm-06') {
+                  imgPath = '/assets/images/classroom_students_group.png';
+                  icon = 'stars';
                 }
 
                 return (
@@ -470,9 +547,23 @@ export const Courses: React.FC = () => {
                       <div className="absolute top-3 left-3 w-10 h-10 rounded-full flex items-center justify-center text-primary-container shadow-md backdrop-blur-md bg-white/90">
                         <span className="material-symbols-outlined text-[22px]">{icon}</span>
                       </div>
-                      <span className="absolute top-3 right-3 font-label-caps text-xs px-space-sm py-1 bg-surface-container-lowest/90 text-primary-container rounded-full shadow-md backdrop-blur-md font-bold">
-                        {course.code}
-                      </span>
+                      
+                      {/* Status / Code Badges */}
+                      <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                        {isLive ? (
+                          <span className="font-label-caps text-[10px] px-2.5 py-1 bg-emerald-600 text-white rounded-full shadow-md font-extrabold flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                            <span>LIVE</span>
+                          </span>
+                        ) : (
+                          <span className="font-label-caps text-[10px] px-2.5 py-1 bg-amber-500 text-slate-950 rounded-full shadow-md font-extrabold flex items-center gap-1">
+                            <span>🚀 Coming Soon</span>
+                          </span>
+                        )}
+                        <span className="font-label-caps text-xs px-2.5 py-1 bg-surface-container-lowest/90 text-primary-container rounded-full shadow-md backdrop-blur-md font-bold">
+                          {course.code}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="p-space-lg flex flex-col flex-grow justify-between space-y-4">
@@ -503,10 +594,10 @@ export const Courses: React.FC = () => {
                       <div className="flex items-center justify-between pt-space-md border-t border-surface-variant/40">
                         <div className="flex items-center gap-space-xs">
                           <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-title-md text-xs font-bold">
-                            SD
+                            PD
                           </div>
                           <span className="font-title-md text-xs font-semibold text-primary-container">
-                            Sagar Dhumal
+                            Prashant Dhumal Sir
                           </span>
                         </div>
 
@@ -517,16 +608,30 @@ export const Courses: React.FC = () => {
                             className="px-3 py-1.5 rounded-full font-title-md text-xs text-secondary border border-secondary/40 hover:bg-secondary-fixed/40 transition-colors cursor-pointer flex items-center gap-1"
                           >
                             <span className="material-symbols-outlined text-[14px]">description</span>
-                            Syllabus PDF
+                            Syllabus
                           </button>
-                          <a
-                            href={getAppCourseCheckoutUrl(course.id)}
-                            className="font-title-md text-xs text-on-secondary bg-secondary px-3.5 py-1.5 rounded-full hover:bg-secondary-container transition-all shadow-xs flex items-center gap-1 font-bold"
-                            title={`Enroll in ${course.title} & Open App`}
-                          >
-                            <span>Enroll</span>
-                            <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-                          </a>
+
+                          {isLive ? (
+                            <a
+                              href={getAppCourseCheckoutUrl(course.code)}
+                              className="font-title-md text-xs text-on-secondary bg-secondary px-3.5 py-1.5 rounded-full hover:bg-secondary-container transition-all shadow-xs flex items-center gap-1 font-bold"
+                              title={`Enroll in ${course.title} & Open App`}
+                            >
+                              <span>Enroll (₹{Math.round((liveMatch?.pricePaise || 99900) / 100)})</span>
+                              <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+                            </a>
+                          ) : (
+                            <a
+                              href={getWhatsAppPreBookUrl(course.title)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-title-md text-xs text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 rounded-full transition-all shadow-xs flex items-center gap-1 font-bold cursor-pointer active:scale-95"
+                              title={`Pre-Book / Notify Me on WhatsApp for ${course.title}`}
+                            >
+                              <span className="material-symbols-outlined text-[14px]">notifications_active</span>
+                              <span>🔔 Notify Me When Batch Starts</span>
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -863,7 +968,7 @@ export const Courses: React.FC = () => {
                 Free tools to start today
               </h2>
               <p className="font-body-md text-body-md text-on-surface-variant">
-                Handy cognitive acceleration templates and foundational guides created by Sagar Dhumal.
+                Handy cognitive acceleration templates and foundational guides created by Prashant Dhumal Sir.
               </p>
             </div>
 

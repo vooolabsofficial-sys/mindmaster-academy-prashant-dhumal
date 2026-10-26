@@ -118,7 +118,7 @@ export const PrivacyPolicy: React.FC = () => {
               <p className="text-slate-600">Near Powai Naka, Sadar Bazar, Satara, Maharashtra - 415001</p>
               <p className="text-slate-600"><strong>Mentor & Director:</strong> Sagar (Prashant) Dhumal</p>
               <p className="text-slate-600"><strong>Phone / WhatsApp:</strong> +91 84593 44077</p>
-              <p className="text-slate-600"><strong>Email:</strong> contact@mindmasteracademy.in</p>
+              <p className="text-slate-600"><strong>Email:</strong> mindmasterdhumal@gmail.com</p>
             </div>
           </section>
         </div>

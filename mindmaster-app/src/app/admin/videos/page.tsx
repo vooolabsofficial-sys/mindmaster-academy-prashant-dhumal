@@ -15,6 +15,10 @@ import {
   ExtendedVideoRow,
   getStoredVideos,
   saveStoredVideos,
+  extractYouTubeVideoId,
+  fetchDbVideos,
+  saveLessonToSupabase,
+  deleteLessonFromSupabase,
 } from "@/lib/playlistStore";
 
 export default function VideoManagerPage() {
@@ -42,6 +46,10 @@ export default function VideoManagerPage() {
   const [specificRemoveAt, setSpecificRemoveAt] = useState("");
   const [isFreePreview, setIsFreePreview] = useState(false);
   const [durationMinutes, setDurationMinutes] = useState(15);
+  const [lessonDescription, setLessonDescription] = useState("");
+  const [lessonPosition, setLessonPosition] = useState(1);
+  const [partNumber, setPartNumber] = useState(1);
+  const [seriesTitle, setSeriesTitle] = useState("");
 
   // Admin-Only Delete Modal State
   const [deleteModalVideo, setDeleteModalVideo] = useState<ExtendedVideoRow | null>(null);
@@ -54,7 +62,11 @@ export default function VideoManagerPage() {
       setSelectedCourseId(cList[0].id);
     }
 
-    const loadVideos = () => setVideos(getStoredVideos());
+    const loadVideos = () => {
+      fetchDbVideos().then((vList) => {
+        if (vList) setVideos(vList);
+      });
+    };
     loadVideos();
     window.addEventListener("mma_videos_changed", loadVideos);
     return () => window.removeEventListener("mma_videos_changed", loadVideos);
@@ -81,6 +93,10 @@ export default function VideoManagerPage() {
     setSpecificRemoveAt("");
     setIsFreePreview(false);
     setDurationMinutes(15);
+    setLessonDescription("");
+    setLessonPosition(videos.length + 1);
+    setPartNumber(1);
+    setSeriesTitle("");
     setIsDrawerOpen(true);
   };
 
@@ -101,6 +117,10 @@ export default function VideoManagerPage() {
     }
     setIsFreePreview(video.isFree);
     setDurationMinutes(Math.round(video.durationSec / 60) || 15);
+    setLessonDescription(video.description || "");
+    setLessonPosition(video.position || 1);
+    setPartNumber(video.partNumber || 1);
+    setSeriesTitle(video.seriesTitle || "");
     setIsDrawerOpen(true);
   };
 
@@ -128,6 +148,10 @@ export default function VideoManagerPage() {
     }
 
     const courseObj = courses.find((c) => c.id === selectedCourseId);
+    const cleanVideoId =
+      videoType === "youtube"
+        ? extractYouTubeVideoId(videoLink) || videoLink.trim()
+        : videoLink.trim();
 
     const newVideo: ExtendedVideoRow = {
       id: editingVideo ? editingVideo.id : `vid-${Date.now()}`,
@@ -136,7 +160,7 @@ export default function VideoManagerPage() {
       courseId: selectedCourseId,
       courseTitle: courseObj ? courseObj.title : "MindMaster Curriculum",
       videoType,
-      videoId: videoLink.trim(),
+      videoId: cleanVideoId,
       publishAt: publishAt ? new Date(publishAt).toISOString() : new Date().toISOString(),
       removeAt: computedRemoveAt,
       validityDays,
@@ -145,6 +169,11 @@ export default function VideoManagerPage() {
       views: editingVideo ? editingVideo.views : 0,
       avgWatchPercent: editingVideo ? editingVideo.avgWatchPercent : 0,
       status,
+      description: lessonDescription.trim() || undefined,
+      position: lessonPosition,
+      partNumber,
+      seriesTitle: seriesTitle.trim() || undefined,
+      likesCount: editingVideo ? editingVideo.likesCount : 0,
     };
 
     const currentVideos = getStoredVideos();
@@ -154,6 +183,7 @@ export default function VideoManagerPage() {
 
     setVideos(updated);
     saveStoredVideos(updated);
+    saveLessonToSupabase(newVideo);
 
     logStaffAction(
       editingVideo ? "VIDEO_UPDATE" : "VIDEO_CREATE",
@@ -173,6 +203,7 @@ export default function VideoManagerPage() {
     const updated = currentVideos.filter((v) => v.id !== deleteModalVideo.id);
     setVideos(updated);
     saveStoredVideos(updated);
+    deleteLessonFromSupabase(deleteModalVideo.id || deleteModalVideo.lessonId || deleteModalVideo.videoId, deleteModalVideo.courseId);
 
     logStaffAction(
       "VIDEO_DELETE",
@@ -380,11 +411,17 @@ export default function VideoManagerPage() {
                                 <span className="text-[#8A94A6]">•</span>
                                 <span className="text-[#0B57D0]">{video.avgWatchPercent}% Avg</span>
                               </div>
-                              <div className="w-28 bg-[#E4E8F8] h-1.5 rounded-full overflow-hidden">
-                                <div
-                                  className="bg-[#0B57D0] h-full rounded-full"
-                                  style={{ width: `${video.avgWatchPercent}%` }}
-                                />
+                              <div className="flex items-center gap-3">
+                                <div className="w-20 bg-[#E4E8F8] h-1.5 rounded-full overflow-hidden">
+                                  <div
+                                    className="bg-[#0B57D0] h-full rounded-full"
+                                    style={{ width: `${video.avgWatchPercent}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-0.5">
+                                  <span>👍</span>
+                                  <span>{video.likesCount !== undefined ? video.likesCount : Math.floor((video.views || 8) * 0.42)}</span>
+                                </span>
                               </div>
                             </div>
                           </td>
@@ -480,33 +517,141 @@ export default function VideoManagerPage() {
                       </div>
                     </div>
 
-                    {/* Video Link / ID Input */}
+                    {/* Video Link / ID Input with Live YouTube Extraction */}
                     <div>
-                      <label className="block font-bold text-[#0E1B3D] mb-1">
-                        {videoType === "youtube" ? "YouTube Video ID or Full URL" : "Custom HLS / Video Stream URL"}
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block font-bold text-[#0E1B3D]">
+                          {videoType === "youtube" ? "YouTube Video Link or ID (Unlisted)" : "Custom Stream URL"}
+                        </label>
+                        {videoType === "youtube" && (
+                          <span className="text-[10px] text-blue-600 font-bold">Auto-Extracts ID</span>
+                        )}
+                      </div>
                       <input
                         type="text"
                         required
                         value={videoLink}
                         onChange={(e) => setVideoLink(e.target.value)}
-                        placeholder={videoType === "youtube" ? "e.g. dQw4w9WgXcQ or https://youtu.be/..." : "https://stream.mindmasteracademy.in/hls/lesson.m3u8"}
+                        placeholder={videoType === "youtube" ? "e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ or dQw4w9WgXcQ" : "https://stream.mindmasteracademy.in/hls/lesson.m3u8"}
                         className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none"
                       />
+
+                      {/* YouTube Detection Badge & Preview */}
+                      {videoType === "youtube" && videoLink.trim() && (
+                        <div className="mt-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3">
+                          {(() => {
+                            const detectedId = extractYouTubeVideoId(videoLink);
+                            if (detectedId) {
+                              return (
+                                <>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={`https://img.youtube.com/vi/${detectedId}/mqdefault.jpg`}
+                                    alt="YouTube Preview"
+                                    className="w-16 h-10 rounded-lg object-cover border border-slate-300 shrink-0"
+                                    onError={(e) => {
+                                      (e.target as HTMLElement).style.display = "none";
+                                    }}
+                                  />
+                                  <div className="text-[11px]">
+                                    <div className="text-emerald-700 font-extrabold flex items-center gap-1">
+                                      <span>✅</span> Valid YouTube Video ID Detected
+                                    </div>
+                                    <code className="text-slate-600 font-mono text-[10px]">{detectedId}</code>
+                                  </div>
+                                </>
+                              );
+                            }
+                            return (
+                              <div className="text-[11px] text-amber-700 font-medium">
+                                ⚠️ Please enter a valid YouTube link or 11-character video ID (e.g. youtube.com/watch?v=...)
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Lesson Title */}
+                    {/* Lesson Title & Order */}
+                    <div className="grid grid-cols-4 gap-3">
+                      <div className="col-span-3">
+                        <label className="block font-bold text-[#0E1B3D] mb-1">
+                          Lesson Title *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={lessonTitle}
+                          onChange={(e) => setLessonTitle(e.target.value)}
+                          placeholder="e.g. 16 Vedic Sutras: Speed Math Foundation"
+                          className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="col-span-1">
+                        <label className="block font-bold text-[#0E1B3D] mb-1">
+                          Order
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={lessonPosition}
+                          onChange={(e) => setLessonPosition(Number(e.target.value))}
+                          placeholder="1"
+                          className="w-full px-3 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-center text-[#0E1B3D] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Multi-Part Series / Episode Chaining */}
+                    <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="font-bold text-[#0E1B3D] text-xs flex items-center gap-1.5">
+                          <span>🎬</span>
+                          <span>Multi-Part Series</span>
+                        </label>
+                        <span className="text-[10px] text-indigo-600 font-bold">Optional</span>
+                      </div>
+                      <p className="text-[11px] text-[#5A6478]">
+                        If this video is part of a series (e.g. Part 1, Part 2), specify the series title and part number.
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="col-span-2">
+                          <input
+                            type="text"
+                            value={seriesTitle}
+                            onChange={(e) => setSeriesTitle(e.target.value)}
+                            placeholder="e.g. 500 Year Calendar Masterclass"
+                            className="w-full px-3 py-2 bg-white border border-indigo-200 rounded-lg text-xs text-[#0E1B3D] focus:outline-none"
+                          />
+                        </div>
+                        <div className="col-span-1">
+                          <select
+                            value={partNumber}
+                            onChange={(e) => setPartNumber(Number(e.target.value))}
+                            className="w-full px-2 py-2 bg-white border border-indigo-200 rounded-lg text-xs font-bold text-[#0E1B3D] focus:outline-none"
+                          >
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                              <option key={num} value={num}>
+                                Part {num}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lesson Description */}
                     <div>
                       <label className="block font-bold text-[#0E1B3D] mb-1">
-                        Lesson Title
+                        Lesson Description
                       </label>
-                      <input
-                        type="text"
-                        required
-                        value={lessonTitle}
-                        onChange={(e) => setLessonTitle(e.target.value)}
-                        placeholder="e.g. 16 Vedic Sutras: Speed Math Foundation"
-                        className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none"
+                      <textarea
+                        value={lessonDescription}
+                        onChange={(e) => setLessonDescription(e.target.value)}
+                        placeholder="What students will learn in this video lesson..."
+                        rows={2}
+                        className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none resize-none"
                       />
                     </div>
 

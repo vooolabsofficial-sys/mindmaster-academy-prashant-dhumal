@@ -9,23 +9,81 @@ import {
   getStaffStudents,
   sendInAppNotification,
   getStaffCourses,
+  getStaffBooks,
   logStaffAction,
+  fetchDbStudents,
+  updateStudentProfileCascading,
+  getPlatformSettings,
 } from "@/lib/staffStore";
 import { exportStudentsToExcel } from "@/lib/excelExporter";
 import { createStudentFuzzySearch } from "@/lib/fuzzySearch";
+import { grantCashAdmission, extendStudentAccess, revokeStudentAccess } from "@/lib/grantStore";
+import { resetStudentDeviceSessionLock } from "@/lib/studentAuthService";
+import { hasStaffPermission } from "@/lib/types";
 
 export default function StudentFinderPage() {
   const [currentStaff, setCurrentStaff] = useState<StaffUser>(getCurrentStaff());
   const [students, setStudents] = useState<StudentRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [districtFilter, setDistrictFilter] = useState("all");
   const [talukaFilter, setTalukaFilter] = useState("all");
   const [schoolFilter, setSchoolFilter] = useState("all");
   const [courseFilter, setCourseFilter] = useState("all");
   const [progressFilter, setProgressFilter] = useState<"all" | "0-25" | "26-75" | "76-99" | "100">("all");
+  const [expiring7DaysOnly, setExpiring7DaysOnly] = useState(false);
+  const [recentSignupsOnly, setRecentSignupsOnly] = useState(false);
 
   // 360 Drawer State
   const [drawerStudent, setDrawerStudent] = useState<StudentRecord | null>(null);
+
+  // Power Actions: Extend Validity Modal State
+  const [extendModalItem, setExtendModalItem] = useState<{
+    student: StudentRecord;
+    itemType: "course" | "book";
+    itemId: string;
+    itemTitle: string;
+    currentExpiry?: string;
+    purchaseId?: string;
+    grantId?: string;
+  } | null>(null);
+  const [extendOption, setExtendOption] = useState<"7" | "15" | "30" | "custom">("15");
+  const [extendCustomDate, setExtendCustomDate] = useState("");
+  const [isExtending, setIsExtending] = useState(false);
+
+  // Power Actions: Revoke Access Modal State
+  const [revokeModalItem, setRevokeModalItem] = useState<{
+    student: StudentRecord;
+    itemType: "course" | "book";
+    itemId: string;
+    itemTitle: string;
+    purchaseId?: string;
+    grantId?: string;
+  } | null>(null);
+  const [revokeReason, setRevokeReason] = useState("");
+  const [isRevoking, setIsRevoking] = useState(false);
+  const [revokeError, setRevokeError] = useState("");
+
+  // Power Actions: Edit Student Profile Modal State
+  const [editStudentModal, setEditStudentModal] = useState<StudentRecord | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editDistrict, setEditDistrict] = useState("");
+  const [editTaluka, setEditTaluka] = useState("");
+  const [editSchool, setEditSchool] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [editProfileError, setEditProfileError] = useState("");
+
+  // Action Feedback Toast
+  const [actionFeedbackToast, setActionFeedbackToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setActionFeedbackToast({ message, type });
+    setTimeout(() => setActionFeedbackToast(null), 3500);
+  };
 
   // In-App Notification Modal State (Strictly In-App, NO WhatsApp)
   const [notifyStudent, setNotifyStudent] = useState<StudentRecord | null>(null);
@@ -33,11 +91,35 @@ export default function StudentFinderPage() {
   const [notifMessage, setNotifMessage] = useState("");
   const [notifySuccess, setNotifySuccess] = useState(false);
 
+  // Offline Cash Admission / Direct Course Grant Modal State
+  const [isCashModalOpen, setIsCashModalOpen] = useState(false);
+  const [cashPhone, setCashPhone] = useState("");
+  const [cashName, setCashName] = useState("");
+  const [cashCourseId, setCashCourseId] = useState("");
+  const [cashAccessMonths, setCashAccessMonths] = useState(6);
+  const [cashPaymentMode, setCashPaymentMode] = useState<"cash" | "upi" | "scholarship">("cash");
+  const [cashAmount, setCashAmount] = useState(199);
+  const [cashRemarks, setCashRemarks] = useState("");
+  const [cashSuccessReceipt, setCashSuccessReceipt] = useState<{
+    grantId: string;
+    studentName: string;
+    studentPhone: string;
+    courseTitle: string;
+    amount: number;
+    paymentMode: string;
+    expiresAt: string;
+    whatsappUrl?: string;
+  } | null>(null);
+  const [cashError, setCashError] = useState("");
+
   const courses = getStaffCourses();
 
-  const reload = () => {
+  const reload = async () => {
     setCurrentStaff(getCurrentStaff());
-    setStudents(getStaffStudents());
+    setIsLoading(true);
+    const dbStudents = await fetchDbStudents();
+    setStudents(dbStudents);
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -86,6 +168,79 @@ export default function StudentFinderPage() {
     }, 1400);
   };
 
+  // Open Offline Cash Admission Modal
+  const handleOpenCashModal = (student?: StudentRecord) => {
+    const courseList = getStaffCourses();
+    const defaultCourse = courseList[0];
+    const defaultPrice = defaultCourse ? Math.round(defaultCourse.pricePaise / 100) : 199;
+
+    setCashPhone(student ? student.phone.replace(/\D/g, "").slice(-10) : "");
+    setCashName(student ? student.name : "");
+    setCashCourseId(defaultCourse?.id || "");
+    setCashAccessMonths(defaultCourse?.accessMonths || 6);
+    setCashPaymentMode("cash");
+    setCashAmount(defaultPrice);
+    setCashRemarks("");
+    setCashError("");
+    setCashSuccessReceipt(null);
+    setIsCashModalOpen(true);
+  };
+
+  // Handle Save Offline Cash Admission
+  const handleSaveCashGrant = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCashError("");
+
+    const clean = cashPhone.replace(/\D/g, "").slice(-10);
+    if (clean.length !== 10) {
+      setCashError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (!cashCourseId) {
+      setCashError("Please select a course.");
+      return;
+    }
+
+    const courseList = getStaffCourses();
+    const bookList = getStaffBooks();
+    const selectedCourse = courseList.find((c) => c.id === cashCourseId || c.code === cashCourseId);
+    const selectedBook = !selectedCourse ? bookList.find((b) => b.id === cashCourseId || b.code === cashCourseId) : null;
+    const itemTitle = selectedCourse?.title || selectedBook?.title || "MindMaster Item";
+
+    const result = grantCashAdmission({
+      studentPhone: clean,
+      studentName: cashName.trim() || undefined,
+      courseId: cashCourseId,
+      accessMonths: cashAccessMonths,
+      paymentMode: cashPaymentMode,
+      amountPaid: cashAmount,
+      remarks: cashRemarks.trim() || undefined,
+    });
+
+    if (!result.success) {
+      setCashError(result.error || "Failed to grant admission.");
+      return;
+    }
+
+    setCashSuccessReceipt({
+      grantId: result.grantId,
+      studentName: cashName.trim() || `Student ${clean.slice(-4)}`,
+      studentPhone: clean,
+      courseTitle: itemTitle,
+      amount: cashAmount,
+      paymentMode:
+        cashPaymentMode === "cash"
+          ? "Cash"
+          : cashPaymentMode === "upi"
+          ? "Direct UPI (PhonePe/GPay)"
+          : "Free Grant / Scholarship",
+      expiresAt: result.expiresAt,
+      whatsappUrl: result.whatsappUrl,
+    });
+
+    reload();
+  };
+
   // 1-Click Excel Export
   const handleExportExcel = () => {
     exportStudentsToExcel(
@@ -107,6 +262,218 @@ export default function StudentFinderPage() {
     );
   };
 
+  const canManageGrants = isMainAdmin || hasStaffPermission(currentStaff, "freegrant.manage");
+
+  // WhatsApp Renewal Reminder
+  const handleSendWhatsAppRenewalReminder = (student: StudentRecord, courseOrBookTitle: string, daysLeft: number) => {
+    const clean = student.phone.replace(/\D/g, "").slice(-10);
+    const settings = getPlatformSettings();
+    const template =
+      settings.reminder_template ||
+      "Namaskar {name}, your access to {course} will expire in {days} days. Renew today to get {percent}% off!";
+    const percent = settings.renewal_coupon_percent || 50;
+    const msg = template
+      .replace("{name}", student.name.split(" ")[0])
+      .replace("{course}", courseOrBookTitle)
+      .replace("{days}", String(daysLeft))
+      .replace("{percent}", String(percent));
+
+    const waUrl = `https://wa.me/91${clean}?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, "_blank");
+
+    logStaffAction(
+      "WHATSAPP_RENEWAL_REMINDER_SENT",
+      "student",
+      student.id,
+      student.name,
+      `Triggered 1-click WhatsApp renewal reminder to ${student.name} (${clean}) for "${courseOrBookTitle}" (${daysLeft}d left).`
+    );
+    showToast(`WhatsApp reminder dispatched for ${student.name}!`);
+  };
+
+  // Reset Device Session Lock
+  const handleResetSessionLock = (student: StudentRecord) => {
+    resetStudentDeviceSessionLock(student.phone);
+    logStaffAction(
+      "STUDENT_SESSION_RESET",
+      "student",
+      student.phone,
+      student.name,
+      `Staff (${currentStaff.role} - ${currentStaff.name}) reset device session lock for ${student.name} (${student.phone}).`
+    );
+    showToast(`Device session lock cleared for ${student.name}! Learner can now login from a new phone.`);
+  };
+
+  // Open Edit Profile Modal
+  const handleOpenEditProfile = (student: StudentRecord) => {
+    setEditStudentModal(student);
+    setEditName(student.name);
+    setEditPhone(student.phone.replace(/\D/g, "").slice(-10));
+    setEditDistrict(student.district || "Maharashtra");
+    setEditTaluka(student.taluka || "");
+    setEditSchool(student.school || "");
+    setEditProfileError("");
+  };
+
+  // Save Edit Profile
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editStudentModal) return;
+    setEditProfileError("");
+    setIsSavingProfile(true);
+
+    const clean = editPhone.replace(/\D/g, "").slice(-10);
+    if (clean.length !== 10) {
+      setEditProfileError("Please enter a valid 10-digit mobile number.");
+      setIsSavingProfile(false);
+      return;
+    }
+
+    try {
+      const result = await updateStudentProfileCascading(editStudentModal.phone, {
+        name: editName.trim(),
+        phone: clean,
+        district: editDistrict.trim(),
+        taluka: editTaluka.trim(),
+        school: editSchool.trim(),
+      });
+
+      if (!result.success) {
+        setEditProfileError(result.error || "Failed to update profile.");
+        setIsSavingProfile(false);
+        return;
+      }
+
+      showToast(`Profile updated successfully for ${editName.trim()}!`);
+      setEditStudentModal(null);
+      await reload();
+
+      // Update drawerStudent if open
+      if (drawerStudent && (drawerStudent.id === editStudentModal.id || drawerStudent.phone === editStudentModal.phone)) {
+        setDrawerStudent((prev) =>
+          prev
+            ? {
+                ...prev,
+                name: editName.trim(),
+                phone: clean,
+                district: editDistrict.trim(),
+                taluka: editTaluka.trim(),
+                school: editSchool.trim(),
+              }
+            : null
+        );
+      }
+    } catch (err: any) {
+      setEditProfileError(err?.message || "Error updating profile.");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  // Submit Extend Validity
+  const handleConfirmExtend = async () => {
+    if (!extendModalItem) return;
+    setIsExtending(true);
+    try {
+      let daysToAdd: number | undefined;
+      let customDate: string | undefined;
+
+      if (extendOption === "custom") {
+        if (!extendCustomDate) {
+          showToast("Please choose a custom expiry date.", "error");
+          setIsExtending(false);
+          return;
+        }
+        customDate = new Date(extendCustomDate).toISOString();
+      } else {
+        daysToAdd = Number(extendOption);
+      }
+
+      const res = await extendStudentAccess({
+        studentPhone: extendModalItem.student.phone,
+        studentName: extendModalItem.student.name,
+        itemType: extendModalItem.itemType,
+        itemId: extendModalItem.itemId,
+        itemTitle: extendModalItem.itemTitle,
+        daysToAdd,
+        customExpiryIso: customDate,
+        purchaseId: extendModalItem.purchaseId,
+        grantId: extendModalItem.grantId,
+      });
+
+      if (!res.success) {
+        showToast(res.error || "Failed to extend validity.", "error");
+        setIsExtending(false);
+        return;
+      }
+
+      showToast(`Extended access for ${extendModalItem.itemTitle} until ${res.newExpiry.slice(0, 10)}!`);
+      setExtendModalItem(null);
+      await reload();
+
+      // Refresh drawerStudent
+      if (drawerStudent) {
+        const dbStudents = await fetchDbStudents();
+        const updatedTarget = dbStudents.find(
+          (s) => s.id === drawerStudent.id || s.phone === drawerStudent.phone
+        );
+        if (updatedTarget) setDrawerStudent(updatedTarget);
+      }
+    } catch (err: any) {
+      showToast(err?.message || "Failed to extend access.", "error");
+    } finally {
+      setIsExtending(false);
+    }
+  };
+
+  // Submit Revoke Access
+  const handleConfirmRevokeAccess = async () => {
+    if (!revokeModalItem) return;
+    if (!revokeReason.trim()) {
+      setRevokeError("Mandatory reason is required to revoke access.");
+      return;
+    }
+    setRevokeError("");
+    setIsRevoking(true);
+
+    try {
+      const res = await revokeStudentAccess({
+        studentPhone: revokeModalItem.student.phone,
+        studentName: revokeModalItem.student.name,
+        itemType: revokeModalItem.itemType,
+        itemId: revokeModalItem.itemId,
+        itemTitle: revokeModalItem.itemTitle,
+        reason: revokeReason.trim(),
+        purchaseId: revokeModalItem.purchaseId,
+        grantId: revokeModalItem.grantId,
+      });
+
+      if (!res.success) {
+        setRevokeError(res.error || "Failed to revoke access.");
+        setIsRevoking(false);
+        return;
+      }
+
+      showToast(`Terminated access to ${revokeModalItem.itemTitle}. Logged to audit trail.`);
+      setRevokeModalItem(null);
+      setRevokeReason("");
+      await reload();
+
+      // Refresh drawerStudent
+      if (drawerStudent) {
+        const dbStudents = await fetchDbStudents();
+        const updatedTarget = dbStudents.find(
+          (s) => s.id === drawerStudent.id || s.phone === drawerStudent.phone
+        );
+        if (updatedTarget) setDrawerStudent(updatedTarget);
+      }
+    } catch (err: any) {
+      setRevokeError(err?.message || "Failed to revoke access.");
+    } finally {
+      setIsRevoking(false);
+    }
+  };
+
   // Filter students with Typo-Tolerant Fuzzy Search (Fuse.js)
   const searchMatchedStudents = React.useMemo(() => {
     const q = searchQuery.trim();
@@ -116,40 +483,82 @@ export default function StudentFinderPage() {
     if (results.length > 0) {
       return results.map((r) => r.item);
     }
-    return students.filter((s) =>
-      s.name.toLowerCase().includes(q.toLowerCase()) ||
-      s.phone.includes(q) ||
-      s.email.toLowerCase().includes(q.toLowerCase()) ||
-      (s.school && s.school.toLowerCase().includes(q.toLowerCase()))
+    return students.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q.toLowerCase()) ||
+        s.phone.includes(q) ||
+        s.email.toLowerCase().includes(q.toLowerCase()) ||
+        (s.school && s.school.toLowerCase().includes(q.toLowerCase()))
     );
   }, [students, searchQuery]);
 
-  const filteredStudents = searchMatchedStudents.filter((s) => {
-    const matchesDistrict =
-      districtFilter === "all" || s.district.toLowerCase() === districtFilter.toLowerCase();
+  const expiring7DaysCount = React.useMemo(() => {
+    return students.filter((s) => {
+      const hasExpiringCourse = (s.coursesTaken || []).some(
+        (c) => !c.isExpired && c.daysLeft !== undefined && c.daysLeft <= 7 && c.daysLeft > 0
+      );
+      const hasExpiringBook = (s.enrolledBooks || []).some(
+        (b) => !b.isExpired && b.daysLeft !== undefined && b.daysLeft <= 7 && b.daysLeft > 0
+      );
+      return hasExpiringCourse || hasExpiringBook;
+    }).length;
+  }, [students]);
 
-    const matchesTaluka =
-      talukaFilter === "all" || (s.taluka && s.taluka.toLowerCase() === talukaFilter.toLowerCase());
+  const filteredStudents = searchMatchedStudents
+    .filter((s) => {
+      if (recentSignupsOnly) {
+        const regTime = new Date(
+          s.registeredAt || (s as any).joinedAt || (s as any).created_at || 0
+        ).getTime();
+        const fourteenDaysAgo = Date.now() - 14 * 86400000;
+        if (regTime < fourteenDaysAgo) return false;
+      }
 
-    const matchesSchool =
-      schoolFilter === "all" || (s.school && s.school.toLowerCase() === schoolFilter.toLowerCase());
+      if (expiring7DaysOnly) {
+        const hasExpiringCourse = (s.coursesTaken || []).some(
+          (c) => !c.isExpired && c.daysLeft !== undefined && c.daysLeft <= 7 && c.daysLeft > 0
+        );
+        const hasExpiringBook = (s.enrolledBooks || []).some(
+          (b) => !b.isExpired && b.daysLeft !== undefined && b.daysLeft <= 7 && b.daysLeft > 0
+        );
+        if (!hasExpiringCourse && !hasExpiringBook) return false;
+      }
 
-    const matchesCourse =
-      courseFilter === "all" ||
-      s.enrolledCourseCodes.includes(courseFilter) ||
-      s.enrolledCourseCodes.some((c) => c.includes(courseFilter));
+      const matchesDistrict =
+        districtFilter === "all" || s.district.toLowerCase() === districtFilter.toLowerCase();
 
-    // Progress Filter
-    let matchesProgress = true;
-    const totalLessons = s.totalLessonsCount || 20;
-    const pct = Math.round((s.completedLessonsCount / totalLessons) * 100);
-    if (progressFilter === "0-25") matchesProgress = pct >= 0 && pct <= 25;
-    else if (progressFilter === "26-75") matchesProgress = pct > 25 && pct <= 75;
-    else if (progressFilter === "76-99") matchesProgress = pct > 75 && pct < 100;
-    else if (progressFilter === "100") matchesProgress = pct >= 100;
+      const matchesTaluka =
+        talukaFilter === "all" || (s.taluka && s.taluka.toLowerCase() === talukaFilter.toLowerCase());
 
-    return matchesDistrict && matchesTaluka && matchesSchool && matchesCourse && matchesProgress;
-  });
+      const matchesSchool =
+        schoolFilter === "all" || (s.school && s.school.toLowerCase() === schoolFilter.toLowerCase());
+
+      const matchesCourse =
+        courseFilter === "all" ||
+        s.enrolledCourseCodes.includes(courseFilter) ||
+        s.enrolledCourseCodes.some((c) => c.includes(courseFilter));
+
+      // Progress Filter
+      let matchesProgress = true;
+      const totalLessons = s.totalLessonsCount || 20;
+      const pct = Math.round((s.completedLessonsCount / totalLessons) * 100);
+      if (progressFilter === "0-25") matchesProgress = pct >= 0 && pct <= 25;
+      else if (progressFilter === "26-75") matchesProgress = pct > 25 && pct <= 75;
+      else if (progressFilter === "76-99") matchesProgress = pct > 75 && pct < 100;
+      else if (progressFilter === "100") matchesProgress = pct >= 100;
+
+      return matchesDistrict && matchesTaluka && matchesSchool && matchesCourse && matchesProgress;
+    })
+    .sort((a, b) => {
+      // Sort newly registered students to the top
+      const timeA = new Date(
+        a.registeredAt || (a as any).joinedAt || (a as any).created_at || 0
+      ).getTime();
+      const timeB = new Date(
+        b.registeredAt || (b as any).joinedAt || (b as any).created_at || 0
+      ).getTime();
+      return timeB - timeA;
+    });
 
   return (
     <PermissionGuard permission="students.view">
@@ -172,6 +581,16 @@ export default function StudentFinderPage() {
             </div>
 
             <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+              {/* Cash Grant Admission Button */}
+              <button
+                type="button"
+                onClick={() => handleOpenCashModal()}
+                className="px-4 py-2 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <span>💵</span>
+                <span>Grant Admission / Offline Access</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleExportExcel}
@@ -301,41 +720,90 @@ export default function StudentFinderPage() {
               </div>
             </div>
 
-            {/* Progress Chips Row (Admin Only) */}
-            {isMainAdmin && (
-              <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-[#E4E8F8]">
-                <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mr-1">
-                  Progress:
+            {/* Filter Chips: Expiring in 7 Days & Progress */}
+            <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-[#E4E8F8]">
+              {/* Recent Signups Filter Chip */}
+              <button
+                type="button"
+                onClick={() => setRecentSignupsOnly((prev) => !prev)}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  recentSignupsOnly
+                    ? "bg-[#0B57D0] text-white shadow-xs"
+                    : "bg-[#EEF4FF] text-[#0B57D0] hover:bg-[#DDEBFF] border border-[#D0E2FF]"
+                }`}
+              >
+                <span>🆕</span>
+                <span>Recent Signups / New Students</span>
+              </button>
+
+              {/* Expiring in 7 Days Filter Chip */}
+              <button
+                type="button"
+                onClick={() => setExpiring7DaysOnly((prev) => !prev)}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  expiring7DaysOnly
+                    ? "bg-amber-500 text-slate-950 shadow-xs"
+                    : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200"
+                }`}
+              >
+                <span>⚠️</span>
+                <span>Expiring in 7 Days</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-200/80 font-black">
+                  {expiring7DaysCount}
                 </span>
-                {[
-                  { key: "all", label: "All Progress" },
-                  { key: "0-25", label: "0-25% Starter" },
-                  { key: "26-75", label: "26-75% In Progress" },
-                  { key: "76-99", label: "76-99% Advanced" },
-                  { key: "100", label: "🏆 100% Completed" },
-                ].map((chip) => {
-                  const isActive = progressFilter === chip.key;
-                  return (
-                    <button
-                      key={chip.key}
-                      onClick={() => setProgressFilter(chip.key as any)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                        isActive
-                          ? "bg-[#0B57D0] text-white shadow-xs"
-                          : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0B57D0] border border-[#E4E8F8]"
-                      }`}
-                    >
-                      {chip.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+              </button>
+
+              {isMainAdmin && (
+                <>
+                  <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider ml-2 mr-1">
+                    Progress:
+                  </span>
+                  {[
+                    { key: "all", label: "All Progress" },
+                    { key: "0-25", label: "0-25% Starter" },
+                    { key: "26-75", label: "26-75% In Progress" },
+                    { key: "76-99", label: "76-99% Advanced" },
+                    { key: "100", label: "🏆 100% Completed" },
+                  ].map((chip) => {
+                    const isActive = progressFilter === chip.key;
+                    return (
+                      <button
+                        key={chip.key}
+                        onClick={() => setProgressFilter(chip.key as any)}
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                          isActive
+                            ? "bg-[#0B57D0] text-white shadow-xs"
+                            : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0B57D0] border border-[#E4E8F8]"
+                        }`}
+                      >
+                        {chip.label}
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+            </div>
           </div>
 
           {/* Students Table */}
           <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm overflow-hidden">
-            {filteredStudents.length === 0 ? (
+            {isLoading ? (
+              <div className="space-y-4 py-4 animate-pulse">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center justify-between py-3 border-b border-[#E4E8F8]">
+                    <div className="space-y-2 w-1/3">
+                      <div className="h-4 bg-slate-200 rounded-md w-3/4" />
+                      <div className="h-3 bg-slate-100 rounded-md w-1/2" />
+                    </div>
+                    <div className="space-y-2 w-1/4">
+                      <div className="h-3.5 bg-slate-200 rounded-md w-2/3" />
+                      <div className="h-3 bg-slate-100 rounded-md w-1/2" />
+                    </div>
+                    <div className="h-6 bg-slate-200 rounded-full w-20" />
+                  </div>
+                ))}
+              </div>
+            ) : filteredStudents.length === 0 ? (
               <div className="py-14 text-center">
                 <span className="text-4xl">🎓</span>
                 <h3 className="text-base font-bold text-[#0E1B3D] mt-2">No students match your criteria</h3>
@@ -435,6 +903,37 @@ export default function StudentFinderPage() {
                           {/* Actions: 360 Profile + Send Alert */}
                           <td className="py-4 text-right pr-3">
                             <div className="flex items-center justify-end gap-2">
+                              {/* 1-Click WhatsApp Renewal Reminder if expiring in <= 7 days */}
+                              {(() => {
+                                const expiringItem = [
+                                  ...(s.coursesTaken || []),
+                                  ...(s.enrolledBooks || []),
+                                ].find(
+                                  (item: any) =>
+                                    !item.isExpired &&
+                                    item.daysLeft !== undefined &&
+                                    item.daysLeft <= 7 &&
+                                    item.daysLeft > 0
+                                );
+                                if (!expiringItem) return null;
+                                return (
+                                  <button
+                                    onClick={() =>
+                                      handleSendWhatsAppRenewalReminder(
+                                        s,
+                                        (expiringItem as any).courseTitle || (expiringItem as any).title,
+                                        expiringItem.daysLeft
+                                      )
+                                    }
+                                    className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-[11px] font-extrabold transition-colors cursor-pointer flex items-center gap-1 shadow-2xs animate-pulse"
+                                    title="1-Click WhatsApp Renewal Reminder using Platform Settings Template"
+                                  >
+                                    <span>⚠️</span>
+                                    <span>{expiringItem.daysLeft}d: Remind</span>
+                                  </button>
+                                );
+                              })()}
+
                               {/* Direct WhatsApp Button */}
                               <a
                                 href={`https://wa.me/91${s.phone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(`Namaskar ${s.name}, Prashant Dhumal Sir / MindMaster Academy kadun sandesh:`)}`}
@@ -461,6 +960,15 @@ export default function StudentFinderPage() {
                                 title="Send in-app notification"
                               >
                                 <span>🔔</span> Alert
+                              </button>
+
+                              {/* Grant Course to this Student */}
+                              <button
+                                onClick={() => handleOpenCashModal(s)}
+                                className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 rounded-xl text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
+                                title="Grant course to this student"
+                              >
+                                <span>💵</span> Grant Access
                               </button>
                             </div>
                           </td>
@@ -507,7 +1015,7 @@ export default function StudentFinderPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {/* WHATSAPP CHIP */}
                       <a
                         href={`https://wa.me/91${drawerStudent.phone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(`Namaskar ${drawerStudent.name}, Prashant Dhumal Sir / MindMaster Academy kadun sandesh:`)}`}
@@ -525,6 +1033,30 @@ export default function StudentFinderPage() {
                       >
                         <span>📞</span> Call Student
                       </a>
+
+                      {/* EDIT PROFILE */}
+                      {(isMainAdmin || canManageGrants) && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditProfile(drawerStudent)}
+                          className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                          title="Edit Student Profile & Phone"
+                        >
+                          <span>✏️</span> Edit Profile
+                        </button>
+                      )}
+
+                      {/* RESET DEVICE LOCK */}
+                      {(isMainAdmin || canManageGrants) && (
+                        <button
+                          type="button"
+                          onClick={() => handleResetSessionLock(drawerStudent)}
+                          className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                          title="Clear active device session token"
+                        >
+                          <span>🔓</span> Reset Device Lock
+                        </button>
+                      )}
 
                       <button
                         onClick={() => setDrawerStudent(null)}
@@ -593,20 +1125,76 @@ export default function StudentFinderPage() {
                                   </span>
                                 </div>
 
-                                {/* Expiry Chip */}
-                                {course.isExpired ? (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
-                                    ❌ Access Expired
-                                  </span>
-                                ) : course.daysLeft <= 7 ? (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
-                                    ⚠️ Expires in {course.daysLeft} days
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    ⏳ {course.daysLeft} days access left
-                                  </span>
-                                )}
+                                {/* Expiry Chip & Action Buttons */}
+                                <div className="flex flex-wrap items-center gap-1.5 justify-end">
+                                  {course.isExpired ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
+                                      ❌ Access Expired
+                                    </span>
+                                  ) : course.daysLeft <= 7 ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                      ⚠️ Expires in {course.daysLeft} days
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      ⏳ {course.daysLeft} days left
+                                    </span>
+                                  )}
+
+                                  {/* WhatsApp Renewal Reminder for expiring/expired */}
+                                  {(course.isExpired || course.daysLeft <= 7) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSendWhatsAppRenewalReminder(drawerStudent, course.courseTitle, course.daysLeft)}
+                                      className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E8F8F2] text-[#0A8554] border border-[#C6ECD9] hover:bg-[#D5F2E6] transition cursor-pointer"
+                                      title="Send WhatsApp renewal reminder"
+                                    >
+                                      💬 WA
+                                    </button>
+                                  )}
+
+                                  {/* Extend Validity */}
+                                  {(canManageGrants || isMainAdmin) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setExtendModalItem({
+                                          student: drawerStudent,
+                                          itemType: "course",
+                                          itemId: course.courseId,
+                                          itemTitle: course.courseTitle,
+                                        });
+                                        setExtendOption("30");
+                                        setExtendCustomDate("");
+                                      }}
+                                      className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition cursor-pointer"
+                                      title="Extend Course Validity"
+                                    >
+                                      ⏳ Extend
+                                    </button>
+                                  )}
+
+                                  {/* Revoke Access */}
+                                  {(canManageGrants || isMainAdmin) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setRevokeModalItem({
+                                          student: drawerStudent,
+                                          itemType: "course",
+                                          itemId: course.courseId,
+                                          itemTitle: course.courseTitle,
+                                        });
+                                        setRevokeReason("");
+                                        setRevokeError("");
+                                      }}
+                                      className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
+                                      title="Revoke Course Access"
+                                    >
+                                      🚫 Revoke
+                                    </button>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Progress bar */}
@@ -622,6 +1210,115 @@ export default function StudentFinderPage() {
                                     className="h-full bg-[#0B57D0] rounded-full transition-all"
                                     style={{ width: `${course.progressPct}%` }}
                                   />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 2B. Enrolled Paid / Course-Linked Books */}
+                    <div className="space-y-3 pt-2 border-t border-[#E4E8F8]">
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#0E1B3D] flex items-center gap-1.5">
+                        <span>📖</span> Enrolled Paid & Course-Linked Books
+                      </h3>
+
+                      {(!drawerStudent.enrolledBooks || drawerStudent.enrolledBooks.length === 0) ? (
+                        <div className="p-3.5 bg-[#F5F7FF] rounded-2xl text-xs text-[#5A6478]">
+                          No independent digital books currently granted or purchased.
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {drawerStudent.enrolledBooks.map((book) => (
+                            <div
+                              key={book.id}
+                              className="p-3.5 bg-white border border-[#E4E8F8] rounded-2xl shadow-xs space-y-2"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono text-[10px] font-bold bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200">
+                                      BOOK
+                                    </span>
+                                    <span className="font-bold text-xs text-[#0E1B3D]">
+                                      {book.title}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] text-[#5A6478]">
+                                    {book.code ? `Linked to ${book.code}` : "Standalone Edition"} • Expires: {book.expiresAt ? book.expiresAt.slice(0, 10) : "Active"}
+                                  </p>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-1.5 justify-end">
+                                  {book.isExpired ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
+                                      ❌ Expired
+                                    </span>
+                                  ) : book.daysLeft <= 7 ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                      ⚠️ {book.daysLeft}d left
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      ⏳ {book.daysLeft}d left
+                                    </span>
+                                  )}
+
+                                  {(book.isExpired || book.daysLeft <= 7) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSendWhatsAppRenewalReminder(drawerStudent, book.title, book.daysLeft)}
+                                      className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E8F8F2] text-[#0A8554] border border-[#C6ECD9] hover:bg-[#D5F2E6] transition cursor-pointer"
+                                      title="Send WhatsApp renewal reminder"
+                                    >
+                                      💬 WA
+                                    </button>
+                                  )}
+
+                                  {(canManageGrants || isMainAdmin) && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setExtendModalItem({
+                                            student: drawerStudent,
+                                            itemType: "book",
+                                            itemId: book.id,
+                                            itemTitle: book.title,
+                                            currentExpiry: book.expiresAt,
+                                            purchaseId: book.purchaseId,
+                                            grantId: book.grantId,
+                                          });
+                                          setExtendOption("30");
+                                          setExtendCustomDate("");
+                                        }}
+                                        className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition cursor-pointer"
+                                        title="Extend Book Validity"
+                                      >
+                                        ⏳ Extend
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setRevokeModalItem({
+                                            student: drawerStudent,
+                                            itemType: "book",
+                                            itemId: book.id,
+                                            itemTitle: book.title,
+                                            purchaseId: book.purchaseId,
+                                            grantId: book.grantId,
+                                          });
+                                          setRevokeReason("");
+                                          setRevokeError("");
+                                        }}
+                                        className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
+                                        title="Revoke Book Access"
+                                      >
+                                        🚫 Revoke
+                                      </button>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -816,6 +1513,623 @@ export default function StudentFinderPage() {
                   </form>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* OFFLINE CASH ADMISSION / DIRECT COURSE GRANT MODAL */}
+          {/* ========================================================= */}
+          {isCashModalOpen && (
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+              <div className="bg-white rounded-3xl border border-amber-200 max-w-lg w-full p-6 md:p-8 shadow-2xl space-y-4 my-8">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center text-lg border border-amber-200">
+                      💵
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-[#0E1B3D] font-heading">
+                        Grant Offline Admission / Course Access
+                      </h3>
+                      <p className="text-[11px] text-[#5A6478]">
+                        Provide direct course access via Cash, UPI, or Free Scholarship grant
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsCashModalOpen(false)}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Success Receipt State */}
+                {cashSuccessReceipt ? (
+                  <div className="py-4 space-y-4 text-center">
+                    <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 text-2xl flex items-center justify-center mx-auto border border-emerald-200 shadow-sm">
+                      ✅
+                    </div>
+                    <div>
+                      <h4 className="text-base font-extrabold text-slate-900">
+                        Course Admission Successfully Granted!
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Student has received an in-app notification and course lectures are unlocked instantly.
+                      </p>
+                    </div>
+
+                    {/* Receipt Details Box */}
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-left space-y-2 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Student Name:</span>
+                        <span className="font-bold text-slate-900">{cashSuccessReceipt.studentName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Mobile Number:</span>
+                        <span className="font-mono font-bold text-slate-900">+91 {cashSuccessReceipt.studentPhone}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Course:</span>
+                        <span className="font-bold text-blue-700">{cashSuccessReceipt.courseTitle}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Payment Mode:</span>
+                        <span className="font-bold text-emerald-700">{cashSuccessReceipt.paymentMode}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Amount Collected:</span>
+                        <span className="font-extrabold text-slate-900">₹{cashSuccessReceipt.amount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Access Expiry:</span>
+                        <span className="font-bold text-amber-800">
+                          {new Date(cashSuccessReceipt.expiresAt).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    </div>
+
+                    {cashSuccessReceipt.whatsappUrl && (
+                      <a
+                        href={cashSuccessReceipt.whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-full shadow flex items-center justify-center gap-2 transition"
+                      >
+                        <span>📲 Share Receipt on WhatsApp</span>
+                      </a>
+                    )}
+
+                    <button
+                      onClick={() => setIsCashModalOpen(false)}
+                      className="w-full py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-bold text-xs rounded-full shadow transition"
+                    >
+                      Done
+                    </button>
+                  </div>
+                ) : (
+                  /* Form */
+                  <form onSubmit={handleSaveCashGrant} className="space-y-4 text-xs">
+                    {cashError && (
+                      <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl font-bold text-xs">
+                        {cashError}
+                      </div>
+                    )}
+
+                    {/* Student Phone & Name */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-bold text-[#0E1B3D] mb-1">
+                          Mobile Number (10 digits) *
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-slate-400 font-bold">+91</span>
+                          <input
+                            type="tel"
+                            maxLength={10}
+                            required
+                            value={cashPhone}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, "");
+                              setCashPhone(val);
+                              // Auto lookup student name if matches existing
+                              if (val.length === 10) {
+                                const found = students.find((s) => s.phone.replace(/\D/g, "").slice(-10) === val);
+                                if (found) setCashName(found.name);
+                              }
+                            }}
+                            placeholder="8459344077"
+                            className="w-full pl-12 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-xs text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-[#0E1B3D] mb-1">
+                          Student Full Name
+                        </label>
+                        <input
+                          type="text"
+                          value={cashName}
+                          onChange={(e) => setCashName(e.target.value)}
+                          placeholder="e.g. Rohan Kulkarni"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Course or Book Selection */}
+                    <div>
+                      <label className="block font-bold text-[#0E1B3D] mb-1">
+                        Select Course or Digital Book *
+                      </label>
+                      <select
+                        required
+                        value={cashCourseId}
+                        onChange={(e) => {
+                          const cId = e.target.value;
+                          setCashCourseId(cId);
+                          const sel = courses.find((c) => c.id === cId || c.code === cId);
+                          if (sel) {
+                            setCashAmount(cashPaymentMode === "scholarship" ? 0 : Math.round(sel.pricePaise / 100));
+                            setCashAccessMonths(sel.accessMonths || 6);
+                            return;
+                          }
+                          const staffBooks = getStaffBooks();
+                          const selB = staffBooks.find((b) => b.id === cId || b.code === cId);
+                          if (selB) {
+                            setCashAmount(cashPaymentMode === "scholarship" ? 0 : Math.round((selB.pricePaise || 49900) / 100));
+                            setCashAccessMonths(12);
+                          }
+                        }}
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
+                      >
+                        <optgroup label="🎓 Academy Courses">
+                          {courses.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.code}: {c.title} (₹{Math.round(c.pricePaise / 100)})
+                            </option>
+                          ))}
+                        </optgroup>
+                        {getStaffBooks().length > 0 && (
+                          <optgroup label="📚 Digital Books & Worksheets">
+                            {getStaffBooks().map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.code || "BOOK"}: {b.title} (₹{Math.round((b.pricePaise || 49900) / 100)})
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                      </select>
+                    </div>
+
+                    {/* Validity Duration & Payment Mode */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-bold text-[#0E1B3D] mb-1">
+                          Validity Duration
+                        </label>
+                        <select
+                          value={cashAccessMonths}
+                          onChange={(e) => setCashAccessMonths(Number(e.target.value))}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none"
+                        >
+                          <option value={3}>3 Months</option>
+                          <option value={6}>6 Months</option>
+                          <option value={12}>1 Year (12 Months)</option>
+                          <option value={100}>Lifetime Access</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-[#0E1B3D] mb-1">
+                          Payment Mode *
+                        </label>
+                        <select
+                          value={cashPaymentMode}
+                          onChange={(e) => setCashPaymentMode(e.target.value as any)}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none"
+                        >
+                          <option value="cash">Cash</option>
+                          <option value="upi">Direct UPI (PhonePe/GPay)</option>
+                          <option value="scholarship">Free Grant / Scholarship</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Cash Amount Collected */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block font-bold text-[#0E1B3D]">
+                          Amount Collected (in ₹)
+                        </label>
+                        <span className="text-[10px] text-slate-500 font-semibold">Cash or UPI Amount</span>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2 text-slate-400 font-bold">₹</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={cashAmount}
+                          onChange={(e) => setCashAmount(Number(e.target.value))}
+                          className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Quick presets */}
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {[0, 99, 149, 199, 299, 499].map((amt) => (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => setCashAmount(amt)}
+                            className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border transition ${
+                              cashAmount === amt
+                                ? "bg-amber-500 text-slate-950 border-amber-500 font-extrabold"
+                                : "bg-white text-slate-700 border-slate-200 hover:border-amber-300"
+                            }`}
+                          >
+                            ₹{amt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Remarks */}
+                    <div>
+                      <label className="block font-bold text-[#0E1B3D] mb-1">
+                        Remarks / Notes
+                      </label>
+                      <input
+                        type="text"
+                        value={cashRemarks}
+                        onChange={(e) => setCashRemarks(e.target.value)}
+                        placeholder="e.g. Cash fee collected during Satara seminar / Scholarship"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-[#0E1B3D] focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => setIsCashModalOpen(false)}
+                        className="px-4 py-2 rounded-full border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-5 py-2 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition"
+                      >
+                        Confirm Admission →
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* POWER ACTION: EXTEND VALIDITY MODAL */}
+          {/* ========================================================= */}
+          {extendModalItem && (
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl border border-amber-200 max-w-md w-full p-6 shadow-2xl space-y-4 animate-fadeIn">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">⏳</span>
+                    <div>
+                      <h3 className="text-base font-bold text-[#0E1B3D]">Extend Access Validity</h3>
+                      <p className="text-[11px] text-[#5A6478]">
+                        {extendModalItem.itemType === "course" ? "Course" : "Handbook"}:{" "}
+                        <span className="font-bold text-[#0E1B3D]">{extendModalItem.itemTitle}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setExtendModalItem(null)}
+                    className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="p-3 bg-amber-50/70 border border-amber-200/60 rounded-xl text-xs text-amber-900">
+                  Learner: <span className="font-bold">{extendModalItem.student.name}</span> ({extendModalItem.student.phone})
+                </div>
+
+                <div className="space-y-3">
+                  <label className="block text-xs font-bold text-[#0E1B3D]">
+                    Choose Extension Duration:
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: "+7 Days", val: "7" },
+                      { label: "+15 Days", val: "15" },
+                      { label: "+30 Days", val: "30" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.val}
+                        type="button"
+                        onClick={() => setExtendOption(opt.val as any)}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                          extendOption === opt.val
+                            ? "bg-[#0B57D0] text-white border-[#0B57D0] shadow-xs"
+                            : "bg-[#F5F7FF] text-[#0E1B3D] border-[#E4E8F8] hover:border-[#0B57D0]"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setExtendOption("custom")}
+                      className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition cursor-pointer flex items-center justify-between ${
+                        extendOption === "custom"
+                          ? "bg-[#EEF4FF] text-[#0B57D0] border-[#0B57D0]"
+                          : "bg-[#FAFBFD] text-[#5A6478] border-[#E4E8F8] hover:border-slate-300"
+                      }`}
+                    >
+                      <span>📅 Or Select Custom Expiry Date</span>
+                      <span className="text-[10px] uppercase font-bold">{extendOption === "custom" ? "Selected" : "Pick"}</span>
+                    </button>
+
+                    {extendOption === "custom" && (
+                      <div className="mt-2.5">
+                        <input
+                          type="date"
+                          value={extendCustomDate}
+                          min={new Date().toISOString().slice(0, 10)}
+                          onChange={(e) => setExtendCustomDate(e.target.value)}
+                          className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#0B57D0] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    disabled={isExtending}
+                    onClick={() => setExtendModalItem(null)}
+                    className="px-4 py-2 rounded-full border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isExtending}
+                    onClick={handleConfirmExtend}
+                    className="px-5 py-2 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
+                  >
+                    {isExtending ? "Extending..." : "Confirm Extension →"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* POWER ACTION: REVOKE ACCESS MODAL */}
+          {/* ========================================================= */}
+          {revokeModalItem && (
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl border border-rose-200 max-w-md w-full p-6 shadow-2xl space-y-4 animate-fadeIn">
+                <div className="flex items-center justify-between pb-3 border-b border-rose-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🚫</span>
+                    <div>
+                      <h3 className="text-base font-bold text-rose-800">Revoke Student Access</h3>
+                      <p className="text-[11px] text-slate-500">
+                        {revokeModalItem.itemType === "course" ? "Course" : "Book"}:{" "}
+                        <span className="font-bold text-[#0E1B3D]">{revokeModalItem.itemTitle}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setRevokeModalItem(null)}
+                    className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 space-y-1">
+                  <p className="font-bold">⚠️ Irreversible Access Termination</p>
+                  <p className="text-[11px] text-rose-700">
+                    This will immediately revoke access for <span className="font-bold">{revokeModalItem.student.name}</span> ({revokeModalItem.student.phone}). All revocation events are logged in the security audit trail.
+                  </p>
+                </div>
+
+                {revokeError && (
+                  <p className="text-xs text-rose-600 font-bold bg-rose-50 p-2 rounded-lg border border-rose-200">
+                    {revokeError}
+                  </p>
+                )}
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-[#0E1B3D]">
+                    Mandatory Reason for Revocation *
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={revokeReason}
+                    onChange={(e) => setRevokeReason(e.target.value)}
+                    placeholder="e.g. Student requested full refund, fee dispute, or misconduct..."
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    disabled={isRevoking}
+                    onClick={() => setRevokeModalItem(null)}
+                    className="px-4 py-2 rounded-full border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isRevoking}
+                    onClick={handleConfirmRevokeAccess}
+                    className="px-5 py-2 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
+                  >
+                    {isRevoking ? "Revoking..." : "Revoke Access Now 🚫"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* POWER ACTION: EDIT STUDENT PROFILE MODAL */}
+          {/* ========================================================= */}
+          {editStudentModal && (
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+              <div className="bg-white rounded-3xl border border-slate-200 max-w-lg w-full p-6 shadow-2xl space-y-4 my-8 animate-fadeIn">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">✏️</span>
+                    <div>
+                      <h3 className="text-base font-bold text-[#0E1B3D]">Edit Student Profile & Phone</h3>
+                      <p className="text-[11px] text-[#5A6478]">
+                        Cascades phone & name across profiles, grants, and video likes
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setEditStudentModal(null)}
+                    className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {editProfileError && (
+                  <p className="text-xs text-rose-600 font-bold bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                    {editProfileError}
+                  </p>
+                )}
+
+                <form onSubmit={handleSaveProfile} className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                      Student Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                      10-Digit Mobile Phone *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-xs font-bold text-slate-400">+91</span>
+                      <input
+                        type="tel"
+                        required
+                        maxLength={10}
+                        value={editPhone}
+                        onChange={(e) => setEditPhone(e.target.value.replace(/\D/g, ""))}
+                        className="w-full pl-11 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold font-mono text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                        District
+                      </label>
+                      <input
+                        type="text"
+                        value={editDistrict}
+                        onChange={(e) => setEditDistrict(e.target.value)}
+                        placeholder="e.g. Satara"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-[#0E1B3D] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                        Taluka
+                      </label>
+                      <input
+                        type="text"
+                        value={editTaluka}
+                        onChange={(e) => setEditTaluka(e.target.value)}
+                        placeholder="e.g. Karad"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-[#0E1B3D] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                      School / Academic Institution
+                    </label>
+                    <input
+                      type="text"
+                      value={editSchool}
+                      onChange={(e) => setEditSchool(e.target.value)}
+                      placeholder="e.g. Shivaji High School"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-[#0E1B3D] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      disabled={isSavingProfile}
+                      onClick={() => setEditStudentModal(null)}
+                      className="px-4 py-2 rounded-full border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSavingProfile}
+                      className="px-5 py-2 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingProfile ? "Saving Updates..." : "Save & Cascade Updates →"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* FLOATING ACTION FEEDBACK TOAST */}
+          {/* ========================================================= */}
+          {actionFeedbackToast && (
+            <div
+              className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-2.5 animate-fadeIn text-xs font-bold ${
+                actionFeedbackToast.type === "success"
+                  ? "bg-slate-900 text-white border-slate-700"
+                  : "bg-rose-900 text-white border-rose-700"
+              }`}
+            >
+              <span>{actionFeedbackToast.type === "success" ? "✅" : "⚠️"}</span>
+              <span>{actionFeedbackToast.message}</span>
             </div>
           )}
         </div>

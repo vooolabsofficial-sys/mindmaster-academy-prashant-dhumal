@@ -18,6 +18,10 @@ export interface Lesson {
   status?: "active" | "expiring_soon" | "expired";
   views?: number;
   avgWatchPercent?: number;
+  partNumber?: number;
+  totalParts?: number;
+  seriesTitle?: string;
+  likesCount?: number;
 }
 
 export interface TargetSegmentConfig {
@@ -41,7 +45,7 @@ export interface Course {
   originalPricePaise: number; // e.g. 299900 = ₹2,999
   isFree: boolean;
   accessMonths: number;
-  status: "live" | "upcoming" | "scheduled" | "closed" | "removed" | "archived";
+  status: "live" | "upcoming" | "scheduled" | "closed" | "removed" | "archived" | "draft";
   badgeText: string;
   badgeType: "bestseller" | "popular" | "free" | "new";
   imageSrc: string;
@@ -59,6 +63,8 @@ export interface Course {
   publishAt?: string; // ISO string
   removeAt?: string | null; // ISO string
   standards?: number[]; // e.g. [5,6,7]; empty/undefined = for all (other courses)
+  audienceType?: "all" | "competitive" | "school";
+  likesCount?: number;
 }
 
 export interface Note {
@@ -89,13 +95,24 @@ export function calculateAllowedWords(durationSec: number): number {
 
 export interface Book {
   id: string;
-  courseId: string;
-  courseTitle: string;
+  code?: string;
+  courseId?: string | null;
+  courseTitle?: string;
   title: string;
+  subtitle?: string;
+  description?: string;
   filePath: string;
   pages: number;
   fileSizeMb: number;
-  coverImage: string;
+  coverImage?: string;
+  isFree?: boolean;
+  pricePaise?: number; // in paise: e.g. 19900 = ₹199
+  originalPricePaise?: number; // e.g. 49900 = ₹499
+  accessMonths?: number;
+  status?: "live" | "draft" | "archived";
+  headerTint?: HeaderTint;
+  badgeText?: string;
+  createdAt?: string;
 }
 
 export interface UserProgress {
@@ -109,11 +126,16 @@ export interface UserProgress {
 export interface Purchase {
   id: string;
   userId: string;
-  courseId: string;
+  courseId?: string | null;
+  bookId?: string | null;
+  itemType?: "course" | "book";
   amountPaise: number;
   purchasedAt: string;
   expiresAt: string;
-  status: "active" | "expired";
+  status: "active" | "expired" | "pending" | "refunded" | "success";
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  couponId?: string | null;
 }
 
 // ==========================================
@@ -153,6 +175,8 @@ export interface StaffUser {
   lastLoginAt: string;
   mustChangePassword?: boolean;
   password?: string;
+  createdAt?: string;
+  createdBy?: string;
 }
 
 export function hasStaffPermission(staff: StaffUser | null | undefined, permission: StaffPermission): boolean {
@@ -185,6 +209,7 @@ export interface Coupon {
   appliesTo: "all" | "selected";
   applies_all?: boolean;
   selectedCourseIds: string[];
+  selectedBookIds?: string[];
   usageLimitPerUser: "once" | "multiple";
   per_user_usage?: "once" | "multiple";
   validityType: "days" | "date_range";
@@ -212,6 +237,9 @@ export interface CouponRedemptionRecord {
   studentMobile?: string;
   courseId?: string;
   courseTitle?: string;
+  itemType?: "course" | "book";
+  bookId?: string;
+  bookTitle?: string;
   originalPricePaise?: number;
   discountPaise?: number;
   paidPaise?: number;
@@ -248,6 +276,22 @@ export interface StudentCourseEnrollment {
   completedLessons: number;
   totalLessons: number;
   isExpired: boolean;
+  itemType?: "course" | "book";
+  bookId?: string;
+  purchaseId?: string;
+  grantId?: string;
+}
+
+export interface EnrolledBookItem {
+  id: string;
+  title: string;
+  code?: string;
+  enrolledAt: string;
+  expiresAt: string;
+  daysLeft: number;
+  isExpired: boolean;
+  purchaseId?: string;
+  grantId?: string;
 }
 
 export interface StudentLessonWatchDetail {
@@ -279,13 +323,19 @@ export interface StudentRecord {
   standard?: string;
   enrolledCourseCodes: string[];
   enrolledCourseTitles: string[];
+  completedCourseCodes?: string[];
+  totalPaidPaise?: number;
+  progressPercentage?: number;
+  lastActive?: string;
   totalWatchSec: number;
   completedLessonsCount: number;
   totalLessonsCount?: number;
   joinedAt: string;
+  registeredAt?: string;
   lastActiveAt: string;
   status: "active" | "inactive";
   coursesTaken?: StudentCourseEnrollment[];
+  enrolledBooks?: EnrolledBookItem[];
   lessonWatches?: StudentLessonWatchDetail[];
   recentActivity?: StudentActivityItem[];
 }

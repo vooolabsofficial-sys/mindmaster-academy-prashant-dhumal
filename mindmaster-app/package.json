@@ -20,11 +20,19 @@
     "test:analytics": "npx tsx scripts/test-analytics.mjs",
     "test:subadmin": "npx tsx scripts/test-subadmin.mjs",
     "test:migrations": "npx tsx scripts/test-migrations.mjs",
-    "test:language": "npx tsx scripts/test-multilingual-support.mjs"
+    "test:language": "npx tsx scripts/test-multilingual-support.mjs",
+    "test:rls-phone": "npx tsx scripts/test-rls-and-phone-normalization.mjs",
+    "test:anti-piracy": "npx tsx scripts/test-anti-piracy-and-single-device.mjs",
+    "test:step3-player": "node scripts/test-step3-video-and-notes.mjs",
+    "test:e2e-live": "node scripts/test-e2e-student-auth-live.mjs",
+    "backup:live": "node scripts/create-live-backup.mjs",
+    "deploy:live": "node scripts/deploy-live-schema.mjs"
   },
   "dependencies": {
+    "@supabase/server": "^1.9.2",
     "@supabase/ssr": "^0.6.0",
     "@supabase/supabase-js": "^2.49.1",
+    "@types/pg": "^8.23.1",
     "canvas-confetti": "^1.9.4",
     "fuse.js": "^7.5.0",
     "hash-wasm": "^4.12.0",
@@ -33,6 +41,7 @@
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.16.0",
     "next": "16.3.4",
+    "pg": "^8.23.1",
     "razorpay": "^2.9.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",

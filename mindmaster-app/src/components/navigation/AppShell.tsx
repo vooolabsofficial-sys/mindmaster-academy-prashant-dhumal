@@ -8,6 +8,7 @@ import BottomNav from "./BottomNav";
 import OfflineBanner from "@/components/common/OfflineBanner";
 import { LanguageProvider } from "@/lib/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
+import { triggerSupabaseKeepAlive } from "@/lib/keepAliveTrigger";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -15,26 +16,69 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // 1. Silent throttled Supabase Free Tier keep-alive (every 12h)
+    triggerSupabaseKeepAlive();
+
     async function verifyAuthAndProfile() {
       const currentPath = pathname || "/home";
 
+      // Check localStorage session first
+      const localToken = localStorage.getItem("mindmaster_session_token");
+      const localProfile = localStorage.getItem("mindmaster_user_profile");
+
+      if (localToken && localProfile) {
+        setIsAuthenticated(true);
+        return;
+      }
+
+      // If localStorage profile/session is missing (e.g. crossing website/ port 5173 -> app port 3000),
+      // DO NOT bounce to /login immediately. First call /api/student/auth using HTTP cookies to hydrate localStorage.
+      try {
+        const res = await fetch("/api/student/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "validate-session",
+            token: localToken || undefined,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && (data.valid || data.success) && data.user) {
+            localStorage.setItem("mindmaster_session_token", data.sessionToken || localToken || `tok-${data.user.id}`);
+            localStorage.setItem("mindmaster_verified_phone", data.user.phone);
+            localStorage.setItem("mindmaster_user_profile", JSON.stringify(data.user));
+
+            if (data.onboardingCompleted || data.onboarding_completed) {
+              localStorage.setItem("mindmaster_onboarding_completed", "true");
+              setIsAuthenticated(true);
+            } else {
+              window.location.href = `/onboarding?next=${encodeURIComponent(currentPath)}&phone=${encodeURIComponent(data.user.phone)}`;
+            }
+            return;
+          }
+        }
+      } catch (hydrationErr) {
+        console.warn("Session hydration error in AppShell:", hydrationErr);
+      }
+
+      // Fallback check for Supabase OAuth session
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
-          // Check if profile exists and has a full_name
           const { data: profile } = await supabase
             .from("profiles")
-            .select("full_name, is_verified")
+            .select("full_name, is_verified, onboarding_completed, district, school_name, village")
             .eq("id", user.id)
             .maybeSingle();
 
-          const localProfile = localStorage.getItem("mindmaster_user_profile");
-          const hasCompletedProfile = (profile && profile.full_name) || localProfile;
+          const hasCompletedProfile = (profile && profile.full_name) || Boolean(profile?.onboarding_completed);
 
           if (!hasCompletedProfile) {
-            router.replace(`/onboarding?next=${encodeURIComponent(currentPath)}`);
+            window.location.href = `/onboarding?next=${encodeURIComponent(currentPath)}`;
             return;
           }
 
@@ -45,19 +89,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         console.warn("Client auth check fallback to storage:", err);
       }
 
-      // Check localStorage session fallback for demo / test environment
-      const localToken = localStorage.getItem("mindmaster_session_token");
-      if (localToken) {
-        const localProfile = localStorage.getItem("mindmaster_user_profile");
-        if (!localProfile) {
-          router.replace(`/onboarding?next=${encodeURIComponent(currentPath)}`);
-          return;
-        }
-        setIsAuthenticated(true);
+      if (localToken && !localProfile) {
+        window.location.href = `/onboarding?next=${encodeURIComponent(currentPath)}`;
         return;
       }
 
-      // No session found -> redirect to login
+      // No valid session found -> redirect to login
       router.replace(`/login?next=${encodeURIComponent(currentPath)}`);
     }
 

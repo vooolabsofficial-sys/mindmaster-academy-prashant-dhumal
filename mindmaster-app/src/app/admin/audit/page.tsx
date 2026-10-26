@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
 import { AuditLogEntry, StaffUser } from "@/lib/types";
-import { getAuditLogs, getStaffUsers } from "@/lib/staffStore";
+import { getAuditLogs, getStaffUsers, fetchDbAuditLogs, fetchDbStaff } from "@/lib/staffStore";
 
 export default function AuditLogPage() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
@@ -14,8 +14,8 @@ export default function AuditLogPage() {
   const [entityFilter, setEntityFilter] = useState("all");
 
   useEffect(() => {
-    setLogs(getAuditLogs());
-    setStaffUsers(getStaffUsers());
+    fetchDbAuditLogs().then((res) => setLogs(res));
+    fetchDbStaff().then((res) => setStaffUsers(res));
   }, []);
 
   const filteredLogs = logs.filter((log) => {

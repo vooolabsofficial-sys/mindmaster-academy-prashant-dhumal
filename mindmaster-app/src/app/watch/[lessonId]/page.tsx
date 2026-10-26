@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect, useRef, Suspense } from "react";
+import { use, useState, useEffect, useRef, Suspense, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
@@ -14,22 +14,24 @@ import {
   Maximize, 
   Lock, 
   CheckCircle2, 
-  FileText, 
-  BookOpen, 
-  Save, 
-  Sparkles, 
   ChevronRight, 
   Clock, 
   Unlock, 
-  AlertCircle, 
   ExternalLink,
-  Plus
+  ThumbsUp,
+  Headphones,
+  FileText
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
-import { MOCK_LESSONS, MOCK_COURSES, MOCK_NOTES, COURSE_ID_MAP } from "@/lib/mockData";
-import { Note, calculateAllowedWords } from "@/lib/types";
+import { COURSE_ID_MAP } from "@/lib/mockData";
+import { Lesson } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { savePlaybackOffline } from "@/lib/offlineStorage";
+import { getStoredVideos } from "@/lib/playlistStore";
+import { getStaffCourses } from "@/lib/staffStore";
+import { normalizePhone } from "@/lib/phoneUtils";
+import { verifyStudentCourseAccess } from "@/app/actions/studentAccess";
+import PiracyShield from "@/components/common/PiracyShield";
 
 declare global {
   interface Window {
@@ -47,14 +49,54 @@ function WatchLessonContent({
   const searchParams = useSearchParams();
   const queryTimeParam = searchParams.get("t");
 
-  const lesson =
-    MOCK_LESSONS.find((l) => l.id === resolvedParams.lessonId) || MOCK_LESSONS[0];
-  const course =
-    MOCK_COURSES.find((c) => c.id === lesson.courseId) || MOCK_COURSES[0];
-  const allCourseLessons = MOCK_LESSONS.filter((l) => l.courseId === course.id);
+  const storedVideos = typeof window !== "undefined" ? getStoredVideos() : [];
+  const dynamicMatch = storedVideos.find(
+    (v) =>
+      v.lessonId === resolvedParams.lessonId ||
+      v.id === resolvedParams.lessonId ||
+      v.videoId === resolvedParams.lessonId
+  );
+  const staffCourses = typeof window !== "undefined" ? getStaffCourses() : [];
+
+  const lesson: Lesson | null = dynamicMatch
+    ? {
+        id: dynamicMatch.lessonId || dynamicMatch.id,
+        courseId: dynamicMatch.courseId,
+        title: dynamicMatch.lessonTitle,
+        durationSec: dynamicMatch.durationSec,
+        isFree: dynamicMatch.isFree,
+        videoType: dynamicMatch.videoType,
+        videoId: dynamicMatch.videoId,
+        position: dynamicMatch.position || 1,
+        description: dynamicMatch.description,
+        partNumber: dynamicMatch.partNumber,
+        totalParts: dynamicMatch.totalParts,
+        seriesTitle: dynamicMatch.seriesTitle,
+        likesCount: dynamicMatch.likesCount,
+      }
+    : null;
+
+  const course = lesson
+    ? staffCourses.find((c) => c.id === lesson.courseId || c.code === lesson.courseId) || null
+    : null;
+
+  const allCourseLessons: Lesson[] = dynamicMatch && course
+    ? storedVideos
+        .filter((v) => v.courseId === course.id)
+        .map((v) => ({
+          id: v.lessonId || v.id,
+          courseId: v.courseId,
+          title: v.lessonTitle,
+          durationSec: v.durationSec,
+          isFree: v.isFree,
+          videoType: v.videoType,
+          videoId: v.videoId,
+          position: v.position || 1,
+        }))
+    : [];
 
   // Access Gating State
-  const [hasAccess, setHasAccess] = useState<boolean>(lesson.isFree);
+  const [hasAccess, setHasAccess] = useState<boolean>(lesson?.isFree ?? false);
   const [isCheckingAccess, setIsCheckingAccess] = useState<boolean>(true);
 
   // Player state
@@ -62,10 +104,13 @@ function WatchLessonContent({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(lesson.durationSec || 1200);
+  const [duration, setDuration] = useState(lesson?.durationSec || 1200);
   const [isMuted, setIsMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [resumeNotification, setResumeNotification] = useState<string | null>(null);
+
+  // Low-Data Audio-Only Mode
+  const [isAudioOnlyMode, setIsAudioOnlyMode] = useState<boolean>(false);
 
   // Anti-Piracy Watermark & Double Tap State
   const [studentWatermark, setStudentWatermark] = useState("MindMaster • Verified Student");
@@ -74,20 +119,175 @@ function WatchLessonContent({
   const lastTapRef = useRef<{ time: number; x: number }>({ time: 0, x: 0 });
   const singleTapTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Dynamic Word Limit based on video duration
-  const maxWordsAllowed = calculateAllowedWords(duration || lesson.durationSec);
 
-  // In-Lecture Note Taking State
-  const [noteTitle, setNoteTitle] = useState("");
-  const [userNote, setUserNote] = useState("");
-  const [capturedTimestamp, setCapturedTimestamp] = useState<number | null>(null);
-  const [noteSaved, setNoteSaved] = useState(false);
-  const [wordWarning, setWordWarning] = useState<string | null>(null);
-  const [lessonNotes, setLessonNotes] = useState<Note[]>([]);
+  // Cached Auth & Throttling Refs
+  const cachedUserRef = useRef<{ id: string; phone: string } | null>(null);
+  const lastRemoteSaveSecRef = useRef<number>(-1);
+  const lastRemoteSaveTimeRef = useRef<number>(0);
+  const isPlayingRef = useRef<boolean>(false);
 
-  // Compute live word count
-  const currentWords = userNote.trim() ? userNote.trim().split(/\s+/).length : 0;
-  const wordPercent = Math.min(100, Math.round((currentWords / maxWordsAllowed) * 100));
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  // Anti-piracy blackout & media pause listener
+  useEffect(() => {
+    const handlePauseEvent = () => {
+      try {
+        if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
+          playerRef.current.pauseVideo();
+        }
+        setIsPlaying(false);
+      } catch {}
+    };
+    window.addEventListener("mma_pause_media", handlePauseEvent);
+    return () => window.removeEventListener("mma_pause_media", handlePauseEvent);
+  }, []);
+
+  // Fetch student profile/auth once on mount and cache it
+  useEffect(() => {
+    async function loadAuth() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        let phone = user?.phone || (user?.user_metadata?.phone as string) || "";
+        let uid = user?.id || "";
+
+        try {
+          const raw = localStorage.getItem("mindmaster_user_profile");
+          if (raw) {
+            const p = JSON.parse(raw);
+            if (!uid && p.id) uid = p.id;
+            if (!phone && (p.mobile_number || p.phone)) phone = p.mobile_number || p.phone;
+          }
+        } catch {}
+
+        cachedUserRef.current = { id: uid, phone };
+      } catch {}
+    }
+    loadAuth();
+  }, []);
+
+  // Student Like State
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState<number>(0);
+
+  // Load Like status for this lesson from localStorage + live Supabase video_likes
+  useEffect(() => {
+    if (!lesson) return;
+    let isMounted = true;
+    try {
+      const storedLikes = JSON.parse(localStorage.getItem("mindmaster_liked_videos") || "[]");
+      const userHasLiked = Array.isArray(storedLikes) && storedLikes.includes(lesson.id);
+      setIsLiked(userHasLiked);
+
+      const baseLikes =
+        lesson.likesCount !== undefined
+          ? lesson.likesCount
+          : Math.floor((lesson.durationSec || 600) / 25) + 8;
+      setLikesCount(baseLikes + (userHasLiked ? 1 : 0));
+
+      async function syncLiveLikes() {
+        if (!lesson) return;
+        try {
+          const supabase = createClient();
+          const { count, error } = await supabase
+            .from("video_likes")
+            .select("*", { count: "exact", head: true })
+            .eq("lesson_id", lesson.id);
+
+          if (!error && typeof count === "number" && count > 0 && isMounted) {
+            setLikesCount(count);
+          }
+
+          let phone = cachedUserRef.current?.phone;
+          if (!phone) {
+            const rawProfile = localStorage.getItem("mindmaster_user_profile");
+            if (rawProfile) {
+              const p = JSON.parse(rawProfile);
+              phone = p.mobile_number || p.phone;
+            }
+          }
+          const cleanPhone = normalizePhone(phone);
+
+          if (cleanPhone) {
+            const { data: userLike } = await supabase
+              .from("video_likes")
+              .select("id")
+              .eq("lesson_id", lesson.id)
+              .eq("user_phone", cleanPhone)
+              .maybeSingle();
+
+            if (userLike && isMounted) {
+              setIsLiked(true);
+              const curStored = JSON.parse(localStorage.getItem("mindmaster_liked_videos") || "[]");
+              if (Array.isArray(curStored) && !curStored.includes(lesson.id)) {
+                localStorage.setItem("mindmaster_liked_videos", JSON.stringify([...curStored, lesson.id]));
+              }
+            }
+          }
+        } catch {}
+      }
+
+      syncLiveLikes();
+    } catch {
+      setLikesCount(12);
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [lesson?.id, lesson?.likesCount, lesson?.durationSec]);
+
+  // Toggle Like handler (optimistic UI + Supabase video_likes sync)
+  const handleToggleLike = async () => {
+    if (!lesson) return;
+    try {
+      const storedLikes: string[] = JSON.parse(localStorage.getItem("mindmaster_liked_videos") || "[]");
+      const nextLiked = !isLiked;
+      setIsLiked(nextLiked);
+      setLikesCount((prev) => Math.max(0, prev + (nextLiked ? 1 : -1)));
+
+      let updatedLikes: string[];
+      if (nextLiked) {
+        updatedLikes = Array.from(new Set([...(Array.isArray(storedLikes) ? storedLikes : []), lesson.id]));
+      } else {
+        updatedLikes = Array.isArray(storedLikes) ? storedLikes.filter((id) => id !== lesson.id) : [];
+      }
+      localStorage.setItem("mindmaster_liked_videos", JSON.stringify(updatedLikes));
+
+      let phone = cachedUserRef.current?.phone;
+      if (!phone) {
+        const rawProfile = localStorage.getItem("mindmaster_user_profile");
+        if (rawProfile) {
+          const p = JSON.parse(rawProfile);
+          phone = p.mobile_number || p.phone;
+        }
+      }
+      const cleanPhone = normalizePhone(phone);
+
+      if (cleanPhone) {
+        const supabase = createClient();
+        if (nextLiked) {
+          await supabase.from("video_likes").upsert(
+            {
+              lesson_id: lesson.id,
+              course_id: course?.id || lesson.courseId,
+              user_phone: cleanPhone,
+              created_at: new Date().toISOString(),
+            },
+            { onConflict: "lesson_id,user_phone" }
+          );
+        } else {
+          await supabase
+            .from("video_likes")
+            .delete()
+            .eq("lesson_id", lesson.id)
+            .eq("user_phone", cleanPhone);
+        }
+      }
+    } catch {}
+  };
 
   // Format seconds to mm:ss safely (prevents NaN:NaN)
   const formatTime = (secs?: number | null) => {
@@ -97,29 +297,15 @@ function WatchLessonContent({
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
-  // Load existing notes for this lesson from localStorage + MOCK_NOTES
+  // 1. GATE ACCESS CHECK: allow if lesson.is_free OR active purchase/grant exists
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("mindmaster_user_notes");
-      let allNotes: Note[] = MOCK_NOTES;
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          allNotes = parsed;
-        }
-      }
-      const matching = allNotes.filter(
-        (n) => n.lessonId === lesson.id || (n.courseId === course.id && !n.lessonId)
-      );
-      setLessonNotes(matching);
-    } catch (e) {
-      setLessonNotes(MOCK_NOTES.filter((n) => n.lessonId === lesson.id));
+    if (!lesson || !course) {
+      setIsCheckingAccess(false);
+      return;
     }
-  }, [lesson.id, course.id]);
 
-  // 1. GATE ACCESS CHECK: allow if lesson.is_free OR active purchase exists
-  useEffect(() => {
     async function checkAccess() {
+      if (!lesson || !course) return;
       if (lesson.isFree) {
         setHasAccess(true);
         setIsCheckingAccess(false);
@@ -130,32 +316,44 @@ function WatchLessonContent({
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
-        if (user) {
-          const dbCourseUuid = COURSE_ID_MAP[course.id] || course.id;
-          const { data: purchase } = await supabase
-            .from("purchases")
-            .select("id, expires_at, status")
-            .eq("user_id", user.id)
-            .in("course_id", [course.id, dbCourseUuid])
-            .eq("status", "success")
-            .gt("expires_at", new Date().toISOString())
-            .maybeSingle();
+        let userId = user?.id || "";
+        let userPhone = user?.phone || (user?.user_metadata?.phone as string) || "";
 
-          if (purchase) {
-            setHasAccess(true);
-            setIsCheckingAccess(false);
-            return;
+        try {
+          const rawProfile = localStorage.getItem("mindmaster_user_profile");
+          if (rawProfile) {
+            const p = JSON.parse(rawProfile);
+            if (!userId && p.id) userId = p.id;
+            if (!userPhone && (p.mobile_number || p.phone)) {
+              userPhone = p.mobile_number || p.phone;
+            }
           }
+        } catch {}
+
+        const cleanPhone = normalizePhone(userPhone);
+        const dbCourseUuid = COURSE_ID_MAP[course.id] || course.id;
+        const targetCourseIds = Array.from(new Set([course.id, course.code, dbCourseUuid].filter(Boolean)));
+
+        // 1. Verify access via server action using Service Role (admin.ts)
+        const serverAccess = await verifyStudentCourseAccess({
+          courseId: course.id,
+          userPhone: cleanPhone,
+          userId,
+        });
+
+        if (serverAccess.hasAccess) {
+          setHasAccess(true);
+          setIsCheckingAccess(false);
+          return;
         }
 
+        // 2. Fallback check local active purchases cache
         const localPurchases = localStorage.getItem("mindmaster_active_purchases");
         if (localPurchases) {
           const parsed = JSON.parse(localPurchases);
-          const dbCourseUuid = COURSE_ID_MAP[course.id];
-          const hasLocalAccess =
-            (parsed[course.id] && new Date(parsed[course.id]) > new Date()) ||
-            (parsed[course.code] && new Date(parsed[course.code]) > new Date()) ||
-            (dbCourseUuid && parsed[dbCourseUuid] && new Date(parsed[dbCourseUuid]) > new Date());
+          const hasLocalAccess = targetCourseIds.some(
+            (cId) => parsed[cId] && new Date(parsed[cId]) > new Date()
+          );
 
           if (hasLocalAccess) {
             setHasAccess(true);
@@ -173,11 +371,11 @@ function WatchLessonContent({
     }
 
     checkAccess();
-  }, [lesson.id, course.id, lesson.isFree]);
+  }, [lesson?.id, course?.id, course?.code, lesson?.isFree]);
 
   // 2. YOUTUBE PLAYER INITIALIZATION & RESUME PLAYBACK
   useEffect(() => {
-    if (!hasAccess) return;
+    if (!hasAccess || !lesson) return;
 
     if (!window.YT) {
       const tag = document.createElement("script");
@@ -193,6 +391,21 @@ function WatchLessonContent({
       } else {
         const local = localStorage.getItem(`mindmaster_progress_${lesson.id}`);
         if (local) initialSeek = parseInt(local, 10) || 0;
+
+        // Auto-resume from remote cloud progress if available
+        try {
+          const studentId = cachedUserRef.current?.id;
+          if (studentId) {
+            const res = await fetch(`/api/watch-stats?lesson_id=${lesson.id}&user_id=${studentId}`);
+            if (res.ok) {
+              const data = await res.json();
+              const cloudPos = data?.progress?.position_sec;
+              if (typeof cloudPos === "number" && cloudPos > initialSeek) {
+                initialSeek = cloudPos;
+              }
+            }
+          }
+        } catch {}
       }
 
       if (window.YT && window.YT.Player) {
@@ -222,7 +435,18 @@ function WatchLessonContent({
               }
             },
             onStateChange: (event: any) => {
-              setIsPlaying(event.data === 1);
+              const playing = event.data === 1;
+              setIsPlaying(playing);
+              const ended = event.data === 0;
+
+              // Flush progress immediately when video pauses or ends with completed = true
+              if (ended) {
+                const dur = duration || lesson.durationSec || 1;
+                flushProgress(dur, true);
+              } else if (!playing && playerRef.current?.getCurrentTime) {
+                const t = Math.floor(playerRef.current.getCurrentTime());
+                flushProgress(t);
+              }
             },
           },
         });
@@ -242,40 +466,165 @@ function WatchLessonContent({
         } catch (e) {}
       }
     };
-  }, [lesson.id, hasAccess, queryTimeParam, lesson.durationSec, lesson.videoId]);
+  }, [lesson?.id, hasAccess, queryTimeParam, lesson?.durationSec, lesson?.videoId]);
 
-  // 3. SAVE PROGRESS EVERY 5 SECONDS
+  // 3. FLUSH & THROTTLED PROGRESS SAVING (0 network spam when paused)
+  const flushProgress = useCallback(
+    async (timeToSave?: number, isCompletedOverride?: boolean) => {
+      if (!hasAccess || !lesson || !course) return;
+      const t =
+        typeof timeToSave === "number"
+          ? timeToSave
+          : playerRef.current?.getCurrentTime
+          ? Math.floor(playerRef.current.getCurrentTime())
+          : currentTime;
+      if (t < 0) return;
+
+      const totalDur = duration || lesson.durationSec || 1;
+      const isCompleted =
+        isCompletedOverride !== undefined ? isCompletedOverride : t >= totalDur - 15;
+
+      // 1. Instant local and offline IndexedDB persistence
+      try {
+        localStorage.setItem(`mindmaster_progress_${lesson.id}`, t.toString());
+        savePlaybackOffline(lesson.id, t, isCompleted).catch(() => {});
+
+        const histRaw = localStorage.getItem("mindmaster_watch_history");
+        const histArr = histRaw ? JSON.parse(histRaw) : [];
+        const histItem = {
+          lessonId: lesson.id,
+          lessonTitle: lesson.title,
+          courseId: course.id,
+          courseTitle: course.title,
+          positionSec: t,
+          durationSec: totalDur,
+          completed: isCompleted,
+          updatedAt: new Date().toISOString(),
+        };
+        const filtered = Array.isArray(histArr)
+          ? histArr.filter((h: any) => h.lessonId !== lesson.id)
+          : [];
+        localStorage.setItem(
+          "mindmaster_watch_history",
+          JSON.stringify([histItem, ...filtered].slice(0, 30))
+        );
+      } catch {}
+
+      // 2. Remote database save (throttled)
+      const now = Date.now();
+      lastRemoteSaveSecRef.current = t;
+      lastRemoteSaveTimeRef.current = now;
+
+      const studentId = cachedUserRef.current?.id;
+      if (studentId) {
+        try {
+          const supabase = createClient();
+          await supabase.from("progress").upsert(
+            {
+              user_id: studentId,
+              lesson_id: lesson.id,
+              position_sec: t,
+              completed: isCompleted,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id,lesson_id" }
+          );
+        } catch {
+          // Fallback to /api/watch-stats POST
+          try {
+            fetch("/api/watch-stats", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                lesson_id: lesson.id,
+                position_sec: t,
+                completed: isCompleted,
+                user_id: studentId,
+              }),
+            }).catch(() => {});
+          } catch {}
+        }
+      }
+    },
+    [hasAccess, lesson?.id, lesson?.durationSec, duration, course?.id, course?.title, currentTime]
+  );
+
+  // Throttled interval ticker (every 1s, remote network call max once per 15s while playing)
   useEffect(() => {
-    if (!hasAccess) return;
+    if (!hasAccess || !lesson) return;
 
-    const interval = setInterval(async () => {
-      if (playerRef.current && playerRef.current.getCurrentTime) {
+    const interval = setInterval(() => {
+      if (playerRef.current && playerRef.current.getCurrentTime && lesson) {
         try {
           const t = Math.floor(playerRef.current.getCurrentTime());
           setCurrentTime(t);
 
-          if (t > 0) {
-            localStorage.setItem(`mindmaster_progress_${lesson.id}`, t.toString());
-            savePlaybackOffline(lesson.id, t).catch(() => {});
+          // ONLY trigger remote save if video is actively playing!
+          // Debounce/throttle remote network calls to at most once every 15 seconds,
+          // or immediately if lesson completion threshold reached.
+          if (isPlayingRef.current && t > 0) {
+            const now = Date.now();
+            const timeSinceLastRemote = now - lastRemoteSaveTimeRef.current;
+            const diffSec = Math.abs(t - lastRemoteSaveSecRef.current);
+            const totalDur = duration || lesson.durationSec || 1;
+            const isCompleted = t >= totalDur - 15;
 
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-              await supabase.from("progress").upsert({
-                user_id: user.id,
-                lesson_id: lesson.id,
-                position_sec: t,
-                completed: t >= duration - 15,
-                updated_at: new Date().toISOString(),
-              });
+            // Local cache update every 5 seconds
+            if (diffSec >= 5) {
+              localStorage.setItem(`mindmaster_progress_${lesson.id}`, t.toString());
+              savePlaybackOffline(lesson.id, t, isCompleted).catch(() => {});
+            }
+
+            // Remote save throttled to 15s (or upon reaching 100% completion)
+            if (timeSinceLastRemote >= 15000 || (isCompleted && !lastRemoteSaveSecRef.current)) {
+              flushProgress(t, isCompleted);
             }
           }
         } catch (e) {}
       }
-    }, 5000);
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [hasAccess, lesson.id, duration]);
+  }, [hasAccess, lesson?.id, duration, lesson?.durationSec, flushProgress]);
+
+  // Flush playback on page exit / unmount so no progress is lost
+  useEffect(() => {
+    if (!lesson) return;
+
+    const handleUnload = () => {
+      if (playerRef.current?.getCurrentTime && lesson) {
+        const t = Math.floor(playerRef.current.getCurrentTime());
+        const studentId = cachedUserRef.current?.id;
+        if (studentId && t > 0) {
+          const totalDur = duration || lesson.durationSec || 1;
+          const payload = JSON.stringify({
+            lesson_id: lesson.id,
+            position_sec: t,
+            completed: t >= totalDur - 15,
+            user_id: studentId,
+          });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon("/api/watch-stats", payload);
+          } else {
+            fetch("/api/watch-stats", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: payload,
+              keepalive: true,
+            }).catch(() => {});
+          }
+        }
+      }
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    window.addEventListener("pagehide", handleUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      window.removeEventListener("pagehide", handleUnload);
+      handleUnload();
+    };
+  }, [lesson?.id, duration, lesson?.durationSec]);
 
   // Dynamic Floating Watermark & Double Tap logic
   useEffect(() => {
@@ -343,6 +692,9 @@ function WatchLessonContent({
     if (!playerRef.current) return;
     if (isPlaying) {
       playerRef.current.pauseVideo();
+      if (playerRef.current.getCurrentTime) {
+        flushProgress(Math.floor(playerRef.current.getCurrentTime()));
+      }
     } else {
       playerRef.current.playVideo();
     }
@@ -350,17 +702,21 @@ function WatchLessonContent({
   };
 
   const seekBy = (offset: number) => {
-    if (!playerRef.current) return;
+    if (!playerRef.current || !lesson) return;
     const target = Math.max(0, Math.min(duration, currentTime + offset));
     playerRef.current.seekTo(target, true);
     setCurrentTime(target);
+    localStorage.setItem(`mindmaster_progress_${lesson.id}`, target.toString());
+    savePlaybackOffline(lesson.id, target).catch(() => {});
   };
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     setCurrentTime(val);
-    if (playerRef.current) {
+    if (playerRef.current && lesson) {
       playerRef.current.seekTo(val, true);
+      localStorage.setItem(`mindmaster_progress_${lesson.id}`, Math.floor(val).toString());
+      savePlaybackOffline(lesson.id, Math.floor(val)).catch(() => {});
     }
   };
 
@@ -394,106 +750,69 @@ function WatchLessonContent({
     }
   };
 
+  // Low-Data Audio-Only Mode Toggle ("🎧 फक्त ऑडिओ मोड - डेटा वाचवा")
+  const toggleAudioOnlyMode = () => {
+    const nextState = !isAudioOnlyMode;
+    setIsAudioOnlyMode(nextState);
+    if (playerRef.current) {
+      try {
+        if (nextState) {
+          if (typeof playerRef.current.setPlaybackQuality === "function") {
+            playerRef.current.setPlaybackQuality("small");
+          }
+          if (typeof playerRef.current.setPlaybackQualityRange === "function") {
+            playerRef.current.setPlaybackQualityRange("small", "small");
+          }
+        } else {
+          if (typeof playerRef.current.setPlaybackQuality === "function") {
+            playerRef.current.setPlaybackQuality("default");
+          }
+        }
+      } catch {}
+    }
+  };
+
+
+
   // Jump player directly to timestamp
-  const jumpToTimestamp = (sec: number) => {
-    if (playerRef.current && playerRef.current.seekTo) {
-      playerRef.current.seekTo(sec, true);
-      setCurrentTime(sec);
-      window.scrollTo({ top: 180, behavior: "smooth" });
-    }
-  };
 
-  // Capture current video timestamp into note
-  const handleCaptureTimestamp = () => {
-    const cur = currentTime;
-    setCapturedTimestamp(cur);
-    if (!noteTitle) {
-      setNoteTitle(`${lesson.title} @ ${formatTime(cur)}`);
-    }
-  };
-
-  // Enforced word limit input handler (prevents system hang)
-  const handleNoteTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    let text = e.target.value;
-    const words = text.trim() ? text.trim().split(/\s+/) : [];
-
-    if (words.length > maxWordsAllowed) {
-      // Safely clamp words to maximum allowed
-      text = words.slice(0, maxWordsAllowed).join(" ");
-      setWordWarning(`Word limit reached! Max ${maxWordsAllowed} words allowed for this ${Math.ceil(duration/60)}-minute lecture.`);
-      setTimeout(() => setWordWarning(null), 3000);
-    } else {
-      setWordWarning(null);
-    }
-
-    setUserNote(text);
-  };
-
-  // Save Note: instantly syncs to shared notes store & /notes dashboard
-  const handleSaveNote = async () => {
-    if (!userNote.trim()) return;
-
-    const words = userNote.trim().split(/\s+/);
-    const finalTimestamp = capturedTimestamp !== null ? capturedTimestamp : currentTime;
-    const titleToUse = noteTitle.trim() || `${lesson.title} @ ${formatTime(finalTimestamp)}`;
-
-    const newNote: Note = {
-      id: `note-${Date.now()}`,
-      userId: "user-1",
-      courseId: course.id,
-      courseCode: course.code,
-      courseTitle: course.title,
-      lessonId: lesson.id,
-      lessonTitle: lesson.title,
-      wordCount: words.length,
-      maxWordsAllowed,
-      timestampSec: finalTimestamp,
-      title: titleToUse,
-      body: userNote.trim(),
-      updatedAt: "Just now",
-    };
-
-    // 1. Update lesson notes state
-    setLessonNotes((prev) => [newNote, ...prev]);
-
-    // 2. Update shared localStorage ("mindmaster_user_notes") so /notes sees it immediately
-    try {
-      const stored = localStorage.getItem("mindmaster_user_notes");
-      let allNotes: Note[] = MOCK_NOTES;
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) allNotes = parsed;
-      }
-      const updated = [newNote, ...allNotes];
-      localStorage.setItem("mindmaster_user_notes", JSON.stringify(updated));
-    } catch (e) {}
-
-    // 3. Persist to Supabase if logged in
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("notes").insert({
-          user_id: user.id,
-          course_id: course.id,
-          title: newNote.title,
-          body: newNote.body,
-        });
-      }
-    } catch (err) {}
-
-    // Feedback & Reset input
-    setNoteSaved(true);
-    setUserNote("");
-    setNoteTitle("");
-    setCapturedTimestamp(null);
-    setTimeout(() => setNoteSaved(false), 3000);
-  };
+  if (!lesson || !course) {
+    return (
+      <AppShell>
+        <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-4 text-slate-400">
+            <FileText className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Lesson Not Found</h2>
+          <p className="text-slate-400 text-sm max-w-md mb-6">
+            The requested lecture or lesson could not be found. Please check our available courses.
+          </p>
+          <Link
+            href="/courses"
+            className="px-6 py-2.5 rounded-xl bg-[#0052FF] hover:bg-[#0047E0] text-white font-semibold text-sm transition shadow-lg shadow-blue-500/25"
+          >
+            Browse Courses
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
 
   const progressPercent = Math.min(100, Math.round((currentTime / (duration || 1)) * 100));
 
+  // Determine Next Lesson in Multi-Part Series or Course
+  const currentPartNumber = lesson.partNumber || 1;
+  const currentSeriesTitle = lesson.seriesTitle;
+  const nextLesson = allCourseLessons.find((l) => {
+    if (l.id === lesson.id) return false;
+    if (currentSeriesTitle && l.seriesTitle && l.seriesTitle.toLowerCase() === currentSeriesTitle.toLowerCase()) {
+      return (l.partNumber || 1) === currentPartNumber + 1;
+    }
+    return (l.position || 1) === (lesson.position || 1) + 1;
+  });
+
   return (
-    <div className="flex flex-col gap-6 max-w-6xl mx-auto select-none">
+    <div className="flex flex-col gap-6 max-w-6xl mx-auto px-3 sm:px-4 md:px-6 pt-2 pb-24 select-none">
       <title>{`${lesson.title} | MindMaster Academy`}</title>
       <meta
         name="description"
@@ -568,11 +887,13 @@ function WatchLessonContent({
           </Link>
         </div>
       ) : (
-        /* ================= CUSTOM YOUTUBE PLAYER ================= */
-        <div
-          ref={containerRef}
-          className="relative bg-black rounded-3xl overflow-hidden shadow-2xl aspect-video w-full flex flex-col justify-end group border border-slate-200"
-        >
+        <>
+          {/* ================= CUSTOM YOUTUBE PLAYER WITH PIRACY SHIELD ================= */}
+          <PiracyShield contentType="video" className="w-full rounded-3xl overflow-hidden shadow-2xl">
+            <div
+              ref={containerRef}
+            className="relative bg-black rounded-3xl overflow-hidden aspect-video w-full flex flex-col justify-end group border border-slate-200"
+          >
           {/* Resume Notification Popup */}
           {resumeNotification && (
             <div className="absolute top-4 left-4 z-30 bg-blue-600/90 text-white text-xs font-bold px-3.5 py-1.5 rounded-full shadow-lg backdrop-blur-md animate-fade-in flex items-center gap-1.5">
@@ -605,6 +926,42 @@ function WatchLessonContent({
             <div id="custom-yt-player" className="w-full h-full" />
           </div>
 
+          {/* Transparent Pointer-Blocking Shield Overlays (Blocks clicking YouTube title bar & bottom-right YouTube logo) */}
+          <div
+            className="absolute top-0 left-0 right-0 h-16 pointer-events-auto z-20 bg-transparent select-none cursor-default"
+            onClick={(e) => { e.stopPropagation(); }}
+            onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            aria-hidden="true"
+          />
+          <div
+            className="absolute bottom-0 right-0 w-44 h-16 pointer-events-auto z-20 bg-transparent select-none cursor-default"
+            onClick={(e) => { e.stopPropagation(); }}
+            onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            aria-hidden="true"
+          />
+
+          {/* Low-Data / Audio-Only Mode Visual Cover Card */}
+          {isAudioOnlyMode && (
+            <div className="absolute inset-0 z-25 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center select-none pointer-events-none">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center mb-3 animate-pulse shadow-xl">
+                <Headphones className="w-8 h-8 sm:w-10 sm:h-10" />
+              </div>
+              <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 border border-emerald-800/40 px-3 py-1 rounded-full mb-2 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                Low Data Mode Active (240p)
+              </span>
+              <h3 className="text-base sm:text-lg md:text-xl font-black text-white max-w-md truncate px-4">
+                {lesson.title}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-200 mt-1 max-w-sm font-semibold">
+                🎧 Audio Revision Mode Active (Data Saver)
+              </p>
+              <p className="text-[10px] text-slate-400 mt-1">
+                Visual stream paused for high-speed mobile data saving
+              </p>
+            </div>
+          )}
+
           {/* Click / Double-Tap to Play/Pause Center Overlay */}
           <div
             onClick={handlePlayerTouch}
@@ -618,7 +975,7 @@ function WatchLessonContent({
           </div>
 
           {/* Custom Overlay Control Bar */}
-          <div className="relative z-20 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 flex flex-col gap-2 pt-8">
+          <div className="relative z-30 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 flex flex-col gap-2 pt-8">
             {/* Blue Progress Bar with Interactive Drag Dot */}
             <div className="relative flex items-center w-full group/bar">
               <div className="relative w-full h-2 bg-white/25 rounded-full overflow-visible pointer-events-none">
@@ -731,184 +1088,148 @@ function WatchLessonContent({
             </div>
           </div>
         </div>
-      )}
+      </PiracyShield>
+
+      {/* Rural-Friendly Playback Controls & Low-Data Audio Mode Quick Strip */}
+      <div className="bg-white rounded-2xl p-3 md:p-4 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        {/* Seek Buttons: ⏪ -10s and +10s ⏩ */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => seekBy(-10)}
+            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black transition cursor-pointer flex items-center gap-1.5 border border-slate-200 shadow-2xs"
+            title="Seek back 10 seconds"
+            aria-label="Seek back 10 seconds"
+          >
+            <span>⏪ -10s</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => seekBy(10)}
+            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black transition cursor-pointer flex items-center gap-1.5 border border-slate-200 shadow-2xs"
+            title="Seek forward 10 seconds"
+            aria-label="Seek forward 10 seconds"
+          >
+            <span>+10s ⏩</span>
+          </button>
+        </div>
+
+        {/* Playback Speed Selector: 1x, 1.25x, 1.5x, 2x */}
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <span className="text-[10px] font-bold text-slate-500 px-1.5 hidden sm:inline">Speed:</span>
+          {[1, 1.25, 1.5, 2].map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSpeedDirect(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+                playbackRate === s
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "text-slate-700 hover:bg-white hover:text-slate-900"
+              }`}
+              aria-label={`Set playback speed to ${s}x`}
+            >
+              {s}x
+            </button>
+          ))}
+        </div>
+
+        {/* Low-Data / Audio-Only Mode Toggle */}
+        <button
+          type="button"
+          onClick={toggleAudioOnlyMode}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 border shadow-xs active:scale-95 ${
+            isAudioOnlyMode
+              ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20"
+              : "bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200"
+          }`}
+          title="Low-Data Audio Revision Mode"
+          aria-label="Low-Data Audio Revision Mode"
+        >
+          <Headphones className="w-4 h-4 text-emerald-600" />
+          <span>
+            {isAudioOnlyMode
+              ? "🎧 Audio Mode Active (Data Saver)"
+              : "🎧 Audio-Only Mode (Save Data)"}
+          </span>
+        </button>
+      </div>
+    </>
+  )}
 
       {/* Bottom 2-Column: Lesson Overview + Live Synchronized Note Dock */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 cols): Lesson Details & Interactive Live Notes Dock */}
         <div className="lg:col-span-2 flex flex-col gap-5">
           {/* Lesson Details Card */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
-            <span className="text-xs font-extrabold text-blue-600 uppercase tracking-wider">
-              Lesson {lesson.position} • {course.title}
-            </span>
-            <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 mt-1">
-              {lesson.title}
-            </h1>
-            <p className="text-xs md:text-sm text-slate-600 mt-2 leading-relaxed">
-              {lesson.description ||
-                "Practical memory and Vedic maths demonstration with Prashant Dhumal Sir. Take concise notes below while watching."}
-            </p>
-          </div>
-
-          {/* ================= LIVE NOTE-TAKING DOCK ================= */}
-          <div className="bg-white rounded-3xl p-6 border-2 border-blue-100 shadow-xs flex flex-col gap-4">
-            {/* Dock Top Bar with Live Word Limit Rule Display */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-blue-600" />
-                <span className="font-extrabold text-sm text-slate-900">
-                  Lecture Study Notes
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-xs font-extrabold text-blue-600 uppercase tracking-wider">
+                  Lesson {lesson.position} • {course.title}
                 </span>
-                <span className="text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full shadow-2xs">
-                  Max {maxWordsAllowed} words (for {Math.ceil(duration/60)} min video)
-                </span>
+                <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 mt-1">
+                  {lesson.title}
+                </h1>
               </div>
 
-              {/* Dynamic Live Word Counter */}
-              <div className="flex items-center gap-2">
-                <span
-                  className={`text-xs font-bold font-mono px-2.5 py-0.5 rounded-full border ${
-                    wordPercent >= 90
-                      ? "bg-red-50 text-red-700 border-red-200"
-                      : wordPercent >= 70
-                      ? "bg-amber-50 text-amber-700 border-amber-200"
-                      : "bg-slate-50 text-slate-700 border-slate-200"
-                  }`}
-                >
-                  {currentWords} / {maxWordsAllowed} words
-                </span>
-              </div>
-            </div>
-
-            {/* Word limit warning alert */}
-            {wordWarning && (
-              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800 flex items-center gap-2 animate-in fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
-                <span>{wordWarning}</span>
-              </div>
-            )}
-
-            {/* Note Title & Capture Timestamp Row */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={noteTitle}
-                  onChange={(e) => setNoteTitle(e.target.value)}
-                  placeholder={`Note Topic (e.g. Formula derivation @ ${formatTime(currentTime)})...`}
-                  className="w-full p-2.5 px-4 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
-                />
-              </div>
-
+              {/* Student Like (👍) Button */}
               <button
                 type="button"
-                onClick={handleCaptureTimestamp}
-                className="touch-target-44 min-h-[44px] px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0 active:scale-95 touch-manipulation"
-                title="Tag current video timestamp"
+                onClick={handleToggleLike}
+                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all border shadow-xs active:scale-95 cursor-pointer shrink-0 self-start sm:self-center ${
+                  isLiked
+                    ? "bg-blue-600 text-white border-blue-600 shadow-blue-500/20"
+                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                }`}
+                title="Like this lecture"
               >
-                <Clock className="w-3.5 h-3.5 text-blue-600" />
-                <span>
-                  {capturedTimestamp !== null
-                    ? `Tagged @ ${formatTime(capturedTimestamp)}`
-                    : `Capture Time (${formatTime(currentTime)})`}
+                <ThumbsUp className={`w-4 h-4 ${isLiked ? "fill-white" : ""}`} />
+                <span>{isLiked ? "Liked" : "Like"}</span>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                    isLiked ? "bg-white/20 text-white" : "bg-white text-slate-700 border border-slate-200"
+                  }`}
+                >
+                  {likesCount}
                 </span>
               </button>
             </div>
 
-            {/* Note Content Textarea with Enforced Word Limit */}
-            <div>
-              <textarea
-                value={userNote}
-                onChange={handleNoteTextChange}
-                placeholder="Type key formulas, rules, or insights taught by Sir. Text is capped to prevent browser lag..."
-                rows={4}
-                className="w-full p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 leading-relaxed shadow-2xs"
-              />
-            </div>
+            {/* Multi-Part Series Chaining Banner */}
+            {(currentSeriesTitle || lesson.partNumber || (nextLesson && allCourseLessons.length > 1)) && (
+              <div className="p-4 rounded-2xl bg-linear-to-r from-indigo-50 to-blue-50 border border-indigo-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
+                    #{lesson.partNumber || lesson.position || 1}
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase text-indigo-700 tracking-wider block">
+                      {currentSeriesTitle ? `Series: ${currentSeriesTitle}` : `Video Series`}
+                    </span>
+                    <span className="text-xs font-bold text-slate-900">
+                      Part {lesson.partNumber || lesson.position || 1}
+                      {lesson.totalParts ? ` / ${lesson.totalParts}` : ""}
+                    </span>
+                  </div>
+                </div>
 
-            {/* Bottom Actions Row */}
-            <div className="flex items-center justify-between pt-1">
-              <div className="text-[11px] text-slate-600 font-medium">
-                {noteSaved ? (
-                  <span className="text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full animate-in fade-in">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    नोंद सेव्ह झाली (Synced to /notes workspace)!
-                  </span>
-                ) : (
-                  <span>Auto-syncs directly to your My Notes section</span>
+                {nextLesson && (
+                  <Link
+                    href={`/watch/${nextLesson.id}`}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm transition active:scale-95"
+                  >
+                    <span>Next Part ({nextLesson.partNumber ? `Part ${nextLesson.partNumber}` : nextLesson.title.slice(0, 18)}) ▶️</span>
+                  </Link>
                 )}
               </div>
-
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/notes"
-                  className="touch-target-44 min-h-[44px] text-xs font-bold text-blue-600 hover:underline px-3 flex items-center"
-                >
-                  View All Notes →
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={handleSaveNote}
-                  disabled={!userNote.trim()}
-                  className="touch-target-44 min-h-[44px] px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white text-xs font-bold transition inline-flex items-center gap-1.5 shadow-sm shadow-blue-500/25 cursor-pointer active:scale-95 touch-manipulation"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Save Note</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Previously Saved Notes for this Lecture */}
-            {lessonNotes.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-slate-700">
-                    Saved Notes for this Lecture ({lessonNotes.length})
-                  </span>
-                  <span className="text-[10px] text-slate-600 font-semibold">
-                    Click timestamp to jump video
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
-                  {lessonNotes.map((n) => (
-                    <div
-                      key={n.id}
-                      className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col gap-1.5 shadow-2xs"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-extrabold text-xs text-slate-900 truncate">
-                          {n.title}
-                        </span>
-
-                        {n.timestampSec !== undefined && (
-                          <button
-                            type="button"
-                            onClick={() => jumpToTimestamp(n.timestampSec!)}
-                            className="touch-target-44 min-h-[36px] px-3 py-1 rounded-full text-xs font-bold text-blue-700 bg-blue-100/80 hover:bg-blue-200 border border-blue-300 inline-flex items-center gap-1 cursor-pointer transition shadow-2xs active:scale-95 touch-manipulation shrink-0"
-                            title="Jump video to this timestamp"
-                          >
-                            <Clock className="w-3.5 h-3.5 text-blue-600" />
-                            <span>Jump to {formatTime(n.timestampSec)}</span>
-                          </button>
-                        )}
-                      </div>
-
-                      <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">
-                        {n.body}
-                      </p>
-
-                      <div className="text-[10px] text-slate-400 flex items-center justify-between pt-1">
-                        <span>{n.wordCount || n.body.split(/\s+/).length} words</span>
-                        <span>{n.updatedAt}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             )}
+
+            <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+              {lesson.description ||
+                "Practical memory and Vedic maths demonstration with international trainer Prashant Dhumal Sir."}
+            </p>
           </div>
         </div>
 

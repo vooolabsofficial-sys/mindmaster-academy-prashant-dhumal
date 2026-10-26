@@ -10,6 +10,7 @@ import {
   EyeOff,
   User,
   ArrowRight,
+  ArrowLeft,
   Sparkles,
   ShieldCheck,
   CheckCircle2,
@@ -45,6 +46,24 @@ function LoginContent() {
 
   // 1. Check existing session on mount
   useEffect(() => {
+    const errorParam = searchParams.get("error");
+    const reasonParam = searchParams.get("reason");
+    const msgParam = searchParams.get("msg");
+
+    if (errorParam === "device_conflict" || reasonParam === "single_device") {
+      try {
+        localStorage.removeItem("mindmaster_session_token");
+        localStorage.removeItem("mindmaster_user_profile");
+      } catch {}
+      setErrorMessage(
+        msgParam
+          ? decodeURIComponent(msgParam)
+          : "Your account was logged in on another device. Only 1 device session is allowed at a time."
+      );
+      setIsCheckingSession(false);
+      return;
+    }
+
     async function checkSession() {
       try {
         const supabase = createClient();
@@ -107,7 +126,7 @@ function LoginContent() {
 
       if (error) throw error;
     } catch (err: any) {
-      setErrorMessage(err.message || "Google लॉगिन सुरू करण्यात अडचण आली.");
+      setErrorMessage(err.message || "Failed to start Google sign in.");
       setGoogleLoading(false);
     }
   };
@@ -132,24 +151,53 @@ function LoginContent() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "लॉगिन अयशस्वी झाले. कृपया माहिती तपासा.");
+        // Smart Auto-Switch: If phone is not found in profiles, automatically switch to Sign Up
+        if (
+          data.code === "USER_NOT_FOUND" ||
+          (data.error &&
+            (data.error.toLowerCase().includes("not found") ||
+              data.error.toLowerCase().includes("not registered")))
+        ) {
+          setActiveTab("signup");
+          setErrorMessage("");
+          setSuccessMessage("This mobile number is not registered yet. Please create your account below.");
+          setLoading(false);
+          return;
+        }
+        throw new Error(data.error || "Login failed. Please verify your details.");
       }
 
       // Save local storage session state
-      localStorage.setItem("mindmaster_session_token", `tok-${data.user.id}`);
+      const profileData = {
+        id: data.user.id,
+        phone: data.user.phone,
+        cleanPhone: data.user.cleanPhone,
+        full_name: data.user.full_name,
+        district: data.user.district || "",
+        taluka: data.user.taluka || "",
+        village: data.user.village || "",
+        school: data.user.school || data.user.school_name || "",
+        role: "student",
+        onboardingCompleted: Boolean(data.onboardingCompleted),
+      };
+      localStorage.setItem("mindmaster_session_token", data.sessionToken || `tok-${data.user.id}`);
       localStorage.setItem("mindmaster_verified_phone", data.user.phone);
+      localStorage.setItem("mindmaster_user_profile", JSON.stringify(profileData));
 
-      setSuccessMessage("लॉगिन यशस्वी! कृपया थांबा...");
+      if (data.onboardingCompleted) {
+        localStorage.setItem("mindmaster_onboarding_completed", "true");
+      }
+
+      setSuccessMessage("Login successful! Redirecting...");
 
       setTimeout(() => {
-        if (!data.onboardingCompleted) {
-          router.replace(`/onboarding?next=${encodeURIComponent(nextParam)}&phone=${encodeURIComponent(phone)}`);
-        } else {
-          router.replace(nextParam);
-        }
-      }, 500);
+        const targetUrl = !data.onboardingCompleted
+          ? `/onboarding?next=${encodeURIComponent(nextParam)}&phone=${encodeURIComponent(phone)}`
+          : nextParam;
+        window.location.href = targetUrl;
+      }, 300);
     } catch (err: any) {
-      setErrorMessage(err.message || "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा.");
+      setErrorMessage(err.message || "Something went wrong. Please try again.");
       setLoading(false);
     }
   };
@@ -176,88 +224,112 @@ function LoginContent() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "नोंदणी अयशस्वी झाली. कृपया पुन्हा प्रयत्न करा.");
+        throw new Error(data.error || "Registration failed. Please try again.");
       }
 
-      localStorage.setItem("mindmaster_session_token", `tok-${data.user.id}`);
+      const profileData = {
+        id: data.user.id,
+        phone: data.user.phone,
+        cleanPhone: data.user.cleanPhone,
+        full_name: data.user.full_name,
+        district: "",
+        taluka: "",
+        village: "",
+        school: "",
+        role: "student",
+        onboardingCompleted: false,
+      };
+      localStorage.setItem("mindmaster_session_token", data.sessionToken || `tok-${data.user.id}`);
       localStorage.setItem("mindmaster_verified_phone", data.user.phone);
+      localStorage.setItem("mindmaster_user_profile", JSON.stringify(profileData));
 
-      setSuccessMessage("नोंदणी यशस्वी! आता तुमची माहिती भरा...");
+      setSuccessMessage("Registration successful! Setting up your account...");
 
       setTimeout(() => {
-        router.replace(`/onboarding?next=${encodeURIComponent(nextParam)}&phone=${encodeURIComponent(phone)}`);
-      }, 600);
+        window.location.href = `/onboarding?next=${encodeURIComponent(nextParam)}&phone=${encodeURIComponent(phone)}`;
+      }, 300);
     } catch (err: any) {
-      setErrorMessage(err.message || "नोंदणी करताना त्रुटी आली.");
+      setErrorMessage(err.message || "An error occurred during registration.");
       setLoading(false);
     }
   };
 
   if (isCheckingSession) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <div className="w-12 h-12 border-3 border-amber-500/20 border-t-amber-500 rounded-full animate-spin mb-4" />
-        <p className="text-slate-400 text-xs tracking-wide">सत्र तपासत आहे (Checking session)...</p>
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 font-sans">
+        <div className="w-10 h-10 border-3 border-[#0052FF]/20 border-t-[#0052FF] rounded-full animate-spin mb-3" />
+        <p className="text-slate-500 text-xs tracking-wide font-medium">Checking session...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans">
-      {/* Background Ambience Glows */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 -right-32 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 left-1/3 w-96 h-96 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-[#F4F7FC] text-slate-800 flex flex-col justify-between relative overflow-hidden font-sans">
+      {/* Subtle Liquid Glass Ambient Glows */}
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#0052FF]/08 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 -right-40 w-96 h-96 bg-sky-400/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-blue-600/06 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Top Brand Bar */}
-      <header className="px-6 py-4 flex items-center justify-between z-10 border-b border-slate-900 bg-slate-950/40 backdrop-blur-md">
+      {/* Top Brand Bar with prominent Back to Website button */}
+      <header className="px-4 sm:px-8 py-3.5 flex items-center justify-between z-10 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center shadow-lg shadow-amber-500/20">
-            <GraduationCap className="w-6 h-6 text-slate-950" />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0052FF] text-white flex items-center justify-center shadow-md shadow-blue-500/25">
+            <GraduationCap className="w-5 h-5" />
           </div>
           <div>
-            <span className="font-extrabold text-base tracking-tight text-white block">
-              MindMaster <span className="text-amber-400">Academy</span>
+            <span className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 block leading-tight">
+              MindMaster <span className="text-[#0052FF]">Academy</span>
             </span>
-            <span className="text-[11px] text-slate-400 block -mt-0.5">
-              प्रशांत धुमाळ सर
+            <span className="text-[11px] text-slate-500 block font-medium">
+              Prashant Dhumal Sir
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-[11px] text-slate-300">
-          <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-          <span>१००% मोफत व सुरक्षित</span>
+        {/* Back to Website Button */}
+        <div className="flex items-center gap-2">
+          <a
+            href={process.env.NEXT_PUBLIC_WEBSITE_URL || "http://localhost:5173"}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white hover:bg-slate-50 text-slate-700 hover:text-[#0052FF] border border-slate-200/90 shadow-xs backdrop-blur-sm text-xs sm:text-sm font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            title="Return to Main Website"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-500" />
+            <span>Back to Website</span>
+          </a>
         </div>
       </header>
 
-      {/* Main Glassmorphic Auth Card */}
-      <main className="flex-1 flex items-center justify-center p-4 z-10 my-6">
-        <div className="w-full max-w-md bg-slate-900/80 border border-slate-800/90 rounded-3xl p-6 sm:p-8 backdrop-blur-2xl shadow-2xl shadow-black/60 relative">
-          {/* Decorative Sparkle Pill */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold mb-4">
+      {/* Main Apple Liquid Glass Auth Card */}
+      <main className="flex-1 flex items-center justify-center p-4 z-10 my-4 sm:my-6">
+        <div className="w-full max-w-[440px] bg-white/85 backdrop-blur-3xl border border-white/80 rounded-3xl p-6 sm:p-8 shadow-[0_24px_70px_rgba(0,82,255,0.12)] relative overflow-hidden ring-1 ring-slate-900/5">
+          
+          {/* Subtle liquid reflection gradient overlay */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-sky-400/10 rounded-full blur-2xl pointer-events-none" />
+
+          {/* Decorative Badge */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/60 text-[#0052FF] text-xs font-bold mb-3.5">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>विद्यार्थी प्रवेश पोर्टल</span>
+            <span>Student Access Portal</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            {activeTab === "signin" ? "लॉगिन करा" : "नवीन नोंदणी करा"}
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            {activeTab === "signin" ? "Student Sign In" : "Create New Account"}
           </h1>
-          <p className="text-xs text-slate-400 mt-1 mb-6">
+          <p className="text-xs text-slate-500 mt-1 mb-5">
             {activeTab === "signin"
-              ? "तुमच्या कोर्स आणि व्हिडिओ अभ्यासाला त्वरित सुरुवात करा"
-              : "अवघ्या ३० सेकंदात तुमचे मोफत खाते तयार करा"}
+              ? "तुमच्या १०-अंकी मोबाईल नंबरने सहज लॉगिन करा"
+              : "अभ्यास सुरू करण्यासाठी तुमचे नाव, नंबर व पासवर्ड टाका"}
           </p>
 
-          {/* 1-CLICK GOOGLE SIGN-IN BUTTON */}
+          {/* Official Google 1-Click Button (Google Brand Guidelines) */}
           <button
             type="button"
             onClick={handleGoogleLogin}
             disabled={googleLoading || loading}
-            className="w-full py-3.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-3 text-sm disabled:opacity-60 cursor-pointer"
+            className="w-full py-3 px-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-700 font-semibold rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-3 text-xs sm:text-sm cursor-pointer disabled:opacity-60"
           >
-            {/* Google Colorful G SVG */}
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -275,21 +347,21 @@ function LoginContent() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
-            <span>{googleLoading ? "Google कडे नेत आहे..." : "Google ने लॉगिन करा (1-Click)"}</span>
+            <span>{googleLoading ? "Connecting to Google..." : "Continue with Google"}</span>
           </button>
 
-          {/* DIVIDER */}
-          <div className="relative my-6 text-center">
+          {/* Minimal Divider */}
+          <div className="relative my-4 text-center">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-800" />
+              <div className="w-full border-t border-slate-200" />
             </div>
-            <span className="relative px-3 bg-slate-900 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-              किंवा मोबाईल नंबरने पुढे जा
+            <span className="relative px-3 bg-white/90 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Or with Phone
             </span>
           </div>
 
-          {/* TAB SWITCHER */}
-          <div className="grid grid-cols-2 gap-1 p-1 bg-slate-950/80 border border-slate-800/80 rounded-xl mb-6">
+          {/* Tab Switcher: Apple Segmented Pill */}
+          <div className="flex bg-slate-100 p-1 rounded-2xl mb-4 border border-slate-200/60">
             <button
               type="button"
               onClick={() => {
@@ -297,13 +369,13 @@ function LoginContent() {
                 setErrorMessage("");
                 setSuccessMessage("");
               }}
-              className={`py-2 text-xs font-bold rounded-lg transition-all ${
+              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                 activeTab === "signin"
-                  ? "bg-amber-500 text-slate-950 shadow-md"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-white text-[#0052FF] shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              लॉगिन करा (Sign In)
+              Sign In (लॉगिन)
             </button>
             <button
               type="button"
@@ -312,40 +384,40 @@ function LoginContent() {
                 setErrorMessage("");
                 setSuccessMessage("");
               }}
-              className={`py-2 text-xs font-bold rounded-lg transition-all ${
+              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                 activeTab === "signup"
-                  ? "bg-amber-500 text-slate-950 shadow-md"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-white text-[#0052FF] shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              नवीन नोंदणी (Sign Up)
+              Create Account (नवीन खाते)
             </button>
           </div>
 
-          {/* ALERT NOTIFICATIONS */}
+          {/* Alert Notifications */}
           {errorMessage && (
-            <div className="mb-4 p-3.5 bg-red-950/50 border border-red-800/60 rounded-xl text-xs text-red-300 flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <div className="mb-3.5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="mb-4 p-3.5 bg-emerald-950/50 border border-emerald-800/60 rounded-xl text-xs text-emerald-300 flex items-start gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="mb-3.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>{successMessage}</span>
             </div>
           )}
 
-          {/* SIGN IN FORM */}
+          {/* Form */}
           {activeTab === "signin" ? (
-            <form onSubmit={handleSignIn} className="space-y-4">
+            <form onSubmit={handleSignIn} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  मोबाईल नंबर (Mobile Number)
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                  Mobile Number (१० अंकी मोबाईल नंबर)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-semibold">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
                     +91
                   </span>
                   <input
@@ -355,37 +427,40 @@ function LoginContent() {
                     placeholder="98XXXXXXXX"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                    className="w-full pl-12 pr-10 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition"
+                    className="w-full pl-12 pr-10 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF] font-mono"
                   />
-                  <Phone className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  <Phone className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
                 </div>
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-slate-300">
-                    पासवर्ड (Password)
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-semibold text-slate-700">
+                    Password (पासवर्ड)
                   </label>
                   <Link
                     href="/forgot-password"
-                    className="text-xs text-amber-400 hover:text-amber-300 font-medium transition"
+                    className="text-[11px] text-[#0052FF] hover:underline font-semibold"
                   >
-                    पासवर्ड विसरलात?
+                    Forgot Password?
                   </Link>
                 </div>
                 <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                    <Lock className="w-4 h-4" />
+                  </span>
                   <input
                     type={showPassword ? "text" : "password"}
                     required
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition pr-11"
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -395,38 +470,48 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading || phone.length !== 10 || !password}
-                className="w-full mt-3 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 transition disabled:opacity-50 flex items-center justify-center gap-2 text-sm cursor-pointer"
+                className="w-full mt-2 py-3 bg-[#0052FF] hover:bg-[#0047E0] text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 transition-all text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
-                {loading ? "लॉगिन होत आहे..." : "लॉगिन करा (Sign In)"}
-                <ArrowRight className="w-4 h-4" />
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Signing In...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In & Start Learning</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
           ) : (
-            /* SIGN UP FORM */
-            <form onSubmit={handleSignUp} className="space-y-3.5">
+            <form onSubmit={handleSignUp} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  विद्यार्थ्याचे पूर्ण नाव (Full Name)
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                  Student Full Name (विद्यार्थ्याचे नाव)
                 </label>
                 <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                    <User className="w-4 h-4" />
+                  </span>
                   <input
                     type="text"
                     required
-                    placeholder="उदा. रोहन कुलकणी"
+                    placeholder="उदा. राहुल सचिन पाटील"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition pr-10"
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
                   />
-                  <User className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  मोबाईल नंबर (Mobile Number)
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                  Mobile Number (१० अंकी मोबाईल नंबर)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-semibold">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
                     +91
                   </span>
                   <input
@@ -436,17 +521,20 @@ function LoginContent() {
                     placeholder="98XXXXXXXX"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                    className="w-full pl-12 pr-10 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition"
+                    className="w-full pl-12 pr-10 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF] font-mono"
                   />
-                  <Phone className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  <Phone className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  पासवर्ड निवडा (Set Password)
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                  Set Password (पासवर्ड ठेवा)
                 </label>
                 <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                    <Lock className="w-4 h-4" />
+                  </span>
                   <input
                     type={showPassword ? "text" : "password"}
                     required
@@ -454,12 +542,12 @@ function LoginContent() {
                     placeholder="किमान ६ अक्षरे"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition pr-11"
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -467,57 +555,68 @@ function LoginContent() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  ४-अंकी सिक्युरिटी पिन (Security Recovery PIN)
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                  4-Digit Security PIN (पासवर्ड रिकव्हरी पिन)
                 </label>
                 <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                    <KeyRound className="w-4 h-4" />
+                  </span>
                   <input
                     type="password"
                     maxLength={4}
-                    placeholder="उदा. 1234 (पासवर्ड विसरल्यास उपयुक्त)"
+                    placeholder="1234"
                     value={recoveryPin}
                     onChange={(e) => setRecoveryPin(e.target.value.replace(/\D/g, ""))}
-                    className="w-full px-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition pr-10 tracking-widest"
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF] font-mono tracking-widest"
                   />
-                  <KeyRound className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">
-                  पासवर्ड विसरल्यास हा पिन वापरून तुम्ही स्वतः त्वरित पासवर्ड बदलू शकता.
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  पासवर्ड विसरल्यास या ४-अंकी पिनने लगेच नवा पासवर्ड ठेवता येतो.
                 </p>
               </div>
 
               <button
                 type="submit"
                 disabled={loading || phone.length !== 10 || password.length < 6 || !fullName.trim()}
-                className="w-full mt-3 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 transition disabled:opacity-50 flex items-center justify-center gap-2 text-sm cursor-pointer"
+                className="w-full mt-2 py-3 bg-[#0052FF] hover:bg-[#0047E0] text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 transition-all text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
-                {loading ? "नोंदणी होत आहे..." : "खाते तयार करा (Create Account)"}
-                <ArrowRight className="w-4 h-4" />
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Creating Account...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Create Account & Continue</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
           )}
 
-          {/* Direct WhatsApp Assistance */}
-          <div className="mt-6 pt-4 border-t border-slate-800/80 text-center">
-            <span className="text-[11px] text-slate-400 block mb-1.5">
-              काही मदत हवी आहे का?
+          {/* WhatsApp Assistance */}
+          <div className="mt-5 pt-3.5 border-t border-slate-100 text-center">
+            <span className="text-[11px] text-slate-500 block mb-1">
+              काही अडचण येत असल्यास मदत मिळवा:
             </span>
             <a
-              href="https://wa.me/919823456789?text=Namaskar%20Prashant%20Sir%2C%20I%20need%20help%20with%20MindMaster%20Academy%20login."
+              href="https://wa.me/918459344077?text=Namaskar%20Prashant%20Sir%2C%20I%20need%20help%20with%20MindMaster%20Academy%20login."
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition"
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              WhatsApp वर प्रशांत सरांशी संपर्क साधा
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>WhatsApp: +91 84593 44077</span>
             </a>
           </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-4 text-center text-slate-500 text-xs z-10 border-t border-slate-900">
-        © 2026 MindMaster Academy • सर्व हक्क राखीव
+      {/* Clean Footer */}
+      <footer className="py-3.5 text-center text-slate-400 text-xs z-10 border-t border-slate-200/60 bg-white/40">
+        © 2026 MindMaster Academy • Prashant Dhumal Sir • All rights reserved
       </footer>
     </div>
   );
@@ -527,8 +626,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-          <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+        <div className="min-h-screen bg-[#F4F7FC] flex items-center justify-center">
+          <div className="w-10 h-10 border-2 border-[#0052FF] border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

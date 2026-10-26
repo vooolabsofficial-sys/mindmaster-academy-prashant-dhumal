@@ -35,8 +35,8 @@ export default function ProfileSettingsPage() {
   const [fullName, setFullName] = useState("Student");
   const [district, setDistrict] = useState("Pune");
   const [school, setSchool] = useState("Maharashtra State Board");
-  const [phone, setPhone] = useState("+91 98XXXXXXXX");
-  const [targetExam, setTargetExam] = useState("पोलीस भरती (Maharashtra Police Bharti 2026)");
+  const [phone, setPhone] = useState("");
+  const [targetExam, setTargetExam] = useState("Maharashtra Police Bharti 2026");
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
 
@@ -73,7 +73,7 @@ export default function ProfileSettingsPage() {
     } catch {}
     setIsEditing(false);
     setSavedSuccess(true);
-    toast.success("विद्यार्थी प्रोफाईल यशस्वीरित्या अद्ययावत केली! (Profile saved)");
+    toast.success("Profile saved successfully!");
     setTimeout(() => setSavedSuccess(false), 2000);
   };
 
@@ -182,7 +182,7 @@ export default function ProfileSettingsPage() {
                 />
               </div>
               <div>
-                <label className="font-bold text-[#0E1B3D] block mb-1">District (जिल्हा)</label>
+                <label className="font-bold text-[#0E1B3D] block mb-1">District</label>
                 <input
                   type="text"
                   value={district}
@@ -191,17 +191,17 @@ export default function ProfileSettingsPage() {
                 />
               </div>
               <div>
-                <label className="font-bold text-[#0E1B3D] block mb-1">Target Exam Goal (लक्ष्य परीक्षा)</label>
+                <label className="font-bold text-[#0E1B3D] block mb-1">Target Exam Goal</label>
                 <select
                   value={targetExam}
                   onChange={(e) => setTargetExam(e.target.value)}
                   className="w-full p-2.5 rounded-xl bg-[#F5F7FF] border border-[#E4E8F8] text-[#0E1B3D] font-medium text-xs focus:ring-2 focus:ring-[#0B57D0]"
                 >
-                  <option value="पोलीस भरती (Maharashtra Police Bharti 2026)">पोलीस भरती (Maharashtra Police Bharti 2026)</option>
-                  <option value="MPSC / स्पर्धा परीक्षा (Civil Services Foundation)">MPSC / स्पर्धा परीक्षा (Civil Services Foundation)</option>
-                  <option value="१०वी बोर्ड गणित (10th SSC Board Maths Special)">१०वी बोर्ड गणित (10th SSC Board Maths Special)</option>
-                  <option value="वैदिक गणित व स्मरणशक्ती (Vedic Maths & Speed Memory)">वैदिक गणित व स्मरणशक्ती (Vedic Maths & Speed Memory)</option>
-                  <option value="स्कॉलरशिप परीक्षा (Scholarship Exam 5th/8th Std)">स्कॉलरशिप परीक्षा (Scholarship Exam 5th/8th Std)</option>
+                  <option value="Maharashtra Police Bharti 2026">Maharashtra Police Bharti 2026</option>
+                  <option value="MPSC / Civil Services Foundation">MPSC / Civil Services Foundation</option>
+                  <option value="10th SSC Board Maths Special">10th SSC Board Maths Special</option>
+                  <option value="Vedic Maths & Speed Memory">Vedic Maths & Speed Memory</option>
+                  <option value="Scholarship Exam (5th/8th Std)">Scholarship Exam (5th/8th Std)</option>
                   <option value="General Skills / Self Improvement">General Skills / Self Improvement</option>
                 </select>
               </div>
@@ -322,7 +322,7 @@ export default function ProfileSettingsPage() {
 
             {/* Help & Support */}
             <a
-              href="tel:+919922000000"
+              href="tel:+918459344077"
               className="p-4 md:p-5 flex items-center justify-between hover:bg-[#F5F7FF] transition"
             >
               <div className="flex items-center gap-3.5">
@@ -348,7 +348,7 @@ export default function ProfileSettingsPage() {
         {/* OFFICIAL DOCUMENTS & CERTIFICATES */}
         <div className="flex flex-col gap-2">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#94A3B8] px-2">
-            OFFICIAL CERTIFICATES & FEE RECEIPTS (अधिकृत पावत्या)
+            OFFICIAL CERTIFICATES & FEE RECEIPTS
           </span>
 
           <div className="bg-white rounded-3xl border border-[#E4E8F8] shadow-2xs p-5 space-y-4">
@@ -381,7 +381,7 @@ export default function ProfileSettingsPage() {
                       studentPhone: phone,
                       district,
                       courseCode: "PB-MATH-2026",
-                      courseTitle: "पोलीस भरती २०२६ - गणित व बुद्धिमत्ता सुपरफास्ट",
+                      courseTitle: "Police Bharti 2026 - Maths & Reasoning Superfast",
                       amountPaise: 249900,
                       paymentId: "pay_rzp_pb_verified",
                       accessMonths: 12,

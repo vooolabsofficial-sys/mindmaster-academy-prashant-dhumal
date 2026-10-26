@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { MAHARASHTRA_DISTRICTS } from "@/lib/constants";
 import { createClient, getCookieDomain } from "@/lib/supabase/client";
+import { normalizePhone } from "@/lib/phoneUtils";
 
 function OnboardingForm() {
   const router = useRouter();
@@ -32,12 +33,20 @@ function OnboardingForm() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    // If onboarding is already marked completed, navigate forward
+    const completed = localStorage.getItem("mindmaster_onboarding_completed");
+    if (completed === "true") {
+      const nextParam = searchParams.get("next") || "/home";
+      window.location.href = nextParam;
+      return;
+    }
+
     // Check if phone was stored during login
     const savedPhone = localStorage.getItem("mindmaster_verified_phone");
     if (savedPhone) {
       setPhone(savedPhone);
     }
-  }, []);
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,51 +61,100 @@ function OnboardingForm() {
 
     try {
       const supabase = createClient();
-      const profileData = {
-        phone: "+91" + phone.replace(/\D/g, ""),
+      const clean = normalizePhone(phone);
+      let existingId = "";
+      try {
+        const existingRaw = localStorage.getItem("mindmaster_user_profile");
+        if (existingRaw) existingId = JSON.parse(existingRaw)?.id || "";
+      } catch {}
+
+      const studentId = existingId || `std-${clean || Date.now()}`;
+      const fullProfile = {
+        id: studentId,
+        phone: clean ? `+91${clean}` : phone,
+        cleanPhone: clean,
         full_name: fullName.trim(),
         village: village.trim(),
         taluka: taluka.trim(),
         district: district,
+        school: schoolName.trim() || null,
         school_name: schoolName.trim() || null,
         role: "student",
+        onboardingCompleted: true,
+        onboarding_completed: true,
         updated_at: new Date().toISOString(),
       };
 
-      // Try Supabase if authenticated, else save locally
+      // Try Supabase client upsert
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           await supabase.from("profiles").upsert({
+            ...fullProfile,
             id: user.id,
-            ...profileData,
-          });
+            phone: clean,
+          }, { onConflict: "phone" });
+        } else {
+          await supabase.from("profiles").upsert({
+            ...fullProfile,
+            phone: clean,
+          }, { onConflict: "phone" });
         }
       } catch (authErr) {
-        // Fallback gracefully
         console.warn("Supabase auth offline, proceeding with local session", authErr);
       }
 
       // Persist to local storage for instant access across the app
-      localStorage.setItem("mindmaster_user_profile", JSON.stringify(profileData));
+      localStorage.setItem("mindmaster_user_profile", JSON.stringify(fullProfile));
       localStorage.setItem("mindmaster_onboarding_completed", "true");
+      localStorage.setItem("mindmaster_verified_phone", fullProfile.phone);
+      if (!localStorage.getItem("mindmaster_session_token")) {
+        localStorage.setItem("mindmaster_session_token", `tok-${studentId}`);
+      }
 
       // Auto-apply active all/district/taluka/school grants to new signups at onboarding
       try {
         const { autoApplyGrantsForStudent } = await import("@/lib/grantStore");
-        autoApplyGrantsForStudent(profileData);
+        autoApplyGrantsForStudent(fullProfile);
       } catch (grantErr) {
         console.warn("Error auto-applying grants at onboarding:", grantErr);
       }
 
-      // Clear onboarding pending cookie across domain
-      const domain = getCookieDomain();
-      const domainPart = domain ? `; domain=${domain}` : "";
-      document.cookie = `mindmaster_onboarding_pending=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax${domainPart}`;
+      // Notify backend auth API to mark onboarding complete, sync profiles & link grants
+      try {
+        const res = await fetch("/api/student/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "complete-onboarding",
+            phone: clean,
+            fullName: fullProfile.full_name,
+            district: fullProfile.district,
+            taluka: fullProfile.taluka,
+            schoolName: fullProfile.school_name,
+            village: fullProfile.village,
+          }),
+        });
+        if (res.ok) {
+          const resData = await res.json();
+          if (resData.sessionToken) {
+            localStorage.setItem("mindmaster_session_token", resData.sessionToken);
+          }
+        }
+      } catch (apiErr) {
+        console.warn("Could not notify auth API of onboarding completion:", apiErr);
+      }
 
-      // Redirect to ?next or /home
+      // Clear onboarding pending cookie across domain and localhost
+      const domain = getCookieDomain();
+      if (domain) {
+        document.cookie = `mindmaster_onboarding_pending=; path=/; domain=${domain}; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+      }
+      document.cookie = `mindmaster_onboarding_pending=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+
+      // Redirect to ?next or /home using hard navigation for clean cookie and localStorage sync
       const nextParam = searchParams.get("next") || "/home";
-      router.push(nextParam);
+      window.location.href = nextParam;
     } catch (err: any) {
       console.error("Onboarding submission error:", err);
       setErrorMessage(err.message || "Error saving profile. Please try again.");

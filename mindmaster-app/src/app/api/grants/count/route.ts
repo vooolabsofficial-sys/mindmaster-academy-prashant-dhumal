@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { INITIAL_STUDENTS } from "@/lib/mockStaffData";
-import { MOCK_COURSES } from "@/lib/mockData";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getStaffStudents, getStaffCourses } from "@/lib/staffStore";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +23,28 @@ export async function POST(req: NextRequest) {
     const { scopeType, scopeValue, courseScope, courseId } = body;
 
     const val = (scopeValue || "").trim().toLowerCase();
-    const students = INITIAL_STUDENTS;
+
+    let students: any[] = [];
+    try {
+      const supabase = createAdminClient();
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, phone, district, taluka, school_name, school");
+      if (profiles && profiles.length > 0) {
+        students = profiles.map((p) => ({
+          id: p.id,
+          name: p.full_name,
+          phone: p.phone,
+          district: p.district || "",
+          taluka: p.taluka || "",
+          school: p.school_name || p.school || "",
+        }));
+      } else {
+        students = getStaffStudents();
+      }
+    } catch {
+      students = getStaffStudents();
+    }
 
     let matching = students;
     switch (scopeType) {
@@ -34,9 +55,9 @@ export async function POST(req: NextRequest) {
         matching = students.filter(
           (s) =>
             s.id === scopeValue ||
-            s.name.toLowerCase().includes(val) ||
-            s.phone.includes(val) ||
-            s.email.toLowerCase().includes(val)
+            (s.name && s.name.toLowerCase().includes(val)) ||
+            (s.phone && s.phone.includes(val)) ||
+            (s.email && s.email.toLowerCase().includes(val))
         );
         break;
       case "district":
@@ -54,14 +75,15 @@ export async function POST(req: NextRequest) {
 
     const count = matching.length;
 
-    // Calculate waived revenue
+    // Calculate waived revenue using DB courses
     let totalWaivedPaise = 0;
     if (count > 0) {
+      const availableCourses = getStaffCourses();
       if (courseScope === "all") {
-        const sumCoursesPaise = MOCK_COURSES.reduce((acc, c) => acc + (c.pricePaise || 0), 0);
+        const sumCoursesPaise = availableCourses.reduce((acc, c) => acc + (c.pricePaise || 0), 0);
         totalWaivedPaise = sumCoursesPaise * count;
       } else {
-        const targetCourse = MOCK_COURSES.find((c) => c.id === courseId) || MOCK_COURSES[0];
+        const targetCourse = availableCourses.find((c) => c.id === courseId || c.code === courseId) || availableCourses[0];
         totalWaivedPaise = (targetCourse?.pricePaise || 99900) * count;
       }
     }

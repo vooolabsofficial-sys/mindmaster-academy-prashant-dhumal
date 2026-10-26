@@ -26,6 +26,11 @@ const ALL_PERMISSIONS: { key: StaffPermission; label: string; desc: string }[] =
     label: "Student Finder",
     desc: "Search students and view 360 profile without per-lesson watch tracking",
   },
+  {
+    key: "freegrant.manage",
+    label: "Offline Admissions (Grants)",
+    desc: "Issue direct offline Cash/UPI course and book admissions to students",
+  },
 ];
 
 export default function SubAdminManagerPage() {

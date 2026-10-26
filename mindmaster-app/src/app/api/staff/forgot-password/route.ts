@@ -18,12 +18,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: result.error }, { status: 404 });
       }
 
-      // In development/test mode, otpDebug is returned to allow test automation
       return NextResponse.json({
         success: true,
         message: `OTP sent via SMS to registered phone ending in ${result.phone?.slice(-4)}`,
         phoneMasked: result.phone ? `${result.phone.slice(0, 5)}••••${result.phone.slice(-3)}` : "",
-        otpDebug: result.otpDebug,
       });
     }
 

@@ -13,6 +13,8 @@ import {
   sendMessage,
   markConversationReadByStaff,
   getUnreadCountForStaff,
+  fetchDbConversations,
+  fetchDbMessages,
 } from "@/lib/messageStore";
 
 export default function SubAdminMessagesPage() {
@@ -29,8 +31,9 @@ export default function SubAdminMessagesPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const reload = () => {
+  const reload = async () => {
     setStaff(getCurrentStaff());
+    await fetchDbConversations();
     const filters: { unreadOnly?: boolean; search?: string } = {};
     if (filterMode === "unread") filters.unreadOnly = true;
     if (searchQuery) filters.search = searchQuery;
@@ -56,7 +59,7 @@ export default function SubAdminMessagesPage() {
 
   useEffect(() => {
     if (activeConvId) {
-      setMessages(getConversationMessages(activeConvId));
+      fetchDbMessages(activeConvId).then((msgs) => setMessages(msgs));
       markConversationReadByStaff(activeConvId);
     }
   }, [activeConvId]);

@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
-import { Course, StaffUser, StudentRecord } from "@/lib/types";
-import { getCurrentStaff, getStaffCourses, getStaffStudents } from "@/lib/staffStore";
+import { Course, StaffUser, StudentRecord, Book } from "@/lib/types";
+import { getCurrentStaff, getStaffCourses, getStaffBooks, getStaffStudents } from "@/lib/staffStore";
 import {
   Grant,
   GrantScopeType,
@@ -14,6 +14,9 @@ import {
   getMatchingStudentCount,
   getMatchingStudents,
   getWaivedRevenue,
+  fetchDbGrants,
+  getStaffCollectionTally,
+  setGrantWhatsappSent,
 } from "@/lib/grantStore";
 
 const POPULAR_DISTRICTS = ["Pune", "Satara", "Kolhapur", "Solapur", "Sangli", "Ahmednagar", "Nashik", "Thane", "Mumbai"];
@@ -23,6 +26,7 @@ export default function GrantsManagerPage() {
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
   const [grants, setGrants] = useState<Grant[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
   const [students, setStudents] = useState<StudentRecord[]>([]);
 
   // Search & Filters
@@ -30,8 +34,13 @@ export default function GrantsManagerPage() {
   const [scopeFilter, setScopeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "revoked">("all");
 
+  // Cash vs UPI Collection Tally Filter: Today, This Week, This Month, All Time
+  const [tallyTimeframe, setTallyTimeframe] = useState<"today" | "week" | "month" | "all">("today");
+
   // Drawer Form State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [grantItemType, setGrantItemType] = useState<"course" | "book">("course");
+  const [selectedBookId, setSelectedBookId] = useState("");
   const [scopeType, setScopeType] = useState<GrantScopeType>("district");
   const [scopeValue, setScopeValue] = useState("Pune");
   const [courseScope, setCourseScope] = useState<"one" | "all">("one");
@@ -44,7 +53,7 @@ export default function GrantsManagerPage() {
   const [revokeTarget, setRevokeTarget] = useState<Grant | null>(null);
   const [revokeError, setRevokeError] = useState<string | null>(null);
 
-  const loadData = () => {
+  const loadData = async () => {
     setStaff(getCurrentStaff());
     setGrants(getGrants());
     const cList = getStaffCourses();
@@ -52,7 +61,19 @@ export default function GrantsManagerPage() {
     if (cList.length > 0 && !selectedCourseId) {
       setSelectedCourseId(cList[0].id);
     }
+    const bList = getStaffBooks();
+    setBooks(bList);
+    if (bList.length > 0 && !selectedBookId) {
+      setSelectedBookId(bList[0].id);
+    }
     setStudents(getStaffStudents());
+
+    try {
+      const liveGrants = await fetchDbGrants();
+      if (liveGrants && liveGrants.length > 0) {
+        setGrants(liveGrants);
+      }
+    } catch {}
   };
 
   // Sub-admin view filter: "own" or "all"
@@ -114,6 +135,11 @@ export default function GrantsManagerPage() {
   const estimatedWaivedRupees = useMemo(() => {
     if (serverWaivedRupees > 0) return serverWaivedRupees;
     if (liveMatchingCount === 0) return 0;
+    if (grantItemType === "book") {
+      const single = books.find((b) => b.id === selectedBookId);
+      const pricePaise = single?.pricePaise || 0;
+      return Math.round((pricePaise * liveMatchingCount) / 100);
+    }
     if (courseScope === "all") {
       const sumPaise = courses.reduce((acc, c) => acc + (c.pricePaise || 0), 0);
       return Math.round((sumPaise * liveMatchingCount) / 100);
@@ -122,17 +148,49 @@ export default function GrantsManagerPage() {
       const pricePaise = single?.pricePaise || 0;
       return Math.round((pricePaise * liveMatchingCount) / 100);
     }
-  }, [liveMatchingCount, courseScope, selectedCourseId, courses, serverWaivedRupees]);
+  }, [liveMatchingCount, grantItemType, selectedBookId, books, courseScope, selectedCourseId, courses, serverWaivedRupees]);
 
   // Waived revenue metrics
   const revenueStats = useMemo(() => getWaivedRevenue(), [grants]);
+
+  // Cash vs UPI Collection Tally for Main Admin
+  const tallyReport = useMemo(() => getStaffCollectionTally(grants), [grants]);
+
+  // 1-Click WhatsApp Receipt and Access Link trigger
+  const handleSendGrantWhatsApp = (grant: Grant) => {
+    const rawPhone = grant.student_phone || grant.studentPhone || grant.scope_value || grant.scopeValue || "";
+    const cleanPhone = rawPhone.replace(/\D/g, "").slice(-10);
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      alert("Invalid student phone number on grant.");
+      return;
+    }
+
+    const studentName = grant.student_name || grant.studentName || `Student ${cleanPhone.slice(-4)}`;
+    const courseTitle = grant.courseTitle || "MindMaster Course";
+    const paymentMode =
+      grant.payment_mode === "cash"
+        ? "Cash"
+        : grant.payment_mode === "upi"
+        ? "Direct UPI (PhonePe/GPay)"
+        : "Free Grant / Scholarship";
+    const amt = grant.amount_paid !== undefined ? `₹${grant.amount_paid}` : "Free Admission";
+
+    const msg = `Hello ${studentName}!\n\nYour admission to "${courseTitle}" at MindMaster Academy is confirmed. ✅\n\n💵 Fee: ${amt} (${paymentMode})\n📱 Login Mobile: ${cleanPhone}\n\n📲 Start learning in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! 🌟\n— Prashant Dhumal Sir, MindMaster Academy`;
+
+    setGrantWhatsappSent(grant.id);
+    loadData();
+
+    window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`, "_blank");
+  };
 
   // Open Drawer for creating new grant
   const handleOpenDrawer = () => {
     setScopeType("district");
     setScopeValue("Pune");
+    setGrantItemType("course");
     setCourseScope("one");
     if (courses.length > 0) setSelectedCourseId(courses[0].id);
+    if (books.length > 0) setSelectedBookId(books[0].id);
     setMonths(3);
     setReason("");
     setFormError(null);
@@ -158,8 +216,10 @@ export default function GrantsManagerPage() {
       createGrant({
         scopeType,
         scopeValue,
-        courseScope,
-        courseId: courseScope === "one" ? selectedCourseId : undefined,
+        itemType: grantItemType,
+        bookId: grantItemType === "book" ? selectedBookId : undefined,
+        courseScope: grantItemType === "course" ? courseScope : "one",
+        courseId: grantItemType === "course" && courseScope === "one" ? selectedCourseId : undefined,
         months,
         reason,
       });
@@ -286,6 +346,181 @@ export default function GrantsManagerPage() {
             </div>
           </div>
 
+          {/* SUB-ADMIN CASH VS UPI COLLECTION TALLY CARD (MAIN ADMIN ONLY) */}
+          {isMainAdmin && (
+            <div className="bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E4E8F8]">
+                <div>
+                  <h2 className="text-base font-extrabold text-[#0E1B3D] flex items-center gap-2">
+                    <span>💰</span> Sub-Admin Cash vs UPI Collection Tally
+                  </h2>
+                  <p className="text-xs text-[#5A6478]">
+                    Real-time audit breakdown of offline fees collected by staff via Cash, UPI, and Scholarships.
+                  </p>
+                </div>
+
+                {/* Timeframe Filter Pills */}
+                <div className="flex items-center gap-1.5 bg-[#F5F7FF] p-1 rounded-full border border-[#E4E8F8] self-start sm:self-auto">
+                  {(
+                    [
+                      { id: "today", label: "Today" },
+                      { id: "week", label: "This Week" },
+                      { id: "month", label: "This Month" },
+                      { id: "all", label: "All Time" },
+                    ] as const
+                  ).map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setTallyTimeframe(t.id)}
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
+                        tallyTimeframe === t.id
+                          ? "bg-[#0B57D0] text-white shadow-xs"
+                          : "text-[#5A6478] hover:text-[#0E1B3D]"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Aggregate Overview Badges */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wide">
+                      Total Cash Collected
+                    </span>
+                    <p className="text-xl font-extrabold text-emerald-900 font-heading mt-0.5">
+                      ₹{(
+                        tallyTimeframe === "today"
+                          ? tallyReport.totals.todayCash
+                          : tallyTimeframe === "week"
+                          ? tallyReport.totals.weekCash
+                          : tallyTimeframe === "month"
+                          ? tallyReport.totals.monthCash
+                          : tallyReport.totals.allTimeCash
+                      ).toLocaleString("en-IN")}
+                    </p>
+                  </div>
+                  <span className="text-2xl">💵</span>
+                </div>
+
+                <div className="p-4 bg-blue-50/70 border border-blue-200/80 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-blue-800 uppercase tracking-wide">
+                      Total Direct UPI Collected
+                    </span>
+                    <p className="text-xl font-extrabold text-[#0B57D0] font-heading mt-0.5">
+                      ₹{(
+                        tallyTimeframe === "today"
+                          ? tallyReport.totals.todayUpi
+                          : tallyTimeframe === "week"
+                          ? tallyReport.totals.weekUpi
+                          : tallyTimeframe === "month"
+                          ? tallyReport.totals.monthUpi
+                          : tallyReport.totals.allTimeUpi
+                      ).toLocaleString("en-IN")}
+                    </p>
+                  </div>
+                  <span className="text-2xl">📱</span>
+                </div>
+
+                <div className="p-4 bg-purple-50/70 border border-purple-200/80 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-purple-800 uppercase tracking-wide">
+                      Free / Scholarship Grants
+                    </span>
+                    <p className="text-xl font-extrabold text-purple-900 font-heading mt-0.5">
+                      {(
+                        tallyTimeframe === "today"
+                          ? tallyReport.totals.todayGrants
+                          : tallyTimeframe === "week"
+                          ? tallyReport.totals.weekGrants
+                          : tallyTimeframe === "month"
+                          ? tallyReport.totals.monthGrants
+                          : tallyReport.totals.allTimeGrants
+                      )}{" "}
+                      Grants
+                    </p>
+                  </div>
+                  <span className="text-2xl">🎓</span>
+                </div>
+              </div>
+
+              {/* Staff Breakdown Table */}
+              <div className="overflow-x-auto rounded-2xl border border-[#E4E8F8]">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#FAFBFD] text-[#5A6478] border-b border-[#E4E8F8]">
+                    <tr>
+                      <th className="px-4 py-3 font-bold">Staff Member (granted_by)</th>
+                      <th className="px-4 py-3 font-bold">Cash Collected</th>
+                      <th className="px-4 py-3 font-bold">UPI Collected</th>
+                      <th className="px-4 py-3 font-bold">Total Collection</th>
+                      <th className="px-4 py-3 font-bold text-right">Free Grants Issued</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E8F8]">
+                    {tallyReport.byStaff.map((s) => {
+                      const cash =
+                        tallyTimeframe === "today"
+                          ? s.todayCash
+                          : tallyTimeframe === "week"
+                          ? s.weekCash
+                          : tallyTimeframe === "month"
+                          ? s.monthCash
+                          : s.allTimeCash;
+                      const upi =
+                        tallyTimeframe === "today"
+                          ? s.todayUpi
+                          : tallyTimeframe === "week"
+                          ? s.weekUpi
+                          : tallyTimeframe === "month"
+                          ? s.monthUpi
+                          : s.allTimeUpi;
+                      const count =
+                        tallyTimeframe === "today"
+                          ? s.todayGrantsCount
+                          : tallyTimeframe === "week"
+                          ? s.weekGrantsCount
+                          : tallyTimeframe === "month"
+                          ? s.monthGrantsCount
+                          : s.allTimeGrantsCount;
+
+                      return (
+                        <tr key={s.staffId} className="hover:bg-[#F9FAFD]">
+                          <td className="px-4 py-3 font-bold text-[#0E1B3D]">
+                            <div className="flex items-center gap-2">
+                              <span className="w-6 h-6 rounded-full bg-[#EBF3FE] text-[#0B57D0] flex items-center justify-center text-[10px] font-bold">
+                                {s.staffName.slice(0, 1).toUpperCase()}
+                              </span>
+                              <span>{s.staffName}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-emerald-700">
+                            ₹{cash.toLocaleString("en-IN")}
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-[#0B57D0]">
+                            ₹{upi.toLocaleString("en-IN")}
+                          </td>
+                          <td className="px-4 py-3 font-extrabold text-[#0E1B3D]">
+                            ₹{(cash + upi).toLocaleString("en-IN")}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                              {count} grants
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Filters Bar */}
           <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -392,7 +627,7 @@ export default function GrantsManagerPage() {
                   <thead className="bg-[#F5F7FF] text-[#5A6478] border-b border-[#E4E8F8]">
                     <tr>
                       <th className="px-5 py-3.5 font-bold">Scope & Recipient</th>
-                      <th className="px-4 py-3.5 font-bold">Course Access</th>
+                      <th className="px-4 py-3.5 font-bold">Item Access</th>
                       <th className="px-4 py-3.5 font-bold">Duration & Validity</th>
                       <th className="px-4 py-3.5 font-bold">Coverage</th>
                       <th className="px-4 py-3.5 font-bold">Reason / Purpose</th>
@@ -436,10 +671,20 @@ export default function GrantsManagerPage() {
                             </div>
                           </td>
 
-                          {/* Course Access */}
+                          {/* Item Access */}
                           <td className="px-4 py-4">
-                            <span className="px-2.5 py-1 bg-[#F5F7FF] border border-[#E4E8F8] text-[#0E1B3D] font-bold rounded-lg inline-block">
-                              {grant.courseTitle || "All Courses"}
+                            <span className="px-2.5 py-1 bg-[#F5F7FF] border border-[#E4E8F8] text-[#0E1B3D] font-bold rounded-lg inline-flex items-center gap-1.5">
+                              {grant.itemType === "book" ? (
+                                <>
+                                  <span className="text-amber-600">📚</span>
+                                  <span>{grant.bookTitle || "Digital Book"}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="text-blue-600">🎓</span>
+                                  <span>{grant.courseTitle || "All Courses"}</span>
+                                </>
+                              )}
                             </span>
                           </td>
 
@@ -503,25 +748,48 @@ export default function GrantsManagerPage() {
 
                           {/* Actions */}
                           <td className="px-4 py-4 text-right">
-                            {grant.status === "active" ? (
-                              canRevoke ? (
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* 1-click WhatsApp Receipt & Access Link */}
+                              {(grant.scope_type === "student" || grant.student_phone || grant.studentPhone || /^\d{10}$/.test(grant.scope_value || grant.scopeValue || "")) && (
                                 <button
-                                  onClick={() => setRevokeTarget(grant)}
-                                  className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-xl text-xs transition border border-red-200"
+                                  type="button"
+                                  onClick={() => handleSendGrantWhatsApp(grant)}
+                                  className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition flex items-center gap-1 cursor-pointer ${
+                                    grant.whatsapp_sent || grant.whatsappSent
+                                      ? "bg-[#E8F8F2] text-[#0A8554] border-[#C6ECD9] hover:bg-[#D5F2E6]"
+                                      : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-xs"
+                                  }`}
+                                  title={
+                                    grant.whatsapp_sent || grant.whatsappSent
+                                      ? "WhatsApp receipt dispatched (click to resend)"
+                                      : "1-Click WhatsApp Receipt & Login Link"
+                                  }
                                 >
-                                  Revoke
+                                  <span>{grant.whatsapp_sent || grant.whatsappSent ? "✓💬" : "💬"}</span>
+                                  <span>{grant.whatsapp_sent || grant.whatsappSent ? "Sent" : "Receipt"}</span>
                                 </button>
+                              )}
+
+                              {grant.status === "active" ? (
+                                canRevoke ? (
+                                  <button
+                                    onClick={() => setRevokeTarget(grant)}
+                                    className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-xl text-xs transition border border-red-200 cursor-pointer"
+                                  >
+                                    Revoke
+                                  </button>
+                                ) : (
+                                  <span
+                                    className="text-[10px] text-[#8A94A6] cursor-help"
+                                    title="Only grant creator or Main Admin can revoke"
+                                  >
+                                    Own only
+                                  </span>
+                                )
                               ) : (
-                                <span
-                                  className="text-[10px] text-[#8A94A6] cursor-help"
-                                  title="Only grant creator or Main Admin can revoke"
-                                >
-                                  Own grants only
-                                </span>
-                              )
-                            ) : (
-                              <span className="text-[10px] text-[#8A94A6]">—</span>
-                            )}
+                                <span className="text-[10px] text-[#8A94A6]">—</span>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -694,48 +962,97 @@ export default function GrantsManagerPage() {
                       )}
                     </div>
 
-                    {/* Course Scope */}
+                    {/* Item Type & Scope */}
                     <div>
                       <label className="block font-bold text-[#0E1B3D] mb-1">
-                        Course Scope
+                        Item Type to Grant
                       </label>
-                      <div className="grid grid-cols-2 gap-2 mb-2">
+                      <div className="grid grid-cols-2 gap-2 mb-3">
                         <button
                           type="button"
-                          onClick={() => setCourseScope("one")}
-                          className={`py-2 px-3 rounded-xl border text-center font-bold text-xs transition ${
-                            courseScope === "one"
+                          onClick={() => setGrantItemType("course")}
+                          className={`py-2 px-3 rounded-xl border text-center font-bold text-xs transition flex items-center justify-center gap-1.5 ${
+                            grantItemType === "course"
                               ? "bg-[#0E1B3D] text-white border-[#0E1B3D]"
                               : "bg-[#F5F7FF] text-[#5A6478] border-[#E4E8F8]"
                           }`}
                         >
-                          Specific Course
+                          <span>🎓</span> Course
                         </button>
                         <button
                           type="button"
-                          onClick={() => setCourseScope("all")}
-                          className={`py-2 px-3 rounded-xl border text-center font-bold text-xs transition ${
-                            courseScope === "all"
+                          onClick={() => setGrantItemType("book")}
+                          className={`py-2 px-3 rounded-xl border text-center font-bold text-xs transition flex items-center justify-center gap-1.5 ${
+                            grantItemType === "book"
                               ? "bg-[#0E1B3D] text-white border-[#0E1B3D]"
                               : "bg-[#F5F7FF] text-[#5A6478] border-[#E4E8F8]"
                           }`}
                         >
-                          All Academy Courses
+                          <span>📚</span> Digital Book
                         </button>
                       </div>
 
-                      {courseScope === "one" && (
-                        <select
-                          value={selectedCourseId}
-                          onChange={(e) => setSelectedCourseId(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl font-bold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
-                        >
-                          {courses.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.code} — {c.title} (₹{Math.round((c.pricePaise || 0) / 100)})
-                            </option>
-                          ))}
-                        </select>
+                      {grantItemType === "book" ? (
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#5A6478] mb-1">
+                            Select Paid / Standalone Book
+                          </label>
+                          <select
+                            value={selectedBookId}
+                            onChange={(e) => setSelectedBookId(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl font-bold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
+                          >
+                            {books.map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.code || "BOOK"} — {b.title} ({b.isFree ? "Free" : `₹${Math.round((b.pricePaise || 0) / 100)}`})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#5A6478] mb-1">
+                            Course Scope
+                          </label>
+                          <div className="grid grid-cols-2 gap-2 mb-2">
+                            <button
+                              type="button"
+                              onClick={() => setCourseScope("one")}
+                              className={`py-2 px-3 rounded-xl border text-center font-bold text-xs transition ${
+                                courseScope === "one"
+                                  ? "bg-[#0E1B3D] text-white border-[#0E1B3D]"
+                                  : "bg-[#F5F7FF] text-[#5A6478] border-[#E4E8F8]"
+                              }`}
+                            >
+                              Specific Course
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCourseScope("all")}
+                              className={`py-2 px-3 rounded-xl border text-center font-bold text-xs transition ${
+                                courseScope === "all"
+                                  ? "bg-[#0E1B3D] text-white border-[#0E1B3D]"
+                                  : "bg-[#F5F7FF] text-[#5A6478] border-[#E4E8F8]"
+                              }`}
+                            >
+                              All Academy Courses
+                            </button>
+                          </div>
+
+                          {courseScope === "one" && (
+                            <select
+                              value={selectedCourseId}
+                              onChange={(e) => setSelectedCourseId(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl font-bold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
+                            >
+                              {courses.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.code} — {c.title} (₹{Math.round((c.pricePaise || 0) / 100)})
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
                       )}
                     </div>
 

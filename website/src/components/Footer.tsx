@@ -11,7 +11,7 @@ export const Footer: React.FC = () => {
     e.preventDefault();
     const clean = callbackPhone.replace(/\D/g, '');
     if (clean.length < 10) {
-      setCallbackError('कृपया वैध १०-अंकी मोबाईल नंबर प्रविष्ट करा.');
+      setCallbackError('Please enter a valid 10-digit mobile number.');
       return;
     }
     setCallbackError('');
@@ -50,10 +50,10 @@ export const Footer: React.FC = () => {
               ⚡ Quick Callback Support
             </span>
             <h3 className="text-lg md:text-xl font-bold text-slate-900">
-              पालकांसाठी मोफत समुपदेशन कॉल (Free Callback in 2 Hours)
+              Free Counseling Callback for Parents (Within 2 Hours)
             </h3>
             <p className="text-xs md:text-sm text-slate-600 mt-1">
-              आपल्या पाल्यासाठी योग्य कोर्स निवडण्यासाठी आपला नंबर नोंदवा. सागर सर किंवा वरिष्ठ शिक्षक संपर्क करतील.
+              Enter your mobile number to get personalized course guidance for your child. Prashant Sir or a senior mentor will call you back directly.
             </p>
           </div>
 
@@ -61,7 +61,7 @@ export const Footer: React.FC = () => {
             {callbackSent ? (
               <div className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-5 py-3 rounded-2xl flex items-center gap-2 text-xs font-bold">
                 <span className="material-symbols-outlined text-emerald-600 text-[20px]">check_circle</span>
-                <span>धन्यवाद! आपला नंबर नोंदवला गेला आहे. २ तासांत कॉल येईल.</span>
+                <span>Thank you! Your callback request is registered. We will call you within 2 hours.</span>
               </div>
             ) : (
               <form onSubmit={handleCallbackSubmit} className="flex flex-col sm:flex-row items-center gap-2.5 w-full">
@@ -73,7 +73,7 @@ export const Footer: React.FC = () => {
                       setCallbackPhone(e.target.value);
                       if (callbackError) setCallbackError('');
                     }}
-                    placeholder="१०-अंकी मोबाईल नंबर (उदा. 9876543210)"
+                    placeholder="10-digit mobile number (e.g. 9876543210)"
                     className="w-full pl-3.5 pr-4 py-2.5 rounded-xl bg-white border border-slate-300 text-xs font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition shadow-2xs"
                   />
                   {callbackError && (
@@ -87,7 +87,7 @@ export const Footer: React.FC = () => {
                   className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-secondary hover:bg-secondary/90 text-white text-xs font-bold shadow-md shadow-secondary/20 transition active:scale-95 cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5"
                 >
                   <span className="material-symbols-outlined text-[16px]">call</span>
-                  <span>कॉल मिळवा</span>
+                  <span>Request Callback</span>
                 </button>
               </form>
             )}
@@ -359,11 +359,11 @@ export const Footer: React.FC = () => {
                   <span>+91 84593 44077</span>
                 </a>
                 <a
-                  href="mailto:contact@mindmasteracademy.in"
+                  href="mailto:mindmasterdhumal@gmail.com"
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-secondary transition-colors truncate"
                 >
                   <span className="material-symbols-outlined text-secondary text-[16px]">mail</span>
-                  <span>contact@mindmasteracademy.in</span>
+                  <span>mindmasterdhumal@gmail.com</span>
                 </a>
               </div>
             </div>
@@ -377,11 +377,11 @@ export const Footer: React.FC = () => {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-medium text-slate-600">
             <Link to="/privacy" className="hover:text-secondary transition-colors underline-offset-4 hover:underline">
-              Privacy Policy (गोपनीयता धोरण)
+              Privacy Policy
             </Link>
             <span>•</span>
             <Link to="/terms" className="hover:text-secondary transition-colors underline-offset-4 hover:underline">
-              Terms & Conditions (नियम आणि अटी)
+              Terms & Conditions
             </Link>
             <span>•</span>
             <Link to="/contact" className="hover:text-secondary transition-colors">

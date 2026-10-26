@@ -1,14 +1,19 @@
 "use client";
 
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect } from "react";
 import AdminTopbar from "./AdminTopbar";
 import AdminSidebar from "./AdminSidebar";
+import { triggerSupabaseKeepAlive } from "@/lib/keepAliveTrigger";
 
 interface AdminShellProps {
   children: ReactNode;
 }
 
 export default function AdminShell({ children }: AdminShellProps) {
+  useEffect(() => {
+    triggerSupabaseKeepAlive();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#F5F7FF] flex flex-col font-sans">
       <AdminTopbar />

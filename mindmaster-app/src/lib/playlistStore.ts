@@ -1,6 +1,20 @@
 import { Course } from "./types";
 import { getStaffCourses, saveStaffCourse, logStaffAction, getPlatformSettings } from "./staffStore";
 
+function getSupabase() {
+  try {
+    if (typeof window === "undefined") {
+      const { createAdminClient } = require("./supabase/admin");
+      return createAdminClient();
+    } else {
+      const { createClient } = require("./supabase/client");
+      return createClient();
+    }
+  } catch {
+    return null;
+  }
+}
+
 export interface PlaylistItem {
   id: string;
   videoId: string;
@@ -35,93 +49,42 @@ export interface ExtendedVideoRow {
   views: number;
   avgWatchPercent: number;
   status: "active" | "expiring_soon" | "expired";
+  description?: string;
+  position?: number;
+  partNumber?: number;
+  totalParts?: number;
+  seriesTitle?: string;
+  likesCount?: number;
+}
+
+export function extractYouTubeVideoId(input: string): string {
+  if (!input) return "";
+  const trimmed = input.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+  const shortMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+  if (shortMatch) return shortMatch[1];
+  const longMatch = trimmed.match(/(?:watch\?v=|embed\/|v\/|shorts\/)([a-zA-Z0-9_-]{11})/);
+  if (longMatch) return longMatch[1];
+  return trimmed;
 }
 
 const STORAGE_KEY_VIDEOS = "mma_videos";
 
-// Seed data matching initial video catalog
-export const INITIAL_VIDEOS: ExtendedVideoRow[] = [
-  {
-    id: "vid-1",
-    lessonId: "les-01",
-    lessonTitle: "16 Vedic Sutras & Vertical Crosswise Multiplication",
-    courseId: "c-mm-01",
-    courseTitle: "Vedic Maths Speed Foundation",
-    videoType: "youtube",
-    videoId: "dQw4w9WgXcQ",
-    publishAt: "2026-09-01T09:00:00Z",
-    removeAt: "2026-10-01T09:00:00Z",
-    validityDays: 30,
-    isFree: true,
-    durationSec: 840,
-    views: 342,
-    avgWatchPercent: 88,
-    status: "active",
-  },
-  {
-    id: "vid-2",
-    lessonId: "les-02",
-    lessonTitle: "Base Multiplication: Fast Square Roots in 5 Seconds",
-    courseId: "c-mm-01",
-    courseTitle: "Vedic Maths Speed Foundation",
-    videoType: "youtube",
-    videoId: "e-ORhEE9VVg",
-    publishAt: "2026-08-15T10:00:00Z",
-    removeAt: "2026-09-14T10:00:00Z",
-    validityDays: 30,
-    isFree: false,
-    durationSec: 920,
-    views: 215,
-    avgWatchPercent: 79,
-    status: "expiring_soon",
-  },
-  {
-    id: "vid-3",
-    lessonId: "les-03",
-    lessonTitle: "Police Bharti Special: Maharashtra District Pegs",
-    courseId: "c-mm-03",
-    courseTitle: "Police Bharti Special GK & Fast Recall",
-    videoType: "custom",
-    videoId: "https://stream.mindmasteracademy.in/hls/police-01.m3u8",
-    publishAt: "2026-09-05T08:00:00Z",
-    removeAt: "2026-10-05T08:00:00Z",
-    validityDays: 30,
-    isFree: true,
-    durationSec: 1200,
-    views: 512,
-    avgWatchPercent: 92,
-    status: "active",
-  },
-  {
-    id: "vid-4",
-    lessonId: "les-04",
-    lessonTitle: "Superfast Calendar Technique: Any Century Day Formula",
-    courseId: "c-mm-04",
-    courseTitle: "Superfast Calendar Technique 2026",
-    videoType: "youtube",
-    videoId: "fJ9rUzIMcZQ",
-    publishAt: "2026-08-01T00:00:00Z",
-    removeAt: "2026-08-31T00:00:00Z",
-    validityDays: 30,
-    isFree: false,
-    durationSec: 650,
-    views: 189,
-    avgWatchPercent: 64,
-    status: "expired",
-  },
-];
+// Production Clean Slate: 0 Fake Videos
+export const INITIAL_VIDEOS: ExtendedVideoRow[] = [];
 
 export function getStoredVideos(): ExtendedVideoRow[] {
-  if (typeof window === "undefined") return INITIAL_VIDEOS;
+  if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY_VIDEOS);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEY_VIDEOS, JSON.stringify(INITIAL_VIDEOS));
-      return INITIAL_VIDEOS;
+      return [];
     }
     return JSON.parse(raw);
   } catch (e) {
-    return INITIAL_VIDEOS;
+    return [];
   }
 }
 
@@ -154,35 +117,6 @@ export function extractPlaylistId(urlOrId: string): string | null {
 }
 
 export const getPlaylistIdFromUrl = extractPlaylistId;
-
-// Extract YouTube Video ID from any URL or string
-export function extractYouTubeVideoId(input: string): string | null {
-  if (!input) return null;
-  const trimmed = input.trim();
-
-  // Pure 11-character video ID
-  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
-    return trimmed;
-  }
-
-  // https://youtu.be/<id>
-  const shortMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
-  if (shortMatch) return shortMatch[1];
-
-  // https://www.youtube.com/watch?v=<id>
-  const watchMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
-  if (watchMatch) return watchMatch[1];
-
-  // https://www.youtube.com/embed/<id>
-  const embedMatch = trimmed.match(/embed\/([a-zA-Z0-9_-]{11})/);
-  if (embedMatch) return embedMatch[1];
-
-  // https://www.youtube.com/shorts/<id>
-  const shortsMatch = trimmed.match(/shorts\/([a-zA-Z0-9_-]{11})/);
-  if (shortsMatch) return shortsMatch[1];
-
-  return null;
-}
 
 // Parse multiline bulk text into PlaylistItem array
 export function parseBulkYouTubeLinks(text: string): PlaylistItem[] {
@@ -291,6 +225,32 @@ export function importPlaylistLessons(
   };
   saveStaffCourse(updatedCourse);
 
+  // Sync to Supabase lessons table
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      newVideos.forEach((v, idx) => {
+        supabase
+          .from("lessons")
+          .upsert({
+            course_id: v.courseId,
+            title: v.lessonTitle,
+            duration_sec: v.durationSec,
+            is_free: v.isFree,
+            video_type: v.videoType,
+            video_url: `https://www.youtube.com/watch?v=${v.videoId}`,
+            video_id: v.videoId,
+            position: config.startPosition + idx,
+            description: v.description || "",
+            publish_at: v.publishAt,
+            remove_at: v.removeAt,
+          }, { onConflict: "course_id,position" })
+          .then(() => {})
+          .catch(() => {});
+      });
+    } catch {}
+  }
+
   // Log Staff Audit Action
   logStaffAction(
     "PLAYLIST_IMPORT",
@@ -306,4 +266,126 @@ export function importPlaylistLessons(
     count: newVideos.length,
     courseTitle: course.title,
   };
+}
+
+export async function fetchDbVideos(): Promise<ExtendedVideoRow[]> {
+  try {
+    const supabase = getSupabase();
+    if (!supabase) return getStoredVideos();
+
+    const { data, error } = await supabase
+      .from("lessons")
+      .select("*, courses(id, title)")
+      .order("position", { ascending: true });
+
+    if (error) return getStoredVideos();
+    if (!data || data.length === 0) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(STORAGE_KEY_VIDEOS, JSON.stringify([]));
+        window.dispatchEvent(new Event("mma_videos_changed"));
+      }
+      return [];
+    }
+
+    const mapped: ExtendedVideoRow[] = data.map((d: any) => ({
+      id: d.id,
+      lessonId: d.id,
+      lessonTitle: d.title,
+      courseId: d.course_id,
+      courseTitle: d.courses?.title || "Course",
+      videoType: d.video_type || "youtube",
+      videoId: d.video_id || extractYouTubeVideoId(d.video_url || ""),
+      publishAt: d.publish_at || d.created_at,
+      removeAt: d.remove_at,
+      validityDays: 30,
+      isFree: Boolean(d.is_free),
+      durationSec: d.duration_sec || 900,
+      views: 0,
+      avgWatchPercent: 0,
+      status: "active",
+      position: d.position,
+      description: d.description,
+      partNumber: d.part_number,
+      totalParts: d.total_parts,
+      seriesTitle: d.series_title,
+      likesCount: d.likes_count || 0,
+    }));
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY_VIDEOS, JSON.stringify(mapped));
+      window.dispatchEvent(new Event("mma_videos_changed"));
+    }
+
+    return mapped;
+  } catch {
+    return getStoredVideos();
+  }
+}
+
+export async function syncCourseLessonCount(courseId: string): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) return;
+  try {
+    const { count } = await supabase
+      .from("lessons")
+      .select("id", { count: "exact", head: true })
+      .eq("course_id", courseId);
+
+    await supabase
+      .from("courses")
+      .update({ lessons_count: count || 0 })
+      .eq("id", courseId);
+  } catch {}
+}
+
+export async function saveLessonToSupabase(video: ExtendedVideoRow): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) return;
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(video.id);
+    const payload: any = {
+      course_id: video.courseId,
+      title: video.lessonTitle,
+      duration_sec: video.durationSec || 900,
+      is_free: Boolean(video.isFree),
+      video_type: video.videoType || "youtube",
+      video_url: video.videoType === "youtube" ? `https://www.youtube.com/watch?v=${video.videoId}` : video.videoId,
+      video_id: video.videoId,
+      position: video.position || 1,
+      description: video.description || "",
+      part_number: video.partNumber || 1,
+      series_title: video.seriesTitle || null,
+      publish_at: video.publishAt || new Date().toISOString(),
+      remove_at: video.removeAt || null,
+    };
+    if (isUuid) {
+      payload.id = video.id;
+    }
+
+    await supabase
+      .from("lessons")
+      .upsert(payload, { onConflict: "course_id,position" });
+
+    await syncCourseLessonCount(video.courseId);
+  } catch (err) {
+    console.warn("saveLessonToSupabase error:", err);
+  }
+}
+
+export async function deleteLessonFromSupabase(lessonIdOrVideoId: string, courseId: string): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) return;
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lessonIdOrVideoId);
+    let query = supabase.from("lessons").delete();
+    if (isUuid) {
+      query = query.or(`id.eq.${lessonIdOrVideoId},video_id.eq.${lessonIdOrVideoId}`);
+    } else {
+      query = query.eq("video_id", lessonIdOrVideoId);
+    }
+    await query;
+    await syncCourseLessonCount(courseId);
+  } catch (err) {
+    console.warn("deleteLessonFromSupabase error:", err);
+  }
 }

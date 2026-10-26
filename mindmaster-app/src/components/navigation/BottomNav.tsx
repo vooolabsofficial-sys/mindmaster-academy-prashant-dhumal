@@ -7,9 +7,6 @@ import { useState, useEffect } from "react";
 import { getUnreadCountForStudent } from "@/lib/messageStore";
 import { useLanguage } from "@/lib/LanguageContext";
 
-// Mock student ID — same as support page
-const STUDENT_ID = "std-01";
-
 export default function BottomNav() {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -24,7 +21,15 @@ export default function BottomNav() {
   ];
 
   useEffect(() => {
-    const update = () => setUnreadCount(getUnreadCountForStudent(STUDENT_ID));
+    const update = () => {
+      try {
+        const raw = localStorage.getItem("mindmaster_user_profile");
+        const studentId = raw ? JSON.parse(raw).id || JSON.parse(raw).phone || "std-01" : "std-01";
+        setUnreadCount(getUnreadCountForStudent(studentId));
+      } catch {
+        setUnreadCount(0);
+      }
+    };
     update();
     window.addEventListener("mma_messages_changed", update);
     return () => window.removeEventListener("mma_messages_changed", update);
@@ -33,7 +38,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Primary mobile navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1.5 shadow-[0_-4px_24px_rgba(15,23,42,0.08)] pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] touch-manipulation"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-1 sm:px-2 py-1 shadow-[0_-4px_24px_rgba(15,23,42,0.08)] pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] touch-manipulation"
     >
       <div className="flex items-center justify-around max-w-lg mx-auto">
         {navItems.map((item) => {
@@ -49,15 +54,15 @@ export default function BottomNav() {
               href={item.href}
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-col items-center justify-center min-h-[48px] min-w-[56px] py-1 px-2.5 rounded-2xl transition-all duration-150 relative active:scale-95 touch-manipulation cursor-pointer ${
+              className={`flex flex-col items-center justify-center min-h-[46px] min-w-[48px] sm:min-w-[56px] py-1 px-1 sm:px-2 rounded-2xl transition-all duration-150 relative active:scale-95 touch-manipulation cursor-pointer ${
                 isActive
                   ? "text-blue-700 font-extrabold"
                   : "text-slate-600 hover:text-slate-900 font-semibold"
               }`}
             >
               <div
-                className={`p-1.5 rounded-2xl transition-all relative ${
-                  isActive ? "bg-blue-50 scale-110 shadow-2xs" : ""
+                className={`p-1 rounded-2xl transition-all relative ${
+                  isActive ? "bg-blue-50 scale-105 shadow-2xs" : ""
                 }`}
               >
                 <Icon className={`w-5 h-5 ${isActive ? "text-blue-700 stroke-[2.4]" : "stroke-[1.9]"}`} />
@@ -68,7 +73,7 @@ export default function BottomNav() {
                   </span>
                 )}
               </div>
-              <span className={`text-[11px] mt-0.5 tracking-tight ${isActive ? "text-blue-700 font-bold" : ""}`}>
+              <span className={`text-[10px] sm:text-[11px] mt-0.5 tracking-tight truncate max-w-[62px] sm:max-w-none text-center ${isActive ? "text-blue-700 font-bold" : ""}`}>
                 {item.label}
               </span>
             </Link>

@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   ArrowLeft, 
@@ -18,7 +18,9 @@ import {
   GraduationCap
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
-import { MOCK_COURSES, MOCK_LESSONS } from "@/lib/mockData";
+import { getStaffCourses } from "@/lib/staffStore";
+import { getStoredVideos } from "@/lib/playlistStore";
+import { createClient } from "@/lib/supabase/client";
 
 export default function CourseDetailPage({
   params,
@@ -27,19 +29,114 @@ export default function CourseDetailPage({
 }) {
   const resolvedParams = use(params);
   const [showAllLessons, setShowAllLessons] = useState(false);
+  const [dbCourse, setDbCourse] = useState<any>(null);
+  const [dbLessons, setDbLessons] = useState<any[]>([]);
 
-  const rawId = resolvedParams.id || "c-mm-01";
+  const rawId = resolvedParams.id || "";
+
+  useEffect(() => {
+    async function fetchCourseDetails() {
+      try {
+        const supabase = createClient();
+        const { data: cData } = await supabase
+          .from("courses")
+          .select("*")
+          .or(`id.eq.${rawId},code.ilike.${rawId}`)
+          .maybeSingle();
+
+        if (cData) {
+          setDbCourse({
+            id: cData.id,
+            code: cData.code,
+            title: cData.title,
+            description: cData.description,
+            pricePaise: cData.price_paise,
+            originalPricePaise: cData.original_price_paise,
+            accessMonths: cData.access_months || 3,
+            badgeText: cData.badge_text,
+            category: cData.category,
+          });
+
+          const { data: lData } = await supabase
+            .from("lessons")
+            .select("*")
+            .eq("course_id", cData.id)
+            .order("position", { ascending: true });
+
+          if (lData && lData.length > 0) {
+            setDbLessons(
+              lData.map((l: any) => ({
+                id: l.id,
+                courseId: l.course_id,
+                title: l.title,
+                durationSec: l.duration_sec,
+                isFree: l.is_free,
+                videoType: l.video_type || "youtube",
+                videoId: l.video_id,
+                position: l.position || 1,
+                description: l.description,
+              }))
+            );
+          }
+        }
+      } catch (e) {}
+    }
+    fetchCourseDetails();
+  }, [rawId]);
+
+  const staffCourses = typeof window !== "undefined" ? getStaffCourses() : [];
   const course =
-    MOCK_COURSES.find(
+    dbCourse ||
+    staffCourses.find(
       (c) =>
-        c.id.toLowerCase() === rawId.toLowerCase() ||
-        c.code.toLowerCase() === rawId.toLowerCase()
-    ) || MOCK_COURSES[0];
+        c.id?.toLowerCase() === rawId?.toLowerCase() ||
+        c.code?.toLowerCase() === rawId?.toLowerCase()
+    ) ||
+    null;
 
-  const allCourseLessons = MOCK_LESSONS.filter((l) => l.courseId === course.id);
+  const storedVideos = typeof window !== "undefined" ? getStoredVideos() : [];
+  const dynamicVideos = course ? storedVideos.filter((v) => v.courseId === course.id) : [];
+  const allCourseLessons =
+    dbLessons.length > 0
+      ? dbLessons
+      : dynamicVideos.length > 0
+      ? dynamicVideos.map((v) => ({
+          id: v.lessonId || v.id,
+          courseId: v.courseId,
+          title: v.lessonTitle,
+          durationSec: v.durationSec,
+          isFree: v.isFree,
+          videoType: v.videoType,
+          videoId: v.videoId,
+          position: v.position || 1,
+          description: v.description,
+        }))
+      : [];
 
-  const priceRupees = Math.round(course.pricePaise / 100);
-  const originalPriceRupees = Math.round(course.originalPricePaise / 100);
+  if (!course) {
+    return (
+      <AppShell>
+        <div className="text-center py-24 max-w-md mx-auto px-4">
+          <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto mb-4 text-slate-400">
+            <BookOpen className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-white">Course Not Found</h2>
+          <p className="text-sm text-slate-400 mt-2">
+            The requested course does not exist or has been removed.
+          </p>
+          <Link
+            href="/courses"
+            className="mt-6 inline-block px-6 py-2.5 bg-[#0052FF] hover:bg-[#0047E0] text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/25 transition cursor-pointer"
+          >
+            Browse All Courses
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const priceRupees = Math.round((course.pricePaise || 0) / 100);
+  const originalPriceRupees = Math.round((course.originalPricePaise || 0) / 100);
   const savingsRupees = Math.max(0, originalPriceRupees - priceRupees);
 
   const displayedLessons = showAllLessons
@@ -114,7 +211,7 @@ export default function CourseDetailPage({
               </div>
 
               <div className="flex flex-col gap-2.5">
-                {course.features.map((feat, idx) => (
+                {(course.features || []).map((feat: string, idx: number) => (
                   <div key={idx} className="p-4 rounded-2xl bg-white border border-[#E4E8F8] shadow-2xs flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-[#E8F1FD] text-[#0B57D0] flex items-center justify-center shrink-0 mt-0.5">
                       <CheckCircle2 className="w-4 h-4" />
@@ -146,61 +243,69 @@ export default function CourseDetailPage({
 
               {/* Lesson Items */}
               <div className="flex flex-col gap-2">
-                {displayedLessons.map((l, index) => (
-                  <div
-                    key={l.id}
-                    className={`p-4 rounded-2xl border transition-all ${
-                      l.isFree
-                        ? "bg-white border-[#C2D7FF] shadow-2xs hover:border-[#0B57D0]"
-                        : "bg-[#FAFAFC] border-[#EAEFF8] opacity-90"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-black text-xs ${
-                            l.isFree
-                              ? "bg-[#E8F1FD] text-[#0B57D0]"
-                              : "bg-[#F1F3F9] text-[#94A3B8]"
-                          }`}
-                        >
-                          {l.isFree ? <Play className="w-4 h-4 fill-current ml-0.5" /> : <Lock className="w-4 h-4" />}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-bold text-[#94A3B8] font-mono">
-                              #{String(index + 1).padStart(2, "0")}
-                            </span>
-                            <h4 className="text-xs md:text-sm font-bold text-[#0E1B3D]">
-                              {l.title.replace(/^\d+\.\s*/, "")}
-                            </h4>
-                          </div>
-                          <p className="text-[11px] text-[#5A6478] mt-0.5 font-normal">
-                            {l.description || `${Math.round(l.durationSec / 60)} mins • Marathi & English`}
-                          </p>
-                        </div>
-                      </div>
-
-                      {l.isFree ? (
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="hidden sm:inline-block text-[10px] font-extrabold uppercase tracking-wider bg-[#E8F8F2] text-[#0A8554] px-2.5 py-1 rounded-md">
-                            Free
-                          </span>
-                          <Link
-                            href={`/watch/${l.id}`}
-                            className="text-xs font-extrabold text-[#0B57D0] hover:text-[#0842A0] bg-[#E8F1FD] hover:bg-[#D3E3FD] px-3.5 py-1.5 rounded-full transition"
-                          >
-                            Preview →
-                          </Link>
-                        </div>
-                      ) : (
-                        <span className="text-[11px] text-[#94A3B8] font-mono bg-[#F1F3F9] px-2 py-0.5 rounded-full">
-                          {Math.round(l.durationSec / 60)} mins
-                        </span>
-                      )}
-                    </div>
+                {displayedLessons.length === 0 ? (
+                  <div className="p-8 text-center bg-[#FAFAFC] border border-[#EAEFF8] rounded-2xl">
+                    <FileText className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                    <p className="text-sm font-semibold text-slate-700">No Lessons Available</p>
+                    <p className="text-xs text-slate-500 mt-1">There are currently no lessons published in this course.</p>
                   </div>
-                ))}
+                ) : (
+                  displayedLessons.map((l, index) => (
+                    <div
+                      key={l.id}
+                      className={`p-4 rounded-2xl border transition-all ${
+                        l.isFree
+                          ? "bg-white border-[#C2D7FF] shadow-2xs hover:border-[#0B57D0]"
+                          : "bg-[#FAFAFC] border-[#EAEFF8] opacity-90"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-black text-xs ${
+                              l.isFree
+                                ? "bg-[#E8F1FD] text-[#0B57D0]"
+                                : "bg-[#F1F3F9] text-[#94A3B8]"
+                            }`}
+                          >
+                            {l.isFree ? <Play className="w-4 h-4 fill-current ml-0.5" /> : <Lock className="w-4 h-4" />}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-bold text-[#94A3B8] font-mono">
+                                #{String(index + 1).padStart(2, "0")}
+                              </span>
+                              <h4 className="text-xs md:text-sm font-bold text-[#0E1B3D]">
+                                {l.title.replace(/^\d+\.\s*/, "")}
+                              </h4>
+                            </div>
+                            <p className="text-[11px] text-[#5A6478] mt-0.5 font-normal">
+                              {l.description || `${Math.round(l.durationSec / 60)} mins • Marathi & English`}
+                            </p>
+                          </div>
+                        </div>
+
+                        {l.isFree ? (
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="hidden sm:inline-block text-[10px] font-extrabold uppercase tracking-wider bg-[#E8F8F2] text-[#0A8554] px-2.5 py-1 rounded-md">
+                              Free
+                            </span>
+                            <Link
+                              href={`/watch/${l.id}`}
+                              className="text-xs font-extrabold text-[#0B57D0] hover:text-[#0842A0] bg-[#E8F1FD] hover:bg-[#D3E3FD] px-3.5 py-1.5 rounded-full transition"
+                            >
+                              Preview →
+                            </Link>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-[#94A3B8] font-mono bg-[#F1F3F9] px-2 py-0.5 rounded-full">
+                            {Math.round(l.durationSec / 60)} mins
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
               {/* Show Remaining Toggle */}

@@ -11,6 +11,7 @@ import {
   deleteStaffCoupon,
   toggleStaffCouponStatus,
   getStaffCourses,
+  getStaffBooks,
 } from "@/lib/staffStore";
 import { getRedemptions, getRedemptionsByCoupon } from "@/lib/couponRedemptionStore";
 import {
@@ -39,6 +40,7 @@ export default function CouponManagerPage() {
   const [formMinOrder, setFormMinOrder] = useState<number>(499);
   const [formAppliesAll, setFormAppliesAll] = useState(true);
   const [formSelectedCourses, setFormSelectedCourses] = useState<string[]>([]);
+  const [formSelectedBooks, setFormSelectedBooks] = useState<string[]>([]);
   const [formPerUserUsage, setFormPerUserUsage] = useState<"once" | "multiple">("once");
   const [formValidityType, setFormValidityType] = useState<"days" | "date_range">("date_range");
   const [formValidDays, setFormValidDays] = useState(30);
@@ -55,6 +57,7 @@ export default function CouponManagerPage() {
   const [deleteModalCoupon, setDeleteModalCoupon] = useState<Coupon | null>(null);
 
   const courses = getStaffCourses();
+  const books = getStaffBooks();
 
   const reload = () => {
     setCoupons(getStaffCoupons());
@@ -80,6 +83,7 @@ export default function CouponManagerPage() {
     setFormMinOrder(499);
     setFormAppliesAll(true);
     setFormSelectedCourses([]);
+    setFormSelectedBooks([]);
     setFormPerUserUsage("once");
     setFormValidityType("date_range");
     setFormValidDays(30);
@@ -114,6 +118,7 @@ export default function CouponManagerPage() {
     const isAll = cpn.applies_all !== undefined ? cpn.applies_all : cpn.appliesTo === "all";
     setFormAppliesAll(isAll);
     setFormSelectedCourses(cpn.selectedCourseIds || []);
+    setFormSelectedBooks(cpn.selectedBookIds || []);
     setFormPerUserUsage(cpn.per_user_usage || cpn.usageLimitPerUser || "once");
     setFormValidityType(
       cpn.validityType || (cpn.starts_at || cpn.validFrom ? "date_range" : "days")
@@ -138,10 +143,18 @@ export default function CouponManagerPage() {
     }
   };
 
+  const toggleBookSelect = (bookId: string) => {
+    if (formSelectedBooks.includes(bookId)) {
+      setFormSelectedBooks(formSelectedBooks.filter((id) => id !== bookId));
+    } else {
+      setFormSelectedBooks([...formSelectedBooks, bookId]);
+    }
+  };
+
   const handleSaveCoupon = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formCode.trim()) {
-      toast.error("कृपया कूपन कोड प्रविष्ट करा.");
+      toast.error("Please enter a coupon code.");
       return;
     }
 
@@ -179,6 +192,7 @@ export default function CouponManagerPage() {
       appliesTo: formAppliesAll ? "all" : "selected",
       applies_all: formAppliesAll,
       selectedCourseIds: formAppliesAll ? [] : formSelectedCourses,
+      selectedBookIds: formAppliesAll ? [] : formSelectedBooks,
       usageLimitPerUser: formPerUserUsage,
       per_user_usage: formPerUserUsage,
       validityType: formValidityType,
@@ -201,8 +215,8 @@ export default function CouponManagerPage() {
     setIsDrawerOpen(false);
     toast.success(
       editingCoupon
-        ? `कूपन "${cleanedCode}" यशस्वीरीत्या अपडेट केले!`
-        : `नवीन कूपन "${cleanedCode}" यशस्वीरीत्या तयार झाले!`
+        ? `Coupon "${cleanedCode}" updated successfully!`
+        : `New coupon "${cleanedCode}" created successfully!`
     );
   };
 
@@ -212,8 +226,8 @@ export default function CouponManagerPage() {
     if (updated) {
       toast.success(
         updated.status === "active"
-          ? `कूपन "${cpn.code}" पुन्हा सुरू (Active) झाले!`
-          : `कूपन "${cpn.code}" तात्पुरते थांबवले (Paused)!`
+          ? `Coupon "${cpn.code}" is now Active!`
+          : `Coupon "${cpn.code}" is now Paused!`
       );
       reload();
     }
@@ -228,23 +242,23 @@ export default function CouponManagerPage() {
 
     const courseStr =
       cpn.applies_all !== false && (cpn.appliesTo === "all" || !cpn.selectedCourseIds?.length)
-        ? "सर्व कोर्सेसवर लागू (Site-wide)"
-        : `${cpn.selectedCourseIds?.length || 1} निवडक कोर्सेस`;
+        ? "All Courses (Site-wide)"
+        : `${cpn.selectedCourseIds?.length || 1} Selected Courses`;
 
     const validityStr =
       cpn.validityType === "days"
-        ? `पुढील ${cpn.validDays || 30} दिवस`
-        : `${cpn.starts_at?.slice(0, 10) || cpn.validFrom || "सुरू"} ते ${cpn.ends_at?.slice(0, 10) || cpn.validUntil || "शेवट"}`;
+        ? `Next ${cpn.validDays || 30} days`
+        : `${cpn.starts_at?.slice(0, 10) || cpn.validFrom || "Start"} to ${cpn.ends_at?.slice(0, 10) || cpn.validUntil || "End"}`;
 
-    const limitStr = `फक्त पहिल्या ${cpn.usage_limit || cpn.maxTotalUses || 100} विद्यार्थ्यांसाठी!`;
+    const limitStr = `Limited to first ${cpn.usage_limit || cpn.maxTotalUses || 100} students!`;
 
-    const msg = `🎓 *MindMaster Academy — विशेष सवलत कूपन!*\n\nप्रशांत धुमळ सरांच्या अकॅडमीतर्फे विशेष सवलत:\n🎟️ कूपन कोड: *${cpn.code}*\n💰 सूट: *${discountStr}*\n📚 लागू कोर्सेस: *${courseStr}*\n⏳ मुदत: *${validityStr}*\n👥 मर्यादा: *${limitStr}*${
-      cpn.school ? `\n🏫 शाळा: *${cpn.school}*` : ""
-    }\n\n👉 ॲडमिशन घेण्यासाठी व कूपन वापरण्यासाठी भेट द्या:\nhttps://mindmasteracademy.in/checkout?coupon=${cpn.code}`;
+    const msg = `🎓 *MindMaster Academy — Special Discount Coupon!*\n\nSpecial discount from Prashant Dhumal Sir's Academy:\n🎟️ Coupon Code: *${cpn.code}*\n💰 Discount: *${discountStr}*\n📚 Applicable Courses: *${courseStr}*\n⏳ Validity: *${validityStr}*\n👥 Limit: *${limitStr}*${
+      cpn.school ? `\n🏫 School: *${cpn.school}*` : ""
+    }\n\n👉 To enroll and apply coupon, visit:\nhttps://mindmasteracademy.in/checkout?coupon=${cpn.code}`;
 
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(msg);
-      toast.success(`कूपन "${cpn.code}" चा व्हॉट्सअ‍ॅप मेसेज क्लिपबोर्डवर कॉपी झाला!`);
+      toast.success(`Coupon "${cpn.code}" WhatsApp message copied to clipboard!`);
     }
   };
 
@@ -252,7 +266,7 @@ export default function CouponManagerPage() {
     if (!deleteModalCoupon) return;
     deleteStaffCoupon(deleteModalCoupon.id);
     reload();
-    toast.success(`कूपन "${deleteModalCoupon.code}" हटवण्यात आले.`);
+    toast.success(`Coupon "${deleteModalCoupon.code}" deleted successfully.`);
     setDeleteModalCoupon(null);
   };
 
@@ -260,26 +274,26 @@ export default function CouponManagerPage() {
   const getAppliesLine = (cpn: Coupon) => {
     const appliesAll = cpn.applies_all !== undefined ? cpn.applies_all : cpn.appliesTo === "all";
     if (appliesAll) {
-      return "सर्व कोर्सेस (Site-wide All Courses)";
+      return "All Courses (Site-wide)";
     }
     const ids = cpn.selectedCourseIds || [];
-    if (ids.length === 0) return "निवडक कोर्सेस (कोणताही नाही)";
+    if (ids.length === 0) return "Selected Courses (None selected)";
     const matchedTitles = courses
       .filter((c) => ids.includes(c.id) || ids.includes(c.code))
       .map((c) => c.title);
     if (matchedTitles.length > 0) {
-      return `${ids.length} कोर्सेस: ${matchedTitles.join(", ")}`;
+      return `${ids.length} Courses: ${matchedTitles.join(", ")}`;
     }
-    return `${ids.length} निवडक कोर्सेस`;
+    return `${ids.length} Selected Courses`;
   };
 
   // Helper for validity line
   const getValidityLine = (cpn: Coupon) => {
     if (cpn.validityType === "days" || cpn.validDays) {
-      return `${cpn.validDays || 30} दिवस मुदत`;
+      return `${cpn.validDays || 30} days validity`;
     }
-    const start = cpn.starts_at ? cpn.starts_at.slice(0, 10) : cpn.validFrom || "सुरू";
-    const end = cpn.ends_at ? cpn.ends_at.slice(0, 10) : cpn.validUntil || "शेवट";
+    const start = cpn.starts_at ? cpn.starts_at.slice(0, 10) : cpn.validFrom || "Start";
+    const end = cpn.ends_at ? cpn.ends_at.slice(0, 10) : cpn.validUntil || "End";
     return `${start} → ${end}`;
   };
 
@@ -292,34 +306,34 @@ export default function CouponManagerPage() {
     if (isQuotaFull) {
       return (
         <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
-          🔴 कोटा पूर्ण ({maxUses}/{maxUses})
+          🔴 Quota Full ({maxUses}/{maxUses})
         </span>
       );
     }
     if (cpn.status === "paused" || cpn.is_active === false || cpn.status === "disabled") {
       return (
         <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
-          ⏸️ तात्पुरते बंद (Paused)
+          ⏸️ Paused
         </span>
       );
     }
     if (cpn.status === "scheduled") {
       return (
         <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200">
-          ⏳ शेड्युल केलेले (Upcoming)
+          ⏳ Scheduled (Upcoming)
         </span>
       );
     }
     if (cpn.status === "expired") {
       return (
         <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-600 border border-slate-200">
-          ⌛ मुदत संपली (Expired)
+          ⌛ Expired
         </span>
       );
     }
     return (
       <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-        🟢 चालू (Active)
+        🟢 Active
       </span>
     );
   };
@@ -352,23 +366,23 @@ export default function CouponManagerPage() {
       };
     });
     exportCouponsMasterToExcel(rows);
-    toast.success("कूपन्स मास्टर रिपोर्ट एक्सेलमध्ये डाऊनलोड झाला!");
+    toast.success("Coupons master report downloaded in Excel!");
   };
 
   // Export Specific Coupon Redemptions
   const handleExportCouponRedemptions = (cpn: Coupon, list: CouponRedemptionRecord[]) => {
     const rows = list.map((r) => ({
       couponCode: cpn.code,
-      studentName: r.studentName || "विद्यार्थी",
+      studentName: r.studentName || "Student",
       studentMobile: r.studentMobile || "—",
       courseTitle: r.courseTitle || "MindMaster Course",
       originalPrice: Math.round((r.originalPricePaise || 99900) / 100),
       discountReceived: Math.round((r.discountPaise || 0) / 100),
       finalPaid: Math.round((r.paidPaise || 99900) / 100),
-      redeemedAt: new Date(r.at).toLocaleString("mr-IN"),
+      redeemedAt: new Date(r.at).toLocaleString("en-IN"),
     }));
     exportCouponRedemptionsToExcel(rows, cpn.code);
-    toast.success(`कूपन "${cpn.code}" चा विद्यार्थी ट्रॅक रेकॉर्ड एक्सेलमध्ये डाऊनलोड झाला!`);
+    toast.success(`Coupon "${cpn.code}" redemptions track record downloaded in Excel!`);
   };
 
   // Global KPIs calculation
@@ -437,14 +451,14 @@ export default function CouponManagerPage() {
               <div className="flex items-center gap-2.5">
                 <span className="text-2xl">🎟️</span>
                 <h1 className="text-2xl font-black text-[#0E1B3D] tracking-tight">
-                  कूपन कोड व्यवस्थापक (Coupon & Discount Manager)
+                  Coupon & Discount Manager
                 </h1>
                 <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#EEF4FF] text-[#0B57D0] border border-[#D0E2FF]">
                   coupons.manage
                 </span>
               </div>
               <p className="text-xs text-[#5A6478] mt-1">
-                सवलत कूपन्स तयार करा, कोर्सेसला जोडा, १०० विद्यार्थी वापर मर्यादा, मुदत आणि विद्यार्थ्यांचा ट्रॅक रेकॉर्ड तपासा.
+                Create discount coupons, link to courses, set 100 student quota, expiry dates, and track student redemptions.
               </p>
             </div>
 
@@ -453,7 +467,7 @@ export default function CouponManagerPage() {
                 onClick={handleExportMasterSummary}
                 className="px-4 py-2.5 bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0B57D0] font-bold text-xs rounded-full border border-[#D0E2FF] transition-all flex items-center gap-2 cursor-pointer shadow-xs"
               >
-                <span>📥</span> एक्सपोर्ट मास्टर रिपोर्ट (.xlsx)
+                <span>📥</span> Export Master Report (.xlsx)
               </button>
 
               <button
@@ -461,7 +475,7 @@ export default function CouponManagerPage() {
                 id="create-coupon-btn"
                 className="px-5 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-bold text-xs rounded-full shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
               >
-                <span className="text-base leading-none">➕</span> नवीन कूपन तयार करा
+                <span className="text-base leading-none">➕</span> Create New Coupon
               </button>
             </div>
           </div>
@@ -470,42 +484,42 @@ export default function CouponManagerPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
             <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-2xs">
               <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider block">
-                एकूण कूपन्स
+                Total Coupons
               </span>
               <p className="text-2xl font-black text-[#0E1B3D] mt-1">{totalCouponsCount}</p>
-              <span className="text-[10px] text-[#5A6478]">सिस्टीममधील सर्व कोड्स</span>
+              <span className="text-[10px] text-[#5A6478]">All codes in system</span>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-2xs">
               <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">
-                सक्रिय (Live)
+                Live (Active)
               </span>
               <p className="text-2xl font-black text-emerald-600 mt-1">{activeCouponsCount}</p>
-              <span className="text-[10px] text-[#5A6478]">सध्या वापरात असलेले</span>
+              <span className="text-[10px] text-[#5A6478]">Currently available</span>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-2xs">
               <span className="text-[11px] font-bold text-[#0B57D0] uppercase tracking-wider block">
-                एकूण वापर (Redemptions)
+                Redemptions
               </span>
               <p className="text-2xl font-black text-[#0B57D0] mt-1">{totalRedemptionsCount}</p>
-              <span className="text-[10px] text-[#5A6478]">विद्यार्थ्यांनी रिडीम केलेले</span>
+              <span className="text-[10px] text-[#5A6478]">Redeemed by students</span>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-2xs">
               <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider block">
-                दिलेली एकूण सूट
+                Total Discount Given
               </span>
               <p className="text-2xl font-black text-amber-600 mt-1">₹{totalDiscountGivenRupees.toLocaleString("en-IN")}</p>
-              <span className="text-[10px] text-[#5A6478]">विद्यार्थ्यांना दिलेली बचत</span>
+              <span className="text-[10px] text-[#5A6478]">Total savings given</span>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-2xs col-span-2 sm:col-span-1">
               <span className="text-[11px] font-bold text-violet-600 uppercase tracking-wider block">
-                कूपन्सद्वारे महसूल
+                Attributed Revenue
               </span>
               <p className="text-2xl font-black text-violet-600 mt-1">₹{totalRevenueAttributedRupees.toLocaleString("en-IN")}</p>
-              <span className="text-[10px] text-[#5A6478]">कूपनमुळे मिळालेली एकूण फी</span>
+              <span className="text-[10px] text-[#5A6478]">Fee received with coupons</span>
             </div>
           </div>
 
@@ -521,7 +535,7 @@ export default function CouponManagerPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="कूपन कोड, शाळा किंवा मोहीम शोधा..."
+                  placeholder="Search coupon code, school, or campaign..."
                   className="w-full pl-9 pr-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-full text-xs text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0] transition-all"
                 />
                 {searchQuery && (
@@ -536,9 +550,9 @@ export default function CouponManagerPage() {
 
               {/* Counts Badge */}
               <div className="text-xs font-semibold text-[#5A6478] flex items-center gap-2 self-start md:self-auto">
-                <span>दाखवत आहे:</span>
+                <span>Showing:</span>
                 <span className="px-2.5 py-0.5 rounded-full bg-[#F5F7FF] text-[#0E1B3D] font-bold border border-[#E4E8F8]">
-                  {filteredCoupons.length} / {coupons.length} कूपन्स
+                  {filteredCoupons.length} / {coupons.length} coupons
                 </span>
               </div>
             </div>
@@ -548,15 +562,15 @@ export default function CouponManagerPage() {
               {/* Status Chips */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mr-1">
-                  स्थिती:
+                  Status:
                 </span>
                 {[
-                  { key: "all", label: "सर्व (All)" },
-                  { key: "active", label: "🟢 चालू (Active)" },
-                  { key: "paused", label: "⏸️ थांबवलेले (Paused)" },
-                  { key: "quota_full", label: "🔴 कोटा पूर्ण (Quota Full)" },
-                  { key: "scheduled", label: "⏳ आगामी (Scheduled)" },
-                  { key: "expired", label: "⌛ मुदत संपलेले (Expired)" },
+                  { key: "all", label: "All" },
+                  { key: "active", label: "🟢 Active" },
+                  { key: "paused", label: "⏸️ Paused" },
+                  { key: "quota_full", label: "🔴 Quota Full" },
+                  { key: "scheduled", label: "⏳ Scheduled" },
+                  { key: "expired", label: "⌛ Expired" },
                 ].map((chip) => {
                   const isActive = statusFilter === chip.key;
                   return (
@@ -578,12 +592,12 @@ export default function CouponManagerPage() {
               {/* Applies Chips */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mr-1">
-                  व्याप्ती:
+                  Scope:
                 </span>
                 {[
-                  { key: "all", label: "सर्व व्याप्ती" },
-                  { key: "all_courses", label: "🌐 सर्व कोर्सेस" },
-                  { key: "selected_courses", label: "🎯 निवडक कोर्सेस" },
+                  { key: "all", label: "All Scopes" },
+                  { key: "all_courses", label: "🌐 All Courses" },
+                  { key: "selected_courses", label: "🎯 Selected Courses" },
                 ].map((chip) => {
                   const isActive = appliesFilter === chip.key;
                   return (
@@ -612,24 +626,24 @@ export default function CouponManagerPage() {
                   🎟️
                 </div>
                 <h3 className="text-base font-black text-[#0E1B3D] mt-3">
-                  कोणताही कूपन कोड उपलब्ध नाही (Clean Slate)
+                  No Coupons Available (Clean Slate)
                 </h3>
                 <p className="text-xs text-[#5A6478] mt-1.5 leading-relaxed">
-                  सर्व जुने व मॉक कूपन्स पूर्णपणे काढून टाकले आहेत. ऍडमिन किंवा सब-ऍडमिनने स्वतः तयार केलेले प्रत्यक्ष कूपन्स येथे दिसतील.
+                  All old and mock coupons have been removed. Live coupons created by admins will appear here.
                 </p>
                 <button
                   onClick={handleOpenAdd}
                   className="mt-5 px-5 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-bold text-xs rounded-full shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
                 >
-                  <span>➕</span> पहिले कूपन तयार करा
+                  <span>➕</span> Create First Coupon
                 </button>
               </div>
             ) : filteredCoupons.length === 0 ? (
               <div className="py-14 text-center">
                 <span className="text-4xl">🔍</span>
-                <h3 className="text-base font-bold text-[#0E1B3D] mt-2">सर्च परिणामांत कूपन सापडले नाही</h3>
+                <h3 className="text-base font-bold text-[#0E1B3D] mt-2">No coupons found matching search</h3>
                 <p className="text-xs text-[#5A6478] mt-1">
-                  सर्च क्वेरी किंवा फिल्टर्स बदला अथवा रीसेट करा.
+                  Change search query or reset filters.
                 </p>
                 <button
                   onClick={() => {
@@ -639,7 +653,7 @@ export default function CouponManagerPage() {
                   }}
                   className="mt-4 px-4 py-1.5 bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0B57D0] border border-[#E4E8F8] rounded-full text-xs font-bold transition-colors cursor-pointer"
                 >
-                  फिल्टर्स पूर्ववत करा (Reset)
+                  Reset Filters
                 </button>
               </div>
             ) : (
@@ -647,13 +661,13 @@ export default function CouponManagerPage() {
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-[#E4E8F8] text-[#8A94A6] uppercase tracking-wider font-semibold">
-                      <th className="pb-3.5 pl-3">कूपन कोड & मोहीम</th>
-                      <th className="pb-3.5">सूट (Discount)</th>
-                      <th className="pb-3.5">लागू कोर्सेस (Scope)</th>
-                      <th className="pb-3.5">वैधता कालावधी (Dates)</th>
-                      <th className="pb-3.5">वापर / मर्यादा (Quota)</th>
-                      <th className="pb-3.5">स्थिती (Status)</th>
-                      <th className="pb-3.5 text-right pr-3">कृती (Actions)</th>
+                      <th className="pb-3.5 pl-3">Coupon Code & Campaign</th>
+                      <th className="pb-3.5">Discount</th>
+                      <th className="pb-3.5">Applicable Courses (Scope)</th>
+                      <th className="pb-3.5">Validity Dates</th>
+                      <th className="pb-3.5">Usage / Limit (Quota)</th>
+                      <th className="pb-3.5">Status</th>
+                      <th className="pb-3.5 text-right pr-3">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E4E8F8]">
@@ -701,7 +715,7 @@ export default function CouponManagerPage() {
                               </span>
                               {c.minOrderValuePaise && (
                                 <p className="text-[10px] text-[#8A94A6] font-medium">
-                                  किमान ₹{Math.round(c.minOrderValuePaise / 100)} खरेदीवर
+                                  Min order ₹{Math.round(c.minOrderValuePaise / 100)}
                                 </p>
                               )}
                             </div>
@@ -713,7 +727,7 @@ export default function CouponManagerPage() {
                               {c.applies_all !== false &&
                               (c.appliesTo === "all" || !c.selectedCourseIds?.length) ? (
                                 <span className="inline-flex items-center gap-1 text-[#0E1B3D] font-semibold text-[11px]">
-                                  <span className="text-xs">🌐</span> सर्व कोर्सेस
+                                  <span className="text-xs">🌐</span> All Courses
                                 </span>
                               ) : (
                                 <span
@@ -737,8 +751,8 @@ export default function CouponManagerPage() {
                           <td className="py-4">
                             <div className="w-32 space-y-1">
                               <div className="flex items-center justify-between text-[10px] font-bold">
-                                <span className="text-[#0E1B3D] font-black">{totalUses} वापरले</span>
-                                <span className="text-[#8A94A6]">/ {maxUses} मर्यादा</span>
+                                <span className="text-[#0E1B3D] font-black">{totalUses} used</span>
+                                <span className="text-[#8A94A6]">/ {maxUses} limit</span>
                               </div>
                               <div className="w-full bg-[#E4E8F8] h-2 rounded-full overflow-hidden">
                                 <div
@@ -753,7 +767,7 @@ export default function CouponManagerPage() {
                                 />
                               </div>
                               <p className="text-[10px] text-[#5A6478] font-medium">
-                                {remaining === 0 ? "🔴 कोटा पूर्ण" : `⚡ ${remaining} शिल्लक`}
+                                {remaining === 0 ? "🔴 Quota Full" : `⚡ ${remaining} remaining`}
                               </p>
                             </div>
                           </td>
@@ -771,8 +785,8 @@ export default function CouponManagerPage() {
                                 }`}
                               >
                                 {c.status === "active" && c.is_active !== false
-                                  ? "⏸️ थांबवा (Pause)"
-                                  : "▶️ पुन्हा सुरू करा (Resume)"}
+                                  ? "⏸️ Pause"
+                                  : "▶️ Resume"}
                               </button>
                             </div>
                           </td>
@@ -780,22 +794,22 @@ export default function CouponManagerPage() {
                           {/* Actions: View Students, WhatsApp, Edit, Delete */}
                           <td className="py-4 text-right pr-3 whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1.5">
-                              {/* View Redemptions (कोणी वापरले?) */}
+                              {/* View Redemptions */}
                               <button
                                 onClick={() => setViewingRedemptionsCoupon(c)}
                                 className="px-2.5 py-1.5 bg-[#EEF4FF] hover:bg-[#D0E2FF] text-[#0B57D0] border border-[#D0E2FF] rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-                                title="या कूपनचा वापर केलेल्या विद्यार्थ्यांची यादी पहा"
+                                title="View list of students who used this coupon"
                               >
-                                <span>👥</span> विद्यार्थी ({totalUses})
+                                <span>👥</span> Students ({totalUses})
                               </button>
 
                               {/* WhatsApp Share */}
                               <button
                                 onClick={() => handleShareWhatsApp(c)}
                                 className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-                                title="व्हॉट्सअ‍ॅप मेसेज कॉपी करा"
+                                title="Copy WhatsApp message"
                               >
-                                <span>💬</span> शेअर
+                                <span>💬</span> Share
                               </button>
 
                               {/* Edit */}
@@ -803,7 +817,7 @@ export default function CouponManagerPage() {
                                 onClick={() => handleOpenEdit(c)}
                                 className="px-2.5 py-1.5 bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0E1B3D] border border-[#E4E8F8] rounded-xl text-[11px] font-bold transition-colors cursor-pointer"
                               >
-                                ✏️ बदला
+                                ✏️ Edit
                               </button>
 
                               {/* Delete (Admin Only) */}
@@ -811,7 +825,7 @@ export default function CouponManagerPage() {
                                 <button
                                   onClick={() => setDeleteModalCoupon(c)}
                                   className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-[11px] font-bold transition-colors cursor-pointer"
-                                  title="कूपन कायमचे हटवा"
+                                  title="Delete coupon permanently"
                                 >
                                   🗑️
                                 </button>
@@ -846,11 +860,11 @@ export default function CouponManagerPage() {
                       <div className="flex items-center gap-2">
                         <span className="text-xl">🎟️</span>
                         <h2 className="text-lg font-black text-[#0E1B3D]">
-                          {editingCoupon ? `कूपन संपादन: ${editingCoupon.code}` : "नवीन कूपन कोड तयार करा"}
+                          {editingCoupon ? `Edit Coupon: ${editingCoupon.code}` : "Create New Coupon Code"}
                         </h2>
                       </div>
                       <p className="text-xs text-[#5A6478] mt-0.5">
-                        कूपन नाव, १०० विद्यार्थी मर्यादा, वैधता तारीख व कोर्स निवडून कूपन सक्रिय करा.
+                        Set coupon code, student quota limit, validity dates, and course scope to activate.
                       </p>
                     </div>
                     <button
@@ -867,14 +881,14 @@ export default function CouponManagerPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                       <div className="sm:col-span-2">
                         <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
-                          कूपन कोड नाव (Coupon Code) *
+                          Coupon Code *
                         </label>
                         <input
                           type="text"
                           required
                           value={formCode}
                           onChange={(e) => setFormCode(e.target.value.toUpperCase())}
-                          placeholder="उदा. DIWALI50, POLICE100"
+                          placeholder="e.g. DIWALI50, POLICE100"
                           className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-mono font-black text-[#0B57D0] uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                         />
                       </div>
@@ -882,8 +896,8 @@ export default function CouponManagerPage() {
                       {/* Active Toggle Switch */}
                       <div className="p-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl flex items-center justify-between">
                         <div>
-                          <p className="text-[11px] font-bold text-[#0E1B3D]">स्थिती</p>
-                          <p className="text-[9px] text-[#5A6478]">{formIsActive ? "चालू (Active)" : "थांबवलेले"}</p>
+                          <p className="text-[11px] font-bold text-[#0E1B3D]">Status</p>
+                          <p className="text-[9px] text-[#5A6478]">{formIsActive ? "Active" : "Paused"}</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
@@ -900,13 +914,13 @@ export default function CouponManagerPage() {
                     {/* Description */}
                     <div>
                       <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
-                        मोहीम / हेतू वर्णन (Campaign Description)
+                        Campaign Description
                       </label>
                       <input
                         type="text"
                         value={formDesc}
                         onChange={(e) => setFormDesc(e.target.value)}
-                        placeholder="उदा. दिवाळी विशेष ५०% सवलत किंवा सातारा सेमिनार ऑफर"
+                        placeholder="e.g. Diwali Special 50% discount or Satara Seminar Offer"
                         className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                       />
                     </div>
@@ -914,38 +928,38 @@ export default function CouponManagerPage() {
                     {/* School Name (Optional) */}
                     <div>
                       <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
-                        शाळेचे नाव (School Restriction — ऐच्छिक, blank = सर्वांसाठी खुला)
+                        School Name (Optional restriction, blank = open to all)
                       </label>
                       <input
                         type="text"
                         value={formSchool}
                         onChange={(e) => setFormSchool(e.target.value)}
-                        placeholder="उदा. अभिनव विद्यालय / आदर्श हायस्कूल"
+                        placeholder="e.g. Abhinav Vidyalaya / Adarsh High School"
                         className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                       />
                       <p className="text-[11px] text-[#5A6478] mt-1">
                         {formSchool.trim()
-                          ? `फक्त "${formSchool.trim()}" मधील विद्यार्थ्यांनाच हा कूपन कोड लागू होईल.`
-                          : "रिकामे ठेवल्यास सर्व शाळांमधील विद्यार्थ्यांसाठी खुला राहील."}
+                          ? `This coupon will only apply to students from "${formSchool.trim()}".`
+                          : "Leaving this blank allows students from all schools to use it."}
                       </p>
                     </div>
 
-                    {/* 2. Course Applicability Scope */}
+                    {/* 2. Course & Books Applicability Scope */}
                     <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl space-y-3">
                       <div className="flex items-center justify-between">
                         <div>
                           <label className="block text-xs font-bold text-[#0E1B3D]">
-                            🎯 कोणत्या कोर्सेसवर लागू होणार? *
+                            🎯 Applicable Catalog Items (Courses &amp; Books) *
                           </label>
                           <p className="text-[11px] text-[#5A6478]">
-                            {formAppliesAll ? "सर्व कोर्सेससाठी लागू (Site-wide)" : "फक्त निवडक कोर्सेससाठी लागू"}
+                            {formAppliesAll ? "Applicable to All Courses & Paid Books (Site-wide)" : "Applicable to Specific Selected Items only"}
                           </p>
                         </div>
 
                         {/* Applies All Toggle */}
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-[#0E1B3D]">
-                            {formAppliesAll ? "सर्व कोर्सेस" : "निवडक"}
+                            {formAppliesAll ? "All Items" : "Selected"}
                           </span>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input
@@ -959,38 +973,76 @@ export default function CouponManagerPage() {
                         </div>
                       </div>
 
-                      {/* Multi-course chips if applies_all is false */}
+                      {/* Multi-item selectors if applies_all is false */}
                       {!formAppliesAll && (
-                        <div className="pt-3 border-t border-[#E4E8F8] space-y-2">
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="font-bold text-[#0E1B3D]">कोर्सेस निवडा (Select Courses):</span>
-                            <span className="text-[#0B57D0] font-semibold">
-                              {formSelectedCourses.length} निवडले
-                            </span>
+                        <div className="pt-3 border-t border-[#E4E8F8] space-y-4">
+                          {/* Course Selection */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="font-bold text-[#0E1B3D]">1. Select Specific Courses:</span>
+                              <span className="text-[#0B57D0] font-semibold">
+                                {formSelectedCourses.length} courses selected
+                              </span>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
+                              {courses.map((course) => {
+                                const isSelected =
+                                  formSelectedCourses.includes(course.id) ||
+                                  formSelectedCourses.includes(course.code);
+                                return (
+                                  <button
+                                    type="button"
+                                    key={course.id}
+                                    onClick={() => toggleCourseSelect(course.id)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                                      isSelected
+                                        ? "bg-[#EEF4FF] border-[#0B57D0] text-[#0B57D0] shadow-2xs font-bold"
+                                        : "bg-white border-[#E4E8F8] text-[#5A6478] hover:border-slate-300"
+                                    }`}
+                                  >
+                                    <span>{isSelected ? "✓" : "+"}</span>
+                                    <span className="font-mono text-[11px] font-bold">{course.code}</span>
+                                    <span className="text-[11px] max-w-[140px] truncate">{course.title}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
 
-                          <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-1">
-                            {courses.map((course) => {
-                              const isSelected =
-                                formSelectedCourses.includes(course.id) ||
-                                formSelectedCourses.includes(course.code);
-                              return (
-                                <button
-                                  type="button"
-                                  key={course.id}
-                                  onClick={() => toggleCourseSelect(course.id)}
-                                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
-                                    isSelected
-                                      ? "bg-[#EEF4FF] border-[#0B57D0] text-[#0B57D0] shadow-2xs font-bold"
-                                      : "bg-white border-[#E4E8F8] text-[#5A6478] hover:border-slate-300"
-                                  }`}
-                                >
-                                  <span>{isSelected ? "✓" : "+"}</span>
-                                  <span className="font-mono text-[11px] font-bold">{course.code}</span>
-                                  <span className="text-[11px] max-w-[140px] truncate">{course.title}</span>
-                                </button>
-                              );
-                            })}
+                          {/* Paid Books Selection */}
+                          <div className="space-y-2 pt-2 border-t border-slate-200">
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="font-bold text-[#0E1B3D]">2. Select Specific Paid Books:</span>
+                              <span className="text-purple-600 font-semibold">
+                                {formSelectedBooks.length} books selected
+                              </span>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
+                              {books.filter((b) => !b.isFree && (b.pricePaise || 0) > 0).map((book) => {
+                                const isSelected =
+                                  formSelectedBooks.includes(book.id) ||
+                                  Boolean(book.code && formSelectedBooks.includes(book.code));
+                                return (
+                                  <button
+                                    type="button"
+                                    key={book.id}
+                                    onClick={() => toggleBookSelect(book.id)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                                      isSelected
+                                        ? "bg-purple-50 border-purple-600 text-purple-700 shadow-2xs font-bold"
+                                        : "bg-white border-[#E4E8F8] text-[#5A6478] hover:border-slate-300"
+                                    }`}
+                                  >
+                                    <span>{isSelected ? "✓" : "+"}</span>
+                                    <span className="font-mono text-[11px] font-bold">{book.code || "BK"}</span>
+                                    <span className="text-[11px] max-w-[140px] truncate">{book.title}</span>
+                                    <span className="text-[10px] text-slate-400 font-bold">₹{Math.round((book.pricePaise || 0) / 100)}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
                       )}
@@ -999,7 +1051,7 @@ export default function CouponManagerPage() {
                     {/* 3. Percent / Flat Segmented + Value & Min Order */}
                     <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl space-y-3">
                       <label className="block text-xs font-bold text-[#0E1B3D]">
-                        💰 सवलत प्रकार व रक्कम (Discount Amount) *
+                        💰 Discount Type & Amount *
                       </label>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1014,7 +1066,7 @@ export default function CouponManagerPage() {
                                 : "text-[#5A6478] hover:text-[#0E1B3D]"
                             }`}
                           >
-                            % टक्केवारी (Percent)
+                            % Percentage
                           </button>
                           <button
                             type="button"
@@ -1025,7 +1077,7 @@ export default function CouponManagerPage() {
                                 : "text-[#5A6478] hover:text-[#0E1B3D]"
                             }`}
                           >
-                            ₹ फ्लॅट रक्कम (Flat ₹)
+                            ₹ Flat Amount
                           </button>
                         </div>
 
@@ -1050,10 +1102,10 @@ export default function CouponManagerPage() {
                       <div className="pt-2 border-t border-[#E4E8F8] flex items-center justify-between gap-3">
                         <div>
                           <label className="block text-[11px] font-bold text-[#0E1B3D]">
-                            किमान खरेदी मर्यादा (Min Order Value ₹):
+                            Minimum Order Value (₹):
                           </label>
                           <p className="text-[10px] text-[#5A6478]">
-                            यापेक्षा कमी किमतीच्या कोर्सवर कूपन चालणार नाही.
+                            Coupon will not apply if course price is less than this value.
                           </p>
                         </div>
                         <div className="relative w-28">
@@ -1072,13 +1124,13 @@ export default function CouponManagerPage() {
                     {/* 4. Validity Window (Start Date to End Date) */}
                     <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl space-y-3">
                       <label className="block text-xs font-bold text-[#0E1B3D]">
-                        ⏳ वैधता तारीख कालावधी (Starting to Expiring Date) *
+                        ⏳ Validity Window (Starting to Expiring Date) *
                       </label>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[11px] font-bold text-[#5A6478] mb-1">
-                            सुरुवात तारीख (Starting Date):
+                            Starting Date:
                           </label>
                           <input
                             type="date"
@@ -1090,7 +1142,7 @@ export default function CouponManagerPage() {
                         </div>
                         <div>
                           <label className="block text-[11px] font-bold text-[#5A6478] mb-1">
-                            समाप्ती तारीख (Expiring Date):
+                            Expiring Date:
                           </label>
                           <input
                             type="date"
@@ -1102,20 +1154,20 @@ export default function CouponManagerPage() {
                         </div>
                       </div>
                       <p className="text-[10px] text-[#5A6478]">
-                        ⚡ समाप्ती तारीख उलटताच कूपन आपोआप एक्सपायर (Expired) होईल.
+                        ⚡ Coupon will automatically expire once the end date passes.
                       </p>
                     </div>
 
                     {/* 5. Total Usage Limit & Per-User Limit */}
                     <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl space-y-3">
                       <label className="block text-xs font-bold text-[#0E1B3D]">
-                        👥 वापर मर्यादा (Usage Limits) *
+                        👥 Usage Limits *
                       </label>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[11px] font-bold text-[#5A6478] mb-1">
-                            एकूण विद्यार्थी मर्यादा (Total Uses):
+                            Total Uses Quota:
                           </label>
                           <input
                             type="number"
@@ -1126,13 +1178,13 @@ export default function CouponManagerPage() {
                             className="w-full px-3 py-2 bg-white border border-[#E4E8F8] rounded-xl text-xs font-black text-[#0E1B3D]"
                           />
                           <p className="text-[10px] text-[#5A6478] mt-1">
-                            उदा. १०० विद्यार्थी. १०० पूर्ण झाल्यावर आपोआप बंद होईल.
+                            e.g. 100 students. Automatically disables once 100 redemptions are reached.
                           </p>
                         </div>
 
                         <div>
                           <label className="block text-[11px] font-bold text-[#5A6478] mb-1">
-                            प्रति विद्यार्थी मर्यादा:
+                            Per Student Limit:
                           </label>
                           <div className="flex bg-white p-1 rounded-xl border border-[#E4E8F8]">
                             <button
@@ -1144,7 +1196,7 @@ export default function CouponManagerPage() {
                                   : "text-[#5A6478]"
                               }`}
                             >
-                              🔒 १ वेळाच (1x)
+                              🔒 Once (1x)
                             </button>
                             <button
                               type="button"
@@ -1155,11 +1207,11 @@ export default function CouponManagerPage() {
                                   : "text-[#5A6478]"
                               }`}
                             >
-                              🔄 एकापेक्षा जास्त
+                              🔄 Multiple
                             </button>
                           </div>
                           <p className="text-[10px] text-[#5A6478] mt-1">
-                            एकाच विद्यार्थ्याने पुन्हा वापरू नये यासाठी १ वेळाच सुरक्षित.
+                            Recommended 1x so the same student cannot reuse it multiple times.
                           </p>
                         </div>
                       </div>
@@ -1169,10 +1221,10 @@ export default function CouponManagerPage() {
                     <div className="pt-4 border-t border-[#E4E8F8]">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[11px] font-black uppercase tracking-wider text-[#8A94A6]">
-                          ✨ लाईव्ह प्रिव्ह्यू (Live Preview)
+                          ✨ Live Preview
                         </span>
                         <span className="text-[10px] text-[#5A6478]">
-                          (ॲपमध्ये हे कूपन असे दिसेल)
+                          (How this coupon will appear in the student app)
                         </span>
                       </div>
 
@@ -1197,18 +1249,18 @@ export default function CouponManagerPage() {
                               {formPerUserUsage === "once" ? "👤 Once per student" : "👥 Multiple uses"}
                             </span>
                             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              ● {formUsageLimit} विद्यार्थी कोटा
+                              ● {formUsageLimit} student quota
                             </span>
                           </div>
                         </div>
 
                         {/* Sample calculation preview */}
                         <div className="mt-2 bg-white p-2.5 rounded-xl border border-[#E4E8F8] flex items-center justify-between text-[11px]">
-                          <span className="text-[#5A6478]">₹९९९ च्या कोर्सवर विद्यार्थ्याचा हिशोब:</span>
+                          <span className="text-[#5A6478]">Sample breakdown on ₹999 course:</span>
                           <span className="font-black text-[#0B57D0]">
                             {formDiscountType === "percentage"
-                              ? `बचत: ₹${Math.round((999 * formValue) / 100)} → विद्यार्थी भरेल: ₹${Math.max(1, 999 - Math.round((999 * formValue) / 100))}`
-                              : `बचत: ₹${Math.min(999, formValue)} → विद्यार्थी भरेल: ₹${Math.max(1, 999 - formValue)}`}
+                              ? `Savings: ₹${Math.round((999 * formValue) / 100)} → Student pays: ₹${Math.max(1, 999 - Math.round((999 * formValue) / 100))}`
+                              : `Savings: ₹${Math.min(999, formValue)} → Student pays: ₹${Math.max(1, 999 - formValue)}`}
                           </span>
                         </div>
                       </div>
@@ -1221,13 +1273,13 @@ export default function CouponManagerPage() {
                         onClick={() => setIsDrawerOpen(false)}
                         className="px-5 py-2.5 rounded-full border border-[#E4E8F8] text-xs font-bold text-[#5A6478] hover:bg-[#F5F7FF] cursor-pointer"
                       >
-                        रद्द करा (Cancel)
+                        Cancel
                       </button>
                       <button
                         type="submit"
                         className="px-6 py-2.5 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer"
                       >
-                        {editingCoupon ? "कूपन बदल सेव्ह करा" : "कूपन सक्रिय करा →"}
+                        {editingCoupon ? "Save Changes" : "Activate Coupon →"}
                       </button>
                     </div>
                   </form>
@@ -1237,7 +1289,7 @@ export default function CouponManagerPage() {
           )}
 
           {/* ========================================================= */}
-          {/* REDEMPTIONS MODAL (कोणी वापरले? - सविस्तर विद्यार्थी ट्रॅक रेकॉर्ड) */}
+          {/* REDEMPTIONS MODAL (Real-time student track record) */}
           {/* ========================================================= */}
           {viewingRedemptionsCoupon && (
             <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -1250,7 +1302,7 @@ export default function CouponManagerPage() {
                         {viewingRedemptionsCoupon.code}
                       </span>
                       <h3 className="text-base font-black text-[#0E1B3D]">
-                        विद्यार्थी रिडेम्पशन ट्रॅक रेकॉर्ड (Redemptions Log)
+                        Student Redemptions Log
                       </h3>
                       {viewingRedemptionsCoupon.school && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
@@ -1259,7 +1311,7 @@ export default function CouponManagerPage() {
                       )}
                     </div>
                     <p className="text-xs text-[#5A6478] mt-1">
-                      {viewingRedemptionsCoupon.description || "हा कूपन कोड वापरलेल्या सर्व विद्यार्थ्यांची प्रत्यक्ष माहिती."}
+                      {viewingRedemptionsCoupon.description || "Real-time records of all students who redeemed this coupon code."}
                     </p>
                   </div>
 
@@ -1304,34 +1356,34 @@ export default function CouponManagerPage() {
                       <div className="grid grid-cols-3 gap-3">
                         <div className="p-3 bg-[#F5F7FF] rounded-2xl border border-[#E4E8F8]">
                           <span className="text-[10px] font-bold text-[#8A94A6] uppercase tracking-wider block">
-                            वापरलेले / कोटा
+                            Used / Quota
                           </span>
                           <p className="text-lg font-black text-[#0E1B3D] mt-0.5">
                             {totalUsedCount} / {quotaLimit}
                           </p>
                           <span className="text-[10px] text-[#5A6478]">
-                            {Math.max(0, quotaLimit - totalUsedCount)} कोटा शिल्लक
+                            {Math.max(0, quotaLimit - totalUsedCount)} quota remaining
                           </span>
                         </div>
 
                         <div className="p-3 bg-amber-50/60 rounded-2xl border border-amber-200">
                           <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">
-                            एकूण दिलेली सूट
+                            Total Discount Given
                           </span>
                           <p className="text-lg font-black text-amber-800 mt-0.5">
                             ₹{totalSavingsGiven.toLocaleString("en-IN")}
                           </p>
-                          <span className="text-[10px] text-amber-600">विद्यार्थ्यांना मिळालेली बचत</span>
+                          <span className="text-[10px] text-amber-600">Total savings provided</span>
                         </div>
 
                         <div className="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-200">
                           <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
-                            जमा झालेली फी
+                            Fee Collected
                           </span>
                           <p className="text-lg font-black text-emerald-800 mt-0.5">
                             ₹{totalFeePaid.toLocaleString("en-IN")}
                           </p>
-                          <span className="text-[10px] text-emerald-600">अकॅडमीला मिळालेला महसूल</span>
+                          <span className="text-[10px] text-emerald-600">Academy revenue earned</span>
                         </div>
                       </div>
 
@@ -1345,7 +1397,7 @@ export default function CouponManagerPage() {
                             type="text"
                             value={redemptionSearch}
                             onChange={(e) => setRedemptionSearch(e.target.value)}
-                            placeholder="विद्यार्थ्याचे नाव किंवा मोबाईल शोधा..."
+                            placeholder="Search student name or mobile..."
                             className="w-full pl-8 pr-3 py-1.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D]"
                           />
                         </div>
@@ -1354,7 +1406,7 @@ export default function CouponManagerPage() {
                           onClick={() => handleExportCouponRedemptions(viewingRedemptionsCoupon, studentRedemptions)}
                           className="px-4 py-2 bg-[#0B57D0] hover:bg-[#0842A0] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
                         >
-                          <span>📥</span> एक्सेल डाऊनलोड (.xlsx)
+                          <span>📥</span> Download Excel (.xlsx)
                         </button>
                       </div>
 
@@ -1364,10 +1416,10 @@ export default function CouponManagerPage() {
                           <div className="py-12 text-center text-[#5A6478] space-y-1">
                             <span className="text-3xl block">📋</span>
                             <p className="text-xs font-bold text-[#0E1B3D]">
-                              अद्याप कोणत्याही विद्यार्थ्याने हा कूपन वापरलेला नाही.
+                              No student has used this coupon yet.
                             </p>
                             <p className="text-[11px] text-[#8A94A6]">
-                              विद्यार्थ्याने चेकआऊटवर हा कोड वापरताच त्याची नोंद येथे आपोआप दिसेल.
+                              Records will automatically appear here as soon as a student applies this coupon during checkout.
                             </p>
                           </div>
                         ) : (
@@ -1375,12 +1427,12 @@ export default function CouponManagerPage() {
                             <thead className="bg-[#FAFBFD] sticky top-0 border-b border-[#E4E8F8] text-[#8A94A6] uppercase text-[10px]">
                               <tr>
                                 <th className="p-3">#</th>
-                                <th className="p-3">विद्यार्थ्याचे नाव</th>
-                                <th className="p-3">मोबाईल</th>
-                                <th className="p-3">खरेदी केलेला कोर्स</th>
-                                <th className="p-3">सूट (₹)</th>
-                                <th className="p-3">भरलेली फी (₹)</th>
-                                <th className="p-3 text-right">तारीख व वेळ</th>
+                                <th className="p-3">Student Name</th>
+                                <th className="p-3">Mobile</th>
+                                <th className="p-3">Purchased Course</th>
+                                <th className="p-3">Discount (₹)</th>
+                                <th className="p-3">Paid Fee (₹)</th>
+                                <th className="p-3 text-right">Date & Time</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[#E4E8F8]">
@@ -1388,7 +1440,7 @@ export default function CouponManagerPage() {
                                 <tr key={r.id} className="hover:bg-[#F9FAFF] transition-colors">
                                   <td className="p-3 text-[#8A94A6] font-semibold">{idx + 1}</td>
                                   <td className="p-3 font-bold text-[#0E1B3D]">
-                                    {r.studentName || "विद्यार्थी"}
+                                    {r.studentName || "Student"}
                                   </td>
                                   <td className="p-3 font-mono text-[11px] text-[#5A6478]">
                                     {r.studentMobile || "—"}
@@ -1403,7 +1455,7 @@ export default function CouponManagerPage() {
                                     ₹{Math.round((r.paidPaise || 0) / 100)}
                                   </td>
                                   <td className="p-3 text-right text-[11px] text-[#8A94A6] whitespace-nowrap">
-                                    {new Date(r.at).toLocaleDateString("mr-IN", {
+                                    {new Date(r.at).toLocaleDateString("en-IN", {
                                       day: "numeric",
                                       month: "short",
                                       year: "numeric",
@@ -1428,7 +1480,7 @@ export default function CouponManagerPage() {
                     }}
                     className="px-5 py-2 rounded-full bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0E1B3D] font-bold text-xs border border-[#E4E8F8] cursor-pointer"
                   >
-                    बंद करा (Close)
+                    Close
                   </button>
                 </div>
               </div>
@@ -1446,10 +1498,10 @@ export default function CouponManagerPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-[#0E1B3D]">
-                    कूपन कोड कायमचा हटवायचा आहे का?
+                    Delete Coupon Code Permanently?
                   </h3>
                   <p className="text-xs text-[#5A6478] mt-1 leading-relaxed">
-                    तुम्ही <span className="font-mono font-bold text-[#0E1B3D]">"{deleteModalCoupon.code}"</span> कूपन डिलीट करत आहात. ही कृती फक्त मुख्य ॲडमिनसाठी राखीव आहे आणि सिस्टीम ऑडिट लॉगमध्ये नोंदवली जाईल.
+                    You are deleting <span className="font-mono font-bold text-[#0E1B3D]">"{deleteModalCoupon.code}"</span>. This action is reserved for main administrators and will be recorded in system audit logs.
                   </p>
                 </div>
 
@@ -1458,13 +1510,13 @@ export default function CouponManagerPage() {
                     onClick={() => setDeleteModalCoupon(null)}
                     className="px-4 py-2 rounded-full border border-[#E4E8F8] text-xs font-bold text-[#5A6478] hover:bg-[#F5F7FF] cursor-pointer"
                   >
-                    रद्द करा (Cancel)
+                    Cancel
                   </button>
                   <button
                     onClick={handleConfirmDelete}
                     className="px-5 py-2 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer"
                   >
-                    होय, कूपन हटवा
+                    Yes, Delete Coupon
                   </button>
                 </div>
               </div>

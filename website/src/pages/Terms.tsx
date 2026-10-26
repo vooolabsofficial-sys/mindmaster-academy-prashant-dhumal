@@ -19,7 +19,7 @@ export const Terms: React.FC = () => {
             <span>Terms of Service • MindMaster Academy</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Terms & Conditions (नियम आणि अटी)
+            Terms & Conditions
           </h1>
           <p className="text-sm sm:text-base text-slate-600 mt-2 leading-relaxed">
             Welcome to MindMaster Academy. These terms govern your enrollment in our cognitive training programs, seminars, online masterclasses, and use of our official website.
@@ -140,8 +140,8 @@ export const Terms: React.FC = () => {
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2 text-xs sm:text-sm">
               <p className="font-bold text-slate-900">MindMaster Academy Head Office</p>
               <p className="text-slate-600">Near Powai Naka, Sadar Bazar, Satara, Maharashtra - 415001</p>
-              <p className="text-slate-600"><strong>Direct Helpline:</strong> +91 84593 44077</p>
-              <p className="text-slate-600"><strong>Official Email:</strong> contact@mindmasteracademy.in</p>
+              <p className="text-slate-600"><strong>Direct Helpline / WhatsApp:</strong> +91 84593 44077</p>
+              <p className="text-slate-600"><strong>Official Email:</strong> mindmasterdhumal@gmail.com</p>
             </div>
           </section>
         </div>

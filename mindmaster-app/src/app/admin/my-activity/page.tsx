@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import { StaffUser, AuditLogEntry } from "@/lib/types";
-import { getCurrentStaff, getAuditLogs } from "@/lib/staffStore";
+import { getCurrentStaff, getAuditLogs, fetchDbAuditLogs } from "@/lib/staffStore";
 
 // Action badge icons & color mapping
 function getActionBadge(action: string) {
@@ -37,25 +37,27 @@ export default function MyActivityPage() {
   const [myLogs, setMyLogs] = useState<AuditLogEntry[]>([]);
   const [filterType, setFilterType] = useState<"all" | "student" | "course" | "coupon" | "video">("all");
 
-  const filterLogsForSelf = (current: StaffUser) => {
-    const allLogs = getAuditLogs();
-    return allLogs.filter(
+  const filterLogsForSelf = async (current: StaffUser) => {
+    const allLogs = await fetchDbAuditLogs(current.staffId || current.id);
+    const selfLogs = allLogs.filter(
       (l) =>
         l.staffId === current.id ||
         (current.staffId && l.staffId === current.staffId) ||
         (l.staffName && current.name && l.staffName.toLowerCase() === current.name.toLowerCase())
     );
+    setMyLogs(selfLogs);
+    return selfLogs;
   };
 
   useEffect(() => {
     const current = getCurrentStaff();
     setStaff(current);
-    setMyLogs(filterLogsForSelf(current));
+    filterLogsForSelf(current);
 
     const handleStaffChange = () => {
       const refreshed = getCurrentStaff();
       setStaff(refreshed);
-      setMyLogs(filterLogsForSelf(refreshed));
+      filterLogsForSelf(refreshed);
     };
 
     window.addEventListener("mma_staff_changed", handleStaffChange);

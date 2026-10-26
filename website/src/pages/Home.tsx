@@ -1,30 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TransformationSlider } from '../components/TransformationSlider';
 import { VideoModal, VideoModalProps } from '../components/VideoModal';
 import { DottedColorfulBrain } from '../components/DottedColorfulBrain';
-import { getAppUrl } from '../config/appConfig';
+import {
+  getAppUrl,
+  getAppCourseCheckoutUrl,
+  fetchLiveCoursesFromApp,
+  LiveDbCourse,
+  getWhatsAppPreBookUrl,
+} from '../config/appConfig';
 
 export const Home: React.FC = () => {
   const [modalData, setModalData] = useState<VideoModalProps | null>(null);
+  const [liveDbCourses, setLiveDbCourses] = useState<LiveDbCourse[]>([]);
 
-  const openAkashVideo = () => {
-    setModalData({
-      isOpen: true,
-      onClose: () => setModalData(null),
-      title: 'Akash M. — Selected, Maharashtra Police Bharti 2025',
-      studentName: 'Akash More',
-      rankBadge: 'SELECTED • POLICE BHARTI 2025',
-      category: 'POLICE BHARTI',
-      location: 'Nashik Centre',
-      batchYear: 'Batch of 2025',
-      quote: 'The physical training calmness under Sagar Sir and rapid GK anchoring gave me 100% written test marks.',
-      posterImg: '/assets/images/akash_police_testimonial.png',
-      videoDuration: '2:14',
-      marksheetScore: '100% Written Test Marks',
-      keyTakeaway: 'Cognitive Anchoring for High Endurance & Quick MCQ Recall'
+  useEffect(() => {
+    fetchLiveCoursesFromApp().then((courses) => {
+      setLiveDbCourses(courses);
     });
-  };
+  }, []);
 
   return (
     <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen">
@@ -66,39 +61,24 @@ export const Home: React.FC = () => {
               Practical memory, concentration and Vedic-maths techniques for students from Grade 4 to UPSC — and anyone aged 10 to 80.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
-              {/* Primary App Link: Explore & Enroll */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto">
+              {/* Single High-Impact Primary Action: Explore & Enroll */}
               <a
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-secondary text-on-secondary font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-md hover:bg-secondary-container hover:scale-105 active:scale-95 transition-all"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#0052FF] text-white font-title-md text-sm sm:text-base px-8 py-3.5 rounded-full shadow-lg shadow-[#0052FF]/25 hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all group"
                 href={getAppUrl('/courses')}
               >
                 <span>Explore &amp; Enroll</span>
                 <span className="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">arrow_forward</span>
               </a>
 
-              {/* Student Login Direct Access */}
+              {/* Clean Student Portal Login */}
               <a
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-slate-800 font-title-md text-sm sm:text-base px-5 py-3.5 rounded-full shadow-xs hover:bg-slate-50 hover:text-secondary transition-all border border-slate-300"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-slate-800 font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-2xs hover:bg-slate-50 hover:text-[#0052FF] transition-all border border-slate-200"
                 href={getAppUrl('/login?next=/home')}
               >
-                <span className="material-symbols-outlined text-lg text-secondary">account_circle</span>
+                <span className="material-symbols-outlined text-lg text-[#0052FF]">account_circle</span>
                 <span>Student Login</span>
               </a>
-
-              <Link
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-title-md text-sm sm:text-base px-5 py-3.5 rounded-full shadow-lg shadow-blue-500/25 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl transition-all group border border-blue-400/30"
-                to="/brain-games"
-              >
-                <span className="material-symbols-outlined text-lg text-cyan-300 group-hover:rotate-12 transition-transform">psychology</span>
-                <span>Play Brain Games</span>
-              </Link>
-
-              <Link
-                className="w-full sm:w-auto inline-flex items-center justify-center bg-surface-container-lowest text-primary-container font-title-md text-sm sm:text-base px-5 py-3.5 rounded-full shadow-xs hover:bg-surface-container-low transition-all border border-surface-variant/60"
-                to="/contact"
-              >
-                Free Demo Class
-              </Link>
             </div>
 
             {/* Hero Showcase: Classroom Photo Card */}
@@ -119,117 +99,38 @@ export const Home: React.FC = () => {
               </div>
             </div>
 
-            {/* NEW: Multi-Platform Access Strip: Laptop Web App vs Phone Mobile App */}
-            <div className="w-full max-w-5xl mt-8 pt-6 border-t border-slate-200">
-              <div className="text-center mb-6">
-                <span className="text-[11px] font-extrabold uppercase tracking-widest text-secondary bg-blue-50 px-3 py-1 rounded-full border border-blue-100 inline-block mb-1.5">
-                  Universal Cross-Platform Learning
-                </span>
-                <h2 className="font-headline-sm text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
-                  Study Anywhere: Web App on Laptop • Install App on Phone
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto mt-1">
-                  Access the same unified MindMaster portal across all your devices with a single login.
-                </p>
-              </div>
+            {/* Single Unified Professional Student Portal Showcase Card */}
+            <div className="w-full max-w-4xl mt-10">
+              <div className="relative rounded-3xl p-6 sm:p-8 bg-white/95 backdrop-blur-2xl border border-blue-100 shadow-[0_16px_40px_rgba(0,82,255,0.06)] flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden">
+                <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-blue-100/40 via-indigo-50/20 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                {/* Laptop / PC Web App Card */}
-                <div className="bg-white rounded-3xl p-6 border-2 border-blue-100 shadow-sm hover:border-blue-300 transition-all flex flex-col justify-between gap-4 group">
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <div className="w-11 h-11 rounded-2xl bg-blue-50 text-secondary flex items-center justify-center shadow-xs">
-                        <span className="material-symbols-outlined text-[24px]">laptop_mac</span>
-                      </div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-extrabold border border-slate-200 uppercase tracking-wider">
-                        Laptop &amp; Desktop Web
-                      </span>
-                    </div>
-
-                    <h3 className="font-bold text-base text-slate-900 group-hover:text-secondary transition-colors">
-                      Study on Laptop or PC (Web App)
-                    </h3>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      Enjoy a wide-screen study experience. Watch HD lectures, write lecture notes live with timestamp bookmarks, and read official PDF course books with zoom.
-                    </p>
-
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      <span className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 text-[10px] font-semibold border border-slate-200">
-                        Full-Screen HD Player
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 text-[10px] font-semibold border border-slate-200">
-                        In-Lecture Notes Dock
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 text-[10px] font-semibold border border-slate-200">
-                        E-Books PDF Reader
-                      </span>
-                    </div>
+                <div className="flex items-start gap-4 text-left">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 text-[#0052FF] flex items-center justify-center shrink-0 shadow-2xs">
+                    <span className="material-symbols-outlined text-[26px]">school</span>
                   </div>
-
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                    <a
-                      href={getAppUrl('/home')}
-                      className="flex-1 py-2.5 px-4 rounded-full bg-secondary hover:bg-secondary-container text-white text-xs font-bold transition text-center shadow-xs flex items-center justify-center gap-1.5"
-                    >
-                      <span>Open Web App</span>
-                      <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
-                    </a>
-                    <a
-                      href={getAppUrl('/login?next=/home')}
-                      className="py-2.5 px-4 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 transition text-center"
-                    >
-                      Login
-                    </a>
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200/60 text-[11px] font-bold text-[#0052FF] mb-1.5">
+                      <span>Unified Learning Hub</span>
+                      <span>•</span>
+                      <span>Web &amp; Mobile</span>
+                    </div>
+                    <h3 className="font-extrabold text-lg sm:text-xl text-slate-900 tracking-tight">
+                      MindMaster Digital Student Portal
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-xl leading-relaxed">
+                      Single login access for all your lectures, practice drills, and official study material across laptop, tablet, or phone.
+                    </p>
                   </div>
                 </div>
 
-                {/* Mobile Phone & Tablet PWA Card */}
-                <div className="bg-white rounded-3xl p-6 border-2 border-emerald-100 shadow-sm hover:border-emerald-300 transition-all flex flex-col justify-between gap-4 group">
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shadow-xs">
-                        <span className="material-symbols-outlined text-[24px]">install_mobile</span>
-                      </div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-extrabold border border-emerald-200 uppercase tracking-wider">
-                        Android &amp; iPhone PWA
-                      </span>
-                    </div>
-
-                    <h3 className="font-bold text-base text-slate-900 group-hover:text-emerald-700 transition-colors">
-                      Install Student App on Phone
-                    </h3>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      Add to your home screen with 1 tap. Ultra-fast, lightweight PWA with zero heavy storage downloads, offline caching, and instant mobile notifications.
-                    </p>
-
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      <span className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 text-[10px] font-semibold border border-slate-200">
-                        1-Tap Home Screen Install
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 text-[10px] font-semibold border border-slate-200">
-                        Zero Storage Bloat
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 text-[10px] font-semibold border border-slate-200">
-                        Daily Practice Streaks
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                    <a
-                      href={getAppUrl('/home?install=true')}
-                      className="flex-1 py-2.5 px-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition text-center shadow-xs shadow-emerald-600/20 flex items-center justify-center gap-1.5"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">download</span>
-                      <span>Install on Phone</span>
-                    </a>
-                    <a
-                      href={getAppUrl('/courses')}
-                      className="py-2.5 px-4 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 transition text-center"
-                    >
-                      Courses
-                    </a>
-                  </div>
+                <div className="shrink-0 w-full md:w-auto">
+                  <a
+                    href={getAppUrl('/login?next=/home')}
+                    className="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#0052FF] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                  >
+                    <span>Enter Student Portal</span>
+                    <span className="material-symbols-outlined text-base">arrow_forward</span>
+                  </a>
                 </div>
               </div>
             </div>
@@ -328,6 +229,450 @@ export const Home: React.FC = () => {
           </div>
         </section>
 
+        {/* Dynamic Flagship Courses & Upcoming Curriculum Section */}
+        <section className="w-full bg-slate-50/80 py-20 px-gutter-mobile lg:px-gutter-desktop border-b border-slate-200/80">
+          <div className="max-w-container-max mx-auto">
+            <div className="text-center mb-14">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-bold mb-3">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span>Flagship Curriculum &amp; Upcoming Batches</span>
+              </div>
+              <h2 className="font-heading-bold text-3xl md:text-4xl text-slate-900 tracking-tight font-bold">
+                Proven Programs Built for{' '}
+                <span className="relative inline-block text-secondary">
+                  Peak Performance
+                  <svg aria-hidden="true" className="absolute -bottom-2 left-0 w-full text-secondary" fill="none" height="8" viewBox="0 0 160 8" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 6C45 2 110 2 158 6" stroke="currentColor" strokeLinecap="round" strokeWidth="3" />
+                  </svg>
+                </span>
+              </h2>
+              <p className="text-slate-600 text-sm max-w-xl mx-auto mt-2">
+                Online digital courses, weekend offline workshops, and personalized coaching designed by Prashant Dhumal Sir.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              {[
+                {
+                  code: 'MM-01',
+                  title: 'Memory Technique Seminar',
+                  subtitle: 'Cognitive Memory Techniques',
+                  category: 'Memory Mastery',
+                  duration: '4 Weeks • Online + Live',
+                  target: 'Grade 4 to College Students',
+                  desc: 'Peg systems, Story method & Roman Room (Memory Palace) for rapid formula, history, and syllabus memorization.',
+                  imgPath: '/assets/images/memory_seminar_brain_3d.png',
+                  icon: 'psychology',
+                  topics: ['Loci Palace Method', 'Formula to Story Coding', 'Spaced Recall 1-7-30'],
+                },
+                {
+                  code: 'MM-05',
+                  title: 'Vedic Lightning Maths',
+                  subtitle: 'Mental Speed Arithmetic',
+                  category: 'Vedic Maths',
+                  duration: '6 Weeks • Online + Live',
+                  target: 'Grade 5 to UPSC CSAT Aspirants',
+                  desc: '16 Vedic Sutras for fast mental multiplication, square roots, and calculation without scratch paper or calculators.',
+                  imgPath: '/assets/images/vedic_maths_abacus_3d.png',
+                  icon: 'calculate',
+                  topics: ['Base Multiplication', 'Square Roots in 1 Sec', 'Mental Ratio & Percent'],
+                },
+                {
+                  code: 'MM-03',
+                  title: 'Police Bharti Fast Track',
+                  subtitle: '100% Written Success Batch',
+                  category: 'Competitive Exams',
+                  duration: '12 Weeks • Comprehensive',
+                  target: 'Maharashtra Police Aspirants (18-28)',
+                  desc: 'Targeted Maharashtra GK memory pegs, IPC & CrPC important sections, and exam hall psychological composure.',
+                  imgPath: '/assets/images/police_bharti_prep_3d.png',
+                  icon: 'verified_user',
+                  topics: ['Maharashtra Geography Pegs', 'IPC Section Matrices', 'Timed Mock Drills'],
+                },
+                {
+                  code: 'MM-04',
+                  title: '500-Year Calendar Technique',
+                  subtitle: 'Mental Calendar Prodigy',
+                  category: 'Speed Arithmetic',
+                  duration: '2 Weeks • Prodigy',
+                  target: 'All Ages (10 to 80 Years)',
+                  desc: 'Determine the exact day of the week for any date from 1600 to 2100 in under 2 seconds mentally.',
+                  imgPath: '/assets/images/superfast_calendar_3d.png',
+                  icon: 'calendar_month',
+                  topics: ['Century Modulo Codes', 'Leap Year Shortcut', 'Mental Day Extraction'],
+                },
+                {
+                  code: 'MM-06',
+                  title: 'School Foundation & Scholarship',
+                  subtitle: 'Scholarship & NMMS Foundation',
+                  category: 'School Foundation',
+                  duration: '8 Weeks • Foundation',
+                  target: '5th & 8th Scholarship, NMMS',
+                  desc: 'Intelligence test pattern solving, Marathi/English vocabulary memory tools, and OMR speed time-budgeting.',
+                  imgPath: '/assets/images/classroom_students_group.png',
+                  icon: 'stars',
+                  topics: ['Scholarship Buddhimatta', 'Language Peg Systems', 'OMR Speed Training'],
+                },
+              ].map((item) => {
+                const liveMatch = liveDbCourses.find(
+                  (c) => c.code.toUpperCase() === item.code.toUpperCase()
+                );
+                const isLive = Boolean(liveMatch);
+
+                return (
+                  <div
+                    key={item.code}
+                    className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between overflow-hidden group"
+                  >
+                    <div className="relative h-44 w-full overflow-hidden bg-slate-900">
+                      <img
+                        src={item.imgPath}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20" />
+                      <div className="absolute top-3 left-3 w-9 h-9 rounded-full bg-white/95 text-secondary flex items-center justify-center shadow-md backdrop-blur-md">
+                        <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                      </div>
+
+                      <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                        {isLive ? (
+                          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold shadow-sm flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                            <span>LIVE</span>
+                          </span>
+                        ) : (
+                          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-extrabold shadow-sm">
+                            🚀 Coming Soon
+                          </span>
+                        )}
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/90 text-slate-800 font-bold">
+                          {item.code}
+                        </span>
+                      </div>
+
+                      <div className="absolute bottom-2.5 left-3 right-3 flex justify-between items-end">
+                        <span className="text-[11px] font-semibold text-sky-200 drop-shadow-sm">
+                          {item.target}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/20 text-white backdrop-blur-md border border-white/30">
+                          {item.duration}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                      <div>
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold mb-1">
+                          <span className="text-secondary font-bold uppercase tracking-wider">{item.category}</span>
+                          <span>{item.subtitle}</span>
+                        </div>
+                        <h3 className="text-base font-extrabold text-slate-900 group-hover:text-secondary transition-colors">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                          {item.desc}
+                        </p>
+
+                        <div className="flex flex-wrap gap-1.5 mt-3">
+                          {item.topics.map((t, idx) => (
+                            <span
+                              key={idx}
+                              className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <Link
+                          to="/courses"
+                          className="text-xs text-slate-600 hover:text-secondary font-bold flex items-center gap-1"
+                        >
+                          <span>Syllabus</span>
+                          <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+                        </Link>
+
+                        {isLive ? (
+                          <a
+                            href={getAppCourseCheckoutUrl(item.code)}
+                            className="px-4 py-2 rounded-full bg-secondary hover:bg-secondary-container text-white text-xs font-bold transition shadow-xs flex items-center gap-1"
+                          >
+                            <span>Enroll Now (₹{Math.round((liveMatch?.pricePaise || 99900) / 100)})</span>
+                            <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                          </a>
+                        ) : (
+                          <a
+                            href={getWhatsAppPreBookUrl(item.title)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1 cursor-pointer active:scale-95"
+                            title={`Pre-Book / Notify Me on WhatsApp for ${item.title}`}
+                          >
+                            <span className="material-symbols-outlined text-[14px]">notifications_active</span>
+                            <span>🔔 Notify Me When Batch Starts</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="text-center">
+              <Link
+                to="/courses"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-slate-50 text-slate-800 font-title-md text-xs sm:text-sm font-bold border border-slate-300 shadow-sm transition-all hover:border-secondary hover:text-secondary"
+              >
+                <span>View Full Syllabus for All Programs</span>
+                <span className="material-symbols-outlined text-base">arrow_forward</span>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Founder Spotlight: Prashant Dhumal Sir */}
+        <section className="w-full bg-white py-20 px-gutter-mobile lg:px-gutter-desktop border-b border-slate-200/80 overflow-hidden relative">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+              {/* Executive Portrait Card */}
+              <div className="lg:col-span-5 relative">
+                <div className="absolute -inset-4 bg-gradient-to-tr from-blue-600/20 via-secondary/15 to-amber-500/15 rounded-3xl blur-2xl transform -rotate-1 pointer-events-none" />
+                <div className="relative rounded-3xl overflow-hidden border-2 border-slate-200/90 shadow-2xl bg-slate-900 group">
+                  <img
+                    src="/assets/images/prashant_dhumal_executive_portrait.png"
+                    alt="Prashant Dhumal Sir — Founder & Memory Master, MindMaster Academy"
+                    className="w-full aspect-[4/5] object-cover object-top group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                  
+                  <div className="absolute bottom-5 left-5 right-5 text-white">
+                    <span className="px-3 py-1 rounded-full bg-secondary/90 text-white text-[10px] font-extrabold uppercase tracking-widest inline-block mb-1.5 backdrop-blur-md">
+                      Founder &amp; Chief Coach
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                      Prashant Dhumal Sir
+                    </h3>
+                    <p className="text-xs text-sky-200 font-medium">
+                      International Memory Trainer, Vedic Maths Master &amp; Author
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bio & Credentials */}
+              <div className="lg:col-span-7 flex flex-col gap-5">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-secondary text-xs font-bold mb-3">
+                    <span className="material-symbols-outlined text-sm">verified</span>
+                    <span>10+ Years of Demonstrated Cognitive Mastery</span>
+                  </div>
+                  <h2 className="font-heading-bold text-3xl sm:text-4xl text-slate-900 font-black tracking-tight leading-tight">
+                    "Any mind can be trained for extraordinary recall."
+                  </h2>
+                  <p className="text-sm sm:text-base text-slate-600 mt-3 leading-relaxed">
+                    Prashant Dhumal Sir has dedicated over a decade to decoding how the human brain retains complex data. Rather than burdening students with tedious rote-learning, he equips them with scientific visual association pegs, Roman Room palaces, and 16 Vedic mathematical sutras.
+                  </p>
+                </div>
+
+                {/* 3 Metric Badges */}
+                <div className="grid grid-cols-3 gap-3 py-2 border-y border-slate-200/80">
+                  <div className="text-center p-2.5 bg-slate-50 rounded-2xl border border-slate-200/60">
+                    <div className="font-['Poppins'] text-2xl font-extrabold text-secondary">5,000+</div>
+                    <div className="text-[11px] text-slate-600 font-semibold mt-0.5">Students Trained</div>
+                  </div>
+                  <div className="text-center p-2.5 bg-slate-50 rounded-2xl border border-slate-200/60">
+                    <div className="font-['Poppins'] text-2xl font-extrabold text-amber-600">500+</div>
+                    <div className="text-[11px] text-slate-600 font-semibold mt-0.5">Batches in Satara &amp; Pune</div>
+                  </div>
+                  <div className="text-center p-2.5 bg-slate-50 rounded-2xl border border-slate-200/60">
+                    <div className="font-['Poppins'] text-2xl font-extrabold text-emerald-600">100%</div>
+                    <div className="text-[11px] text-slate-600 font-semibold mt-0.5">Police Bharti Written</div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-4 text-xs text-slate-700 leading-relaxed italic">
+                  "Our mission is simple: eliminate academic stress, overcome exam blankouts, and empower Maharashtra's rural and urban students to top competitive merit lists with unwavering mental composure."
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <a
+                    href="https://wa.me/918459344077?text=Namaskar%20Prashant%20Sir%2C%20I%20would%20like%20to%20consult%20regarding%20MindMaster%20Academy%20batches."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
+                  >
+                    <span>💬</span>
+                    <span>Chat Directly with Prashant Sir on WhatsApp</span>
+                  </a>
+                  <Link
+                    to="/about"
+                    className="inline-flex items-center gap-1.5 px-5 py-3 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xs border border-slate-300 transition-all"
+                  >
+                    <span>Read Full Founder Journey</span>
+                    <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Real Results & Offline Centres Showcase */}
+        <section className="w-full bg-gradient-to-b from-slate-50 to-white py-20 px-gutter-mobile lg:px-gutter-desktop border-b border-slate-200/80">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-14">
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-secondary bg-blue-50 px-3 py-1 rounded-full border border-blue-100 inline-block mb-2">
+                Unmatched Real Results Across Maharashtra
+              </span>
+              <h2 className="font-heading-bold text-3xl md:text-4xl text-slate-900 tracking-tight font-black">
+                Proven Success in{' '}
+                <span className="text-secondary">Police Bharti, MPSC &amp; Scholarships</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto mt-2">
+                Live batch celebrations and merit ranks from our Satara Flagship HQ and Pune Hubs.
+              </p>
+            </div>
+
+            {/* Results Photo Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+              {/* Photo 1: Police Bharti */}
+              <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group">
+                <div className="relative h-64 sm:h-72 w-full overflow-hidden">
+                  <img
+                    src="/assets/images/police_bharti_celebration.jpg"
+                    alt="Maharashtra Police Bharti written clearance celebration at MindMaster Academy"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                  <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-emerald-600 text-white font-extrabold text-[11px] shadow-md uppercase tracking-wider">
+                    100% Written Clearance
+                  </span>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-lg font-bold text-slate-900 mb-1.5 group-hover:text-secondary transition-colors">
+                    Maharashtra Police Bharti Selection Celebration
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                    MindMaster cadets securing postings across Pune, Satara, Mumbai, and Kolhapur Police after mastering high-speed General Knowledge recall and IPC section matrices.
+                  </p>
+                  <Link
+                    to="/results?category=police"
+                    className="text-xs font-bold text-secondary flex items-center gap-1 hover:underline"
+                  >
+                    <span>View all Police Bharti rankers &amp; marks</span>
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Photo 2: MPSC & State Scholarship */}
+              <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group">
+                <div className="relative h-64 sm:h-72 w-full overflow-hidden">
+                  <img
+                    src="/assets/images/mpsc_merit_topper.jpg"
+                    alt="MPSC and State Scholarship Merit Rankers trained by Prashant Dhumal Sir"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                  <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-blue-600 text-white font-extrabold text-[11px] shadow-md uppercase tracking-wider">
+                    State Merit Rankers
+                  </span>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-lg font-bold text-slate-900 mb-1.5 group-hover:text-secondary transition-colors">
+                    MPSC, NTSE &amp; 5th/8th State Scholarship Toppers
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                    School and competitive examination toppers achieving 90%+ percentile through associative pegging, Vedic calculations, and timed mock tests.
+                  </p>
+                  <Link
+                    to="/results?category=mpsc"
+                    className="text-xs font-bold text-secondary flex items-center gap-1 hover:underline"
+                  >
+                    <span>Explore State Scholarship &amp; MPSC results</span>
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Offline Centres Strip: Satara & Pune */}
+            <div className="bg-white rounded-3xl border-2 border-blue-100 p-6 sm:p-8 shadow-sm">
+              <div className="text-center max-w-xl mx-auto mb-6">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-secondary bg-blue-50 px-3 py-1 rounded-full border border-blue-100 inline-block mb-1.5">
+                  Classroom Offline Centres
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  Join In-Person Classroom Batches in Satara &amp; Pune
+                </h3>
+                <p className="text-xs text-slate-600 mt-1">
+                  Experience live interactive drills, hands-on memory assessment, and one-on-one feedback with Prashant Sir.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between gap-3">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-xs font-extrabold text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-full">
+                        FLAGSHIP HQ
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-semibold">Satara Center</span>
+                    </div>
+                    <h4 className="font-bold text-base text-slate-900">Satara Academy HQ</h4>
+                    <p className="text-xs text-slate-600 mt-1">
+                      Powai Naka, Near Radhika Road, Satara, Maharashtra 415001.
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Weekend intensive batches • Grade 4 to UPSC aspirants.
+                    </p>
+                  </div>
+                  <a
+                    href="https://wa.me/918459344077?text=Namaskar%20Prashant%20Sir%2C%20I%20would%20like%20to%20visit%20the%20Satara%20HQ%20centre."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-secondary hover:underline flex items-center gap-1"
+                  >
+                    <span>Visit Satara Centre / Book Free Demo</span>
+                    <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+                  </a>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between gap-3">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-xs font-extrabold text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full">
+                        COACHING HUB
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-semibold">Pune Center</span>
+                    </div>
+                    <h4 className="font-bold text-base text-slate-900">Pune Coaching Hub</h4>
+                    <p className="text-xs text-slate-600 mt-1">
+                      Narayan Peth / FC Road Area, Pune, Maharashtra 411030.
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Special Police Bharti &amp; Competitive Exam sprint batches.
+                    </p>
+                  </div>
+                  <a
+                    href="https://wa.me/918459344077?text=Namaskar%20Prashant%20Sir%2C%20I%20would%20like%20to%20inquire%20about%20the%20Pune%20batches."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-secondary hover:underline flex items-center gap-1"
+                  >
+                    <span>Inquire for Pune Batches</span>
+                    <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Why Families Choose MindMaster */}
         <section className="w-full bg-slate-50/90 py-20 px-gutter-mobile lg:px-gutter-desktop border-b border-slate-200/80">
           <div className="max-w-container-max mx-auto">
@@ -410,146 +755,7 @@ export const Home: React.FC = () => {
           </div>
         </section>
 
-        {/* Real Ranks Testimonials & Video Spotlight */}
-        <section className="w-full bg-white py-20 px-gutter-mobile lg:px-gutter-desktop border-t border-surface-variant/40">
-          <div className="max-w-container-max mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="font-heading-bold text-3xl md:text-4xl text-slate-900 tracking-tight font-bold">
-                MindMaster helped students build <span className="text-secondary font-extrabold">real ranks</span>, not just marks.
-              </h2>
-            </div>
 
-            {/* Akash M. Police Bharti Testimonial Video Card (Clickable to open VideoModal) */}
-            <div
-              onClick={openAkashVideo}
-              className="max-w-4xl mx-auto mb-14 bg-white rounded-2xl border border-[#E4E8F8] overflow-hidden shadow-md group cursor-pointer hover:shadow-xl transition-all"
-            >
-              <div className="relative aspect-video w-full overflow-hidden bg-black/5">
-                <img
-                  alt="Akash M. Police Bharti Testimonial Video"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  src="/assets/images/akash_police_testimonial.png"
-                />
-                <div className="absolute inset-0 bg-black/25 group-hover:bg-black/15 transition-colors"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-secondary text-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                    <span className="material-symbols-outlined text-4xl sm:text-5xl ml-1">play_arrow</span>
-                  </div>
-                </div>
-                <span className="absolute bottom-4 right-4 bg-black/80 text-white text-xs font-semibold px-3 py-1 rounded-md backdrop-blur-xs flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[16px] text-red-500">videocam</span>
-                  Watch Video • 2:14
-                </span>
-                <span className="absolute top-4 left-4 bg-secondary-fixed text-on-secondary-fixed text-xs font-bold px-3 py-1 rounded-full shadow-xs">
-                  POLICE BHARTI 2025 • TOP RANKER
-                </span>
-              </div>
-              <div className="p-4 sm:p-6 flex items-center justify-between gap-4 bg-white">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-blue-100 text-secondary flex items-center justify-center font-bold text-base shadow-xs">
-                    AM
-                  </div>
-                  <div>
-                    <h4 className="font-heading-bold text-base sm:text-lg font-bold text-[#0E1B3D]">
-                      Akash M. — Selected, Police Bharti 2025
-                    </h4>
-                    <p className="text-xs sm:text-sm text-[#5A6478]">
-                      Watch how cognitive anchoring and GK memory drills secured 100% written marks.
-                    </p>
-                  </div>
-                </div>
-                <span className="hidden sm:inline-flex items-center gap-1 text-xs font-title-md text-secondary font-bold">
-                  Play Interview <span className="material-symbols-outlined text-[16px]">play_circle</span>
-                </span>
-              </div>
-            </div>
-
-            {/* Testimonial Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-2xl p-6 border border-[#E4E8F8] shadow-xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-1 text-amber-400 mb-3">
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                  </div>
-                  <p className="text-[#5A6478] text-sm leading-relaxed mb-6">
-                    “The Peg memory method changed everything for my History and Civics papers. I could recall <span className="font-['Poppins'] font-bold text-slate-800">200</span> exact dates in 2 days.”
-                  </p>
-                </div>
-                <div className="pt-4 border-t border-[#E4E8F8] flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#FFE8D6] text-[#0E1B3D] flex items-center justify-center font-bold text-xs">
-                    SK
-                  </div>
-                  <div>
-                    <div className="font-heading-bold text-sm font-bold text-[#0E1B3D]">Snehal Kulkarni</div>
-                    <div className="text-xs text-secondary font-medium">Scholarship Rank 12 • Satara</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl p-6 border border-[#E4E8F8] shadow-xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-1 text-amber-400 mb-3">
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                  </div>
-                  <p className="text-[#5A6478] text-sm leading-relaxed mb-6">
-                    “Learning from Sagar Sir gave me the methodology to teach kids in my town. I have trained <span className="font-['Poppins'] font-bold text-slate-800">400+</span> students with our own academy.”
-                  </p>
-                </div>
-                <div className="pt-4 border-t border-[#E4E8F8] flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#DFF7EA] text-[#0E1B3D] flex items-center justify-center font-bold text-xs">
-                    SG
-                  </div>
-                  <div>
-                    <div className="font-heading-bold text-sm font-bold text-[#0E1B3D]">Dr. Sunita Gaikwad</div>
-                    <div className="text-xs text-secondary font-medium">Train the Trainer • Kolhapur</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl p-6 border border-[#E4E8F8] shadow-xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-1 text-amber-400 mb-3">
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                    <span className="material-symbols-outlined text-lg fill-current">star</span>
-                  </div>
-                  <p className="text-[#5A6478] text-sm leading-relaxed mb-6">
-                    “I used to panic during mental arithmetic. Vedic maths cut my calculation time by <span className="font-['Poppins'] font-bold text-slate-800">75%</span> and secured my NMMS merit list position.”
-                  </p>
-                </div>
-                <div className="pt-4 border-t border-[#E4E8F8] flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 text-secondary flex items-center justify-center font-bold text-xs">
-                    TP
-                  </div>
-                  <div>
-                    <div className="font-heading-bold text-sm font-bold text-[#0E1B3D]">Tanvi Patil</div>
-                    <div className="text-xs text-secondary font-medium">NMMS Qualified • Pune</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center mt-10">
-              <Link
-                className="inline-flex items-center justify-center gap-2 bg-secondary text-white px-8 py-3.5 rounded-full font-title-md text-sm shadow-md hover:bg-secondary-container transition-all"
-                to="/results"
-              >
-                <span>View All Student Success Stories</span>
-                <span className="material-symbols-outlined text-lg">arrow_forward</span>
-              </Link>
-            </div>
-          </div>
-        </section>
 
         
         {/* Cognitive Speed Arena & Brain Games Showcase Section */}
@@ -710,7 +916,7 @@ export const Home: React.FC = () => {
                     Ready to put your cognitive reflexes to the test?
                   </h4>
                   <p className="text-slate-300 text-xs sm:text-sm">
-                    100% Free • Works directly in browser • English & मराठी Bilingual Support
+                    100% Free • Works directly in browser • English & Marathi Bilingual Support
                   </p>
                 </div>
               </div>

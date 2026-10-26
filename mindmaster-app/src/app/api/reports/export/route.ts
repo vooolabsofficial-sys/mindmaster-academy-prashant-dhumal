@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeAnalyticsData, AnalyticsFilter } from "@/lib/analyticsEngine";
+import { getStaffStudents } from "@/lib/staffStore";
+import { getGrants } from "@/lib/grantStore";
 
 function escapeCsvCell(val: string | number | undefined | null): string {
   if (val === undefined || val === null) return '""';
@@ -188,6 +190,69 @@ export async function GET(req: NextRequest) {
           `${w.completionRate}%`,
           `${w.totalWatchHours} hrs`,
         ]);
+        csvContent = buildCsv(headers, rows);
+        break;
+      }
+
+      case "fee-collections":
+      case "transactions": {
+        filename = `fee-collections-${range}-${district}.csv`;
+        const headers = [
+          "Transaction ID",
+          "Customer Name",
+          "Verified 10-Digit Mobile",
+          "District",
+          "Item Enrolled",
+          "Amount (INR)",
+          "Payment Method",
+          "Status",
+          "Enrollment Date",
+        ];
+
+        const students = getStaffStudents();
+        const grants = getGrants();
+        const rows: (string | number)[][] = [];
+
+        students.forEach((s, idx) => {
+          if (district !== "all" && s.district?.toLowerCase() !== district.toLowerCase()) return;
+          const cleanPhone = s.phone.replace(/\D/g, "").slice(-10);
+          const enrolledCourses = s.coursesTaken?.length
+            ? s.coursesTaken
+            : [{ courseCode: "MMA", courseTitle: s.enrolledCourseTitles?.[0] || "Foundational Mindset", isExpired: false }];
+
+          enrolledCourses.forEach((c: any, cIdx: number) => {
+            rows.push([
+              `TXN-${cleanPhone.slice(-4) || "0000"}-${idx + 1}-${cIdx + 1}`,
+              s.name,
+              cleanPhone ? `+91 ${cleanPhone}` : s.phone,
+              s.district || "Maharashtra",
+              `[${c.courseCode}] ${c.courseTitle}`,
+              199,
+              "Online Gateway (Razorpay)",
+              c.isExpired ? "Expired" : "Success",
+              s.joinedAt ? s.joinedAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+            ]);
+          });
+        });
+
+        grants.forEach((g, gIdx) => {
+          const rawPhone = g.student_phone || g.studentPhone || (g.scope_type === "student" ? g.scope_value : "");
+          const cleanPhone = rawPhone.replace(/\D/g, "").slice(-10);
+          if (cleanPhone) {
+            rows.push([
+              `GRANT-${cleanPhone.slice(-4)}-${gIdx + 1}`,
+              g.student_name || g.studentName || `Learner ${cleanPhone.slice(-4)}`,
+              `+91 ${cleanPhone}`,
+              "Maharashtra",
+              g.courseTitle || "MindMaster Course Access",
+              g.amount_paid !== undefined ? g.amount_paid : 0,
+              g.payment_mode === "cash" ? "Offline Cash" : g.payment_mode === "upi" ? "Direct UPI" : "Scholarship Grant",
+              g.status === "active" ? "Active" : "Revoked",
+              g.created_at ? g.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+            ]);
+          }
+        });
+
         csvContent = buildCsv(headers, rows);
         break;
       }

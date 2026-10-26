@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getAppUrl } from '../config/appConfig';
+import { LoginModal } from './LoginModal';
 
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('login') === '1' || params.get('login') === 'true') {
+      setIsLoginModalOpen(true);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -85,27 +94,17 @@ export const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Right CTA Actions */}
+          {/* Right CTA Actions: Only Student Login */}
           <div className="flex items-center gap-2">
-            {/* Student Login Button */}
-            <a
-              href={getAppUrl('/login?next=/home')}
-              className="inline-flex items-center justify-center bg-white/15 hover:bg-white/25 text-white font-title-md text-xs sm:text-sm font-bold px-3 sm:px-4 py-2 rounded-full border border-white/30 backdrop-blur-sm transition-all shrink-0 gap-1.5"
-              title="Student Login / Web Portal (Laptop & Mobile)"
+            {/* Student Login Button -> Opens Apple Liquid Glass Modal */}
+            <button
+              onClick={() => setIsLoginModalOpen(true)}
+              className="inline-flex items-center justify-center bg-white text-[#0052FF] hover:bg-sky-50 font-title-md text-xs sm:text-sm font-extrabold px-4 sm:px-5 py-2 rounded-full shadow-md hover:scale-105 active:scale-95 transition-all ring-2 ring-white/40 shrink-0 gap-1.5 cursor-pointer"
+              title="Student Login / Web Portal"
             >
-              <span className="material-symbols-outlined text-[17px]">account_circle</span>
-              <span>Login</span>
-            </a>
-
-            {/* Enroll Now -> Links directly to App Courses */}
-            <a
-              href={getAppUrl('/courses')}
-              className="inline-flex items-center justify-center bg-white text-[#0052FF] font-title-md text-xs sm:text-sm font-extrabold px-3.5 sm:px-5 py-2 rounded-full shadow-md hover:bg-sky-50 hover:scale-105 active:scale-95 transition-all ring-2 ring-white/40 shrink-0"
-              title="Enroll in Courses & Open App"
-            >
-              <span>Enroll Now</span>
-              <span className="material-symbols-outlined text-[15px] ml-1">arrow_forward</span>
-            </a>
+              <span className="material-symbols-outlined text-[18px]">account_circle</span>
+              <span className="whitespace-nowrap">Student Login</span>
+            </button>
 
             <a
               href="tel:+918459344077"
@@ -118,7 +117,7 @@ export const Navbar: React.FC = () => {
             {/* Mobile Menu Toggle Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-white focus:outline-none hover:bg-white/30 transition-colors"
+              className="md:hidden w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-white focus:outline-none hover:bg-white/30 transition-colors cursor-pointer"
               aria-label="Toggle Menu"
             >
               <span className="material-symbols-outlined text-[20px]">
@@ -130,7 +129,7 @@ export const Navbar: React.FC = () => {
 
         {/* Dynamic Island Expansion Drawer for Mobile */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-2 bg-[#0047E0]/95 backdrop-blur-2xl border border-white/25 rounded-3xl p-4 shadow-2xl space-y-1.5 animate-fadeIn">
+          <div className="md:hidden mt-2 bg-[#0047E0]/95 backdrop-blur-2xl border border-white/25 rounded-3xl p-4 shadow-2xl space-y-1.5 animate-fadeIn pointer-events-auto">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -156,39 +155,25 @@ export const Navbar: React.FC = () => {
               </Link>
             ))}
 
-            {/* Mobile Actions: Login, Enroll & Install App */}
-            <div className="pt-2 border-t border-white/20 flex flex-col gap-2">
-              <div className="flex gap-2">
-                <a
-                  href={getAppUrl('/login?next=/home')}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 bg-white/20 hover:bg-white/30 text-white font-title-md text-xs py-2.5 rounded-full border border-white/30 font-bold transition-all"
-                >
-                  <span className="material-symbols-outlined text-[16px]">account_circle</span>
-                  <span>Student Login</span>
-                </a>
-                <a
-                  href={getAppUrl('/courses')}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex-1 inline-flex items-center justify-center bg-white text-[#0052FF] font-title-md text-xs py-2.5 rounded-full shadow-md font-extrabold"
-                >
-                  <span>Enroll Now</span>
-                  <span className="material-symbols-outlined text-[15px] ml-1">arrow_forward</span>
-                </a>
-              </div>
-
-              <a
-                href={getAppUrl('/home?install=true')}
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-title-md text-xs py-2.5 rounded-full font-bold shadow-md shadow-emerald-900/20 transition-all"
+            {/* Mobile Action: Student Login only */}
+            <div className="pt-2.5 border-t border-white/20">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setIsLoginModalOpen(true);
+                }}
+                className="w-full inline-flex items-center justify-center gap-2 bg-white text-[#0052FF] font-title-md text-sm py-2.5 rounded-full shadow-md font-extrabold hover:bg-sky-50 transition-all cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[16px]">install_mobile</span>
-                <span>Install MindMaster App (Phone / PWA)</span>
-              </a>
+                <span className="material-symbols-outlined text-[18px]">account_circle</span>
+                <span>Student Login</span>
+              </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Render Login Modal with blurred background */}
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </header>
   );
 };

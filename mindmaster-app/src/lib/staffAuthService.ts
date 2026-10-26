@@ -1,18 +1,13 @@
 import { StaffUser, StaffRole, StaffPermission, AuditLogEntry } from "./types";
 import { INITIAL_STAFF_USERS } from "./mockStaffData";
-import { hashArgon2, verifyArgon2 } from "./argon2";
 import { getStaffUsers } from "./staffStore";
 
-export interface StaffSessionData {
-  staff_id: string;
-  name: string;
-  phone: string;
-  role: StaffRole;
-  permissions: StaffPermission[];
-  status: "active" | "suspended" | "inactive";
-  must_change_password: boolean;
-  logged_at: number;
-}
+export type { StaffSessionData } from "./staffSession";
+export {
+  signStaffSession,
+  createStaffSessionToken,
+  verifyStaffSession,
+} from "./staffSession";
 
 export interface LockoutInfo {
   attempts: number;
@@ -76,9 +71,14 @@ export function clearFailedAttempts(staffId: string): void {
 /**
  * Find staff member by staff_id, phone, or email.
  */
+import { normalizePhone } from "./phoneUtils";
+import crypto from "crypto";
+
+// (Session management functions are now in ./staffSession to preserve Edge runtime compatibility)
+
 export function findStaffAccount(identifier: string): StaffUser | null {
   const clean = identifier.trim().toLowerCase();
-  const cleanPhone = identifier.replace(/[\s\-\+]/g, "");
+  const normalizedPhone = normalizePhone(identifier);
 
   // Read from dynamic staff store
   const allStaff = getStaffUsers();
@@ -86,7 +86,7 @@ export function findStaffAccount(identifier: string): StaffUser | null {
   const user = allStaff.find((u) => {
     const matchId = (u.staffId && u.staffId.toLowerCase() === clean) || u.id.toLowerCase() === clean;
     const matchEmail = u.email && u.email.toLowerCase() === clean;
-    const matchPhone = u.phone && u.phone.replace(/[\s\-\+]/g, "") === cleanPhone;
+    const matchPhone = normalizedPhone && normalizePhone(u.phone) === normalizedPhone;
     return matchId || matchEmail || matchPhone;
   });
 
@@ -94,7 +94,7 @@ export function findStaffAccount(identifier: string): StaffUser | null {
     return {
       ...user,
       permissions: (user.permissions || []).filter(
-        (p) => p === "messages.manage" || p === "students.view"
+        (p) => p === "messages.manage" || p === "students.view" || p === "freegrant.manage"
       ),
     };
   }
@@ -159,6 +159,7 @@ export async function verifyOtpAndResetPassword(
   }
 
   // Success -> Hash new password with Argon2
+  const { hashArgon2 } = await import("./argon2");
   const hashed = await hashArgon2(newPassword);
   user.password = hashed;
   user.mustChangePassword = false;

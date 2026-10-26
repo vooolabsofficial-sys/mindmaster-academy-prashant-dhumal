@@ -31,11 +31,12 @@ export default function LanguageModal({ isOpen, onClose }: LanguageModalProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="language-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-2xl flex flex-col gap-5 max-h-[90vh] overflow-hidden"
+        className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-2xl flex flex-col gap-4 sm:gap-5 max-h-[85vh] overflow-hidden"
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 pb-2 border-b border-slate-100">

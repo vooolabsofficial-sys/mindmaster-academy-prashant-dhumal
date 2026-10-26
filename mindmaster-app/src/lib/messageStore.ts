@@ -1,5 +1,5 @@
 // In-App Messaging Store
-// Bidirectional Student ↔ Staff messaging — NO WhatsApp anywhere
+// Bidirectional Student ↔ Staff messaging — 100% Live Supabase support_conversations & support_messages
 
 export interface Conversation {
   id: string;
@@ -26,203 +26,108 @@ export interface Message {
   at: string;
 }
 
-// ==========================================
-// PRE-SEEDED CONVERSATIONS
-// ==========================================
-const INITIAL_CONVERSATIONS: Conversation[] = [
-  {
-    id: "conv-academy",
-    studentId: "std-01",
-    studentName: "Aditi Patil",
-    staffId: "staff-3",
-    staffName: "Sneha Patil",
-    courseId: null,
-    courseTitle: null,
-    lastAt: "2026-09-10T15:30:00Z",
-    lastMessage: "Thank you for clarifying, I will try the revised drill tonight.",
-    unreadStudent: 1,
-    unreadStaff: 0,
-    district: "Pune",
-  },
-  {
-    id: "conv-vedic-doubt",
-    studentId: "std-coupon-used",
-    studentName: "Kavita Mane",
-    staffId: "staff-3",
-    staffName: "Sneha Patil",
-    courseId: "c2",
-    courseTitle: "Vedic Maths Speed System",
-    lastAt: "2026-09-10T11:20:00Z",
-    lastMessage: "Sir, Lesson 4 ma Vedic multiplication cha shortcut nahi samjhla. Plz help?",
-    unreadStudent: 0,
-    unreadStaff: 1,
-    district: "Sangli",
-  },
-  {
-    id: "conv-police-query",
-    studentId: "std-02",
-    studentName: "Rahul Shinde",
-    staffId: null,
-    staffName: null,
-    courseId: "c4",
-    courseTitle: "Police Bharti Speed & GK Memory",
-    lastAt: "2026-09-09T14:00:00Z",
-    lastMessage: "Access expiring in 5 days — can I get renewal coupon?",
-    unreadStudent: 0,
-    unreadStaff: 1,
-    district: "Satara",
-  },
-  {
-    id: "conv-new-student",
-    studentId: "std-new",
-    studentName: "Tanvi Deshpande",
-    staffId: "staff-mma-000",
-    staffName: "Prashant Dhumal",
-    courseId: null,
-    courseTitle: null,
-    lastAt: "2026-09-08T10:45:00Z",
-    lastMessage: "Welcome to MindMaster Academy! Feel free to ask any questions here.",
-    unreadStudent: 1,
-    unreadStaff: 0,
-    district: "Pune",
-  },
-];
-
-// ==========================================
-// PRE-SEEDED MESSAGES
-// ==========================================
-const INITIAL_MESSAGES: Message[] = [
-  // Aditi conversation
-  {
-    id: "msg-001",
-    conversationId: "conv-academy",
-    senderType: "student",
-    senderId: "std-01",
-    senderName: "Aditi Patil",
-    body: "Namaste! Mala Vedic Maths lesson 6 madhe speed drill che technique nahi samjhle. Can you help?",
-    at: "2026-09-10T14:00:00Z",
-  },
-  {
-    id: "msg-002",
-    conversationId: "conv-academy",
-    senderType: "staff",
-    senderId: "staff-3",
-    senderName: "Sneha Patil",
-    body: "Hi Aditi! Lesson 6 madhye tum Base 100 method vaparla pahije. Step 1: Subtract from 100. Step 2: Cross-multiply. Practice with numbers 88 × 96 first. 🧠",
-    at: "2026-09-10T14:30:00Z",
-  },
-  {
-    id: "msg-003",
-    conversationId: "conv-academy",
-    senderType: "student",
-    senderId: "std-01",
-    senderName: "Aditi Patil",
-    body: "Thank you for clarifying, I will try the revised drill tonight.",
-    at: "2026-09-10T15:30:00Z",
-  },
-  {
-    id: "msg-004",
-    conversationId: "conv-academy",
-    senderType: "staff",
-    senderId: "staff-3",
-    senderName: "Sneha Patil",
-    body: "Great! Once you complete the drill, share your score here. Keep going! 💪",
-    at: "2026-09-10T15:35:00Z",
-  },
-
-  // Kavita conversation
-  {
-    id: "msg-005",
-    conversationId: "conv-vedic-doubt",
-    senderType: "student",
-    senderId: "std-coupon-used",
-    senderName: "Kavita Mane",
-    body: "Sir, Lesson 4 ma Vedic multiplication cha shortcut nahi samjhla. Plz help?",
-    at: "2026-09-10T11:20:00Z",
-  },
-
-  // Rahul conversation
-  {
-    id: "msg-006",
-    conversationId: "conv-police-query",
-    senderType: "student",
-    senderId: "std-02",
-    senderName: "Rahul Shinde",
-    body: "Namaskar sir, maza Police Bharti course 5 divas madhye expire honar aahe. Renewal coupon milel ka?",
-    at: "2026-09-09T13:30:00Z",
-  },
-  {
-    id: "msg-007",
-    conversationId: "conv-police-query",
-    senderType: "student",
-    senderId: "std-02",
-    senderName: "Rahul Shinde",
-    body: "Access expiring in 5 days — can I get renewal coupon?",
-    at: "2026-09-09T14:00:00Z",
-  },
-
-  // Tanvi welcome conversation
-  {
-    id: "msg-008",
-    conversationId: "conv-new-student",
-    senderType: "student",
-    senderId: "std-new",
-    senderName: "Tanvi Deshpande",
-    body: "Hi, I just registered. Which course should I start with for 10th scholarship?",
-    at: "2026-09-08T10:30:00Z",
-  },
-  {
-    id: "msg-009",
-    conversationId: "conv-new-student",
-    senderType: "staff",
-    senderId: "staff-mma-000",
-    senderName: "Prashant Dhumal",
-    body: "Welcome to MindMaster Academy! Feel free to ask any questions here.",
-    at: "2026-09-08T10:45:00Z",
-  },
-];
-
-// ==========================================
-// localStorage Keys
-// ==========================================
-const CONVERSATIONS_KEY = "mma_conversations";
-const MESSAGES_KEY = "mma_messages";
-
-const SERVER_MEM_STORE = new Map<string, any>();
-
-function safeGetItem<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") {
-    return SERVER_MEM_STORE.has(key) ? (SERVER_MEM_STORE.get(key) as T) : fallback;
-  }
+function getSupabase() {
   try {
-    const raw = localStorage.getItem(key);
-    if (!raw) {
-      localStorage.setItem(key, JSON.stringify(fallback));
-      return fallback;
+    if (typeof window === "undefined") {
+      const { createAdminClient } = require("./supabase/admin");
+      return createAdminClient();
+    } else {
+      const { createClient } = require("./supabase/client");
+      return createClient();
     }
-    return JSON.parse(raw) as T;
   } catch {
-    return fallback;
+    return null;
   }
 }
 
-function safeSetItem<T>(key: string, data: T): void {
-  if (typeof window === "undefined") {
-    SERVER_MEM_STORE.set(key, data);
-    return;
+// In-Memory cache for instantaneous synchronous UI reads
+let CACHED_CONVERSATIONS: Conversation[] = [];
+const CACHED_MESSAGES: Map<string, Message[]> = new Map();
+
+function notifyListeners() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("mma_messages_changed"));
   }
+}
+
+// ----------------------------------------------------
+// DIRECT SUPABASE ASYNC FETCHERS
+// ----------------------------------------------------
+export async function fetchDbConversations(): Promise<Conversation[]> {
   try {
-    localStorage.setItem(key, JSON.stringify(data));
-  } catch (err) {
-    console.error(`Error writing ${key}:`, err);
+    const supabase = getSupabase();
+    if (!supabase) return CACHED_CONVERSATIONS;
+
+    const { data, error } = await supabase
+      .from("support_conversations")
+      .select("*")
+      .order("updated_at", { ascending: false });
+
+    if (error || !data) return CACHED_CONVERSATIONS;
+
+    const mapped: Conversation[] = data.map((d: any) => ({
+      id: d.id,
+      studentId: d.student_id,
+      studentName: d.student_name,
+      staffId: null,
+      staffName: null,
+      courseId: d.course_id || null,
+      courseTitle: null,
+      lastAt: d.updated_at || d.created_at || new Date().toISOString(),
+      lastMessage: d.last_message || "",
+      unreadStudent: d.unread_student || 0,
+      unreadStaff: d.unread_staff ?? d.unread_count ?? 0,
+      district: d.district || undefined,
+    }));
+
+    CACHED_CONVERSATIONS = mapped;
+    notifyListeners();
+    return mapped;
+  } catch {
+    return CACHED_CONVERSATIONS;
   }
 }
 
-// ==========================================
-// CONVERSATION CRUD
-// ==========================================
+export async function fetchDbMessages(conversationId: string): Promise<Message[]> {
+  try {
+    const supabase = getSupabase();
+    if (!supabase) return CACHED_MESSAGES.get(conversationId) || [];
+
+    const { data, error } = await supabase
+      .from("support_messages")
+      .select("*")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
+
+    if (error || !data) return CACHED_MESSAGES.get(conversationId) || [];
+
+    const mapped: Message[] = data.map((d: any) => ({
+      id: d.id,
+      conversationId: d.conversation_id,
+      senderType: d.sender_role as "student" | "staff",
+      senderId: d.sender_id,
+      senderName: d.sender_name,
+      body: d.body,
+      at: d.created_at || new Date().toISOString(),
+    }));
+
+    CACHED_MESSAGES.set(conversationId, mapped);
+    notifyListeners();
+    return mapped;
+  } catch {
+    return CACHED_MESSAGES.get(conversationId) || [];
+  }
+}
+
+// ----------------------------------------------------
+// SYNCHRONOUS GETTERS (CACHED)
+// ----------------------------------------------------
 export function getConversations(): Conversation[] {
-  return safeGetItem<Conversation[]>(CONVERSATIONS_KEY, INITIAL_CONVERSATIONS);
+  // Trigger background fetch if empty on client
+  if (CACHED_CONVERSATIONS.length === 0 && typeof window !== "undefined") {
+    fetchDbConversations().catch(() => {});
+  }
+  return CACHED_CONVERSATIONS;
 }
 
 export function getConversationsForStudent(studentId: string): Conversation[] {
@@ -235,7 +140,7 @@ export function getConversationsForStaff(filters?: {
   district?: string;
   search?: string;
 }): Conversation[] {
-  let convs = getConversations();
+  let convs = [...getConversations()];
 
   if (filters?.unreadOnly) {
     convs = convs.filter((c) => c.unreadStaff > 0);
@@ -256,7 +161,6 @@ export function getConversationsForStaff(filters?: {
     );
   }
 
-  // Sort by most recent
   return convs.sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
 }
 
@@ -264,19 +168,24 @@ export function getConversationById(id: string): Conversation | undefined {
   return getConversations().find((c) => c.id === id);
 }
 
-// ==========================================
-// MESSAGE CRUD
-// ==========================================
 export function getMessages(): Message[] {
-  return safeGetItem<Message[]>(MESSAGES_KEY, INITIAL_MESSAGES);
+  const all: Message[] = [];
+  CACHED_MESSAGES.forEach((msgs) => all.push(...msgs));
+  return all;
 }
 
 export function getConversationMessages(conversationId: string): Message[] {
-  return getMessages()
-    .filter((m) => m.conversationId === conversationId)
-    .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  if (!CACHED_MESSAGES.has(conversationId) && typeof window !== "undefined") {
+    fetchDbMessages(conversationId).catch(() => {});
+  }
+  return (CACHED_MESSAGES.get(conversationId) || []).sort(
+    (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime()
+  );
 }
 
+// ----------------------------------------------------
+// MUTATIONS (LIVE SUPABASE WRITE + CACHE UPDATE)
+// ----------------------------------------------------
 export function sendMessage(params: {
   conversationId: string;
   senderType: "student" | "staff";
@@ -295,50 +204,74 @@ export function sendMessage(params: {
     at: now.toISOString(),
   };
 
-  // Save message
-  const messages = getMessages();
-  safeSetItem(MESSAGES_KEY, [...messages, newMsg]);
+  // Update local cache immediately
+  const existing = CACHED_MESSAGES.get(params.conversationId) || [];
+  CACHED_MESSAGES.set(params.conversationId, [...existing, newMsg]);
 
-  // Update conversation
-  const convs = getConversations();
-  const updated = convs.map((c) => {
+  CACHED_CONVERSATIONS = CACHED_CONVERSATIONS.map((c) => {
     if (c.id === params.conversationId) {
       return {
         ...c,
         lastAt: now.toISOString(),
         lastMessage: params.body,
-        staffId: params.senderType === "staff" ? params.senderId : c.staffId,
-        staffName: params.senderType === "staff" ? params.senderName : c.staffName,
         unreadStudent: params.senderType === "staff" ? c.unreadStudent + 1 : c.unreadStudent,
         unreadStaff: params.senderType === "student" ? c.unreadStaff + 1 : c.unreadStaff,
       };
     }
     return c;
   });
-  safeSetItem(CONVERSATIONS_KEY, updated);
 
-  // Dispatch event for real-time badge updates
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("mma_messages_changed"));
+  notifyListeners();
+
+  // Persist directly to Supabase
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      supabase
+        .from("support_messages")
+        .insert({
+          conversation_id: params.conversationId,
+          sender_role: params.senderType,
+          sender_id: params.senderId,
+          sender_name: params.senderName,
+          body: params.body,
+          created_at: now.toISOString(),
+        })
+        .then(() => {})
+        .catch((err: any) => console.warn("Supabase support_messages insert error:", err));
+
+      const isStaff = params.senderType === "staff";
+      const conv = CACHED_CONVERSATIONS.find((c) => c.id === params.conversationId);
+      supabase
+        .from("support_conversations")
+        .update({
+          last_message: params.body,
+          updated_at: now.toISOString(),
+          unread_staff: isStaff ? 0 : (conv?.unreadStaff || 1),
+          unread_student: isStaff ? (conv?.unreadStudent || 1) : 0,
+        })
+        .eq("id", params.conversationId)
+        .then(() => {})
+        .catch((err: any) => console.warn("Supabase support_conversations update error:", err));
+    } catch {}
   }
 
   return newMsg;
 }
 
-// ==========================================
-// CREATE A NEW CONVERSATION (student-initiated)
-// ==========================================
 export function createConversation(params: {
   studentId: string;
   studentName: string;
+  studentPhone?: string;
   courseId?: string;
   courseTitle?: string;
   district?: string;
   firstMessage: string;
 }): Conversation {
   const now = new Date();
+  const convId = `conv-${Date.now()}`;
   const newConv: Conversation = {
-    id: `conv-${Date.now()}`,
+    id: convId,
     studentId: params.studentId,
     studentName: params.studentName,
     staffId: null,
@@ -352,49 +285,96 @@ export function createConversation(params: {
     district: params.district,
   };
 
-  const convs = getConversations();
-  safeSetItem(CONVERSATIONS_KEY, [newConv, ...convs]);
+  CACHED_CONVERSATIONS = [newConv, ...CACHED_CONVERSATIONS];
+  notifyListeners();
 
-  // Also create the first message
-  sendMessage({
-    conversationId: newConv.id,
-    senderType: "student",
-    senderId: params.studentId,
-    senderName: params.studentName,
-    body: params.firstMessage,
-  });
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      supabase
+        .from("support_conversations")
+        .insert({
+          id: convId,
+          student_id: params.studentId,
+          student_name: params.studentName,
+          student_phone: params.studentPhone || null,
+          district: params.district || null,
+          course_id: params.courseId || null,
+          unread_count: 1,
+          unread_staff: 1,
+          unread_student: 0,
+          last_message: params.firstMessage,
+          created_at: now.toISOString(),
+          updated_at: now.toISOString(),
+        })
+        .then(() => {
+          sendMessage({
+            conversationId: convId,
+            senderType: "student",
+            senderId: params.studentId,
+            senderName: params.studentName,
+            body: params.firstMessage,
+          });
+        })
+        .catch((err: any) => console.warn("Supabase support_conversations insert error:", err));
+    } catch {
+      sendMessage({
+        conversationId: convId,
+        senderType: "student",
+        senderId: params.studentId,
+        senderName: params.studentName,
+        body: params.firstMessage,
+      });
+    }
+  } else {
+    sendMessage({
+      conversationId: convId,
+      senderType: "student",
+      senderId: params.studentId,
+      senderName: params.studentName,
+      body: params.firstMessage,
+    });
+  }
 
   return newConv;
 }
 
-// ==========================================
-// MARK-AS-READ
-// ==========================================
 export function markConversationReadByStudent(conversationId: string): void {
-  const convs = getConversations();
-  const updated = convs.map((c) =>
+  CACHED_CONVERSATIONS = CACHED_CONVERSATIONS.map((c) =>
     c.id === conversationId ? { ...c, unreadStudent: 0 } : c
   );
-  safeSetItem(CONVERSATIONS_KEY, updated);
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("mma_messages_changed"));
+  notifyListeners();
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      supabase
+        .from("support_conversations")
+        .update({ unread_student: 0 })
+        .eq("id", conversationId)
+        .then(() => {});
+    } catch {}
   }
 }
 
 export function markConversationReadByStaff(conversationId: string): void {
-  const convs = getConversations();
-  const updated = convs.map((c) =>
+  CACHED_CONVERSATIONS = CACHED_CONVERSATIONS.map((c) =>
     c.id === conversationId ? { ...c, unreadStaff: 0 } : c
   );
-  safeSetItem(CONVERSATIONS_KEY, updated);
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("mma_messages_changed"));
+  notifyListeners();
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      supabase
+        .from("support_conversations")
+        .update({ unread_staff: 0, unread_count: 0 })
+        .eq("id", conversationId)
+        .then(() => {});
+    } catch {}
   }
 }
 
-// ==========================================
-// UNREAD BADGE COUNTERS
-// ==========================================
 export function getUnreadCountForStudent(studentId: string): number {
   return getConversationsForStudent(studentId).reduce(
     (sum, c) => sum + c.unreadStudent,

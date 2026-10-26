@@ -11,6 +11,14 @@ node_modules
 dist
 dist-ssr
 *.local
+.env*
+.data/
+**/.data/
+.next/
+out/
+build/
+backups/
+**/backups/
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +30,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Repomix bundles
+repomix-output.*

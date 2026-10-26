@@ -40,17 +40,17 @@ async function run() {
   assert.strictEqual(resMatch.coupon?.code, "ABHINAVA100");
   console.log("✓ Matching school case-insensitive succeeded");
 
-  // 2. Different school -> Error: हा कूपन फक्त [school name] च्या विद्यार्थ्यांसाठी आहे.
+  // 2. Different school -> Error
   const resMismatch = await validateCoupon("ABHINAVA100", "c-mm-01", "any-id", "Modern High School, Karad");
   assert.strictEqual(resMismatch.success, false, "Should fail for different school");
-  assert.strictEqual(resMismatch.error, "हा कूपन फक्त Abhinava Vidyalaya, Pune च्या विद्यार्थ्यांसाठी आहे.");
-  console.log("✓ Different school rejected with Marathi toast message");
+  assert.strictEqual(resMismatch.error, "This coupon is valid only for students of Abhinava Vidyalaya, Pune.");
+  console.log("✓ Different school rejected with proper message");
 
   // 3. No school specified -> Error
   const resNoSchool = await validateCoupon("ABHINAVA100", "c-mm-01", "any-id", "");
   assert.strictEqual(resNoSchool.success, false, "Should fail when student has no school");
-  assert.strictEqual(resNoSchool.error, "हा कूपन फक्त Abhinava Vidyalaya, Pune च्या विद्यार्थ्यांसाठी आहे.");
-  console.log("✓ Missing school rejected with Marathi toast message");
+  assert.strictEqual(resNoSchool.error, "This coupon is valid only for students of Abhinava Vidyalaya, Pune.");
+  console.log("✓ Missing school rejected with proper message");
 
   // 4. Unrestricted coupon -> Works for everyone
   const resUnrestricted = await validateCoupon("WELCOME50", "c-mm-01", "std-unrestricted-test", "Any Random School");

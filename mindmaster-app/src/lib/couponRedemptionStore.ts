@@ -26,6 +26,20 @@ export function hasUserRedeemedCoupon(userId: string, couponIdentifier: string):
   );
 }
 
+function getSupabase() {
+  try {
+    if (typeof window === "undefined") {
+      const { createAdminClient } = require("./supabase/admin");
+      return createAdminClient();
+    } else {
+      const { createClient } = require("./supabase/client");
+      return createClient();
+    }
+  } catch {
+    return null;
+  }
+}
+
 export function recordCouponRedemption(
   userId: string,
   couponId: string,
@@ -35,6 +49,9 @@ export function recordCouponRedemption(
     studentMobile?: string;
     courseId?: string;
     courseTitle?: string;
+    bookId?: string;
+    bookTitle?: string;
+    itemType?: "course" | "book";
     originalPricePaise?: number;
     discountPaise?: number;
     paidPaise?: number;
@@ -49,6 +66,9 @@ export function recordCouponRedemption(
     studentMobile: details?.studentMobile,
     courseId: details?.courseId,
     courseTitle: details?.courseTitle,
+    bookId: details?.bookId,
+    bookTitle: details?.bookTitle,
+    itemType: details?.itemType || "course",
     originalPricePaise: details?.originalPricePaise,
     discountPaise: details?.discountPaise,
     paidPaise: details?.paidPaise,
@@ -69,7 +89,68 @@ export function recordCouponRedemption(
     } catch {}
   }
 
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      supabase.from("coupon_redemptions").insert({
+        coupon_code: couponCode.toUpperCase(),
+        user_id: userId && userId.includes("-") && userId.length === 36 ? userId : undefined,
+        student_name: details?.studentName || null,
+        student_mobile: details?.studentMobile || null,
+        course_id: details?.courseId || null,
+        course_title: details?.courseTitle || null,
+        item_type: details?.itemType || "course",
+        book_id: details?.bookId || null,
+        book_title: details?.bookTitle || null,
+        original_price_paise: details?.originalPricePaise || null,
+        discount_paise: details?.discountPaise || null,
+        paid_paise: details?.paidPaise || null,
+      }).then(({ error }: any) => {
+        if (error) console.warn("Supabase coupon_redemptions insert error:", error.message);
+      });
+    } catch {}
+  }
+
   return record;
+}
+
+export async function fetchDbRedemptions(): Promise<CouponRedemptionRecord[]> {
+  try {
+    const supabase = getSupabase();
+    if (!supabase) return getRedemptions();
+    const { data, error } = await supabase
+      .from("coupon_redemptions")
+      .select("*")
+      .order("redeemed_at", { ascending: false });
+
+    if (error || !data) return getRedemptions();
+
+    const mapped: CouponRedemptionRecord[] = data.map((d: any) => ({
+      id: d.id,
+      userId: d.user_id || "",
+      couponId: d.coupon_id || d.coupon_code,
+      couponCode: d.coupon_code,
+      studentName: d.student_name || undefined,
+      studentMobile: d.student_mobile || undefined,
+      courseId: d.course_id || undefined,
+      courseTitle: d.course_title || undefined,
+      itemType: d.item_type || "course",
+      bookId: d.book_id || undefined,
+      bookTitle: d.book_title || undefined,
+      originalPricePaise: Number(d.original_price_paise) || undefined,
+      discountPaise: Number(d.discount_paise) || undefined,
+      paidPaise: Number(d.paid_paise) || undefined,
+      at: d.redeemed_at || d.at || new Date().toISOString(),
+    }));
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("mma_coupon_redemptions", JSON.stringify(mapped));
+    }
+    globalThis._mma_server_coupon_redemptions = mapped;
+    return mapped;
+  } catch {
+    return getRedemptions();
+  }
 }
 
 export function getRedemptions(): CouponRedemptionRecord[] {

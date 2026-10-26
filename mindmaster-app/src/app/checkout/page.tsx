@@ -26,7 +26,7 @@ import {
   FileText
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
-import { MOCK_COURSES, MOCK_LESSONS, COURSE_ID_MAP } from "@/lib/mockData";
+import { COURSE_ID_MAP } from "@/lib/mockData";
 import { 
   validateCoupon, 
   createRazorpayOrder, 
@@ -35,7 +35,10 @@ import {
 } from "@/app/actions/checkout";
 import { triggerCourseUnlockConfetti } from "@/lib/celebration";
 import { generateFeeReceiptPdf } from "@/lib/pdfGenerator";
-import { getStaffStudents } from "@/lib/staffStore";
+import { getStaffStudents, getStaffCourses, getStaffBooks } from "@/lib/staffStore";
+import { createClient } from "@/lib/supabase/client";
+import { normalizePhone } from "@/lib/phoneUtils";
+import { verifyStudentCourseAccess } from "@/app/actions/studentAccess";
 import { toast } from "sonner";
 
 declare global {
@@ -47,22 +50,39 @@ declare global {
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const rawCourseId = searchParams.get("courseId") || "c-mm-01";
+  const rawBookId = searchParams.get("bookId") || "";
+  const rawCourseId = searchParams.get("courseId") || searchParams.get("course") || "";
+  const isBookCheckout = Boolean(rawBookId);
 
-  const course =
-    MOCK_COURSES.find(
-      (c) =>
-        c.id.toLowerCase() === rawCourseId.toLowerCase() ||
-        c.code.toLowerCase() === rawCourseId.toLowerCase()
-    ) || MOCK_COURSES[0];
+  const [dbFetchedItem, setDbFetchedItem] = useState<any>(null);
 
-  const firstLesson = MOCK_LESSONS.find((l) => l.courseId === course.id) || MOCK_LESSONS[0];
+  const staffBooks = typeof window !== "undefined" ? getStaffBooks() : [];
+  const book = isBookCheckout && rawBookId
+    ? staffBooks.find(
+        (b) =>
+          b.id.toLowerCase() === rawBookId.toLowerCase() ||
+          (b.code && b.code.toLowerCase() === rawBookId.toLowerCase())
+      ) || (dbFetchedItem?.isBook ? dbFetchedItem : null)
+    : null;
+
+  const staffCourses = typeof window !== "undefined" ? getStaffCourses() : [];
+  const course = !isBookCheckout && rawCourseId
+    ? staffCourses.find(
+        (c) =>
+          c.id.toLowerCase() === rawCourseId.toLowerCase() ||
+          c.code.toLowerCase() === rawCourseId.toLowerCase()
+      ) || (!dbFetchedItem?.isBook ? dbFetchedItem : null)
+    : null;
 
   // Student verification form state
-  const [studentName, setStudentName] = useState("Student");
-  const [studentMobile, setStudentMobile] = useState("98XXXXXXXX");
+  const [studentName, setStudentName] = useState("");
+  const [studentMobile, setStudentMobile] = useState("");
   const [district, setDistrict] = useState("Pune");
   const [studentSchool, setStudentSchool] = useState("");
+
+  // Ownership state to prevent duplicate purchases
+  const [alreadyOwned, setAlreadyOwned] = useState<boolean>(false);
+  const [alreadyOwnedExpiresAt, setAlreadyOwnedExpiresAt] = useState<string>("");
 
   useEffect(() => {
     try {
@@ -71,24 +91,171 @@ function CheckoutContent() {
       if (raw) {
         const p = JSON.parse(raw);
         if (p.full_name) setStudentName(p.full_name);
-        if (p.phone) setStudentMobile(p.phone.replace(/\D/g, "").slice(-10));
+        if (p.phone) setStudentMobile(normalizePhone(p.phone));
         if (p.district) setDistrict(p.district);
         schoolVal = p.school_name || p.school || "";
       }
       const verifiedPhone = localStorage.getItem("mindmaster_verified_phone");
-      if (verifiedPhone) setStudentMobile(verifiedPhone.replace(/\D/g, "").slice(-10));
+      if (verifiedPhone) setStudentMobile(normalizePhone(verifiedPhone));
 
       if (!schoolVal) {
         const students = getStaffStudents();
-        const cleanPhone = (verifiedPhone || "").replace(/\D/g, "").slice(-10);
+        const cleanPhone = normalizePhone(verifiedPhone);
         const matched = students.find(
-          (s) => s.phone && cleanPhone && s.phone.replace(/\D/g, "").includes(cleanPhone)
+          (s) => s.phone && cleanPhone && normalizePhone(s.phone).includes(cleanPhone)
         );
         if (matched?.school) schoolVal = matched.school;
       }
       if (schoolVal) setStudentSchool(schoolVal);
+
+      // Local storage active purchase check
+      if (isBookCheckout && book) {
+        const rawBookPurchases = localStorage.getItem("mindmaster_active_book_purchases");
+        if (rawBookPurchases) {
+          const parsed = JSON.parse(rawBookPurchases);
+          const exp = parsed[book.id] || (book.code && parsed[book.code]);
+          if (exp && new Date(exp) > new Date()) {
+            setAlreadyOwned(true);
+            setAlreadyOwnedExpiresAt(exp);
+          }
+        }
+      } else if (course) {
+        const rawPurchases = localStorage.getItem("mindmaster_active_purchases");
+        if (rawPurchases) {
+          const parsed = JSON.parse(rawPurchases);
+          const exp =
+            parsed[course.id] ||
+            parsed[course.code] ||
+            (COURSE_ID_MAP[course.id] && parsed[COURSE_ID_MAP[course.id]]);
+          if (exp && new Date(exp) > new Date()) {
+            setAlreadyOwned(true);
+            setAlreadyOwnedExpiresAt(exp);
+          }
+        }
+      }
     } catch {}
-  }, []);
+
+    async function loadSupabaseUser() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name, phone, school_name, district")
+            .eq("id", user.id)
+            .maybeSingle();
+          if (profile) {
+            if (profile.full_name) setStudentName(profile.full_name);
+            if (profile.phone) setStudentMobile(normalizePhone(profile.phone));
+            if (profile.district) setDistrict(profile.district);
+            if (profile.school_name) setStudentSchool(profile.school_name);
+          }
+
+          // Check active purchases in database
+          if (isBookCheckout && book) {
+            const { data: dbPurchase } = await supabase
+              .from("purchases")
+              .select("id, expires_at, status")
+              .eq("user_id", user.id)
+              .eq("book_id", book.id)
+              .in("status", ["success", "active"])
+              .gt("expires_at", new Date().toISOString())
+              .maybeSingle();
+
+            if (dbPurchase) {
+              setAlreadyOwned(true);
+              setAlreadyOwnedExpiresAt(dbPurchase.expires_at);
+            }
+          } else if (course) {
+            const dbCourseUuid = COURSE_ID_MAP[course.id] || course.id;
+            const { data: dbPurchase } = await supabase
+              .from("purchases")
+              .select("id, expires_at, status")
+              .eq("user_id", user.id)
+              .in("course_id", [course.id, dbCourseUuid])
+              .in("status", ["success", "active"])
+              .gt("expires_at", new Date().toISOString())
+              .maybeSingle();
+
+            if (dbPurchase) {
+              setAlreadyOwned(true);
+              setAlreadyOwnedExpiresAt(dbPurchase.expires_at);
+            }
+          }
+        }
+
+        if (!isBookCheckout && course) {
+          const verifiedPhone = localStorage.getItem("mindmaster_verified_phone") || "";
+          const cleanPhone = normalizePhone(studentMobile || verifiedPhone);
+
+          const accessCheck = await verifyStudentCourseAccess({
+            courseId: course.id,
+            userPhone: cleanPhone,
+            userId: user?.id,
+          });
+
+          if (accessCheck.hasAccess) {
+            setAlreadyOwned(true);
+            if (accessCheck.expiresAt) {
+              setAlreadyOwnedExpiresAt(accessCheck.expiresAt);
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    loadSupabaseUser();
+
+    async function fetchItemFromDb() {
+      try {
+        const supabase = createClient();
+        if (isBookCheckout && rawBookId) {
+          const { data: bData } = await supabase
+            .from("books")
+            .select("*")
+            .or(`id.eq.${rawBookId},code.ilike.${rawBookId}`)
+            .maybeSingle();
+          if (bData) {
+            setDbFetchedItem({
+              id: bData.id,
+              code: bData.code || "BOOK",
+              title: bData.title,
+              subtitle: bData.subtitle || "",
+              description: bData.description || "",
+              pricePaise: Number(bData.price_paise) || 0,
+              originalPricePaise: Number(bData.original_price_paise) || 0,
+              accessMonths: bData.access_months || 6,
+              pages: bData.pages || 50,
+              fileSizeMb: Number(bData.file_size_mb) || 8.5,
+              headerTint: bData.header_tint || "sky",
+              badgeText: bData.badge_text || undefined,
+              isBook: true,
+            });
+          }
+        } else if (!isBookCheckout && rawCourseId) {
+          const { data: cData } = await supabase
+            .from("courses")
+            .select("*")
+            .or(`id.eq.${rawCourseId},code.ilike.${rawCourseId}`)
+            .maybeSingle();
+          if (cData) {
+            setDbFetchedItem({
+              id: cData.id,
+              code: cData.code,
+              title: cData.title,
+              description: cData.description,
+              pricePaise: Number(cData.price_paise) || 0,
+              originalPricePaise: Number(cData.original_price_paise) || 0,
+              accessMonths: cData.access_months || 3,
+              badgeText: cData.badge_text,
+              isBook: false,
+            });
+          }
+        }
+      } catch {}
+    }
+    fetchItemFromDb();
+  }, [isBookCheckout, rawBookId, rawCourseId, book?.id, book?.code, course?.id, course?.code, studentMobile]);
 
   // Coupon state
   const [couponInput, setCouponInput] = useState("");
@@ -123,14 +290,50 @@ function CheckoutContent() {
     };
   }, []);
 
-  // Compute pricing in Rupees and Paise
-  const basePriceRupees = Math.round(course.pricePaise / 100);
-  const originalPriceRupees = Math.round(course.originalPricePaise / 100);
+  if (isBookCheckout && !book) {
+    return (
+      <div className="max-w-xl mx-auto py-16 px-4 text-center select-none">
+        <div className="bg-white rounded-3xl p-8 border border-[#E4E8F8] shadow-xs">
+          <div className="w-16 h-16 bg-[#EBF3FE] text-[#0B57D0] rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
+            📖
+          </div>
+          <h2 className="text-xl font-black text-[#0E1B3D]">Book Currently Unavailable</h2>
+          <p className="text-xs text-[#5A6478] mt-2 mb-6">Please browse our other publications or try again later.</p>
+          <Link href="/books" className="px-6 py-2.5 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold shadow-sm transition">
+            View Books Catalog
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isBookCheckout && !course) {
+    return (
+      <div className="max-w-xl mx-auto py-16 px-4 text-center select-none">
+        <div className="bg-white rounded-3xl p-8 border border-[#E4E8F8] shadow-xs">
+          <div className="w-16 h-16 bg-[#EBF3FE] text-[#0B57D0] rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
+            🎓
+          </div>
+          <h2 className="text-xl font-black text-[#0E1B3D]">Course Currently Unavailable</h2>
+          <p className="text-xs text-[#5A6478] mt-2 mb-6">Please check our catalog of available courses.</p>
+          <Link href="/courses" className="px-6 py-2.5 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold shadow-sm transition">
+            View Courses
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Compute pricing
+  const activePricePaise = isBookCheckout ? (book?.pricePaise || 0) : (course?.pricePaise || 0);
+  const activeOriginalPricePaise = isBookCheckout ? (book?.originalPricePaise || 0) : (course?.originalPricePaise || 0);
+  const basePriceRupees = Math.round(activePricePaise / 100);
+  const originalPriceRupees = Math.round(activeOriginalPricePaise / 100);
   const discountRupees = appliedCoupon ? Math.round(appliedCoupon.discountAmountPaise / 100) : 0;
   const finalPriceRupees = Math.max(1, basePriceRupees - discountRupees);
-  const totalSavingsRupees = (originalPriceRupees - basePriceRupees) + discountRupees;
+  const totalSavingsRupees = Math.max(0, originalPriceRupees - basePriceRupees) + discountRupees;
 
-  // 1. Coupon validation handler calling server action
+  // Coupon validation
   const handleApplyCoupon = async (e?: React.FormEvent, directCode?: string) => {
     if (e) e.preventDefault();
     const codeToValidate = (directCode || couponInput).trim();
@@ -156,16 +359,22 @@ function CheckoutContent() {
           }
           if (!currentSchool) {
             const students = getStaffStudents();
-            const cleanPhone = studentMobile.replace(/\D/g, "").slice(-10);
+            const cleanPhone = normalizePhone(studentMobile);
             const matched = students.find(
-              (s) => s.phone && cleanPhone && s.phone.replace(/\D/g, "").includes(cleanPhone)
+              (s) => s.phone && cleanPhone && normalizePhone(s.phone).includes(cleanPhone)
             );
             if (matched?.school) currentSchool = matched.school;
           }
         } catch {}
       }
 
-      const result = await validateCoupon(codeToValidate, course.id, undefined, currentSchool);
+      const result = await validateCoupon(
+        codeToValidate,
+        isBookCheckout ? book!.id : course.id,
+        undefined,
+        currentSchool,
+        isBookCheckout ? "book" : "course"
+      );
       if (result.success && result.coupon) {
         setAppliedCoupon(result.coupon);
         setCouponInput(result.coupon.code);
@@ -173,21 +382,21 @@ function CheckoutContent() {
           type: "success",
           message: result.message || "Coupon code successfully applied!",
         });
-        toast.success(`कूपन लागू झाले: ${result.coupon.code} (Coupon applied!)`);
+        toast.success(`Coupon applied: ${result.coupon.code}`);
       } else {
         setAppliedCoupon(null);
         setCouponFeedback({
           type: "error",
           message: result.error || "Invalid or expired coupon code.",
         });
-        toast.error(result.error || "अवैध कूपन कोड (Invalid coupon)");
+        toast.error(result.error || "Invalid coupon code");
       }
     } catch (err: any) {
       setCouponFeedback({
         type: "error",
         message: "Error during coupon validation. Please try again.",
       });
-      toast.error("कूपन तपासताना त्रुटी आली");
+      toast.error("Error validating coupon");
     } finally {
       setIsValidatingCoupon(false);
     }
@@ -197,18 +406,25 @@ function CheckoutContent() {
     setAppliedCoupon(null);
     setCouponInput("");
     setCouponFeedback(null);
-    toast.info("कूपन काढले (Coupon removed)");
+    toast.info("Coupon removed");
   };
 
-  // 2. Razorpay payment execution
+  // Payment execution
   const handleInitiatePayment = async () => {
+    if (alreadyOwned) {
+      toast.info(isBookCheckout ? "You already have active access to this book!" : "You already have active access to this course!");
+      router.push(isBookCheckout ? "/books" : "/my-courses");
+      return;
+    }
+
     setIsProcessingPayment(true);
     setFailureReason("");
 
     try {
-      // Step A: Create order server-side
       const orderResult = await createRazorpayOrder({
-        courseId: course.id,
+        courseId: isBookCheckout ? undefined : course.id,
+        bookId: isBookCheckout ? book!.id : undefined,
+        itemType: isBookCheckout ? "book" : "course",
         couponCode: appliedCoupon?.code,
         studentMobile,
         studentName,
@@ -219,17 +435,18 @@ function CheckoutContent() {
         throw new Error(orderResult.error || "Could not generate order ID.");
       }
 
-      // If Razorpay SDK is not available or mock mode is active
+      // Offline / Mock fallback
       if (typeof window === "undefined" || !window.Razorpay) {
-        // Fallback simulation for offline/preview mode
         setTimeout(async () => {
           const verification = await verifyRazorpayPayment({
             razorpay_order_id: orderResult.orderId!,
             razorpay_payment_id: `pay_mock_${Date.now()}`,
             razorpay_signature: "mock_signature_approved",
-            courseId: course.id,
+            courseId: isBookCheckout ? undefined : course.id,
+            bookId: isBookCheckout ? book!.id : undefined,
+            itemType: isBookCheckout ? "book" : "course",
             couponCode: appliedCoupon?.code,
-            amountPaise: orderResult.amountPaise || course.pricePaise,
+            amountPaise: orderResult.amountPaise || activePricePaise,
             studentName,
             studentMobile,
           });
@@ -247,13 +464,15 @@ function CheckoutContent() {
         return;
       }
 
-      // Step B: Launch real Razorpay modal
+      const itemTitle = isBookCheckout ? book!.title : course.title;
+      const itemCode = isBookCheckout ? (book!.code || "BOOK") : course.code;
+
       const options = {
         key: orderResult.keyId,
         amount: orderResult.amountPaise,
         currency: orderResult.currency || "INR",
         name: "MindMaster Academy",
-        description: `${course.code} - ${course.title}`,
+        description: `${itemCode} - ${itemTitle}`,
         image: "/icons/icon-192.png",
         order_id: orderResult.orderId,
         prefill: {
@@ -266,14 +485,15 @@ function CheckoutContent() {
         },
         handler: async function (response: any) {
           try {
-            // Step C: Verify signature server-side
             const verifyResult = await verifyRazorpayPayment({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              courseId: course.id,
+              courseId: isBookCheckout ? undefined : course.id,
+              bookId: isBookCheckout ? book!.id : undefined,
+              itemType: isBookCheckout ? "book" : "course",
               couponCode: appliedCoupon?.code,
-              amountPaise: orderResult.amountPaise || course.pricePaise,
+              amountPaise: orderResult.amountPaise || activePricePaise,
               studentName,
               studentMobile,
             });
@@ -318,17 +538,28 @@ function CheckoutContent() {
     setPaymentStatus("success");
     triggerCourseUnlockConfetti();
 
-    // Unlock access in local storage instantly so /watch/[lessonId] and /my-courses immediately show active access
-    try {
-      const activePurchases = JSON.parse(
-        localStorage.getItem("mindmaster_active_purchases") || "{}"
-      );
-      activePurchases[course.id] = expiresAt;
-      activePurchases[course.code] = expiresAt;
-      const dbUuid = COURSE_ID_MAP[course.id];
-      if (dbUuid) activePurchases[dbUuid] = expiresAt;
-      localStorage.setItem("mindmaster_active_purchases", JSON.stringify(activePurchases));
-    } catch (e) {}
+    if (isBookCheckout && book) {
+      try {
+        const activeBookPurchases = JSON.parse(
+          localStorage.getItem("mindmaster_active_book_purchases") || "{}"
+        );
+        activeBookPurchases[book.id] = expiresAt;
+        if (book.code) activeBookPurchases[book.code] = expiresAt;
+        localStorage.setItem("mindmaster_active_book_purchases", JSON.stringify(activeBookPurchases));
+        window.dispatchEvent(new Event("mma_books_unlocked"));
+      } catch (e) {}
+    } else {
+      try {
+        const activePurchases = JSON.parse(
+          localStorage.getItem("mindmaster_active_purchases") || "{}"
+        );
+        activePurchases[course.id] = expiresAt;
+        activePurchases[course.code] = expiresAt;
+        const dbUuid = COURSE_ID_MAP[course.id];
+        if (dbUuid) activePurchases[dbUuid] = expiresAt;
+        localStorage.setItem("mindmaster_active_purchases", JSON.stringify(activePurchases));
+      } catch (e) {}
+    }
   };
 
   const handlePaymentFailure = (reason: string) => {
@@ -346,6 +577,9 @@ function CheckoutContent() {
   // SUCCESS SCREEN
   // =========================================================================
   if (paymentStatus === "success") {
+    const itemTitle = isBookCheckout ? book!.title : course.title;
+    const itemCode = isBookCheckout ? (book!.code || "BOOK") : course.code;
+
     return (
       <div className="max-w-2xl mx-auto py-6 px-4 select-none">
         <div className="bg-white rounded-3xl p-8 md:p-10 border-2 border-[#0A8554]/30 shadow-[0_20px_50px_rgba(10,133,84,0.12)] text-center flex flex-col items-center">
@@ -362,43 +596,50 @@ function CheckoutContent() {
           </h1>
 
           <p className="text-xs md:text-sm text-[#5A6478] mt-2 max-w-md leading-relaxed">
-            Your course <strong className="text-[#0E1B3D]">{course.title}</strong> has been successfully activated. You can now access all premium lectures and study materials right away.
+            Your {isBookCheckout ? "Digital Book" : "course"}{" "}
+            <strong className="text-[#0E1B3D]">{itemTitle}</strong> has been successfully activated.
+            {isBookCheckout
+              ? " You can now read it directly inside the app and save it in your encrypted offline vault."
+              : " You can now access all premium lectures and study materials right away."}
           </p>
 
           {/* Transaction Summary Card */}
           <div className="w-full mt-6 p-5 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-left text-xs flex flex-col gap-2.5">
             <div className="flex justify-between items-center py-1 border-b border-[#E4E8F8]">
-              <span className="text-[#5A6478]">Course Code:</span>
-              <span className="font-extrabold text-[#0E1B3D]">{course.code}</span>
+              <span className="text-[#5A6478]">{isBookCheckout ? "Book Code:" : "Course Code:"}</span>
+              <span className="font-extrabold text-[#0E1B3D]">{itemCode}</span>
             </div>
-            <div className="flex justify-between items-center py-1 border-b border-[#E4E8F8]">
-              <span className="text-[#5A6478]">Amount Paid:</span>
-              <span className="font-black text-[#0B57D0] text-sm">₹{finalPriceRupees}</span>
-            </div>
+
             <div className="flex justify-between items-center py-1 border-b border-[#E4E8F8]">
               <span className="text-[#5A6478]">Order ID:</span>
-              <span className="font-mono text-[10px] text-[#5A6478] truncate max-w-[200px]">
-                {paymentDetails?.orderId}
-              </span>
+              <span className="font-mono text-[#0E1B3D]">{paymentDetails?.orderId}</span>
             </div>
+
+            <div className="flex justify-between items-center py-1 border-b border-[#E4E8F8]">
+              <span className="text-[#5A6478]">Payment ID:</span>
+              <span className="font-mono text-[#0A8554] font-bold">{paymentDetails?.paymentId}</span>
+            </div>
+
+            <div className="flex justify-between items-center py-1 border-b border-[#E4E8F8]">
+              <span className="text-[#5A6478]">Amount Paid:</span>
+              <span className="font-extrabold text-[#0E1B3D]">₹{finalPriceRupees}</span>
+            </div>
+
             <div className="flex justify-between items-center py-1">
-              <span className="text-[#5A6478]">Access Validity:</span>
-              <span className="font-bold text-[#D85A12] flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
-                {course.accessMonths} Months (
+              <span className="text-[#5A6478]">Access Valid Until:</span>
+              <span className="font-bold text-[#0B57D0]">
                 {paymentDetails?.expiresAt
                   ? new Date(paymentDetails.expiresAt).toLocaleDateString("en-IN", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
                     })
-                  : "3 Months"}
-                )
+                  : "Active"}
               </span>
             </div>
           </div>
 
-          {/* Download Official Admission Receipt Button */}
+          {/* Download Official Receipt Button */}
           <button
             type="button"
             onClick={() =>
@@ -406,44 +647,54 @@ function CheckoutContent() {
                 receiptNo: `REC-${paymentDetails?.paymentId ? paymentDetails.paymentId.slice(-6).toUpperCase() : Date.now().toString().slice(-6)}`,
                 date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
                 studentName: studentName || "Verified Student",
-                studentPhone: studentMobile || "+91 98XXXXXXXX",
+                studentPhone: studentMobile || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("mma_student_session") || "{}")?.phone || "Verified Mobile" : "Verified Mobile"),
                 district: "Maharashtra",
-                courseCode: course.code,
-                courseTitle: course.title,
+                courseCode: itemCode,
+                courseTitle: itemTitle,
                 amountPaise: finalPriceRupees * 100,
                 paymentId: paymentDetails?.paymentId || "pay_verified_gateway",
-                accessMonths: course.accessMonths,
+                accessMonths: isBookCheckout ? (book?.accessMonths || 6) : course.accessMonths,
                 expiryDate: paymentDetails?.expiresAt
                   ? new Date(paymentDetails.expiresAt).toLocaleDateString("en-IN", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
                     })
-                  : "90 Days",
+                  : "180 Days",
               })
             }
             className="w-full mt-6 py-3 px-6 rounded-2xl bg-[#E8F8F2] hover:bg-[#D5F2E6] text-[#0A8554] border border-[#C6ECD9] text-xs font-black transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-2xs"
           >
             <FileText className="w-4 h-4" />
-            <span>Download Official Admission Receipt (फी पावती)</span>
+            <span>Download Official Admission / Purchase Receipt</span>
           </button>
 
           {/* Action CTAs */}
           <div className="w-full mt-4 flex flex-col sm:flex-row gap-3">
-            <Link
-              href={`/watch/${firstLesson.id}`}
-              className="flex-1 py-3.5 px-6 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs md:text-sm font-extrabold shadow-lg shadow-[#0B57D0]/30 transition inline-flex items-center justify-center gap-2"
-            >
-              <Zap className="w-4 h-4" />
-              <span>Start Learning Now</span>
-            </Link>
+            {isBookCheckout ? (
+              <Link
+                href={`/books?open=${book!.id}`}
+                className="flex-1 py-3.5 px-6 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs md:text-sm font-extrabold shadow-lg shadow-[#0B57D0]/30 transition inline-flex items-center justify-center gap-2"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Read Book Now</span>
+              </Link>
+            ) : (
+              <Link
+                href={course ? `/course/${course.id}` : "/courses"}
+                className="flex-1 py-3.5 px-6 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs md:text-sm font-extrabold shadow-lg shadow-[#0B57D0]/30 transition inline-flex items-center justify-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                <span>Start Learning Now</span>
+              </Link>
+            )}
 
             <Link
-              href="/my-courses"
+              href={isBookCheckout ? "/books" : "/my-courses"}
               className="flex-1 py-3.5 px-6 rounded-full bg-white hover:bg-[#F5F7FF] text-[#0E1B3D] border border-[#E4E8F8] text-xs md:text-sm font-extrabold transition inline-flex items-center justify-center gap-2"
             >
               <BookOpen className="w-4 h-4 text-[#0B57D0]" />
-              <span>View My Courses</span>
+              <span>{isBookCheckout ? "View All Books" : "View My Courses"}</span>
             </Link>
           </div>
 
@@ -491,7 +742,6 @@ function CheckoutContent() {
             </ul>
           </div>
 
-          {/* Action CTAs */}
           <div className="w-full mt-8 flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleRetry}
@@ -502,11 +752,11 @@ function CheckoutContent() {
             </button>
 
             <a
-              href="tel:+919922000000"
+              href="tel:+918459344077"
               className="flex-1 py-3.5 px-6 rounded-full bg-[#E8F8F2] hover:bg-[#D4F3E5] text-[#0A8554] border border-[#C6ECD9] text-xs md:text-sm font-extrabold transition inline-flex items-center justify-center gap-2"
             >
               <Smartphone className="w-4 h-4" />
-              <span>Call Support Helpline</span>
+              <span>Call Support: +91 84593 44077</span>
             </a>
           </div>
         </div>
@@ -517,23 +767,59 @@ function CheckoutContent() {
   // =========================================================================
   // MAIN CHECKOUT FORM & SUMMARY
   // =========================================================================
+  if ((isBookCheckout && !book) || (!isBookCheckout && !course)) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 px-4 select-none text-center">
+        <div className="bg-white rounded-3xl p-8 md:p-10 border border-[#E4E8F8] shadow-xs flex flex-col items-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-[#5A6478] flex items-center justify-center mb-4">
+            <FileText className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-bold text-[#0E1B3D] mb-2">
+            Item Not Found
+          </h2>
+          <p className="text-xs md:text-sm text-[#5A6478] max-w-md mb-6">
+            The selected course or book could not be found. Please check our course and book catalog.
+          </p>
+          <div className="flex gap-3">
+            <Link
+              href="/courses"
+              className="px-5 py-2.5 rounded-full bg-[#0B57D0] text-white text-xs font-bold hover:bg-[#0842A0] transition shadow"
+            >
+              View Courses
+            </Link>
+            <Link
+              href="/books"
+              className="px-5 py-2.5 rounded-full bg-white border border-[#E4E8F8] text-[#0E1B3D] text-xs font-bold hover:bg-[#F5F7FF] transition"
+            >
+              View Books
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const itemTitle = isBookCheckout ? book!.title : course!.title;
+  const itemSubtitle = isBookCheckout ? book!.subtitle : (course!.description?.slice(0, 70) || "");
+  const itemCode = isBookCheckout ? (book!.code || "BOOK") : course!.code;
+
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto select-none">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <title>{`Secure Checkout - ${course.title} | MindMaster Academy`}</title>
+      <title>{`Secure Checkout - ${itemTitle} | MindMaster Academy`}</title>
       <meta name="description" content="MindMaster Academy 100% Secure Razorpay Payment Gateway - UPI, Cards & NetBanking supported." />
 
       {/* Navigation */}
       <Link
-        href={`/course/${course.id}`}
+        href={isBookCheckout ? "/books" : `/course/${course!.id}`}
         className="inline-flex items-center gap-2 text-xs font-bold text-[#5A6478] hover:text-[#0B57D0] transition w-fit"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span>Back to {course.title}</span>
+        <span>Back to {isBookCheckout ? "Books & Notes" : course!.title}</span>
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* ================= LEFT COLUMN: STUDENT DETAILS & PAYMENT (7 cols) ================= */}
+        {/* LEFT COLUMN: STUDENT DETAILS & PAYMENT */}
         <div className="lg:col-span-7 flex flex-col gap-6">
           {/* Step 1: Student Verification Card */}
           <div className="bg-white rounded-3xl p-6 md:p-7 border border-[#E4E8F8] shadow-xs">
@@ -552,7 +838,7 @@ function CheckoutContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <label className="font-bold text-[#0E1B3D] block mb-1.5">
-                  Student Full Name (for certificate)
+                  Student Full Name (for certificate/receipt)
                 </label>
                 <input
                   type="text"
@@ -613,86 +899,76 @@ function CheckoutContent() {
               <div className="p-4 rounded-2xl border-2 border-[#0B57D0] bg-[#E8F1FD]/40 flex flex-col justify-between gap-3">
                 <div className="flex items-center justify-between">
                   <Smartphone className="w-5 h-5 text-[#0B57D0]" />
-                  <div className="w-4 h-4 rounded-full border-4 border-[#0B57D0] bg-white" />
+                  <span className="w-3 h-3 rounded-full bg-[#0B57D0]" />
                 </div>
                 <div>
-                  <span className="text-xs font-black text-[#0E1B3D] block">
-                    All UPI Apps
-                  </span>
-                  <span className="text-[10px] text-[#5A6478]">
-                    GPay, PhonePe, Paytm
-                  </span>
+                  <span className="text-xs font-black text-[#0E1B3D] block">Instant UPI</span>
+                  <span className="text-[10px] text-[#5A6478]">GPay, PhonePe, Paytm, BHIM</span>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF]/50 flex flex-col justify-between gap-3 opacity-70">
+              <div className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] flex flex-col justify-between gap-3">
                 <div className="flex items-center justify-between">
                   <CreditCard className="w-5 h-5 text-[#5A6478]" />
-                  <div className="w-4 h-4 rounded-full border border-[#94A3B8] bg-white" />
+                  <span className="w-3 h-3 rounded-full border border-[#CBD5E1]" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-[#0E1B3D] block">
-                    Debit / Credit Card
-                  </span>
-                  <span className="text-[10px] text-[#5A6478]">
-                    Visa, RuPay, Master
-                  </span>
+                  <span className="text-xs font-black text-[#0E1B3D] block">Cards &amp; NetBanking</span>
+                  <span className="text-[10px] text-[#5A6478]">Visa, MasterCard, Rupay</span>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF]/50 flex flex-col justify-between gap-3 opacity-70">
+              <div className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] flex flex-col justify-between gap-3">
                 <div className="flex items-center justify-between">
-                  <Lock className="w-5 h-5 text-[#5A6478]" />
-                  <div className="w-4 h-4 rounded-full border border-[#94A3B8] bg-white" />
+                  <ShieldCheck className="w-5 h-5 text-[#0A8554]" />
+                  <span className="w-3 h-3 rounded-full border border-[#CBD5E1]" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-[#0E1B3D] block">
-                    Net Banking
-                  </span>
-                  <span className="text-[10px] text-[#5A6478]">
-                    SBI, HDFC, ICICI, etc.
-                  </span>
+                  <span className="text-xs font-black text-[#0E1B3D] block">256-Bit SSL Encrypted</span>
+                  <span className="text-[10px] text-[#5A6478]">Verified Razorpay Gateway</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-5 p-3.5 rounded-2xl bg-[#E8F8F2] border border-[#C6ECD9] flex items-center gap-3">
-              <ShieldCheck className="w-5 h-5 text-[#0A8554] shrink-0" />
-              <div className="text-[11px] text-[#0A8554] leading-tight">
-                <strong className="font-extrabold">256-Bit Encrypted Secure Payment:</strong>{" "}
+            <div className="mt-4 p-3 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] flex items-center gap-2.5 text-xs text-[#5A6478]">
+              <Lock className="w-4 h-4 text-[#0A8554] shrink-0" />
+              <span>
                 Transactions processed securely through authorized Razorpay payment gateway. No card information is stored.
-              </div>
+              </span>
             </div>
           </div>
         </div>
 
-        {/* ================= RIGHT COLUMN: ORDER SUMMARY & COUPON (5 cols) ================= */}
+        {/* RIGHT COLUMN: ORDER SUMMARY & COUPON */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-          {/* Order Summary Card */}
           <div className="bg-white rounded-3xl p-6 md:p-7 border border-[#E4E8F8] shadow-xs flex flex-col gap-5">
             <div className="flex items-center justify-between pb-4 border-b border-[#F1F3F9]">
               <h3 className="font-black text-base text-[#0E1B3D]">
                 Order Summary
               </h3>
               <span className="text-[10px] font-extrabold text-[#0B57D0] bg-[#E8F1FD] px-2.5 py-1 rounded-full">
-                {course.code}
+                {itemCode}
               </span>
             </div>
 
-            {/* Course mini item */}
+            {/* Item Mini Card */}
             <div className="flex items-center gap-3">
               <div className="w-14 h-14 rounded-2xl bg-[#E8F1FD] border border-[#C7DEFB] text-[#0B57D0] flex items-center justify-center shrink-0 shadow-2xs font-extrabold text-sm">
-                MM
+                {isBookCheckout ? "📚" : "MM"}
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-extrabold text-[#0E1B3D] truncate">
-                  {course.title}
+                  {itemTitle}
                 </span>
                 <span className="text-[11px] text-[#5A6478]">
-                  {course.accessMonths} Months Unlimited Access
+                  {isBookCheckout
+                    ? `${book?.pages || 80} Pages • ${book?.fileSizeMb || 8} MB • ${book?.accessMonths || 6} Mo Access`
+                    : `${course.accessMonths} Months Unlimited Access`}
                 </span>
                 <span className="text-[10px] font-bold text-[#0A8554]">
-                  ✓ All Video Lessons + Notes + Certificate
+                  {isBookCheckout
+                    ? "✓ In-App Secure Reader + Encrypted Offline Vault"
+                    : "✓ All Video Lessons + Notes + Certificate"}
                 </span>
               </div>
             </div>
@@ -772,14 +1048,14 @@ function CheckoutContent() {
                     onClick={() => handleApplyCoupon(undefined, "PRASHANT50")}
                     className="text-[10px] font-bold text-[#0B57D0] bg-[#E8F1FD] px-2.5 py-0.5 rounded-full hover:bg-[#D4E4FA] transition border border-[#C7DEFB] cursor-pointer"
                   >
-                    PRASHANT50 (-₹200)
+                    PRASHANT50
                   </button>
                   <button
                     type="button"
                     onClick={() => handleApplyCoupon(undefined, "FIRST100")}
                     className="text-[10px] font-bold text-[#0B57D0] bg-[#E8F1FD] px-2.5 py-0.5 rounded-full hover:bg-[#D4E4FA] transition border border-[#C7DEFB] cursor-pointer"
                   >
-                    FIRST100 (-₹100)
+                    FIRST100
                   </button>
                 </div>
               )}
@@ -793,7 +1069,7 @@ function CheckoutContent() {
               </div>
 
               <div className="flex justify-between text-[#5A6478]">
-                <span>Course Offer Price:</span>
+                <span>Special Offer Price:</span>
                 <span className="font-semibold text-[#0E1B3D]">₹{basePriceRupees}</span>
               </div>
 
@@ -815,7 +1091,7 @@ function CheckoutContent() {
                     Total Payable Amount:
                   </span>
                   <span className="text-[10px] text-[#5A6478]">
-                    (Inclusive of all taxes & GST)
+                    (Inclusive of all taxes &amp; GST)
                   </span>
                 </div>
                 <div className="text-right">
@@ -826,13 +1102,40 @@ function CheckoutContent() {
               </div>
             </div>
 
+            {/* Already Owned Warning */}
+            {alreadyOwned && (
+              <div className="p-4 rounded-2xl bg-[#E8F8F2] border border-[#A6E1C7] text-left">
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle2 className="w-5 h-5 text-[#0A8554] shrink-0" />
+                  <span className="text-xs font-black text-[#0A8554]">
+                    You already have active access to this {isBookCheckout ? "book" : "course"}!
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#5A6478] mb-3">
+                  Your access is valid until {alreadyOwnedExpiresAt ? new Date(alreadyOwnedExpiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "expiry"}. You do not need to pay again.
+                </p>
+                <Link
+                  href={isBookCheckout ? "/books" : "/my-courses"}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0A8554] hover:bg-[#086C44] text-white text-xs font-bold transition"
+                >
+                  <span>{isBookCheckout ? "Go to Books" : "Go to My Courses"}</span>
+                  <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+                </Link>
+              </div>
+            )}
+
             {/* Primary Pay Button */}
             <button
               onClick={handleInitiatePayment}
-              disabled={isProcessingPayment}
+              disabled={isProcessingPayment || alreadyOwned}
               className="w-full py-4 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] disabled:bg-[#94A3B8] text-white text-sm font-black shadow-lg shadow-[#0B57D0]/30 transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
             >
-              {isProcessingPayment ? (
+              {alreadyOwned ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Already Unlocked</span>
+                </>
+              ) : isProcessingPayment ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
                   <span>Processing Secure Payment...</span>

@@ -11,6 +11,8 @@ import {
   sendMessage,
   markConversationReadByStudent,
   createConversation,
+  fetchDbConversations,
+  fetchDbMessages,
 } from "@/lib/messageStore";
 
 export default function StudentSupportPage() {
@@ -34,6 +36,7 @@ export default function StudentSupportPage() {
         const p = JSON.parse(raw);
         setCurrentStudent((prev) => ({
           ...prev,
+          id: p.id || p.phone || prev.id,
           name: p.full_name || prev.name,
           district: p.district || prev.district,
         }));
@@ -41,7 +44,8 @@ export default function StudentSupportPage() {
     } catch {}
   }, []);
 
-  const reload = () => {
+  const reload = async () => {
+    await fetchDbConversations();
     setConversations(getConversationsForStudent(currentStudent.id));
   };
 
@@ -53,7 +57,7 @@ export default function StudentSupportPage() {
 
   useEffect(() => {
     if (activeConvId) {
-      setMessages(getConversationMessages(activeConvId));
+      fetchDbMessages(activeConvId).then((msgs) => setMessages(msgs));
       markConversationReadByStudent(activeConvId);
     }
   }, [activeConvId]);

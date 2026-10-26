@@ -35,6 +35,8 @@ export default function PermissionGuard({ permission, adminOnly, children }: Pro
     );
   }
 
+  const returnHref = staff?.role === "sub_admin" ? "/sub" : "/admin";
+
   // Admin-only check
   if (adminOnly && staff?.role !== "main_admin") {
     return (
@@ -61,7 +63,7 @@ export default function PermissionGuard({ permission, adminOnly, children }: Pro
         </div>
         <div className="flex items-center justify-center gap-3">
           <Link
-            href="/admin"
+            href={returnHref}
             className="px-6 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-medium rounded-full transition-colors text-sm"
           >
             ← Return to Dashboard
@@ -86,7 +88,7 @@ export default function PermissionGuard({ permission, adminOnly, children }: Pro
         </p>
         <div className="flex items-center justify-center gap-3">
           <Link
-            href="/admin"
+            href={returnHref}
             className="px-6 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-medium rounded-full transition-colors text-sm"
           >
             ← Return to Dashboard

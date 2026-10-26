@@ -18,6 +18,7 @@ import {
   getStudentNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
+  fetchDbStudentNotifications,
 } from "@/lib/studentNotificationStore";
 
 export default function StudentNotificationsPage() {
@@ -25,14 +26,28 @@ export default function StudentNotificationsPage() {
   const [filter, setFilter] = useState<"all" | "unread" | "renewal" | "reminder" | "announcement">("all");
   const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null);
 
-  const reload = () => {
+  const reload = async () => {
+    // 1. Load immediately from local state
     setNotifications(getStudentNotifications());
+
+    // 2. Fetch live from Supabase in_app_notifications
+    try {
+      const live = await fetchDbStudentNotifications();
+      if (live && live.length > 0) {
+        setNotifications(live);
+      }
+    } catch (e) {
+      console.warn("Could not fetch live in_app_notifications from Supabase:", e);
+    }
   };
 
   useEffect(() => {
     reload();
-    window.addEventListener("mma_notifications_changed", reload);
-    return () => window.removeEventListener("mma_notifications_changed", reload);
+    const handleChanged = () => {
+      setNotifications(getStudentNotifications());
+    };
+    window.addEventListener("mma_notifications_changed", handleChanged);
+    return () => window.removeEventListener("mma_notifications_changed", handleChanged);
   }, []);
 
   const handleCopyCoupon = (code: string) => {

@@ -86,12 +86,6 @@ function StaffLoginContent() {
     }
   };
 
-  const quickFill = (demoStaffId: string, demoPass: string) => {
-    setStaffId(demoStaffId);
-    setPassword(demoPass);
-    setError("");
-  };
-
   return (
     <div className="min-h-screen bg-[#F5F7FF] flex flex-col justify-between items-center p-4">
       {/* Top Header */}
@@ -179,41 +173,7 @@ function StaffLoginContent() {
           </button>
         </form>
 
-        {/* Quick Test Accounts for Instant Verification */}
-        <div className="mt-8 pt-6 border-t border-[#E4E8F8]">
-          <p className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mb-2 text-center">
-            Phase-2 Seed Test Accounts
-          </p>
-          <div className="space-y-1.5">
-            {/* OWNER SEED MMA-000 */}
-            <button
-              type="button"
-              onClick={() => quickFill("MMA-000", "Owner@2026")}
-              className="w-full text-left p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/50 transition-colors flex items-center justify-between text-xs"
-            >
-              <div>
-                <span className="font-bold text-indigo-950">👑 MMA-000 (Owner Seed)</span>
-                <p className="text-[10px] text-indigo-800">Prashant Dhumal • must_change_password=true</p>
-              </div>
-              <span className="text-[#0B57D0] font-semibold text-[11px]">Fill →</span>
-            </button>
-
-            {/* SUB-ADMIN TRAINER */}
-            <button
-              type="button"
-              onClick={() => quickFill("staff-2", "Master@2026")}
-              className="w-full text-left p-2.5 rounded-xl border border-[#E4E8F8] hover:bg-[#F5F7FF] transition-colors flex items-center justify-between text-xs"
-            >
-              <div>
-                <span className="font-bold text-[#0E1B3D]">🛡️ staff-2 (Sub-Admin Trainer)</span>
-                <p className="text-[10px] text-[#5A6478]">Rohit More • videos.manage</p>
-              </div>
-              <span className="text-[#0B57D0] font-semibold text-[11px]">Fill →</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-6 text-center">
+        <div className="mt-8 text-center">
           <Link
             href="/home"
             className="text-xs text-[#5A6478] hover:text-[#0B57D0] transition-colors"

@@ -5,9 +5,11 @@ import {
   recordFailedAttempt,
   clearFailedAttempts,
   StaffSessionData,
+  signStaffSession,
 } from "@/lib/staffAuthService";
 import { verifyArgon2 } from "@/lib/argon2";
 import { logStaffAction } from "@/lib/staffStore";
+import { normalizePhone } from "@/lib/phoneUtils";
 
 export async function POST(req: Request) {
   try {
@@ -37,8 +39,40 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Locate Staff Account
-    const staff = findStaffAccount(cleanStaffId);
+    // 2. Locate Staff Account (Supabase live DB first, fallback to store)
+    let staff = findStaffAccount(cleanStaffId);
+    try {
+      const { createAdminClient } = require("@/lib/supabase/admin");
+      const supabase = createAdminClient();
+      const normPhone = normalizePhone(cleanStaffId);
+      const orFilter = normPhone && normPhone.length === 10
+        ? `staff_id.ilike.${cleanStaffId},phone.eq.${cleanStaffId},phone.eq.${normPhone}`
+        : `staff_id.ilike.${cleanStaffId},phone.eq.${cleanStaffId}`;
+      const { data: dbStaff } = await supabase
+        .from("staff_accounts")
+        .select("*, staff_permissions(permission_key)")
+        .or(orFilter)
+        .maybeSingle();
+
+      if (dbStaff) {
+        staff = {
+          id: dbStaff.id,
+          staffId: dbStaff.staff_id,
+          name: dbStaff.full_name,
+          email: dbStaff.email || `${(dbStaff.staff_id || "staff").toLowerCase()}@mindmasteracademy.in`,
+          phone: dbStaff.phone,
+          role: dbStaff.role,
+          password: dbStaff.password_hash,
+          mustChangePassword: Boolean(dbStaff.must_change_password),
+          status: dbStaff.status,
+          permissions: (dbStaff.staff_permissions || []).map((p: any) => p.permission_key),
+          lastLoginAt: new Date().toISOString(),
+          createdAt: dbStaff.created_at,
+          createdBy: dbStaff.created_by,
+        };
+      }
+    } catch {}
+
     if (!staff) {
       const { locked, attemptsLeft } = recordFailedAttempt(cleanStaffId);
       return NextResponse.json(
@@ -108,7 +142,8 @@ export async function POST(req: Request) {
     });
 
     // Set secure HTTP session cookie
-    res.cookies.set("mma_staff_session", JSON.stringify(sessionData), {
+    const signedToken = signStaffSession(sessionData);
+    res.cookies.set("mma_staff_session", signedToken, {
       httpOnly: false, // accessible to client auth store
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

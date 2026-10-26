@@ -21,19 +21,25 @@ const NAV_ITEMS = [
   { href: "/home", altHref: "/", label: "Home", icon: Home },
   { href: "/courses", label: "Courses", badge: "5 Live", icon: BookOpen },
   { href: "/my-courses", label: "My Learning", icon: GraduationCap },
-  { href: "/notes", label: "Notes & Books", icon: FileText },
+  { href: "/books", label: "Books", icon: FileText },
   { href: "/support", label: "Support", icon: MessageCircle, hasMsgBadge: true },
   { href: "/profile", label: "Profile", icon: User },
 ];
-
-const STUDENT_ID = "std-01";
 
 export default function SidebarNav() {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    const update = () => setUnreadCount(getUnreadCountForStudent(STUDENT_ID));
+    const update = () => {
+      try {
+        const raw = localStorage.getItem("mindmaster_user_profile");
+        const studentId = raw ? JSON.parse(raw).id || JSON.parse(raw).phone || "std-01" : "std-01";
+        setUnreadCount(getUnreadCountForStudent(studentId));
+      } catch {
+        setUnreadCount(0);
+      }
+    };
     update();
     window.addEventListener("mma_messages_changed", update);
     return () => window.removeEventListener("mma_messages_changed", update);
@@ -116,7 +122,7 @@ export default function SidebarNav() {
           <div className="flex items-center justify-between">
             <span className="text-xs font-extrabold tracking-wider uppercase text-emerald-800 flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              Narhe Centre Hub
+              Satara Flagship Hub
             </span>
             <Sparkles className="w-4 h-4 text-emerald-600" />
           </div>
@@ -126,16 +132,16 @@ export default function SidebarNav() {
               Need classroom drills or offline study guidance?
             </h4>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Connect directly with academy mentors in Room 302.
+              Connect directly with academy mentors and Prashant Sir.
             </p>
           </div>
 
           <a
-            href="tel:+919922000000"
+            href="tel:+918459344077"
             className="w-full py-2.5 px-4 rounded-2xl bg-blue-600 text-white text-xs font-bold text-center hover:bg-blue-700 shadow-sm shadow-blue-600/25 transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
           >
             <span>📞</span>
-            <span>Helpline Mentor</span>
+            <span>Helpline: +91 84593 44077</span>
           </a>
         </div>
 

@@ -78,7 +78,7 @@ export function generateFeeReceiptPdf(data: FeeReceiptData) {
   doc.setTextColor(...grayTextColor);
   doc.text("Founder & Master Trainer: Prashant Dhumal Sir", 15, 30);
   doc.text("Head Office: Powai Naka, Satara (415001) | Pune Campus: Zeal Chowk, Narhe, Pune", 15, 35);
-  doc.text("Helpline: +91 84593 44077 | Email: contact@mindmasteracademy.in", 15, 40);
+  doc.text("Helpline / WhatsApp: +91 84593 44077 | Email: mindmasterdhumal@gmail.com", 15, 40);
 
   // Top Right Receipt Badge
   doc.setFillColor(232, 241, 253); // Light Blue
@@ -108,7 +108,7 @@ export function generateFeeReceiptPdf(data: FeeReceiptData) {
     head: [["STUDENT & ENROLLMENT PARTICULARS", "DETAILS"]],
     body: [
       ["Student Full Name", safeStudentName],
-      ["Registered Mobile", data.studentPhone || "+91 98XXXXXXXX"],
+      ["Registered Mobile", data.studentPhone ? `+91 ${data.studentPhone.replace(/\D/g, "").slice(-10)}` : "Registered Mobile Verified"],
       ["District / Region", data.district || "Maharashtra"],
       ["Course Code & Title", `[${data.courseCode}] ${safeCourseTitle}`],
       ["Access Duration", `${data.accessMonths} Months (Valid through ${data.expiryDate})`],

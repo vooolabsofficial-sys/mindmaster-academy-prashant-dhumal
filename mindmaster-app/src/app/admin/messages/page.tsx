@@ -13,6 +13,8 @@ import {
   sendMessage,
   markConversationReadByStaff,
   getUnreadCountForStaff,
+  fetchDbConversations,
+  fetchDbMessages,
 } from "@/lib/messageStore";
 
 export default function StaffMessagesPage() {
@@ -31,8 +33,9 @@ export default function StaffMessagesPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const reload = () => {
+  const reload = async () => {
     setStaff(getCurrentStaff());
+    await fetchDbConversations();
     const filters: {
       unreadOnly?: boolean;
       courseId?: string;
@@ -65,7 +68,7 @@ export default function StaffMessagesPage() {
 
   useEffect(() => {
     if (activeConvId) {
-      setMessages(getConversationMessages(activeConvId));
+      fetchDbMessages(activeConvId).then((msgs) => setMessages(msgs));
       markConversationReadByStaff(activeConvId);
     }
   }, [activeConvId]);

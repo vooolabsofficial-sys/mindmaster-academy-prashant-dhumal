@@ -33,7 +33,7 @@ async function run() {
   // 1. Minimum Order Value Check
   const resMinOrderFail = await validateCoupon("POLICEBHARTI", "c-mm-04", "std-test-user"); // c-mm-04 price is ₹499, min order for POLICEBHARTI is ₹999
   assert.strictEqual(resMinOrderFail.success, false, "Should fail when course price is below minOrderValue");
-  assert(resMinOrderFail.error?.includes("किमान"), "Error should mention minimum order amount");
+  assert(resMinOrderFail.error?.includes("at least") || resMinOrderFail.error?.includes("₹"), "Error should mention minimum order amount");
   console.log("✓ Minimum order value requirement correctly enforced");
 
   // 2. Instant Paused Status Check
@@ -98,7 +98,7 @@ async function run() {
 
   const resFull = await validateCoupon("QUOTAFULL100", "c-mm-01", "std-quota-tester");
   assert.strictEqual(resFull.success, false, "Should fail when coupon reaches 100/100 limit");
-  assert(resFull.error?.includes("मर्यादा (Quota) समाप्त"), "Should show quota finished error");
+  assert(resFull.error?.toLowerCase().includes("quota") || resFull.error?.toLowerCase().includes("limit"), "Should show quota finished error");
   console.log("✓ 100-student quota limit auto-expiry enforced");
 
   // 4. Rich Redemption Tracking Log

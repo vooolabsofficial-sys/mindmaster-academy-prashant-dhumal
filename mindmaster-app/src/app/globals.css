@@ -164,3 +164,11 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Anti-Piracy Print Media Protection */
+@media print {
+  body {
+    display: none !important;
+  }
+}
+

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { findStaffAccount, StaffSessionData } from "@/lib/staffAuthService";
+import { findStaffAccount, StaffSessionData, signStaffSession } from "@/lib/staffAuthService";
 import { hashArgon2, verifyArgon2 } from "@/lib/argon2";
 import { logStaffAction, saveStaffUser } from "@/lib/staffStore";
 
@@ -18,6 +18,11 @@ export async function POST(req: Request) {
     const staff = findStaffAccount(staff_id);
     if (!staff) {
       return NextResponse.json({ error: "Staff account not found." }, { status: 404 });
+    }
+    if (staff.status !== "active") {
+      const res = NextResponse.json({ error: "Account is suspended." }, { status: 403 });
+      res.cookies.delete("mma_staff_session");
+      return res;
     }
 
     const isMatch = await verifyArgon2(temp_password, staff.password || "");
@@ -55,10 +60,11 @@ export async function POST(req: Request) {
     const res = NextResponse.json({
       success: true,
       message: "Password updated successfully with Argon2!",
-      redirect_url: staff.role === "main_admin" ? "/admin" : "/sub/videos",
+      redirect_url: staff.role === "main_admin" ? "/admin" : "/sub",
     });
 
-    res.cookies.set("mma_staff_session", JSON.stringify(sessionData), {
+    const signedToken = signStaffSession(sessionData);
+    res.cookies.set("mma_staff_session", signedToken, {
       httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
