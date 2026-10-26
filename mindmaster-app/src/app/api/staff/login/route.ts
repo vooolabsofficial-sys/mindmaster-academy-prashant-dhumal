@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       const supabase = createAdminClient();
       const normPhone = normalizePhone(cleanStaffId);
       const orFilter = normPhone && normPhone.length === 10
-        ? `staff_id.ilike.${cleanStaffId},phone.eq.${cleanStaffId},phone.eq.${normPhone}`
+        ? `staff_id.ilike.${cleanStaffId},phone.eq.${cleanStaffId},phone.eq.${normPhone},phone.eq.+91${normPhone}`
         : `staff_id.ilike.${cleanStaffId},phone.eq.${cleanStaffId}`;
       const { data: dbStaff } = await supabase
         .from("staff_accounts")

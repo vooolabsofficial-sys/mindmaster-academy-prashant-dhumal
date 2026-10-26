@@ -64,14 +64,36 @@ function LoginContent() {
       return;
     }
 
+    let isMounted = true;
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) setIsCheckingSession(false);
+    }, 1000);
+
     async function checkSession() {
       try {
+        const localSession = localStorage.getItem("mindmaster_session_token");
+        if (localSession) {
+          const localProfile = localStorage.getItem("mindmaster_user_profile");
+          if (!localProfile) {
+            router.replace(`/onboarding?next=${encodeURIComponent(nextParam)}`);
+          } else {
+            router.replace(nextParam);
+          }
+          return;
+        }
+
         const supabase = createClient();
+        // Fast timeout promise so network lag does not hang the login screen
+        const userPromise = supabase.auth.getUser();
+        const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
+          setTimeout(() => resolve({ data: { user: null } }), 800)
+        );
+
         const {
           data: { user },
-        } = await supabase.auth.getUser();
+        } = await Promise.race([userPromise, timeoutPromise]);
 
-        if (user) {
+        if (user && isMounted) {
           const { data: profile } = await supabase
             .from("profiles")
             .select("full_name, is_verified")
@@ -90,24 +112,19 @@ function LoginContent() {
         }
       } catch (err) {
         // Fallback check
-      }
-
-      const localSession = localStorage.getItem("mindmaster_session_token");
-      if (localSession) {
-        const localProfile = localStorage.getItem("mindmaster_user_profile");
-        if (!localProfile) {
-          router.replace(`/onboarding?next=${encodeURIComponent(nextParam)}`);
-        } else {
-          router.replace(nextParam);
+      } finally {
+        if (isMounted) {
+          clearTimeout(safetyTimer);
+          setIsCheckingSession(false);
         }
-        return;
       }
-
-      // No active session -> show login form
-      setIsCheckingSession(false);
     }
 
     checkSession();
+    return () => {
+      isMounted = false;
+      clearTimeout(safetyTimer);
+    };
   }, [nextParam, router]);
 
   // Google OAuth 1-Click Login

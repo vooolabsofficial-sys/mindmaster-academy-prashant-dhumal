@@ -11,6 +11,7 @@ function StaffLoginContent() {
   const [staffId, setStaffId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [lockoutSec, setLockoutSec] = useState<number | null>(null);
 
@@ -35,6 +36,7 @@ function StaffLoginContent() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
     setLoading(true);
 
     try {
@@ -72,13 +74,19 @@ function StaffLoginContent() {
       }
 
       const nextParam = searchParams.get("next");
-      if (data.must_change_password) {
-        router.push("/staff/change-password");
-      } else if (nextParam && (nextParam.startsWith("/sub") || nextParam.startsWith("/admin"))) {
-        router.push(nextParam);
-      } else {
-        router.push(data.redirect_url || (data.role === "main_admin" ? "/admin" : "/sub"));
-      }
+      const targetUrl = data.must_change_password
+        ? "/staff/change-password"
+        : (nextParam && (nextParam.startsWith("/sub") || nextParam.startsWith("/admin")))
+        ? nextParam
+        : (data.redirect_url || (data.role === "main_admin" ? "/admin" : "/sub"));
+
+      const roleLabel = data.role === "main_admin" ? "Admin Console" : "Staff Console";
+      setSuccessMsg(`Welcome, ${data.staff?.name || "Staff"}! Opening ${roleLabel}...`);
+
+      // Use window.location.href to guarantee full session cookie persistence across server boundaries
+      setTimeout(() => {
+        window.location.href = targetUrl;
+      }, 150);
     } catch (err: any) {
       console.error("Login fetch error:", err);
       setError("Network connection failed. Please check server.");
@@ -125,6 +133,13 @@ function StaffLoginContent() {
           </div>
         )}
 
+        {successMsg && (
+          <div className="mb-4 p-3.5 bg-green-50 border border-green-200 text-green-700 text-xs rounded-xl flex items-center gap-2">
+            <span className="text-base leading-none">✅</span>
+            <p className="font-semibold">{successMsg}</p>
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-[#0E1B3D] mb-1.5">
@@ -136,7 +151,7 @@ function StaffLoginContent() {
               disabled={!!lockoutSec}
               value={staffId}
               onChange={(e) => setStaffId(e.target.value)}
-              placeholder="e.g. MMA-000 or staff-2"
+              placeholder="e.g. MMA-000 or MMA-001"
               className="w-full px-4 py-3 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-sm font-mono text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0] disabled:opacity-50"
             />
           </div>
@@ -166,12 +181,29 @@ function StaffLoginContent() {
 
           <button
             type="submit"
-            disabled={loading || !!lockoutSec}
-            className="w-full py-3.5 px-6 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-semibold rounded-full shadow-sm transition-all transform active:scale-[0.99] text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading || !!lockoutSec || !!successMsg}
+            className="w-full py-3.5 px-6 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-semibold rounded-full shadow-sm transition-all transform active:scale-[0.99] text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? "Verifying with Argon2..." : "Verify & Sign In →"}
+            {loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Verifying credentials...</span>
+              </>
+            ) : successMsg ? (
+              <span>Redirecting...</span>
+            ) : (
+              <span>Verify & Sign In →</span>
+            )}
           </button>
         </form>
+
+        <div className="mt-4 p-3 bg-blue-50/70 border border-blue-100 rounded-2xl text-[11px] text-[#0E1B3D]">
+          <p className="font-bold text-[#0B57D0] mb-1">🔑 Direct Dashboard Logins:</p>
+          <div className="space-y-1">
+            <p className="font-mono text-[10px] text-slate-600">Admin: <span className="font-bold text-slate-800">MMA-000</span> (Pass: <span className="font-bold text-slate-800">Owner@2026</span>) → <span className="text-[#0B57D0]">/admin</span></p>
+            <p className="font-mono text-[10px] text-slate-600">Sub-Admin: <span className="font-bold text-slate-800">MMA-001</span> (Pass: <span className="font-bold text-slate-800">Staff@2026</span>) → <span className="text-[#0B57D0]">/sub</span></p>
+          </div>
+        </div>
 
         <div className="mt-8 text-center">
           <Link
