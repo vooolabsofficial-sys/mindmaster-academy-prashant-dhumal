@@ -21,6 +21,21 @@ export interface StudentAccount {
 // Production Initial Seed Students (for test & verification)
 const INITIAL_STUDENT_ACCOUNTS: StudentAccount[] = [
   {
+    id: "std-demo-01",
+    phone: "+919876500001",
+    cleanPhone: "9876500001",
+    full_name: "Demo Student",
+    email: "student@mindmasteracademy.in",
+    password_hash: "Student@123",
+    recovery_pin: "1234",
+    onboarding_completed: true,
+    district: "Pune",
+    taluka: "Haveli",
+    village: "Narhe",
+    school_name: "MindMaster High School",
+    created_at: "2026-01-01T00:00:00.000Z",
+  },
+  {
     id: "std-rohan",
     phone: "+919823456789",
     cleanPhone: "9823456789",
