@@ -25,8 +25,8 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const nextParam = searchParams.get("next") || "/home";
 
-  // Session check state
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  // Session check state - default to false so form is instantly visible without spinner hang
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
 
   // Tab state: "signin" or "signup"
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
@@ -62,9 +62,10 @@ function LoginContent() {
       localStorage.setItem("mindmaster_onboarding_completed", "true");
     } catch {}
     document.cookie = "mindmaster_session=tok-demo-student; path=/; max-age=604800; SameSite=Lax";
+    const targetUrl = (!nextParam || nextParam === "/" || nextParam.startsWith("/login")) ? "/home" : nextParam;
     setTimeout(() => {
-      window.location.href = nextParam.startsWith("/login") ? "/home" : nextParam;
-    }, 200);
+      window.location.href = targetUrl;
+    }, 150);
   };
 
   // 1. Check existing session on mount
@@ -83,72 +84,20 @@ function LoginContent() {
           ? decodeURIComponent(msgParam)
           : "Your account was logged in on another device. Only 1 device session is allowed at a time."
       );
-      setIsCheckingSession(false);
       return;
     }
 
-    let isMounted = true;
-    const safetyTimer = setTimeout(() => {
-      if (isMounted) setIsCheckingSession(false);
-    }, 1000);
-
-    async function checkSession() {
-      try {
-        const localSession = localStorage.getItem("mindmaster_session_token");
-        if (localSession) {
-          const localProfile = localStorage.getItem("mindmaster_user_profile");
-          if (!localProfile) {
-            router.replace(`/onboarding?next=${encodeURIComponent(nextParam)}`);
-          } else {
-            router.replace(nextParam);
-          }
-          return;
-        }
-
-        const supabase = createClient();
-        // Fast timeout promise so network lag does not hang the login screen
-        const userPromise = supabase.auth.getUser();
-        const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
-          setTimeout(() => resolve({ data: { user: null } }), 800)
-        );
-
-        const {
-          data: { user },
-        } = await Promise.race([userPromise, timeoutPromise]);
-
-        if (user && isMounted) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name, is_verified")
-            .eq("id", user.id)
-            .maybeSingle();
-
-          const localProfile = localStorage.getItem("mindmaster_user_profile");
-          const hasProfile = (profile && profile.full_name) || localProfile;
-
-          if (!hasProfile) {
-            router.replace(`/onboarding?next=${encodeURIComponent(nextParam)}`);
-          } else {
-            router.replace(nextParam);
-          }
-          return;
-        }
-      } catch (err) {
-        // Fallback check
-      } finally {
-        if (isMounted) {
-          clearTimeout(safetyTimer);
-          setIsCheckingSession(false);
-        }
+    try {
+      const localSession = localStorage.getItem("mindmaster_session_token");
+      const localProfile = localStorage.getItem("mindmaster_user_profile");
+      if (localSession && localProfile) {
+        document.cookie = `mindmaster_session=${localSession}; path=/; max-age=604800; SameSite=Lax`;
+        const targetUrl = (!nextParam || nextParam === "/" || nextParam.startsWith("/login")) ? "/home" : nextParam;
+        window.location.href = targetUrl;
       }
-    }
-
-    checkSession();
-    return () => {
-      isMounted = false;
-      clearTimeout(safetyTimer);
-    };
+    } catch {}
   }, [nextParam, router]);
+
 
   // Google OAuth 1-Click Login
   const handleGoogleLogin = async () => {
@@ -228,14 +177,19 @@ function LoginContent() {
         localStorage.setItem("mindmaster_onboarding_completed", "true");
       }
 
+      // Ensure session cookie is set for Edge middleware
+      const sessionTok = data.sessionToken || `tok-${data.user.id}`;
+      document.cookie = `mindmaster_session=${sessionTok}; path=/; max-age=604800; SameSite=Lax`;
+
       setSuccessMessage("Login successful! Redirecting...");
 
       setTimeout(() => {
+        const canonicalNext = (!nextParam || nextParam === "/" || nextParam.startsWith("/login")) ? "/home" : nextParam;
         const targetUrl = !data.onboardingCompleted
-          ? `/onboarding?next=${encodeURIComponent(nextParam)}&phone=${encodeURIComponent(phone)}`
-          : nextParam;
+          ? `/onboarding?next=${encodeURIComponent(canonicalNext)}&phone=${encodeURIComponent(phone)}`
+          : canonicalNext;
         window.location.href = targetUrl;
-      }, 300);
+      }, 200);
     } catch (err: any) {
       setErrorMessage(err.message || "Something went wrong. Please try again.");
       setLoading(false);
@@ -283,25 +237,20 @@ function LoginContent() {
       localStorage.setItem("mindmaster_verified_phone", data.user.phone);
       localStorage.setItem("mindmaster_user_profile", JSON.stringify(profileData));
 
+      // Ensure session cookie is set for Edge middleware
+      const regTok = data.sessionToken || `tok-${data.user.id}`;
+      document.cookie = `mindmaster_session=${regTok}; path=/; max-age=604800; SameSite=Lax`;
+
       setSuccessMessage("Registration successful! Setting up your account...");
 
       setTimeout(() => {
         window.location.href = `/onboarding?next=${encodeURIComponent(nextParam)}&phone=${encodeURIComponent(phone)}`;
-      }, 300);
+      }, 200);
     } catch (err: any) {
       setErrorMessage(err.message || "An error occurred during registration.");
       setLoading(false);
     }
   };
-
-  if (isCheckingSession) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 font-sans">
-        <div className="w-10 h-10 border-3 border-[#0052FF]/20 border-t-[#0052FF] rounded-full animate-spin mb-3" />
-        <p className="text-slate-500 text-xs tracking-wide font-medium">Checking session...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#F4F7FC] text-slate-800 flex flex-col justify-between relative overflow-hidden font-sans">
