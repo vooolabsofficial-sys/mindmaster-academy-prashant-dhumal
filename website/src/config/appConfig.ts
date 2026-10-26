@@ -7,8 +7,13 @@ export const getAppBaseUrl = (): string => {
     return metaEnv.VITE_APP_URL;
   }
 
-  // If in browser and on localhost or local IP, use local dev port 3001
+  // If in browser, check localStorage override or localhost
   if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("mma_app_url");
+      if (stored) return stored;
+    } catch {}
+
     const hostname = window.location.hostname;
     if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.")) {
       return "http://localhost:3000";

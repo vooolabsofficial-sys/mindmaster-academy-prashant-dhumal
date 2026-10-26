@@ -12,7 +12,31 @@ import {
 import { normalizePhone } from "@/lib/phoneUtils";
 import { getCookieDomain } from "@/lib/supabase/client";
 
+function getCorsHeaders(req: NextRequest) {
+  const origin = req.headers.get("origin") || "*";
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+  };
+}
+
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: getCorsHeaders(req),
+  });
+}
+
 export async function POST(req: NextRequest) {
+  const response = await handlePost(req);
+  const cors = getCorsHeaders(req);
+  Object.entries(cors).forEach(([k, v]) => response.headers.set(k, v));
+  return response;
+}
+
+async function handlePost(req: NextRequest) {
   try {
     const body = await req.json();
     const { action } = body;

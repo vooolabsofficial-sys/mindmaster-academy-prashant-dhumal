@@ -32,17 +32,17 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
     const cleanPhone = phone.replace(/\D/g, '').slice(-10);
     if (cleanPhone.length !== 10) {
-      setErrorMessage('कृपया १० अंकी योग्य मोबाईल नंबर टाका (Please enter valid 10-digit mobile number)');
+      setErrorMessage('Please enter a valid 10-digit mobile number');
       return;
     }
 
     if (!password || password.length < 6) {
-      setErrorMessage('पासवर्ड किमान ६ अक्षरांचा असावा (Password must be at least 6 characters)');
+      setErrorMessage('Password must be at least 6 characters');
       return;
     }
 
     if (tab === 'signup' && !fullName.trim()) {
-      setErrorMessage('कृपया तुमचे पूर्ण नाव टाका (Please enter your full name)');
+      setErrorMessage('Please enter your full name');
       return;
     }
 
@@ -82,14 +82,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         localStorage.setItem('mindmaster_user_profile', JSON.stringify(profile));
       } catch {}
 
-      setSuccessMessage(tab === 'signin' ? 'लॉगिन यशस्वी! उघडत आहे...' : 'नोंदणी यशस्वी! ॲप सुरू होत आहे...');
+      setSuccessMessage(tab === 'signin' ? 'Sign in successful! Opening portal...' : 'Account created successfully! Starting portal...');
 
       setTimeout(() => {
         const dest = data.redirect || (data.onboardingCompleted ? '/home' : '/onboarding');
         window.location.href = `${appBaseUrl}${dest}`;
       }, 400);
     } catch (err: any) {
-      setErrorMessage(err.message || 'काहीतरी अडचण आली. कृपया पुन्हा प्रयत्न करा.');
+      setErrorMessage(err.message || 'Connection error. Please open the Student Portal directly.');
       setLoading(false);
     }
   };
@@ -138,8 +138,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {tab === 'signin'
-              ? 'तुमच्या १०-अंकी मोबाईल नंबरने सहज लॉगिन करा'
-              : 'अभ्यास सुरू करण्यासाठी मोफत खाते तयार करा'}
+              ? 'Sign in with your 10-digit mobile number'
+              : 'Create a free account to start learning'}
           </p>
         </div>
 
@@ -195,7 +195,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            Sign In (लॉगिन)
+            Sign In
           </button>
           <button
             type="button"
@@ -210,15 +210,28 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            Create Account (नवीन खाते)
+            Create Account
           </button>
         </div>
 
         {/* Feedback Alerts */}
         {errorMessage && (
-          <div className="mb-3.5 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-red-500 shrink-0">error</span>
-            <span>{errorMessage}</span>
+          <div className="mb-3.5 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-300 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-red-500 shrink-0">error</span>
+              <span>{errorMessage}</span>
+            </div>
+            <div className="mt-2 pt-2 border-t border-red-200/60 dark:border-red-800/40">
+              <a
+                href={`${appBaseUrl}/login`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0052FF] hover:underline"
+              >
+                <span>Open Student Portal Login Page directly</span>
+                <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+              </a>
+            </div>
           </div>
         )}
 
@@ -234,7 +247,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           {tab === 'signup' && (
             <div>
               <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Full Name (विद्यार्थ्याचे पूर्ण नाव)
+                Full Name
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">
@@ -244,7 +257,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="उदा. राहुल सचिन पाटील"
+                  placeholder="e.g. John Doe / Rahul Patil"
                   className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0052FF]/30 focus:border-[#0052FF]"
                   required
                 />
@@ -254,7 +267,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
           <div>
             <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Mobile Number (१० अंकी मोबाईल नंबर)
+              Mobile Number
             </label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
@@ -274,7 +287,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                Password (पासवर्ड)
+                Password
               </label>
               {tab === 'signin' && (
                 <a
@@ -312,7 +325,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           {tab === 'signup' && (
             <div>
               <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                4-Digit Security PIN (पासवर्ड विसरल्यास कामास येईल)
+                4-Digit Security PIN (Used for quick password recovery)
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">
@@ -339,7 +352,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             {loading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>कृपया थांबा...</span>
+                <span>Please wait...</span>
               </>
             ) : (
               <>

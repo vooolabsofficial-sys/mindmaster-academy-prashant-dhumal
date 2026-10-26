@@ -318,8 +318,8 @@ function LoginContent() {
           </h1>
           <p className="text-xs text-slate-500 mt-1 mb-5">
             {activeTab === "signin"
-              ? "तुमच्या १०-अंकी मोबाईल नंबरने सहज लॉगिन करा"
-              : "अभ्यास सुरू करण्यासाठी तुमचे नाव, नंबर व पासवर्ड टाका"}
+              ? "Sign in with your 10-digit mobile number"
+              : "Enter your name, mobile number and password to start learning"}
           </p>
 
           {/* Official Google 1-Click Button (Google Brand Guidelines) */}
@@ -375,7 +375,7 @@ function LoginContent() {
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              Sign In (लॉगिन)
+              Sign In
             </button>
             <button
               type="button"
@@ -390,7 +390,7 @@ function LoginContent() {
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              Create Account (नवीन खाते)
+              Create Account
             </button>
           </div>
 
@@ -414,7 +414,7 @@ function LoginContent() {
             <form onSubmit={handleSignIn} className="space-y-3.5">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Mobile Number (१० अंकी मोबाईल नंबर)
+                  Mobile Number
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
@@ -436,7 +436,7 @@ function LoginContent() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-[11px] font-semibold text-slate-700">
-                    Password (पासवर्ड)
+                    Password
                   </label>
                   <Link
                     href="/forgot-password"
@@ -489,7 +489,7 @@ function LoginContent() {
             <form onSubmit={handleSignUp} className="space-y-3">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Student Full Name (विद्यार्थ्याचे नाव)
+                  Student Full Name
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -498,7 +498,7 @@ function LoginContent() {
                   <input
                     type="text"
                     required
-                    placeholder="उदा. राहुल सचिन पाटील"
+                    placeholder="e.g. John Doe / Rahul Patil"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
@@ -508,7 +508,7 @@ function LoginContent() {
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Mobile Number (१० अंकी मोबाईल नंबर)
+                  Mobile Number
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
@@ -529,7 +529,7 @@ function LoginContent() {
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Set Password (पासवर्ड ठेवा)
+                  Set Password
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -539,7 +539,7 @@ function LoginContent() {
                     type={showPassword ? "text" : "password"}
                     required
                     minLength={6}
-                    placeholder="किमान ६ अक्षरे"
+                    placeholder="At least 6 characters"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-10 pr-10 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
@@ -556,7 +556,7 @@ function LoginContent() {
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  4-Digit Security PIN (पासवर्ड रिकव्हरी पिन)
+                  4-Digit Security PIN (Password Recovery)
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -572,7 +572,7 @@ function LoginContent() {
                   />
                 </div>
                 <p className="text-[10px] text-slate-500 mt-0.5">
-                  पासवर्ड विसरल्यास या ४-अंकी पिनने लगेच नवा पासवर्ड ठेवता येतो.
+                  Used to quickly reset your password if forgotten.
                 </p>
               </div>
 
@@ -599,7 +599,7 @@ function LoginContent() {
           {/* WhatsApp Assistance */}
           <div className="mt-5 pt-3.5 border-t border-slate-100 text-center">
             <span className="text-[11px] text-slate-500 block mb-1">
-              काही अडचण येत असल्यास मदत मिळवा:
+              Need assistance with your account?
             </span>
             <a
               href="https://wa.me/918459344077?text=Namaskar%20Prashant%20Sir%2C%20I%20need%20help%20with%20MindMaster%20Academy%20login."
