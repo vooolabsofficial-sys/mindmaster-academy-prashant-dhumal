@@ -1,14 +1,32 @@
 import { createBrowserClient } from "@supabase/ssr";
 
-export function getCookieDomain(): string | undefined {
+export function getCookieDomain(hostOrReq?: string | any): string | undefined {
+  let hostname = "";
   if (typeof window !== "undefined") {
-    // Only set domain on production domain so localhost doesn't drop cookies
-    if (window.location.hostname.includes("mindmasteracademy.in")) {
-      return process.env.NEXT_PUBLIC_COOKIE_DOMAIN || ".mindmasteracademy.in";
-    }
+    hostname = window.location.hostname;
+  } else if (typeof hostOrReq === "string") {
+    hostname = hostOrReq.split(":")[0];
+  } else if (hostOrReq && typeof hostOrReq.get === "function") {
+    const rawHost = hostOrReq.get("host") || "";
+    hostname = rawHost.split(":")[0];
+  }
+
+  // Never set explicit domain on Vercel preview/production (*.vercel.app), localhost, or IP addresses
+  if (
+    !hostname ||
+    hostname.includes("localhost") ||
+    hostname.includes("vercel.app") ||
+    hostname.includes("127.0.0.1") ||
+    /^\d+\.\d+\.\d+\.\d+$/.test(hostname)
+  ) {
     return undefined;
   }
-  return process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined;
+
+  if (hostname.includes("mindmasteracademy.in")) {
+    return process.env.NEXT_PUBLIC_COOKIE_DOMAIN || ".mindmasteracademy.in";
+  }
+
+  return undefined;
 }
 
 export function createClient() {

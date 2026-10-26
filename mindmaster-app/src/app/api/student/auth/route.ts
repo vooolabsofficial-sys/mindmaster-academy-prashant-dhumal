@@ -41,7 +41,8 @@ async function handlePost(req: NextRequest) {
     const body = await req.json();
     const { action } = body;
 
-    const cookieDomain = getCookieDomain();
+    const host = req.headers.get("host") || "";
+    const cookieDomain = getCookieDomain(host);
     const isProd = process.env.NODE_ENV === "production";
 
     // -----------------------------------------------------------------------

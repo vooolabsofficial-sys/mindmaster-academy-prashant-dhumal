@@ -75,7 +75,11 @@ function getStoreFilePath(): string | null {
   try {
     const pathModule = require("path");
     const fsModule = require("fs");
-    const dir = pathModule.join(process.cwd(), ".data");
+    const osModule = require("os");
+    const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+    const dir = isVercel
+      ? pathModule.join(osModule.tmpdir(), "mma-data")
+      : pathModule.join(process.cwd(), ".data");
     if (!fsModule.existsSync(dir)) {
       try {
         fsModule.mkdirSync(dir, { recursive: true });

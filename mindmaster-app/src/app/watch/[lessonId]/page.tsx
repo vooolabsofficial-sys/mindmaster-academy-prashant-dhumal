@@ -780,19 +780,27 @@ function WatchLessonContent({
     return (
       <AppShell>
         <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-4 text-slate-400">
+          <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-4 text-amber-400 shadow-inner">
             <FileText className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Lesson Not Found</h2>
-          <p className="text-slate-400 text-sm max-w-md mb-6">
-            The requested lecture or lesson could not be found. Please check our available courses.
+          <h2 className="text-xl font-bold text-white mb-2">लेक्चर लवकरच उपलब्ध होत आहे</h2>
+          <p className="text-slate-400 text-sm max-w-md mb-6 leading-relaxed">
+            हे लेक्चर किंवा व्हिडिओ सध्या सिस्टीममध्ये अपडेट केले जात आहे. कृपया इतर उपलब्ध कोर्सेस तपासा किंवा होमपेजवर परत जा.
           </p>
-          <Link
-            href="/courses"
-            className="px-6 py-2.5 rounded-xl bg-[#0052FF] hover:bg-[#0047E0] text-white font-semibold text-sm transition shadow-lg shadow-blue-500/25"
-          >
-            Browse Courses
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/courses"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/20"
+            >
+              अभ्यासक्रम पहा (Explore Courses)
+            </Link>
+            <Link
+              href="/home"
+              className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium text-sm transition"
+            >
+              होमपेज (Home)
+            </Link>
+          </div>
         </div>
       </AppShell>
     );
