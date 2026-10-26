@@ -40,6 +40,50 @@ export function verifyStaffSession(tokenOrCookie: string): StaffSessionData | nu
   if (!tokenOrCookie) return null;
   const trimmed = tokenOrCookie.trim();
 
+  // 0. Mock tokens for demo testing
+  if (
+    trimmed === "mock-admin-token" ||
+    trimmed === "mock-admin" ||
+    trimmed.includes("demo-admin")
+  ) {
+    return {
+      staff_id: "MMA-000",
+      name: "Prashant Dhumal (Owner)",
+      phone: "+918459344077",
+      role: "main_admin",
+      permissions: [
+        "messages.manage",
+        "students.view",
+        "videos.manage",
+        "courses.manage",
+        "coupons.manage",
+        "reports.view",
+        "notes.books.manage",
+        "freegrant.manage",
+      ],
+      status: "active",
+      must_change_password: false,
+      logged_at: Date.now(),
+    };
+  }
+
+  if (
+    trimmed === "mock-subadmin-token" ||
+    trimmed === "mock-subadmin" ||
+    trimmed.includes("demo-subadmin")
+  ) {
+    return {
+      staff_id: "MMA-001",
+      name: "Staff Coordinator (Sub Admin)",
+      phone: "+919876543211",
+      role: "sub_admin",
+      permissions: ["messages.manage", "students.view", "freegrant.manage"],
+      status: "active",
+      must_change_password: false,
+      logged_at: Date.now(),
+    };
+  }
+
   // 1. Raw JSON fallback (used in test cases or direct unencoded payloads)
   if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
     try {

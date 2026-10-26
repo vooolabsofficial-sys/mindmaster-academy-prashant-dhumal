@@ -32,8 +32,8 @@ function LoginContent() {
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
 
   // Form states
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("9876500001");
+  const [password, setPassword] = useState("Student@123");
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [recoveryPin, setRecoveryPin] = useState("");
@@ -43,6 +43,29 @@ function LoginContent() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  const handleQuickStudentLogin = () => {
+    setLoading(true);
+    setSuccessMessage("Demo student authenticated! Opening student portal...");
+    const profileData = {
+      id: "std-demo-01",
+      phone: "+919876500001",
+      cleanPhone: "9876500001",
+      full_name: "MindMaster Demo Student",
+      role: "student",
+      onboardingCompleted: true,
+    };
+    try {
+      localStorage.setItem("mindmaster_session_token", "tok-demo-student");
+      localStorage.setItem("mindmaster_verified_phone", "+919876500001");
+      localStorage.setItem("mindmaster_user_profile", JSON.stringify(profileData));
+      localStorage.setItem("mindmaster_onboarding_completed", "true");
+    } catch {}
+    document.cookie = "mindmaster_session=tok-demo-student; path=/; max-age=604800; SameSite=Lax";
+    setTimeout(() => {
+      window.location.href = nextParam.startsWith("/login") ? "/home" : nextParam;
+    }, 200);
+  };
 
   // 1. Check existing session on mount
   useEffect(() => {
@@ -339,6 +362,16 @@ function LoginContent() {
               : "Enter your name, mobile number and password to start learning"}
           </p>
 
+          {/* Instant 1-Click Student Login */}
+          <button
+            type="button"
+            onClick={handleQuickStudentLogin}
+            disabled={loading}
+            className="w-full py-3.5 px-4 mb-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-md shadow-blue-500/20 text-xs sm:text-sm flex items-center justify-center gap-2 transition-all transform active:scale-[0.99] cursor-pointer"
+          >
+            <span>⚡ Instant 1-Click Student Login (Demo) →</span>
+          </button>
+
           {/* Official Google 1-Click Button (Google Brand Guidelines) */}
           <button
             type="button"
@@ -627,6 +660,22 @@ function LoginContent() {
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>WhatsApp: +91 84593 44077</span>
             </a>
+          </div>
+
+          {/* Portal Switcher for Admin & Sub-Admin */}
+          <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-col gap-1.5 text-center">
+            <Link
+              href="/admin/login"
+              className="text-xs font-semibold text-[#0052FF] hover:underline"
+            >
+              👑 Main Admin Portal Login (/admin) →
+            </Link>
+            <Link
+              href="/sub/login"
+              className="text-xs font-semibold text-slate-600 hover:text-[#0052FF] hover:underline"
+            >
+              🛡️ Sub-Admin Staff Portal Login (/sub) →
+            </Link>
           </div>
         </div>
       </main>

@@ -57,13 +57,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${plusJakarta.variable} ${inter.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${plusJakarta.variable} ${inter.variable} h-full antialiased`}>
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-800 font-sans antialiased">
+      <body suppressHydrationWarning className="min-h-full flex flex-col bg-slate-50 text-slate-800 font-sans antialiased">
         <MaintenanceBanner />
         <ServiceWorkerRegister />
         <PwaInstallPrompt />

@@ -307,22 +307,24 @@ export async function middleware(req: NextRequest | Request) {
   const isAdminRoute = pathname.startsWith("/admin");
   const isSubRoute = pathname.startsWith("/sub");
 
-  if (isAdminRoute || isSubRoute) {
-    // Redirect old /admin/login to unified /staff/login
-    if (pathname === "/admin/login") {
-      return NextResponse.redirect(new URL("/staff/login", req.url));
-    }
+  // Dedicated login pages are public
+  if (pathname === "/admin/login" || pathname === "/sub/login") {
+    return NextResponse.next();
+  }
 
+  if (isAdminRoute || isSubRoute) {
     // A. Must be authenticated as staff
     if (!staffSession) {
-      const loginUrl = new URL("/staff/login", req.url);
+      const loginDest = isAdminRoute ? "/admin/login" : "/sub/login";
+      const loginUrl = new URL(loginDest, req.url);
       loginUrl.searchParams.set("next", currentPath);
       return NextResponse.redirect(loginUrl);
     }
 
     // B. Suspend Check on every request with instant session kill
     if (staffSession.status === "suspended" || staffSession.status === "inactive") {
-      const killRes = NextResponse.redirect(new URL("/staff/login?error=suspended", req.url));
+      const loginDest = isAdminRoute ? "/admin/login" : "/sub/login";
+      const killRes = NextResponse.redirect(new URL(`${loginDest}?error=suspended`, req.url));
       killRes.cookies.delete("mma_staff_session");
       return killRes;
     }
