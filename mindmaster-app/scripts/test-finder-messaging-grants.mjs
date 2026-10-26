@@ -37,7 +37,7 @@ import {
 } from "../src/lib/grantStore.js";
 import { computeAnalyticsData } from "../src/lib/analyticsEngine.js";
 import { GET as cronCleanupGet } from "../src/app/api/cron/cleanup-expired/route.js";
-import { getStaffStudents, getStaffCoupons, logStaffAction, getAuditLogs } from "../src/lib/staffStore.js";
+import { getStaffStudents, getStaffCoupons, logStaffAction, getAuditLogs, getStaffCourses, saveStaffCourse } from "../src/lib/staffStore.js";
 
 console.log("================================================================================");
 console.log("🚀 VERIFYING FINDER, NOTIFICATIONS, MESSAGING, GRANTS & ANALYTICS");
@@ -165,6 +165,18 @@ https://www.youtube.com/watch?v=kJQP7kiw5Fk`;
   console.log("\n--- Free Grants ---");
 
   await test("District grants materialize ₹0 purchases, auto-apply, and revoke cleanly", () => {
+    let courses = getStaffCourses();
+    if (courses.length === 0) {
+      saveStaffCourse({
+        id: "c-mm-01",
+        code: "MM-01",
+        title: "Memory Technique Seminar",
+        price: 999,
+        originalPrice: 2999,
+        status: "live",
+      });
+    }
+
     const grant = createGrant({
       scopeType: "district",
       scopeValue: "Pune",

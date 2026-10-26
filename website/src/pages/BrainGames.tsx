@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { DottedColorfulBrain } from '../components/DottedColorfulBrain';
 
 // Web Audio API Sound Synthesizer (Works 100% offline, zero external dependencies)
@@ -865,7 +865,32 @@ export const BrainGames: React.FC = () => {
   const textFont = lang === 'mr' ? { fontFamily: "'Mukta', 'Noto Sans Devanagari', sans-serif" } : {};
   const numFont = { fontFamily: "'Poppins', sans-serif" };
 
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'calendar' | 'vedic' | 'memory' | 'neuro' | 'stats'>('calendar');
+
+  // Deep-link game selection from Home or URL
+  useEffect(() => {
+    const g = searchParams.get('game') || searchParams.get('tab');
+    if (g) {
+      const map: Record<string, 'calendar' | 'vedic' | 'memory' | 'neuro' | 'stats'> = {
+        calendar: 'calendar',
+        cal: 'calendar',
+        vedic: 'vedic',
+        maths: 'vedic',
+        math: 'vedic',
+        memory: 'memory',
+        flash: 'memory',
+        neuro: 'neuro',
+        agility: 'neuro',
+        stroop: 'neuro',
+        stats: 'stats',
+      };
+      const targetTab = map[g.toLowerCase()];
+      if (targetTab) {
+        setActiveTab(targetTab);
+      }
+    }
+  }, [searchParams]);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);

@@ -265,7 +265,7 @@ export function createGrant(params: {
   const allBooks = getStaffBooks();
   const matchingStudents = getMatchingStudents(params.scopeType, params.scopeValue);
 
-  if (matchingStudents.length === 0) {
+  if (params.scopeType === "student" && matchingStudents.length === 0) {
     throw new Error("No students match the specified scope. Please adjust your criteria.");
   }
 

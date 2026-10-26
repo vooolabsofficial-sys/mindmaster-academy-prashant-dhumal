@@ -551,6 +551,35 @@ export const Home: React.FC = () => {
                   <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-emerald-600 text-white font-extrabold text-[11px] shadow-md uppercase tracking-wider">
                     100% Written Clearance
                   </span>
+                  {/* Interactive Play Button */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setModalData({
+                        isOpen: true,
+                        title: 'Police Bharti Selection Celebration Interview',
+                        studentName: 'Akash More & Cadets',
+                        rankBadge: 'SELECTED • 100% WRITTEN SCORE',
+                        category: 'Police Bharti',
+                        location: 'Satara / Nashik Centre',
+                        batchYear: 'Batch of 2025',
+                        quote:
+                          'The physical training calmness under Sagar Sir and rapid GK anchoring gave me 100% written test marks in Maharashtra Police Bharti.',
+                        posterImg: '/assets/images/police_bharti_celebration.jpg',
+                        videoDuration: '2:14',
+                        marksheetScore: '100% Written Test Marks • 1st In District',
+                        keyTakeaway: 'Pegging System for Maharashtra IPC Codes & Current Affairs',
+                        onClose: () => setModalData(null),
+                      })
+                    }
+                    className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-white/90 hover:bg-white text-secondary flex items-center justify-center shadow-xl backdrop-blur-md hover:scale-110 active:scale-95 transition-all cursor-pointer z-10"
+                    title="Watch Police Bharti Celebration Video"
+                    aria-label="Play Police Bharti Celebration Video"
+                  >
+                    <span className="material-symbols-outlined text-3xl ml-1 text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      play_arrow
+                    </span>
+                  </button>
                 </div>
                 <div className="p-6">
                   <h3 className="text-lg font-bold text-slate-900 mb-1.5 group-hover:text-secondary transition-colors">
@@ -559,13 +588,40 @@ export const Home: React.FC = () => {
                   <p className="text-xs text-slate-600 leading-relaxed mb-4">
                     MindMaster cadets securing postings across Pune, Satara, Mumbai, and Kolhapur Police after mastering high-speed General Knowledge recall and IPC section matrices.
                   </p>
-                  <Link
-                    to="/results?category=police"
-                    className="text-xs font-bold text-secondary flex items-center gap-1 hover:underline"
-                  >
-                    <span>View all Police Bharti rankers &amp; marks</span>
-                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                  </Link>
+                  <div className="flex items-center justify-between">
+                    <Link
+                      to="/results?category=police"
+                      className="text-xs font-bold text-secondary flex items-center gap-1 hover:underline"
+                    >
+                      <span>View all Police Bharti rankers &amp; marks</span>
+                      <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setModalData({
+                          isOpen: true,
+                          title: 'Police Bharti Selection Celebration Interview',
+                          studentName: 'Akash More & Cadets',
+                          rankBadge: 'SELECTED • 100% WRITTEN SCORE',
+                          category: 'Police Bharti',
+                          location: 'Satara / Nashik Centre',
+                          batchYear: 'Batch of 2025',
+                          quote:
+                            'The physical training calmness under Sagar Sir and rapid GK anchoring gave me 100% written test marks in Maharashtra Police Bharti.',
+                          posterImg: '/assets/images/police_bharti_celebration.jpg',
+                          videoDuration: '2:14',
+                          marksheetScore: '100% Written Test Marks • 1st In District',
+                          keyTakeaway: 'Pegging System for Maharashtra IPC Codes & Current Affairs',
+                          onClose: () => setModalData(null),
+                        })
+                      }
+                      className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">play_circle</span>
+                      <span>Watch Story</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -581,6 +637,35 @@ export const Home: React.FC = () => {
                   <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-blue-600 text-white font-extrabold text-[11px] shadow-md uppercase tracking-wider">
                     State Merit Rankers
                   </span>
+                  {/* Interactive Play Button */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setModalData({
+                        isOpen: true,
+                        title: 'MPSC State Rank 12 Merit Interview',
+                        studentName: 'Pooja Deshmukh',
+                        rankBadge: 'MPSC STATE RANK 12',
+                        category: 'MPSC & State Services',
+                        location: 'Nashik Centre',
+                        batchYear: 'Batch of 2024',
+                        quote:
+                          "MindMaster's memory palace and 1-7-30 spaced recall routine transformed my 6-hour revision into 45 minutes. What felt impossible in MPSC became second nature.",
+                        posterImg: '/assets/images/mpsc_merit_topper.jpg',
+                        videoDuration: '1:48',
+                        marksheetScore: 'Rank 12 State Merit • 96% Written Score',
+                        keyTakeaway: '3D Memory Palace for Constitution Articles & Spaced Revision',
+                        onClose: () => setModalData(null),
+                      })
+                    }
+                    className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-white/90 hover:bg-white text-secondary flex items-center justify-center shadow-xl backdrop-blur-md hover:scale-110 active:scale-95 transition-all cursor-pointer z-10"
+                    title="Watch Pooja Deshmukh's Story"
+                    aria-label="Play MPSC Ranker Story Video"
+                  >
+                    <span className="material-symbols-outlined text-3xl ml-1 text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      play_arrow
+                    </span>
+                  </button>
                 </div>
                 <div className="p-6">
                   <h3 className="text-lg font-bold text-slate-900 mb-1.5 group-hover:text-secondary transition-colors">
@@ -589,13 +674,40 @@ export const Home: React.FC = () => {
                   <p className="text-xs text-slate-600 leading-relaxed mb-4">
                     School and competitive examination toppers achieving 90%+ percentile through associative pegging, Vedic calculations, and timed mock tests.
                   </p>
-                  <Link
-                    to="/results?category=mpsc"
-                    className="text-xs font-bold text-secondary flex items-center gap-1 hover:underline"
-                  >
-                    <span>Explore State Scholarship &amp; MPSC results</span>
-                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                  </Link>
+                  <div className="flex items-center justify-between">
+                    <Link
+                      to="/results?category=mpsc"
+                      className="text-xs font-bold text-secondary flex items-center gap-1 hover:underline"
+                    >
+                      <span>Explore State Scholarship &amp; MPSC results</span>
+                      <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setModalData({
+                          isOpen: true,
+                          title: 'MPSC State Rank 12 Merit Interview',
+                          studentName: 'Pooja Deshmukh',
+                          rankBadge: 'MPSC STATE RANK 12',
+                          category: 'MPSC & State Services',
+                          location: 'Nashik Centre',
+                          batchYear: 'Batch of 2024',
+                          quote:
+                            "MindMaster's memory palace and 1-7-30 spaced recall routine transformed my 6-hour revision into 45 minutes. What felt impossible in MPSC became second nature.",
+                          posterImg: '/assets/images/mpsc_merit_topper.jpg',
+                          videoDuration: '1:48',
+                          marksheetScore: 'Rank 12 State Merit • 96% Written Score',
+                          keyTakeaway: '3D Memory Palace for Constitution Articles & Spaced Revision',
+                          onClose: () => setModalData(null),
+                        })
+                      }
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">play_circle</span>
+                      <span>Watch Story</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -805,7 +917,7 @@ export const Home: React.FC = () => {
               <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Game 1: Calendar */}
                 <Link
-                  to="/brain-games"
+                  to="/brain-games?game=calendar"
                   className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/70 hover:border-cyan-400/50 hover:bg-slate-800/90 transition-all group flex flex-col justify-between shadow-md"
                 >
                   <div>
@@ -830,7 +942,7 @@ export const Home: React.FC = () => {
 
                 {/* Game 2: Vedic Math */}
                 <Link
-                  to="/brain-games"
+                  to="/brain-games?game=vedic"
                   className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/70 hover:border-amber-400/50 hover:bg-slate-800/90 transition-all group flex flex-col justify-between shadow-md"
                 >
                   <div>
@@ -855,7 +967,7 @@ export const Home: React.FC = () => {
 
                 {/* Game 3: Flash Recall */}
                 <Link
-                  to="/brain-games"
+                  to="/brain-games?game=memory"
                   className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/70 hover:border-indigo-400/50 hover:bg-slate-800/90 transition-all group flex flex-col justify-between shadow-md"
                 >
                   <div>
@@ -880,7 +992,7 @@ export const Home: React.FC = () => {
 
                 {/* Game 4: Neuro Agility */}
                 <Link
-                  to="/brain-games"
+                  to="/brain-games?game=agility"
                   className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/70 hover:border-emerald-400/50 hover:bg-slate-800/90 transition-all group flex flex-col justify-between shadow-md"
                 >
                   <div>

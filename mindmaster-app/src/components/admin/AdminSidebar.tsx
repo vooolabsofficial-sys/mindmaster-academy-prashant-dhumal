@@ -63,7 +63,6 @@ export default function AdminSidebar() {
     { label: "Dashboard", href: "/sub", icon: "📊" },
     { label: "Messages", href: "/sub/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
     { label: "Student Finder", href: "/sub/students", icon: "🎓", permission: "students.view" },
-    { label: "Offline Grants", href: "/sub/grants", icon: "🎁", permission: "freegrant.manage" },
     { label: "My Activity", href: "/sub/activity", icon: "⏱️" },
   ];
 

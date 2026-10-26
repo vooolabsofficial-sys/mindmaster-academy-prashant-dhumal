@@ -288,6 +288,15 @@ export function createConversation(params: {
   CACHED_CONVERSATIONS = [newConv, ...CACHED_CONVERSATIONS];
   notifyListeners();
 
+  // Synchronously record the first message in memory cache & dispatch
+  sendMessage({
+    conversationId: convId,
+    senderType: "student",
+    senderId: params.studentId,
+    senderName: params.studentName,
+    body: params.firstMessage,
+  });
+
   const supabase = getSupabase();
   if (supabase) {
     try {
@@ -307,33 +316,9 @@ export function createConversation(params: {
           created_at: now.toISOString(),
           updated_at: now.toISOString(),
         })
-        .then(() => {
-          sendMessage({
-            conversationId: convId,
-            senderType: "student",
-            senderId: params.studentId,
-            senderName: params.studentName,
-            body: params.firstMessage,
-          });
-        })
+        .then(() => {})
         .catch((err: any) => console.warn("Supabase support_conversations insert error:", err));
-    } catch {
-      sendMessage({
-        conversationId: convId,
-        senderType: "student",
-        senderId: params.studentId,
-        senderName: params.studentName,
-        body: params.firstMessage,
-      });
-    }
-  } else {
-    sendMessage({
-      conversationId: convId,
-      senderType: "student",
-      senderId: params.studentId,
-      senderName: params.studentName,
-      body: params.firstMessage,
-    });
+    } catch {}
   }
 
   return newConv;
