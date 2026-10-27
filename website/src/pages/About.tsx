@@ -1,5 +1,13 @@
-import React from 'react';
-import { Link } from 'react-router-dom'; export const About: React.FC = () => { return ( <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen"> <div className="flex flex-col w-full"> <div className="relative w-full overflow-hidden">
+import React, { useState, useEffect } from 'react';
+import { fetchLiveWebsiteCms, WebsiteCmsData, DEFAULT_WEBSITE_CMS } from '../config/appConfig';
+import { Link } from 'react-router-dom'; export const About: React.FC = () => {
+  const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
+
+  useEffect(() => {
+    fetchLiveWebsiteCms().then((data) => setCms(data));
+  }, []);
+
+  return ( <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen"> <div className="flex flex-col w-full"> <div className="relative w-full overflow-hidden">
 <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-secondary-fixed/40 rounded-full blur-3xl pointer-events-none -z-10"></div> <section className="w-full max-w-container-max mx-auto px-gutter-desktop pt-space-3xl pb-space-2xl text-center flex flex-col items-center"> <div className="inline-flex items-center gap-space-xs px-space-md py-1.5 rounded-full bg-secondary-fixed/50 mb-space-lg shadow-sm">
 <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
 <span className="font-label-caps text-label-caps text-secondary tracking-widest">SINCE 2015</span>
@@ -8,22 +16,16 @@ import { Link } from 'react-router-dom'; export const About: React.FC = () => { 
 </svg>
 </span>
 </h1> <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed"> From a single Satara classroom to 5,000+ learners across Maharashtra — one mission has never changed. </p> <div className="mt-space-2xl grid grid-cols-2 sm:grid-cols-4 gap-space-md w-full max-w-4xl pt-space-lg">
-<div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col items-center">
-<span className="font-headline-lg text-headline-lg text-secondary">10+</span>
-<span className="font-label-caps text-label-caps text-on-surface-variant mt-1">Years of Rigor</span>
-</div>
-<div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col items-center">
-<span className="font-headline-lg text-headline-lg text-primary-container">5,000+</span>
-<span className="font-label-caps text-label-caps text-on-surface-variant mt-1">Students Coached</span>
-</div>
-<div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col items-center">
-<span className="font-headline-lg text-headline-lg text-secondary">100%</span>
-<span className="font-label-caps text-label-caps text-on-surface-variant mt-1">Pass Milestone</span>
-</div>
-<div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col items-center">
-<span className="font-headline-lg text-headline-lg text-primary-container">120+</span>
-<span className="font-label-caps text-label-caps text-on-surface-variant mt-1">Certified Mentors</span>
-</div>
+{cms.counters.map((c) => (
+  <div key={c.id} className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col items-center">
+    <span className="font-headline-lg text-headline-lg text-secondary font-black">
+      {c.value}{c.suffix}
+    </span>
+    <span className="font-label-caps text-label-caps text-on-surface-variant mt-1 text-center font-bold">
+      {c.label}
+    </span>
+  </div>
+))}
 </div>
 </section>
 </div> <section className="w-full bg-surface-container-lowest py-space-3xl">
@@ -78,7 +80,9 @@ import { Link } from 'react-router-dom'; export const About: React.FC = () => { 
 </div>
 </div>
 </div>
-</section> <section className="w-full py-space-3xl bg-surface">
+</section>
+
+        <section className="w-full py-space-3xl bg-surface">
 <div className="max-w-container-max mx-auto px-gutter-desktop"> <div className="text-center max-w-2xl mx-auto mb-space-2xl">
 <h2 className="font-headline-lg text-headline-lg text-primary-container mb-space-xs"> The <span className="relative inline-block text-secondary"> journey <svg className="absolute -bottom-2 left-0 w-full overflow-visible" fill="none" height="10" viewBox="0 0 160 10" xmlns="http://www.w3.org/2000/svg">
 <path className="text-secondary/75" d="M2 7C40 2 110 1 158 6" stroke="currentColor" strokeLinecap="round" strokeWidth="3.5" />
@@ -147,7 +151,9 @@ import { Link } from 'react-router-dom'; export const About: React.FC = () => { 
 </div>
 </div>
 </div>
-</section> <section className="w-full py-space-3xl bg-surface">
+</section>
+
+        <section className="w-full py-space-3xl bg-surface">
 <div className="max-w-container-max mx-auto px-gutter-desktop">
 <div className="text-center max-w-xl mx-auto mb-space-2xl">
 <h2 className="font-headline-lg text-headline-lg text-primary-container mb-space-xs"> The MindMaster <span className="relative inline-block text-secondary"> Method <svg className="absolute -bottom-2 left-0 w-full overflow-visible" fill="none" height="10" viewBox="0 0 160 10" xmlns="http://www.w3.org/2000/svg">
@@ -254,7 +260,56 @@ import { Link } from 'react-router-dom'; export const About: React.FC = () => { 
 </div>
 </div>
 </div>
-</section> <section className="w-full py-space-3xl bg-surface">
+</section>
+
+        {/* Faculty Mentors & Leadership */}
+        {cms.sectionVisibility?.facultySection && (
+          <section className="w-full py-space-3xl bg-surface-container-low/50">
+            <div className="max-w-container-max mx-auto px-gutter-desktop">
+              <div className="text-center max-w-xl mx-auto mb-space-2xl">
+                <span className="font-label-caps text-label-caps text-secondary tracking-widest block mb-1">
+                  OUR EDUCATORS
+                </span>
+                <h2 className="font-headline-lg text-headline-lg text-primary-container">
+                  Mentors &amp; Leadership
+                </h2>
+                <p className="font-body-md text-body-md text-on-surface-variant mt-2">
+                  Learn directly from record-holding memory coaches and speed mathematics specialists.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-space-xl max-w-4xl mx-auto">
+                {cms.faculty.map((f) => (
+                  <div
+                    key={f.id}
+                    className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center gap-5"
+                  >
+                    <div className="w-24 h-28 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200 shadow-2xs">
+                      <img
+                        src={f.photoUrl}
+                        alt={f.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "/assets/images/prashant_dhumal_studio_portrait.png";
+                        }}
+                      />
+                    </div>
+                    <div className="text-center sm:text-left">
+                      <h3 className="font-title-lg text-lg text-primary-container font-extrabold">
+                        {f.name}
+                      </h3>
+                      <p className="text-xs text-secondary font-bold">{f.role}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">{f.qualification}</p>
+                      <p className="text-xs text-slate-600 mt-2 leading-relaxed">{f.bio}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="w-full py-space-3xl bg-surface">
 <div className="max-w-container-max mx-auto px-gutter-desktop">
 <div className="relative bg-secondary text-on-secondary rounded-[28px] p-space-xl md:p-space-3xl overflow-hidden shadow-xl"> <svg className="absolute -right-16 -top-16 w-96 h-96 opacity-15 pointer-events-none text-on-secondary" fill="none" stroke="currentColor" viewBox="0 0 200 200">
 <circle cx="100" cy="100" r="40" strokeDasharray="4 4" strokeWidth="2" />

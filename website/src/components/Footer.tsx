@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAppUrl } from '../config/appConfig';
+import {
+  getAppUrl,
+  fetchLiveWebsiteCms,
+  submitWebsiteLead,
+  WebsiteCmsData,
+  DEFAULT_WEBSITE_CMS,
+} from '../config/appConfig';
 
 export const Footer: React.FC = () => {
   const [callbackPhone, setCallbackPhone] = useState('');
   const [callbackSent, setCallbackSent] = useState(false);
   const [callbackError, setCallbackError] = useState('');
+  const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
 
-  const handleCallbackSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchLiveWebsiteCms().then((data) => setCms(data));
+  }, []);
+
+  const handleCallbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const clean = callbackPhone.replace(/\D/g, '');
     if (clean.length < 10) {
@@ -16,6 +27,13 @@ export const Footer: React.FC = () => {
     }
     setCallbackError('');
     setCallbackSent(true);
+    await submitWebsiteLead({
+      name: 'Quick Callback Request',
+      phone: clean,
+      courseInterest: 'General Consultation',
+      message: 'Parent requested urgent callback within 2 hours from website footer.',
+      source: 'Footer Callback Widget',
+    });
   };
 
   return (
@@ -126,7 +144,7 @@ export const Footer: React.FC = () => {
               <div className="flex items-center flex-wrap gap-2.5">
                 {/* Instagram */}
                 <a
-                  href="https://www.instagram.com"
+                  href={cms.seoAndSocial?.instagramUrl || "https://www.instagram.com"}
                   target="_blank"
                   rel="noreferrer"
                   title="Follow MindMaster Academy on Instagram"
@@ -140,7 +158,7 @@ export const Footer: React.FC = () => {
 
                 {/* YouTube */}
                 <a
-                  href="https://www.youtube.com"
+                  href={cms.seoAndSocial?.youtubeUrl || "https://www.youtube.com/@mindmasteracademy"}
                   target="_blank"
                   rel="noreferrer"
                   title="Subscribe to MindMaster Academy on YouTube"
@@ -152,23 +170,23 @@ export const Footer: React.FC = () => {
                   </svg>
                 </a>
 
-                {/* Facebook */}
-                <a
-                  href="https://www.facebook.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  title="MindMaster Academy on Facebook"
-                  aria-label="Facebook"
-                  className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-white hover:bg-[#1877F2] hover:border-transparent transition-all shadow-xs flex items-center justify-center group"
-                >
-                  <svg className="w-4 h-4 transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                  </svg>
-                </a>
+                {/* Telegram */}
+                {cms.seoAndSocial?.telegramUrl && (
+                  <a
+                    href={cms.seoAndSocial.telegramUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Join MindMaster Academy Telegram"
+                    aria-label="Telegram"
+                    className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-white hover:bg-[#229ED9] hover:border-transparent transition-all shadow-xs flex items-center justify-center group"
+                  >
+                    <span className="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">send</span>
+                  </a>
+                )}
 
                 {/* WhatsApp */}
                 <a
-                  href="https://wa.me/918459344077?text=Hello%20MindMaster%20Academy%2C%20I%20want%20information%20about%20your%20courses."
+                  href={`https://wa.me/${(cms.seoAndSocial?.whatsappNumber || "918459344077").replace(/\D/g, "")}?text=Hello%20MindMaster%20Academy%2C%20I%20want%20information%20about%20your%20courses.`}
                   target="_blank"
                   rel="noreferrer"
                   title="Chat directly on WhatsApp"

@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import {
+  fetchLiveWebsiteCms,
+  submitWebsiteLead,
+  WebsiteCmsData,
+  DEFAULT_WEBSITE_CMS,
+} from '../config/appConfig';
 
 export const Contact: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -12,6 +18,11 @@ export const Contact: React.FC = () => {
   const [courseSelect, setCourseSelect] = useState(initialCourse);
   const [message, setMessage] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
+
+  useEffect(() => {
+    fetchLiveWebsiteCms().then((data) => setCms(data));
+  }, []);
 
   useEffect(() => {
     const courseParam = searchParams.get('course');
@@ -20,9 +31,17 @@ export const Contact: React.FC = () => {
     }
   }, [searchParams]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitted(true);
+    await submitWebsiteLead({
+      name: `${firstName} ${lastName}`.trim(),
+      phone: phone,
+      email: email,
+      courseInterest: courseSelect || 'General Inquiry',
+      message: message,
+      source: 'Contact Page Form',
+    });
   };
 
   return (
@@ -105,21 +124,30 @@ export const Contact: React.FC = () => {
                 <div className="bg-surface-container-lowest rounded-[24px] p-space-lg shadow-xs flex flex-col gap-space-md border border-surface-variant/60">
                   <h4 className="font-title-md text-base text-primary-container font-bold">Campuses Across Maharashtra</h4>
                   <div className="space-y-2 text-xs text-on-surface-variant">
-                    <div className="p-3 rounded-xl bg-surface-container-low border border-secondary/30">
-                      <p className="font-bold text-primary-container flex items-center justify-between">
-                        <span>Satara Campus (Flagship HQ)</span>
-                        <span className="text-[10px] font-label-caps px-2 py-0.5 rounded-full bg-secondary text-white font-bold">HQ</span>
-                      </p>
-                      <p className="text-[11px] mt-0.5">Near Powai Naka • Daily memory batches & Diagnostic evaluation</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-surface-container-low border border-surface-variant/50">
-                      <p className="font-bold text-primary-container">Pune University Hub</p>
-                      <p className="text-[11px] mt-0.5">FC Road / Shivajinagar • Weekend intensive masterclasses</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-surface-container-low border border-surface-variant/50">
-                      <p className="font-bold text-primary-container">Nashik Regional Centre</p>
-                      <p className="text-[11px] mt-0.5">Near City Centre Mall • Police Bharti & Competitive batches</p>
-                    </div>
+                    {cms.centres.map((c) => (
+                      <div
+                        key={c.id}
+                        className={`p-3 rounded-xl bg-surface-container-low border ${
+                          c.isHeadquarter ? 'border-secondary/30' : 'border-surface-variant/50'
+                        }`}
+                      >
+                        <p className="font-bold text-primary-container flex items-center justify-between">
+                          <span>{c.name}</span>
+                          <span
+                            className={`text-[10px] font-label-caps px-2 py-0.5 rounded-full font-bold ${
+                              c.isHeadquarter
+                                ? 'bg-secondary text-white'
+                                : 'bg-blue-100 text-[#0052FF]'
+                            }`}
+                          >
+                            {c.tag || (c.isHeadquarter ? 'HQ' : 'Branch')}
+                          </span>
+                        </p>
+                        <p className="text-[11px] mt-0.5">
+                          {c.address} • {c.nextBatchDate}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

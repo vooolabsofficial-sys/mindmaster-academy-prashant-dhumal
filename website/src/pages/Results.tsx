@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { VideoModal, VideoModalProps } from '../components/VideoModal';
+import {
+  fetchLiveWebsiteCms,
+  WebsiteCmsData,
+  DEFAULT_WEBSITE_CMS,
+} from '../config/appConfig';
 
 interface TestimonialItem {
   id: string;
@@ -138,6 +143,11 @@ export const Results: React.FC = () => {
 
   const [activeFilter, setActiveFilter] = useState<string>(initialCategory);
   const [modalData, setModalData] = useState<VideoModalProps | null>(null);
+  const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
+
+  useEffect(() => {
+    fetchLiveWebsiteCms().then((data) => setCms(data));
+  }, []);
 
   // Sync state if URL query param changes
   useEffect(() => {
@@ -156,13 +166,46 @@ export const Results: React.FC = () => {
     }
   };
 
+  const liveToppersAsTestimonials: TestimonialItem[] = (cms.toppers || []).map((t) => {
+    const cat = (t.examCategory || '').toLowerCase();
+    const resolvedCat: TestimonialItem['category'] = cat.includes('police')
+      ? 'police'
+      : cat.includes('mpsc')
+      ? 'mpsc'
+      : cat.includes('vedic') || cat.includes('math')
+      ? 'vedic'
+      : 'scholarship';
+    return {
+      id: t.id,
+      name: t.name,
+      category: resolvedCat,
+      badge: t.scoreOrRank.toUpperCase(),
+      quote: t.quote || "MindMaster's cognitive methods made studying effortless and enjoyable.",
+      batch: `Batch of ${t.batchYear || '2024'}`,
+      location: 'Satara & Pune Flagship',
+      image: t.photoUrl || '/assets/images/akash_police_testimonial.png',
+      scoreHighlight: t.scoreOrRank,
+      fullStory: `${t.name} secured ${t.scoreOrRank} in ${t.examCategory}. Mastered photographic memory retention with Prashant Sir.`,
+      videoDuration: t.testimonialVideoUrl ? '2:15' : undefined,
+      keyTechnique: `${t.examCategory} High-Speed Mnemonic Mastery`,
+    };
+  });
+
+  const combinedTestimonials = [
+    ...liveToppersAsTestimonials,
+    ...TESTIMONIALS.filter(
+      (t) => !liveToppersAsTestimonials.some((lt) => lt.name.toLowerCase() === t.name.toLowerCase())
+    ),
+  ];
+
   // Filter items based on activeFilter
-  const filteredStories = activeFilter === 'all'
-    ? TESTIMONIALS
-    : TESTIMONIALS.filter((item) => item.category === activeFilter);
+  const filteredStories =
+    activeFilter === 'all'
+      ? combinedTestimonials
+      : combinedTestimonials.filter((item) => item.category === activeFilter);
 
   // Dynamic Featured Spotlight based on filter
-  const featuredItem = filteredStories[0] || TESTIMONIALS[0];
+  const featuredItem = filteredStories[0] || combinedTestimonials[0];
 
   const openVideoModal = (item: TestimonialItem) => {
     setModalData({

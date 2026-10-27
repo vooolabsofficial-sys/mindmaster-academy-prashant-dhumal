@@ -9,15 +9,27 @@ import {
   fetchLiveCoursesFromApp,
   LiveDbCourse,
   getWhatsAppPreBookUrl,
+  fetchLiveWebsiteCms,
+  WebsiteCmsData,
+  DEFAULT_WEBSITE_CMS,
 } from '../config/appConfig';
 
 export const Home: React.FC = () => {
   const [modalData, setModalData] = useState<VideoModalProps | null>(null);
   const [liveDbCourses, setLiveDbCourses] = useState<LiveDbCourse[]>([]);
+  const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
+  const [showPromoPopup, setShowPromoPopup] = useState(false);
 
   useEffect(() => {
     fetchLiveCoursesFromApp().then((courses) => {
       setLiveDbCourses(courses);
+    });
+    fetchLiveWebsiteCms().then((data) => {
+      setCms(data);
+      if (data.sectionVisibility?.promoPopup && data.promoPopup?.enabled) {
+        const timer = setTimeout(() => setShowPromoPopup(true), 2500);
+        return () => clearTimeout(timer);
+      }
     });
   }, []);
 
@@ -34,46 +46,60 @@ export const Home: React.FC = () => {
             <div className="inline-flex items-center gap-space-xs px-space-md py-1.5 rounded-full bg-surface-container-low shadow-xs mb-space-lg">
               <span className="w-2 h-2 rounded-full bg-secondary ring-4 ring-secondary-fixed animate-pulse"></span>
               <span className="font-label-caps text-xs text-on-surface-variant uppercase tracking-wider font-semibold">
-                Trusted by 5,000+ learners across Maharashtra
+                {cms.hero?.trustBadge || 'Trusted by 5,000+ learners across Maharashtra'}
               </span>
             </div>
 
             <h1 className="font-display-hero text-3xl sm:text-5xl md:text-6xl text-primary-container max-w-4xl tracking-tight leading-[1.12] font-extrabold">
-              Train Your Mind. <br className="hidden sm:inline" />
-              <span className="relative inline-block">Master Your Memory.</span>
-              <br />
-              <span className="relative inline-block text-secondary mt-1">
-                Succeed Anywhere.
-                <svg
-                  aria-hidden="true"
-                  className="absolute -bottom-2.5 left-0 w-full text-secondary opacity-80 overflow-visible"
-                  fill="none"
-                  height="12"
-                  viewBox="0 0 280 12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M3 9C68 2.5 185 -0.5 277 8.5" stroke="currentColor" strokeLinecap="round" strokeWidth="4.5" />
-                </svg>
-              </span>
+              {cms.hero?.headline ? (
+                <span>{cms.hero.headline}</span>
+              ) : (
+                <>
+                  Train Your Mind. <br className="hidden sm:inline" />
+                  <span className="relative inline-block">Master Your Memory.</span>
+                  <br />
+                  <span className="relative inline-block text-secondary mt-1">Succeed Anywhere.</span>
+                </>
+              )}
             </h1>
 
             <p className="font-body-lg text-base md:text-lg text-on-surface-variant max-w-2xl mt-space-lg mb-space-xl">
-              Practical memory, concentration and Vedic-maths techniques for students from Grade 4 to UPSC — and anyone aged 10 to 80.
+              {cms.hero?.subtitle ||
+                'Practical memory, concentration and Vedic-maths techniques for students from Grade 4 to UPSC — and anyone aged 10 to 80.'}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto">
-              {/* Single High-Impact Primary Action: Explore & Enroll */}
+              {/* Primary Action: Explore & Enroll */}
               <a
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#0052FF] text-white font-title-md text-sm sm:text-base px-8 py-3.5 rounded-full shadow-lg shadow-[#0052FF]/25 hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all group"
-                href={getAppUrl('/courses')}
+                href={
+                  cms.hero?.primaryCtaUrl?.startsWith('http')
+                    ? cms.hero.primaryCtaUrl
+                    : getAppUrl(cms.hero?.primaryCtaUrl || '/courses')
+                }
               >
-                <span>Explore &amp; Enroll</span>
-                <span className="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">arrow_forward</span>
+                <span>{cms.hero?.primaryCtaText || 'Explore & Enroll'}</span>
+                <span className="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">
+                  arrow_forward
+                </span>
+              </a>
+
+              {/* Secondary Action */}
+              <a
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-slate-800 font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-2xs hover:bg-slate-50 hover:text-[#0052FF] transition-all border border-slate-200"
+                href={
+                  cms.hero?.secondaryCtaUrl?.startsWith('http')
+                    ? cms.hero.secondaryCtaUrl
+                    : cms.hero?.secondaryCtaUrl || '/demo'
+                }
+              >
+                <span className="material-symbols-outlined text-lg text-[#0052FF]">play_circle</span>
+                <span>{cms.hero?.secondaryCtaText || 'Free Demo Hub'}</span>
               </a>
 
               {/* Clean Student Portal Login */}
               <a
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-slate-800 font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-2xs hover:bg-slate-50 hover:text-[#0052FF] transition-all border border-slate-200"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-100 text-slate-700 font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-2xs hover:bg-slate-200 transition-all border border-slate-300"
                 href={getAppUrl('/login?next=/home')}
               >
                 <span className="material-symbols-outlined text-lg text-[#0052FF]">account_circle</span>
@@ -88,7 +114,10 @@ export const Home: React.FC = () => {
                 <img
                   alt="Indian students studying around a laptop in bright classroom"
                   className="w-full aspect-[16/9] md:aspect-[21/10] object-cover rounded-xl md:rounded-2xl"
-                  src="/assets/images/classroom_students_group.png"
+                  src={cms.hero?.bannerImages?.[0] || '/assets/images/classroom_students_group.png'}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/assets/images/classroom_students_group.png';
+                  }}
                 />
                 <div className="absolute bottom-6 left-6 hidden md:flex items-center gap-space-sm bg-surface-container-lowest/95 backdrop-blur-md px-space-md py-space-xs rounded-full shadow-sm">
                   <span className="material-symbols-outlined text-secondary text-title-md">psychology</span>
@@ -197,37 +226,31 @@ export const Home: React.FC = () => {
         </section>
 
         {/* Statistics Counters - High-Impact Electric Blue Impact Ribbon */}
-        <section className="w-full bg-gradient-to-r from-[#0038B8] via-[#0052FF] to-[#0038B8] py-12 md:py-16 text-white border-y border-blue-400/40 shadow-xl shadow-[#0052FF]/20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.15),transparent_70%)] pointer-events-none"></div>
-          <div className="max-w-6xl mx-auto px-gutter-mobile lg:px-gutter-desktop relative z-10">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6 text-center">
-              <div className="flex flex-col items-center justify-center p-3">
-                <div className="font-['Poppins'] text-3xl sm:text-4xl md:text-5xl text-white tracking-tight font-extrabold drop-shadow-md">
-                  5,000+
-                </div>
-                <div className="font-body-sm text-xs sm:text-sm text-blue-100 mt-1.5 font-semibold uppercase tracking-wider">Students trained</div>
-              </div>
-              <div className="flex flex-col items-center justify-center p-3 border-l border-white/20">
-                <div className="font-['Poppins'] text-3xl sm:text-4xl md:text-5xl text-amber-300 tracking-tight font-extrabold drop-shadow-md">
-                  500+
-                </div>
-                <div className="font-body-sm text-xs sm:text-sm text-blue-100 mt-1.5 font-semibold uppercase tracking-wider">Batches completed</div>
-              </div>
-              <div className="flex flex-col items-center justify-center p-3 border-l border-white/20">
-                <div className="font-['Poppins'] text-3xl sm:text-4xl md:text-5xl text-emerald-300 tracking-tight font-extrabold drop-shadow-md">
-                  100%
-                </div>
-                <div className="font-body-sm text-xs sm:text-sm text-blue-100 mt-1.5 font-semibold uppercase tracking-wider">Police Bharti clearance</div>
-              </div>
-              <div className="flex flex-col items-center justify-center p-3 border-l border-white/20">
-                <div className="font-['Poppins'] text-3xl sm:text-4xl md:text-5xl text-sky-200 tracking-tight font-extrabold drop-shadow-md">
-                  10+
-                </div>
-                <div className="font-body-sm text-xs sm:text-sm text-blue-100 mt-1.5 font-semibold uppercase tracking-wider">Years of excellence</div>
+        {cms.sectionVisibility?.heroStats !== false && (
+          <section className="w-full bg-gradient-to-r from-[#0038B8] via-[#0052FF] to-[#0038B8] py-12 md:py-16 text-white border-y border-blue-400/40 shadow-xl shadow-[#0052FF]/20 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.15),transparent_70%)] pointer-events-none"></div>
+            <div className="max-w-6xl mx-auto px-gutter-mobile lg:px-gutter-desktop relative z-10">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6 text-center">
+                {(cms.counters || []).map((c, idx) => (
+                  <div
+                    key={c.id}
+                    className={`flex flex-col items-center justify-center p-3 ${
+                      idx > 0 ? 'border-l border-white/20' : ''
+                    }`}
+                  >
+                    <div className="font-['Poppins'] text-3xl sm:text-4xl md:text-5xl text-white tracking-tight font-extrabold drop-shadow-md">
+                      {c.value}
+                      {c.suffix}
+                    </div>
+                    <div className="font-body-sm text-xs sm:text-sm text-blue-100 mt-1.5 font-semibold uppercase tracking-wider">
+                      {c.label}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Dynamic Flagship Courses & Upcoming Curriculum Section */}
         <section className="w-full bg-slate-50/80 py-20 px-gutter-mobile lg:px-gutter-desktop border-b border-slate-200/80">
@@ -1043,6 +1066,43 @@ export const Home: React.FC = () => {
           </div>
         </section>
 
+        {/* Dynamic FAQs Section */}
+        {cms.sectionVisibility?.faqSection !== false && (cms.faqs || []).length > 0 && (
+          <section className="w-full bg-slate-50 py-16 px-gutter-mobile lg:px-gutter-desktop border-b border-slate-200">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-10">
+                <span className="font-label-caps text-xs text-secondary font-bold uppercase tracking-widest block mb-1">
+                  FREQUENTLY ASKED QUESTIONS
+                </span>
+                <h2 className="font-headline-lg text-2xl sm:text-3xl text-slate-900 font-extrabold">
+                  Everything You Need to Know
+                </h2>
+              </div>
+              <div className="space-y-3.5">
+                {cms.faqs.map((faq) => (
+                  <details
+                    key={faq.id}
+                    className="group bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs open:border-blue-400 transition-all cursor-pointer"
+                  >
+                    <summary className="flex items-center justify-between font-bold text-slate-900 text-sm list-none select-none">
+                      <span className="flex items-center gap-2">
+                        <span className="text-[#0052FF]">Q.</span>
+                        <span>{faq.question}</span>
+                      </span>
+                      <span className="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform">
+                        expand_more
+                      </span>
+                    </summary>
+                    <p className="mt-3 text-xs sm:text-sm text-slate-600 leading-relaxed pl-6 border-l-2 border-blue-100">
+                      {faq.answer}
+                    </p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* CTA Section */}
         <section className="w-full px-gutter-mobile lg:px-gutter-desktop py-12">
           <div className="max-w-6xl mx-auto rounded-3xl bg-secondary text-white p-8 md:p-14 relative overflow-hidden text-center shadow-xl">
@@ -1071,6 +1131,64 @@ export const Home: React.FC = () => {
           </div>
         </section>
       </div>
+
+      {/* Promotional Entry & Admissions Popup Modal */}
+      {showPromoPopup && cms.promoPopup?.enabled && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="relative bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200">
+            <button
+              onClick={() => setShowPromoPopup(false)}
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-700 flex items-center justify-center font-bold text-sm shadow-md"
+              aria-label="Close popup"
+            >
+              ✕
+            </button>
+            {cms.promoPopup.imageUrl && (
+              <div className="w-full h-44 bg-gradient-to-r from-blue-600 to-indigo-700 overflow-hidden relative">
+                <img
+                  src={cms.promoPopup.imageUrl}
+                  alt={cms.promoPopup.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/assets/images/police_bharti_prep_3d.png';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <span className="absolute bottom-3 left-4 px-2.5 py-0.5 rounded-full bg-amber-400 text-black text-[10px] font-black uppercase tracking-wider">
+                  Special Admissions
+                </span>
+              </div>
+            )}
+            <div className="p-6 text-center space-y-3">
+              <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
+                {cms.promoPopup.title}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                {cms.promoPopup.subtitle}
+              </p>
+              <div className="pt-2 flex flex-col gap-2">
+                <a
+                  href={cms.promoPopup.ctaUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setShowPromoPopup(false)}
+                  className="w-full py-3 px-5 rounded-2xl bg-[#0052FF] hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
+                >
+                  <span>💬</span>
+                  <span>{cms.promoPopup.ctaText || 'Reserve Seat on WhatsApp'}</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setShowPromoPopup(false)}
+                  className="text-xs text-slate-400 hover:text-slate-600 font-semibold py-1"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Video Modal */}
       {modalData && <VideoModal {...modalData} />}

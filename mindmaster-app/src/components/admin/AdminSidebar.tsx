@@ -71,6 +71,7 @@ export default function AdminSidebar() {
     { label: "Support Messages", href: "/admin/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
     { label: "Sub-Admins", href: "/admin/sub-admins", icon: "👥", badge: "Admin", adminOnly: true },
     { label: "Audit Logs", href: "/admin/audit", icon: "📜", adminOnly: true },
+    { label: "Website CMS", href: "/admin/website-cms", icon: "🌐", badge: "Studio", adminOnly: true },
     { label: "Settings", href: "/admin/settings", icon: "⚙️", badge: "Config", adminOnly: true },
     { label: "Reports", href: "/admin/reports", icon: "📈", adminOnly: true },
   ];

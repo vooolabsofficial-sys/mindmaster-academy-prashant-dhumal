@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { getAppUrl } from '../config/appConfig';
+import { getAppUrl, fetchLiveWebsiteCms, WebsiteCmsData, DEFAULT_WEBSITE_CMS } from '../config/appConfig';
 import { LoginModal } from './LoginModal';
 
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
   const location = useLocation();
+
+  useEffect(() => {
+    fetchLiveWebsiteCms().then((data) => setCms(data));
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -39,8 +44,28 @@ export const Navbar: React.FC = () => {
     return false;
   };
 
+  const hasAnnouncement = Boolean(cms.sectionVisibility?.announcement && cms.announcement?.enabled);
+
   return (
-    <header className="fixed top-3 sm:top-5 left-0 right-0 z-50 px-3 sm:px-6 pointer-events-none transition-all duration-300">
+    <>
+      {hasAnnouncement && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-[#0E1B3D] text-white py-1.5 px-3 text-xs border-b border-white/10 flex items-center justify-center gap-2 pointer-events-auto">
+          <span className="bg-[#FF453A] text-white text-[9px] uppercase font-black px-1.5 py-0.2 rounded-full">Offer</span>
+          <span className="truncate max-w-xl font-medium">{cms.announcement.message}</span>
+          {cms.announcement.couponBadge && (
+            <span className="bg-yellow-400 text-black px-1.5 py-0.2 rounded font-mono font-black text-[10px]">
+              {cms.announcement.couponBadge}
+            </span>
+          )}
+          <a
+            href={cms.announcement.ctaUrl?.startsWith("http") ? cms.announcement.ctaUrl : getAppUrl(cms.announcement.ctaUrl || "/courses")}
+            className="underline text-sky-300 font-bold hover:text-white shrink-0 ml-1"
+          >
+            {cms.announcement.ctaText || "Enroll Now"} →
+          </a>
+        </div>
+      )}
+      <header className={`fixed ${hasAnnouncement ? 'top-9 sm:top-11' : 'top-3 sm:top-5'} left-0 right-0 z-50 px-3 sm:px-6 pointer-events-none transition-all duration-300`}>
       <div
         className={`max-w-5xl mx-auto pointer-events-auto transition-all duration-300 ${
           scrolled ? 'scale-[0.98]' : 'scale-100'
@@ -175,5 +200,6 @@ export const Navbar: React.FC = () => {
       {/* Render Login Modal with blurred background */}
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </header>
+    </>
   );
 };
