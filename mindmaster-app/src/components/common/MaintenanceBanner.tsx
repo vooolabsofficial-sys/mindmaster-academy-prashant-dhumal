@@ -7,18 +7,35 @@ export default function MaintenanceBanner() {
   const [isMaintenance, setIsMaintenance] = useState(false);
 
   useEffect(() => {
-    const checkMaintenance = () => {
+    let mounted = true;
+    const checkMaintenance = async () => {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const data = await res.json();
+          if (mounted && data.settings) {
+            setIsMaintenance(Boolean(data.settings.maintenance));
+            return;
+          }
+        }
+      } catch {}
+
       try {
         const settings = getPlatformSettings();
-        setIsMaintenance(Boolean(settings?.maintenance));
-      } catch (err) {
-        setIsMaintenance(false);
+        if (mounted) setIsMaintenance(Boolean(settings?.maintenance));
+      } catch {
+        if (mounted) setIsMaintenance(false);
       }
     };
 
     checkMaintenance();
+    const interval = setInterval(checkMaintenance, 10000);
     window.addEventListener("mma_settings_changed", checkMaintenance);
-    return () => window.removeEventListener("mma_settings_changed", checkMaintenance);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+      window.removeEventListener("mma_settings_changed", checkMaintenance);
+    };
   }, []);
 
   if (!isMaintenance) return null;

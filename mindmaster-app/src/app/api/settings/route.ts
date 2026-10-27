@@ -6,23 +6,32 @@ export async function GET(req: NextRequest) {
   try {
     const staffCookie = req.cookies.get("mma_staff_session")?.value;
     const staffSession = staffCookie ? verifyStaffSession(staffCookie) : null;
-
-    if (!staffSession || staffSession.role !== "main_admin" || staffSession.status !== "active") {
-      const res = NextResponse.json(
-        { error: "Forbidden: Platform settings require active main_admin authority" },
-        { status: 403 }
-      );
-      if (staffSession && staffSession.status !== "active") {
-        res.cookies.delete("mma_staff_session");
-      }
-      return res;
-    }
+    const isMainAdmin = staffSession && staffSession.role === "main_admin" && staffSession.status === "active";
 
     const settings = await fetchDbSettings();
+    const data = settings || DEFAULT_PLATFORM_SETTINGS;
+
+    if (!isMainAdmin) {
+      // Public-safe settings for students & visitors
+      return NextResponse.json({
+        success: true,
+        settings: {
+          maintenance: Boolean(data.maintenance),
+          reminder_template: data.reminder_template,
+          support_phone: data.support_phone,
+          support_email: data.support_email,
+          centre_address: data.centre_address,
+          academy_title: data.academy_title,
+          founder_name: data.founder_name,
+          razorpay_key_id: data.razorpay_key_id,
+          razorpay_mode: data.razorpay_mode,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      settings: settings || DEFAULT_PLATFORM_SETTINGS,
+      settings: data,
     });
   } catch (err: any) {
     return NextResponse.json(

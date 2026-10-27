@@ -15,6 +15,7 @@ import {
   getUnreadCountForStaff,
   fetchDbConversations,
   fetchDbMessages,
+  subscribeToSupportLiveUpdates,
 } from "@/lib/messageStore";
 
 export default function StaffMessagesPage() {
@@ -52,14 +53,21 @@ export default function StaffMessagesPage() {
 
   useEffect(() => {
     reload();
+    const unsubscribe = subscribeToSupportLiveUpdates(() => {
+      reload();
+      if (activeConvId) {
+        fetchDbMessages(activeConvId).then((msgs) => setMessages(msgs));
+      }
+    });
     window.addEventListener("mma_staff_changed", reload);
     window.addEventListener("mma_messages_changed", reload);
     return () => {
+      unsubscribe();
       window.removeEventListener("mma_staff_changed", reload);
       window.removeEventListener("mma_messages_changed", reload);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeConvId]);
 
   useEffect(() => {
     reload();

@@ -39,10 +39,26 @@ export default function ProfileSettingsPage() {
   const [targetExam, setTargetExam] = useState("Maharashtra Police Bharti 2026");
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [platformSettings, setPlatformSettings] = useState({
+    supportPhone: "+91 84593 44077",
+    centreAddress: "Narhe Campus: Survey No. 49, Zeal Chowk, Narhe, Pune",
+  });
 
   const { languageInfo, t } = useLanguage();
 
   useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.settings) {
+          setPlatformSettings({
+            supportPhone: data.settings.support_phone || "+91 84593 44077",
+            centreAddress: data.settings.centre_address || "Narhe Campus: Survey No. 49, Zeal Chowk, Narhe, Pune",
+          });
+        }
+      })
+      .catch(() => {});
+
     try {
       const raw = localStorage.getItem("mindmaster_user_profile");
       if (raw) {
@@ -322,7 +338,7 @@ export default function ProfileSettingsPage() {
 
             {/* Help & Support */}
             <a
-              href="tel:+918459344077"
+              href={`tel:${platformSettings.supportPhone.replace(/\s+/g, "")}`}
               className="p-4 md:p-5 flex items-center justify-between hover:bg-[#F5F7FF] transition"
             >
               <div className="flex items-center gap-3.5">
@@ -499,7 +515,7 @@ export default function ProfileSettingsPage() {
         <div className="p-4 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-xs text-[#5A6478] flex items-center justify-between font-medium">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-[#0B57D0]" />
-            <span>Narhe Campus: Survey No. 49, Zeal Chowk, Narhe, Pune</span>
+            <span>{platformSettings.centreAddress}</span>
           </div>
           <span className="text-[10px] uppercase font-bold text-[#94A3B8]">DESK #02</span>
         </div>

@@ -23,8 +23,247 @@ export interface CertificateData {
   grade?: string;
 }
 
+// Common Marathi names, surnames, and words dictionary for natural English rendering
+const MARATHI_DICT: Record<string, string> = {
+  // Surnames
+  "धुमाळ": "Dhumal",
+  "शिंदे": "Shinde",
+  "पाटील": "Patil",
+  "पवार": "Pawar",
+  "जाधव": "Jadhav",
+  "देशमुख": "Deshmukh",
+  "कांबळे": "Kamble",
+  "गायकवाड": "Gaikwad",
+  "कदम": "Kadam",
+  "चव्हाण": "Chavan",
+  "सावंत": "Sawant",
+  "मोरे": "More",
+  "भोसले": "Bhosale",
+  "वाघमारे": "Waghmare",
+  "शेलार": "Shelar",
+  "माने": "Mane",
+  "जगताप": "Jagtap",
+  "साळुंखे": "Salunkhe",
+  "निकम": "Nikam",
+  "घाडगे": "Ghadge",
+  "थोरात": "Thorat",
+  "काळे": "Kale",
+  "सूर्यवंशी": "Suryavanshi",
+  "तांबोळी": "Tamboli",
+  "कुंभार": "Kumbhar",
+  "खराडे": "Kharade",
+  "जोशी": "Joshi",
+  "कुलकर्णी": "Kulkarni",
+  "देशपांडे": "Deshpande",
+  "सुतार": "Sutar",
+  "लोहार": "Lohar",
+  "सोनवणे": "Sonawane",
+  "मोहिते": "Mohite",
+  "गोरे": "Gore",
+  "इंगळे": "Ingale",
+  "खरात": "Kharat",
+  "तांबे": "Tambe",
+  "बंडगर": "Bandgar",
+  "कोळी": "Koli",
+  "माळी": "Mali",
+  "बागल": "Bagal",
+  "गोडसे": "Godse",
+  "खोत": "Khot",
+  "गाढवे": "Gadhve",
+  "पडवळ": "Padwal",
+  "नलावडे": "Nalawade",
+  "फडतरे": "Phadtare",
+
+  // First Names
+  "प्रशांत": "Prashant",
+  "राहुल": "Rahul",
+  "सचिन": "Sachin",
+  "अमोल": "Amol",
+  "महेश": "Mahesh",
+  "गणेश": "Ganesh",
+  "अक्षय": "Akshay",
+  "स्वप्नील": "Swapnil",
+  "ओंकार": "Omkar",
+  "सूरज": "Suraj",
+  "विकास": "Vikas",
+  "रोहन": "Rohan",
+  "किरण": "Kiran",
+  "अमित": "Amit",
+  "निलेश": "Nilesh",
+  "नितीन": "Nitin",
+  "प्रविण": "Pravin",
+  "सागर": "Sagar",
+  "सुमित": "Sumit",
+  "दिपक": "Deepak",
+  "विशाल": "Vishal",
+  "संकेत": "Sanket",
+  "शुभम": "Shubham",
+  "ऋषिकेश": "Rushikesh",
+  "अनिकेत": "Aniket",
+  "तेजस": "Tejas",
+  "ऋतुराज": "Ruturaj",
+  "आदित्य": "Aditya",
+  "प्रथमेश": "Prathamesh",
+  "मयुर": "Mayur",
+  "योगेश": "Yogesh",
+  "चेतन": "Chetan",
+  "तुषार": "Tushar",
+  "आकाश": "Akash",
+  "अजय": "Ajay",
+  "विजय": "Vijay",
+  "मनोज": "Manoj",
+  "संदीप": "Sandeep",
+  "संतोष": "Santosh",
+  "सुनील": "Sunil",
+  "आनंद": "Anand",
+  "समाधान": "Samadhan",
+  "पूजा": "Pooja",
+  "स्नेहल": "Snehal",
+  "प्रियांका": "Priyanka",
+  "अंकिता": "Ankita",
+  "अश्विनी": "Ashwini",
+  "प्राजक्ता": "Prajakta",
+  "पल्लवी": "Pallavi",
+  "सोनाली": "Sonali",
+  "माधुरी": "Madhuri",
+  "कविता": "Kavita",
+  "श्वेता": "Shweta",
+  "सुप्रिया": "Supriya",
+  "कोमल": "Komal",
+  "शीतल": "Sheetal",
+  "मनिषा": "Manisha",
+  "रूपाली": "Rupali",
+  "दीपाली": "Deepali",
+  "भाग्यश्री": "Bhagyashree",
+  "तेजस्विनी": "Tejaswini",
+  "वैशाली": "Vaishali",
+  "सिद्धी": "Siddhi",
+  "सानिका": "Sanika",
+  "नेहा": "Neha",
+  "गौरी": "Gauri",
+  "दिव्या": "Divya",
+  "आदिती": "Aditi",
+  "ज्ञानेश्वर": "Dnyaneshwar",
+  "विठ्ठल": "Vitthal",
+  "श्री": "Shree",
+  "सौ": "Sau",
+  "कुमार": "Kumar",
+  "कुमारी": "Kumari",
+
+  // Course & Academy Words
+  "महाराष्ट्र": "Maharashtra",
+  "पोलीस": "Police",
+  "भरती": "Bharti",
+  "गणित": "Maths",
+  "बुद्धिमत्ता": "Reasoning",
+  "वैदिक": "Vedic",
+  "मेमरी": "Memory",
+  "अकॅडमी": "Academy",
+  "फाऊंडेशन": "Foundation",
+  "फाउंडेशन": "Foundation",
+  "परीक्षा": "Exam",
+  "विद्यार्थी": "Student",
+};
+
+const DEVANAGARI_VOWELS: Record<string, string> = {
+  "\u0905": "a", "\u0906": "aa", "\u0907": "i", "\u0908": "ee", "\u0909": "u", "\u090A": "oo",
+  "\u090B": "ru", "\u090F": "e", "\u0910": "ai", "\u0913": "o", "\u0914": "au",
+  "\u0902": "n", "\u0903": "h", "\u0901": "m", "\u0972": "a", "\u0911": "o"
+};
+
+const DEVANAGARI_MATRAS: Record<string, string> = {
+  "\u093E": "a", "\u093F": "i", "\u0940": "ee", "\u0941": "u", "\u0942": "oo",
+  "\u0943": "ru", "\u0947": "e", "\u0948": "ai", "\u094B": "o", "\u094C": "au",
+  "\u0949": "o", "\u0945": "e", "\u093C": ""
+};
+
+const DEVANAGARI_CONSONANTS: Record<string, string> = {
+  "\u0915": "k", "\u0916": "kh", "\u0917": "g", "\u0918": "gh", "\u0919": "ng",
+  "\u091A": "ch", "\u091B": "chh", "\u091C": "j", "\u091D": "jh", "\u091E": "ny",
+  "\u091F": "t", "\u0920": "th", "\u0921": "d", "\u0922": "dh", "\u0923": "n",
+  "\u0924": "t", "\u0925": "th", "\u0926": "d", "\u0927": "dh", "\u0928": "n",
+  "\u092A": "p", "\u092B": "ph", "\u092C": "b", "\u092D": "bh", "\u092E": "m",
+  "\u092F": "y", "\u0930": "r", "\u0932": "l", "\u0935": "v", "\u0936": "sh",
+  "\u0937": "sh", "\u0938": "s", "\u0939": "h", "\u0933": "l"
+};
+
+const DEVANAGARI_NUMBERS: Record<string, string> = {
+  "\u0966": "0", "\u0967": "1", "\u0968": "2", "\u0969": "3", "\u096A": "4",
+  "\u096B": "5", "\u096C": "6", "\u096D": "7", "\u096E": "8", "\u096F": "9"
+};
+
+/**
+ * Phonetically transliterates a Devanagari word into Roman/Latin characters.
+ */
+function transliterateDevanagariWord(word: string): string {
+  const trimmed = word.trim();
+  if (!trimmed) return "";
+  if (MARATHI_DICT[trimmed]) return MARATHI_DICT[trimmed];
+
+  let result = "";
+  for (let i = 0; i < trimmed.length; i++) {
+    const ch = trimmed[i];
+    const next = trimmed[i + 1];
+
+    if (DEVANAGARI_NUMBERS[ch]) {
+      result += DEVANAGARI_NUMBERS[ch];
+    } else if (DEVANAGARI_VOWELS[ch]) {
+      result += DEVANAGARI_VOWELS[ch];
+    } else if (DEVANAGARI_CONSONANTS[ch]) {
+      const c = DEVANAGARI_CONSONANTS[ch];
+      if (next === "\u094D") {
+        // Halant (virama): suppress inherent vowel
+        result += c;
+        i++;
+      } else if (DEVANAGARI_MATRAS[next] !== undefined) {
+        // Dependent vowel sign (matra)
+        result += c + DEVANAGARI_MATRAS[next];
+        i++;
+      } else if (next === "\u0902") {
+        // Anusvara
+        result += c + "an";
+        i++;
+      } else {
+        // End of word (schwa deletion in Marathi) vs middle consonant
+        if (i === trimmed.length - 1) {
+          result += c;
+        } else {
+          result += c + "a";
+        }
+      }
+    } else if (ch === "\u0902") {
+      result += "n";
+    } else if (ch === "\u0903") {
+      result += "h";
+    } else if (/[\x20-\x7E]/.test(ch)) {
+      result += ch;
+    }
+  }
+
+  return result ? result.charAt(0).toUpperCase() + result.slice(1) : "";
+}
+
+/**
+ * Transliterates Devanagari text into clean Latin characters for standard jsPDF fonts.
+ */
+export function transliterateDevanagariToLatin(text: string): string {
+  if (!text) return "";
+  return text
+    .split(/(\s+|[.,;:\-_/()]+)/)
+    .map((token) => {
+      if (/[\u0900-\u097F]/.test(token)) {
+        return transliterateDevanagariWord(token);
+      }
+      return token;
+    })
+    .join("")
+    .replace(/[^\x20-\x7E]/g, "")
+    .trim();
+}
+
 /**
  * Normalizes text for standard PDF Latin fonts to prevent corrupted character glyphs (???)
+ * Uses intelligent Marathi course mapping and phonetic Devanagari transliteration.
  */
 function toSafePdfText(str?: string): string {
   if (!str) return "";
@@ -44,9 +283,12 @@ function toSafePdfText(str?: string): string {
     if (str.includes("ट्रेनर") || str.toLowerCase().includes("trainer")) {
       return "Train the Trainer Memory Mastery Professional";
     }
-    return str.replace(/[^\x20-\x7E]/g, "").trim() || "MindMaster Certified Syllabus Track";
+
+    const transliterated = transliterateDevanagariToLatin(str);
+    if (transliterated) return transliterated;
+    return "MindMaster Certified Syllabus Track";
   }
-  return str;
+  return str.replace(/[^\x20-\x7E]/g, "").trim();
 }
 
 /**

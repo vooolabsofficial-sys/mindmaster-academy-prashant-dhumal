@@ -13,6 +13,7 @@ import {
   createConversation,
   fetchDbConversations,
   fetchDbMessages,
+  subscribeToSupportLiveUpdates,
 } from "@/lib/messageStore";
 
 export default function StudentSupportPage() {
@@ -27,7 +28,27 @@ export default function StudentSupportPage() {
   const [composerText, setComposerText] = useState("");
   const [newThreadText, setNewThreadText] = useState("");
   const [showNewThread, setShowNewThread] = useState(false);
+  const [supportSettings, setSupportSettings] = useState({
+    supportPhone: "+91 84593 44077",
+    supportEmail: "mindmasterdhumal@gmail.com",
+    centreAddress: "Narhe Centre Desk, Pune",
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.settings) {
+          setSupportSettings({
+            supportPhone: data.settings.support_phone || "+91 84593 44077",
+            supportEmail: data.settings.support_email || "mindmasterdhumal@gmail.com",
+            centreAddress: data.settings.centre_address || "Narhe Centre Desk, Pune",
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     try {
@@ -51,9 +72,18 @@ export default function StudentSupportPage() {
 
   useEffect(() => {
     reload();
+    const unsubscribe = subscribeToSupportLiveUpdates(() => {
+      reload();
+      if (activeConvId) {
+        fetchDbMessages(activeConvId).then((msgs) => setMessages(msgs));
+      }
+    });
     window.addEventListener("mma_messages_changed", reload);
-    return () => window.removeEventListener("mma_messages_changed", reload);
-  }, [currentStudent.id]);
+    return () => {
+      unsubscribe();
+      window.removeEventListener("mma_messages_changed", reload);
+    };
+  }, [currentStudent.id, activeConvId]);
 
   useEffect(() => {
     if (activeConvId) {
@@ -68,15 +98,17 @@ export default function StudentSupportPage() {
 
   const handleSend = () => {
     if (!composerText.trim() || !activeConvId) return;
-    sendMessage({
+    const text = composerText.trim();
+    setComposerText("");
+    const newMsg = sendMessage({
       conversationId: activeConvId,
       senderType: "student",
       senderId: currentStudent.id,
       senderName: currentStudent.name,
-      body: composerText.trim(),
+      body: text,
     });
-    setComposerText("");
-    setMessages(getConversationMessages(activeConvId));
+    setMessages((prev) => [...prev, newMsg]);
+    reload();
   };
 
   const handleNewThread = () => {
@@ -207,6 +239,16 @@ export default function StudentSupportPage() {
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-sm text-slate-900">MindMaster Academy</h3>
               <p className="text-[11px] text-blue-600 font-semibold">📌 Pinned — General support &amp; queries</p>
+              <div className="flex flex-wrap items-center gap-3 mt-1 text-[11px] text-slate-600 font-medium">
+                <a
+                  href={`tel:${supportSettings.supportPhone.replace(/\s+/g, "")}`}
+                  className="text-blue-700 font-bold hover:underline flex items-center gap-1"
+                >
+                  📞 {supportSettings.supportPhone}
+                </a>
+                <span>•</span>
+                <span>📍 {supportSettings.centreAddress}</span>
+              </div>
             </div>
             <span className="text-[10px] text-blue-500 font-bold px-2 py-1 bg-white rounded-full border border-blue-200">
               Academy

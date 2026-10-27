@@ -16,6 +16,27 @@ interface NavItem {
   permission?: StaffPermission;
 }
 
+function isTabActive(href: string, pathname: string): boolean {
+  if (href === "/admin") return pathname === "/admin" || pathname === "/admin/";
+  if (href === "/sub") return pathname === "/sub" || pathname === "/sub/";
+  if (href === "/admin/courses") {
+    return (
+      pathname.startsWith("/admin/courses") ||
+      pathname.startsWith("/admin/videos") ||
+      pathname.startsWith("/admin/playlist")
+    );
+  }
+  if (href === "/admin/students" || href === "/sub/students") {
+    return (
+      pathname.startsWith("/admin/students") ||
+      pathname.startsWith("/admin/grants") ||
+      pathname.startsWith("/sub/students") ||
+      pathname.startsWith("/sub/grants")
+    );
+  }
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
 export default function AdminSidebar() {
   const pathname = usePathname();
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
@@ -40,32 +61,26 @@ export default function AdminSidebar() {
   const isSubRoute = pathname.startsWith("/sub");
   const isSubAdmin = staff.role === "sub_admin" || isSubRoute;
 
-  // Navigation tabs for MAIN ADMIN (/admin/*)
+  // Streamlined navigation tabs for MAIN ADMIN (/admin/*)
   const adminNavItems: NavItem[] = [
-    { label: "Overview", href: "/admin", icon: "📊" },
-    { label: "Courses", href: "/admin/courses", icon: "📚", permission: "courses.manage" },
-    { label: "Videos", href: "/admin/videos", icon: "🎬", permission: "videos.manage" },
-    { label: "Playlist Import", href: "/admin/playlist", icon: "📥", permission: "videos.manage" },
-    { label: "Coupons", href: "/admin/coupons", icon: "🏷️", permission: "coupons.manage" },
-    { label: "Free Grants", href: "/admin/grants", icon: "🎁", permission: "freegrant.manage" },
-    { label: "Sub-Admins", href: "/admin/sub-admins", icon: "👥", badge: "Admin", adminOnly: true },
-    { label: "Student Finder", href: "/admin/students", icon: "🎓", permission: "students.view" },
-    { label: "Messages", href: "/admin/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
-    { label: "Analytics Hub", href: "/admin/reports", icon: "📈", permission: "reports.view" },
+    { label: "Dashboard", href: "/admin", icon: "📊" },
+    { label: "Courses & Videos", href: "/admin/courses", icon: "📚", permission: "courses.manage" },
     { label: "Digital Books", href: "/admin/notes", icon: "📖", permission: "notes.books.manage" },
-    { label: "My Activity", href: "/admin/my-activity", icon: "⏱️" },
+    { label: "Students & Grants", href: "/admin/students", icon: "🎓", permission: "students.view" },
+    { label: "Coupons", href: "/admin/coupons", icon: "🏷️", permission: "coupons.manage" },
+    { label: "Support Messages", href: "/admin/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
+    { label: "Sub-Admins", href: "/admin/sub-admins", icon: "👥", badge: "Admin", adminOnly: true },
+    { label: "Audit Logs", href: "/admin/audit", icon: "📜", adminOnly: true },
     { label: "Settings", href: "/admin/settings", icon: "⚙️", badge: "Config", adminOnly: true },
-    { label: "Audit Trail", href: "/admin/audit", icon: "📜", adminOnly: true },
+    { label: "Reports", href: "/admin/reports", icon: "📈", adminOnly: true },
   ];
 
   // Dynamic navigation tabs for SUB-ADMIN matching assigned operational permissions
   const subNavItems: NavItem[] = [
     { label: "Dashboard", href: "/sub", icon: "📊" },
-    { label: "Student Finder", href: "/sub/students", icon: "🎓", permission: "students.view" },
-    { label: "Messages", href: "/sub/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
-    { label: "Offline Grants", href: "/sub/grants", icon: "🎁", permission: "freegrant.manage" },
-    { label: "Courses", href: "/admin/courses", icon: "📚", permission: "courses.manage" },
-    { label: "Videos", href: "/admin/videos", icon: "🎬", permission: "videos.manage" },
+    { label: "Students & Grants", href: "/sub/students", icon: "🎓", permission: "students.view" },
+    { label: "Support Messages", href: "/sub/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
+    { label: "Courses & Videos", href: "/admin/courses", icon: "📚", permission: "courses.manage" },
     { label: "Digital Books", href: "/admin/notes", icon: "📖", permission: "notes.books.manage" },
     { label: "Coupons", href: "/admin/coupons", icon: "🏷️", permission: "coupons.manage" },
     { label: "My Activity", href: "/sub/activity", icon: "⏱️" },
@@ -138,10 +153,7 @@ export default function AdminSidebar() {
               Permitted Tabs ({filteredItems.length})
             </div>
             {filteredItems.map((item) => {
-              const isActive =
-                item.href === "/sub"
-                  ? pathname === "/sub"
-                  : pathname === item.href || pathname.startsWith(item.href + "/");
+              const isActive = isTabActive(item.href, pathname);
 
               return (
                 <Link
@@ -223,10 +235,7 @@ export default function AdminSidebar() {
             Navigation Tabs ({filteredItems.length})
           </p>
           {filteredItems.map((item) => {
-            const isActive =
-              item.href === "/admin"
-                ? pathname === "/admin"
-                : pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive = isTabActive(item.href, pathname);
 
             return (
               <Link

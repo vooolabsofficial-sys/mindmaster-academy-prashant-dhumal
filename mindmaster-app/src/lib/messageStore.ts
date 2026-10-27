@@ -370,3 +370,59 @@ export function getUnreadCountForStudent(studentId: string): number {
 export function getUnreadCountForStaff(): number {
   return getConversations().reduce((sum, c) => sum + c.unreadStaff, 0);
 }
+
+/**
+ * Real-time Supabase subscription + fallback polling for bidirectional instant chat
+ */
+export function subscribeToSupportLiveUpdates(onUpdate: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+
+  const supabase = getSupabase();
+  let channel: any = null;
+
+  if (supabase && typeof supabase.channel === "function") {
+    try {
+      channel = supabase
+        .channel(`support_live_${Date.now()}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "support_messages" },
+          async () => {
+            await fetchDbConversations();
+            notifyListeners();
+            onUpdate();
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "support_conversations" },
+          async () => {
+            await fetchDbConversations();
+            notifyListeners();
+            onUpdate();
+          }
+        )
+        .subscribe();
+    } catch (e) {
+      console.warn("Supabase realtime subscription fallback:", e);
+    }
+  }
+
+  // High-frequency live poller (3.5s) ensuring instant arrival of student & staff messages
+  const interval = setInterval(async () => {
+    try {
+      await fetchDbConversations();
+      notifyListeners();
+      onUpdate();
+    } catch {}
+  }, 3500);
+
+  return () => {
+    clearInterval(interval);
+    if (channel && supabase) {
+      try {
+        supabase.removeChannel(channel);
+      } catch {}
+    }
+  };
+}
