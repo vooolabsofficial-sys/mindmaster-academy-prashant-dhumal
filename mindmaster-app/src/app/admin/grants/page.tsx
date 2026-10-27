@@ -17,6 +17,13 @@ import {
   fetchDbGrants,
   getStaffCollectionTally,
   setGrantWhatsappSent,
+  getPendingGrantApprovals,
+  approveGrant,
+  rejectGrant,
+  getSubAdminCashSettlements,
+  settleSubAdminCash,
+  settleSingleGrant,
+  SubAdminCashSummary,
 } from "@/lib/grantStore";
 
 const POPULAR_DISTRICTS = ["Pune", "Satara", "Kolhapur", "Solapur", "Sangli", "Ahmednagar", "Nashik", "Thane", "Mumbai"];
@@ -27,11 +34,16 @@ export default function GrantsManagerPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [students, setStudents] = useState<StudentRecord[]>([]);
+  const [pendingApprovals, setPendingApprovals] = useState<Grant[]>([]);
+  const [cashSettlements, setCashSettlements] = useState<SubAdminCashSummary[]>([]);
+  const [rejectModalGrant, setRejectModalGrant] = useState<Grant | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [scopeFilter, setScopeFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "revoked">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending_approval" | "revoked" | "rejected">("all");
 
   // Cash vs UPI Collection Tally Filter: Today, Last 7 Days, This Month, All Time
   const [tallyTimeframe, setTallyTimeframe] = useState<"today" | "week" | "month" | "all">("today");
@@ -59,6 +71,8 @@ export default function GrantsManagerPage() {
   const loadData = async () => {
     setStaff(getCurrentStaff());
     setGrants(getGrants());
+    setPendingApprovals(getPendingGrantApprovals());
+    setCashSettlements(getSubAdminCashSettlements());
     const cList = getStaffCourses();
     setCourses(cList);
     if (cList.length > 0 && !selectedCourseId) {
@@ -75,8 +89,61 @@ export default function GrantsManagerPage() {
       const liveGrants = await fetchDbGrants();
       if (liveGrants && liveGrants.length > 0) {
         setGrants(liveGrants);
+        setPendingApprovals(liveGrants.filter((g) => g.status === "pending_approval"));
       }
     } catch {}
+  };
+
+  const handleApprove = (grantId: string) => {
+    try {
+      approveGrant(grantId);
+      setActionFeedback("Grant approved & student access activated!");
+      setTimeout(() => setActionFeedback(null), 3500);
+      loadData();
+    } catch (e: any) {
+      alert(e?.message || "Failed to approve grant.");
+    }
+  };
+
+  const handleOpenRejectModal = (grant: Grant) => {
+    setRejectModalGrant(grant);
+    setRejectReason("");
+  };
+
+  const handleConfirmReject = () => {
+    if (!rejectModalGrant) return;
+    try {
+      rejectGrant(rejectModalGrant.id, rejectReason.trim() || undefined);
+      setRejectModalGrant(null);
+      setActionFeedback("Grant rejected successfully.");
+      setTimeout(() => setActionFeedback(null), 3500);
+      loadData();
+    } catch (e: any) {
+      alert(e?.message || "Failed to reject grant.");
+    }
+  };
+
+  const handleSettleSubAdmin = (staffId: string) => {
+    if (!confirm(`Confirm cash handover settlement for Sub-Admin ${staffId}? This marks all collected cash as received at HQ.`)) return;
+    try {
+      const amount = settleSubAdminCash(staffId);
+      setActionFeedback(`Settled ₹${amount.toLocaleString("en-IN")} cash handover successfully!`);
+      setTimeout(() => setActionFeedback(null), 3500);
+      loadData();
+    } catch (e: any) {
+      alert(e?.message || "Failed to settle cash.");
+    }
+  };
+
+  const handleSettleSingle = (grantId: string) => {
+    try {
+      settleSingleGrant(grantId);
+      setActionFeedback("Cash marked settled for this grant.");
+      setTimeout(() => setActionFeedback(null), 3500);
+      loadData();
+    } catch (e: any) {
+      alert(e?.message || "Failed to settle grant.");
+    }
   };
 
   // Sub-admin view filter: "own" or "all"
@@ -277,14 +344,14 @@ export default function GrantsManagerPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl md:text-3xl font-extrabold text-[#0E1B3D] font-heading">
-                  Free Access Grants
+                  Free Access Grants &amp; Offline Admissions
                 </h1>
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#EBF3FE] text-[#0B57D0]">
                   freegrant.manage
                 </span>
               </div>
               <p className="text-xs text-[#5A6478] mt-1">
-                Materialize 100% free course access for scholarship recipients, schools, talukas, or entire districts.
+                Materialize course access, oversee Sub-Admin Maker-Checker offline admissions, and settle physical cash collection.
               </p>
             </div>
 
@@ -295,6 +362,103 @@ export default function GrantsManagerPage() {
               <span>🎁</span> + New Grant
             </button>
           </div>
+
+          {/* Action Feedback Banner */}
+          {actionFeedback && (
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between shadow-xs animate-fadeIn">
+              <span className="flex items-center gap-2">
+                <span>✅</span> {actionFeedback}
+              </span>
+              <button onClick={() => setActionFeedback(null)} className="text-emerald-700 hover:text-emerald-950 font-bold">✕</button>
+            </div>
+          )}
+
+          {/* PENDING SUB-ADMIN APPROVALS QUEUE (MAIN ADMIN ONLY) */}
+          {isMainAdmin && pendingApprovals.length > 0 && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50/50 border-2 border-amber-300 rounded-3xl p-6 shadow-md space-y-4 animate-fadeIn">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-200 text-amber-900 flex items-center justify-center text-xl font-bold">
+                    ⏳
+                  </div>
+                  <div>
+                    <h2 className="text-base font-extrabold text-amber-950 font-heading">
+                      Pending Sub-Admin Approvals Queue ({pendingApprovals.length} pending)
+                    </h2>
+                    <p className="text-xs text-amber-900">
+                      Maker-Checker Governance: Review and activate offline course admissions submitted by Sub-Admins.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-3 py-1 bg-amber-200 text-amber-950 rounded-full text-xs font-black self-start sm:self-auto">
+                  REQUIRES ACTION
+                </span>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-amber-200 bg-white">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-amber-100/60 text-amber-950 border-b border-amber-200 font-bold">
+                    <tr>
+                      <th className="px-4 py-3">Student Recipient</th>
+                      <th className="px-4 py-3">Item Requested</th>
+                      <th className="px-4 py-3">Fee &amp; Payment Mode</th>
+                      <th className="px-4 py-3">Submitted By (Sub-Admin)</th>
+                      <th className="px-4 py-3 text-right">Verification Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-amber-100">
+                    {pendingApprovals.map((grant) => (
+                      <tr key={grant.id} className="hover:bg-amber-50/50 transition">
+                        <td className="px-4 py-3.5">
+                          <p className="font-bold text-[#0E1B3D]">{grant.student_name || grant.scope_value}</p>
+                          <p className="font-mono text-[11px] text-[#5A6478]">📱 +91 {grant.student_phone || grant.scope_value}</p>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="font-bold text-[#0B57D0]">{grant.courseTitle || "Item"}</span>
+                          <span className="block text-[10px] text-[#8A94A6]">{grant.months} Months Access</span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="font-extrabold text-emerald-700">₹{grant.amount_paid || 0}</span>
+                          <span className="block text-[10px] text-[#5A6478]">
+                            {grant.payment_mode === "upi" ? `UPI (UTR: ${grant.upi_ref || "N/A"})` : "Cash Collected"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="font-bold text-[#0E1B3D]">{grant.createdByName}</span>
+                          <span className="block text-[10px] text-[#8A94A6]">
+                            {new Date(grant.created_at || grant.createdAt).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleApprove(grant.id)}
+                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer flex items-center gap-1"
+                            >
+                              <span>✅</span> Approve &amp; Activate
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenRejectModal(grant)}
+                              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition cursor-pointer"
+                            >
+                              <span>❌</span> Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -463,7 +627,8 @@ export default function GrantsManagerPage() {
                       <th className="px-4 py-3 font-bold">Cash Collected</th>
                       <th className="px-4 py-3 font-bold">UPI Collected</th>
                       <th className="px-4 py-3 font-bold">Total Collection</th>
-                      <th className="px-4 py-3 font-bold text-right">Free Grants Issued</th>
+                      <th className="px-4 py-3 font-bold">Unsettled Cash</th>
+                      <th className="px-4 py-3 font-bold text-right">Settlement Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E4E8F8]">
@@ -484,14 +649,10 @@ export default function GrantsManagerPage() {
                           : tallyTimeframe === "month"
                           ? s.monthUpi
                           : s.allTimeUpi;
-                      const count =
-                        tallyTimeframe === "today"
-                          ? s.todayGrantsCount
-                          : tallyTimeframe === "week"
-                          ? s.weekGrantsCount
-                          : tallyTimeframe === "month"
-                          ? s.monthGrantsCount
-                          : s.allTimeGrantsCount;
+                      const settlement = cashSettlements.find(
+                        (cs) => cs.staffId === s.staffId || cs.staffName.toLowerCase() === s.staffName.toLowerCase()
+                      );
+                      const unsettled = settlement ? settlement.unsettledCash : 0;
 
                       return (
                         <tr key={s.staffId} className="hover:bg-[#F9FAFD]">
@@ -500,7 +661,10 @@ export default function GrantsManagerPage() {
                               <span className="w-6 h-6 rounded-full bg-[#EBF3FE] text-[#0B57D0] flex items-center justify-center text-[10px] font-bold">
                                 {s.staffName.slice(0, 1).toUpperCase()}
                               </span>
-                              <span>{s.staffName}</span>
+                              <div>
+                                <span className="block font-bold">{s.staffName}</span>
+                                <span className="text-[10px] text-[#8A94A6] font-mono">{s.staffId}</span>
+                              </div>
                             </div>
                           </td>
                           <td className="px-4 py-3 font-semibold text-emerald-700">
@@ -512,10 +676,29 @@ export default function GrantsManagerPage() {
                           <td className="px-4 py-3 font-extrabold text-[#0E1B3D]">
                             ₹{(cash + upi).toLocaleString("en-IN")}
                           </td>
+                          <td className="px-4 py-3">
+                            {unsettled > 0 ? (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                                💰 ₹{unsettled.toLocaleString("en-IN")} Pending
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                ✅ All Settled
+                              </span>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-right">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                              {count} grants
-                            </span>
+                            {unsettled > 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => handleSettleSubAdmin(s.staffId)}
+                                className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black shadow-xs transition cursor-pointer"
+                              >
+                                💰 Mark Cash Settled
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-[#8A94A6] italic">Handover Cleared</span>
+                            )}
                           </td>
                         </tr>
                       );
@@ -556,8 +739,8 @@ export default function GrantsManagerPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E4E8F8] pt-3 text-xs">
               <div className="flex items-center gap-2">
                 <span className="text-[#5A6478] font-bold">Status:</span>
-                <div className="flex gap-1.5">
-                  {(["all", "active", "revoked"] as const).map((st) => (
+                <div className="flex gap-1.5 flex-wrap">
+                  {(["all", "active", "pending_approval", "revoked", "rejected"] as const).map((st) => (
                     <button
                       key={st}
                       onClick={() => setStatusFilter(st)}
@@ -567,7 +750,7 @@ export default function GrantsManagerPage() {
                           : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EBF3FE]"
                       }`}
                     >
-                      {st}
+                      {st === "pending_approval" ? `⏳ Pending (${pendingApprovals.length})` : st}
                     </button>
                   ))}
                 </div>
@@ -705,6 +888,36 @@ export default function GrantsManagerPage() {
                                 year: "numeric",
                               })}
                             </div>
+                            {grant.amount_paid !== undefined && grant.amount_paid > 0 && (
+                              <div className="mt-1">
+                                <span className="font-bold text-emerald-700">₹{grant.amount_paid}</span>
+                                <span className="text-[10px] text-[#5A6478] ml-1 uppercase">({grant.payment_mode || "fee"})</span>
+                              </div>
+                            )}
+                            {grant.payment_mode === "cash" && (
+                              <div className="mt-1">
+                                {grant.settlement_status === "settled" ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    ✅ Cash Settled
+                                  </span>
+                                ) : (
+                                  <div className="flex items-center gap-1">
+                                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-900 border border-amber-300">
+                                      💰 Unsettled Cash
+                                    </span>
+                                    {isMainAdmin && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleSettleSingle(grant.id)}
+                                        className="text-[9px] font-bold text-[#0B57D0] hover:underline cursor-pointer"
+                                      >
+                                        Settle
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </td>
 
                           {/* Coverage */}
@@ -719,11 +932,24 @@ export default function GrantsManagerPage() {
                             <p className="text-xs text-[#0E1B3D] line-clamp-2" title={grant.reason}>
                               {grant.reason}
                             </p>
+                            {grant.rejection_reason && (
+                              <p className="text-[10px] text-rose-600 font-semibold mt-0.5">
+                                Reason: {grant.rejection_reason}
+                              </p>
+                            )}
                           </td>
 
                           {/* Status */}
                           <td className="px-4 py-4">
-                            {grant.status === "active" && !isExpired ? (
+                            {grant.status === "pending_approval" ? (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200">
+                                ⏳ Pending Approval
+                              </span>
+                            ) : grant.status === "rejected" ? (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                                ❌ Rejected
+                              </span>
+                            ) : grant.status === "active" && !isExpired ? (
                               <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
                                 Active
                               </span>
@@ -753,7 +979,27 @@ export default function GrantsManagerPage() {
 
                           {/* Actions */}
                           <td className="px-4 py-4 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              {/* Pending Maker-Checker Actions */}
+                              {grant.status === "pending_approval" && isMainAdmin && (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleApprove(grant.id)}
+                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-xs"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenRejectModal(grant)}
+                                    className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs transition border border-rose-200 cursor-pointer"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              )}
+
                               {/* 1-click WhatsApp Receipt & Access Link */}
                               {(grant.scope_type === "student" || grant.student_phone || grant.studentPhone || /^\d{10}$/.test(grant.scope_value || grant.scopeValue || "")) && (
                                 <button
@@ -792,7 +1038,7 @@ export default function GrantsManagerPage() {
                                   </span>
                                 )
                               ) : (
-                                <span className="text-[10px] text-[#8A94A6]">—</span>
+                                grant.status !== "pending_approval" && <span className="text-[10px] text-[#8A94A6]">—</span>
                               )}
                             </div>
                           </td>
@@ -1267,6 +1513,57 @@ export default function GrantsManagerPage() {
                     className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow"
                   >
                     Yes, Revoke Grant
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Reject Pending Grant Modal */}
+          {rejectModalGrant && (
+            <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+              <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-rose-200 space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center text-2xl font-bold mx-auto">
+                  ❌
+                </div>
+                <div className="text-center">
+                  <h3 className="text-base font-bold text-[#0E1B3D] font-heading">
+                    Reject Sub-Admin Admission Grant?
+                  </h3>
+                  <p className="text-xs text-[#5A6478] mt-1">
+                    Student: <strong>{rejectModalGrant.student_name || rejectModalGrant.scope_value}</strong> (+91 {rejectModalGrant.student_phone || rejectModalGrant.scope_value})
+                    <br />
+                    Item: <em>{rejectModalGrant.courseTitle}</em>
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                    Rejection Reason (Optional note for Sub-Admin)
+                  </label>
+                  <input
+                    type="text"
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="e.g. UTR mismatch / Duplicate offline entry"
+                    className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  />
+                </div>
+
+                <div className="pt-3 border-t border-[#E4E8F8] flex justify-end gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setRejectModalGrant(null)}
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-[#0E1B3D] font-bold rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmReject}
+                    className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow transition"
+                  >
+                    Confirm Rejection
                   </button>
                 </div>
               </div>

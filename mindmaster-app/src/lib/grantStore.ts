@@ -1,5 +1,5 @@
 import { Course, StudentRecord, Book } from "./types";
-import { getStaffStudents, getStaffCourses, getStaffBooks, getCurrentStaff, logStaffAction, saveStaffStudent } from "./staffStore";
+import { getStaffStudents, getStaffCourses, getStaffBooks, getCurrentStaff, getStaffUsers, logStaffAction, saveStaffStudent } from "./staffStore";
 import { addStudentNotification } from "./studentNotificationStore";
 import { normalizePhone } from "./phoneUtils";
 
@@ -42,12 +42,14 @@ export interface Grant {
   ends_at: string;
   endsAt: string;
   reason: string;
-  status: "active" | "revoked";
+  status: "active" | "pending_approval" | "revoked" | "rejected";
   created_at: string;
   createdAt: string;
   affectedStudentsCount: number;
   payment_mode?: "cash" | "upi" | "scholarship";
   paymentMode?: "cash" | "upi" | "scholarship";
+  upi_ref?: string;
+  upiRef?: string;
   amount_paid?: number;
   amountPaid?: number;
   whatsapp_sent?: boolean;
@@ -56,6 +58,19 @@ export interface Grant {
   studentPhone?: string;
   student_name?: string;
   studentName?: string;
+  settlement_status?: "unsettled" | "settled";
+  settlementStatus?: "unsettled" | "settled";
+  settled_at?: string;
+  settledAt?: string;
+  settled_by?: string;
+  settledBy?: string;
+  settled_by_name?: string;
+  approved_at?: string;
+  approvedAt?: string;
+  approved_by?: string;
+  approvedBy?: string;
+  rejection_reason?: string;
+  rejectionReason?: string;
 }
 
 export interface GrantPurchase {
@@ -76,7 +91,7 @@ export interface GrantPurchase {
   source: "grant";
   expires_at: string;
   expiresAt: string;
-  status: "active" | "revoked";
+  status: "active" | "pending_approval" | "revoked" | "rejected";
   created_at: string;
   createdAt: string;
 }
@@ -156,8 +171,22 @@ export async function fetchDbGrants(): Promise<Grant[]> {
         affectedStudentsCount: 1,
         payment_mode: d.payment_mode || "scholarship",
         paymentMode: d.payment_mode || "scholarship",
+        upi_ref: d.upi_ref || d.utr_number || undefined,
+        upiRef: d.upi_ref || d.utr_number || undefined,
         amount_paid: Number(d.amount_paid) || 0,
         amountPaid: Number(d.amount_paid) || 0,
+        settlement_status: d.settlement_status || (d.payment_mode === "cash" ? "unsettled" : "settled"),
+        settlementStatus: d.settlement_status || (d.payment_mode === "cash" ? "unsettled" : "settled"),
+        settled_at: d.settled_at || undefined,
+        settledAt: d.settled_at || undefined,
+        settled_by: d.settled_by || undefined,
+        settledBy: d.settled_by || undefined,
+        approved_at: d.approved_at || undefined,
+        approvedAt: d.approved_at || undefined,
+        approved_by: d.approved_by || undefined,
+        approvedBy: d.approved_by || undefined,
+        rejection_reason: d.rejection_reason || undefined,
+        rejectionReason: d.rejection_reason || undefined,
         whatsapp_sent: Boolean(d.whatsapp_sent),
         whatsappSent: Boolean(d.whatsapp_sent),
         student_phone: d.student_phone,
@@ -817,6 +846,7 @@ export interface CashAdmissionParams {
   validityDays?: number;
   customExpiryDate?: string;
   paymentMode: "cash" | "upi" | "scholarship";
+  upiRef?: string;
   amountPaid: number;
   remarks?: string;
 }
@@ -829,12 +859,42 @@ export interface CashAdmissionResult {
   whatsappUrl: string;
   receiptText: string;
   expiresAt: string;
+  isPendingApproval?: boolean;
   error?: string;
 }
 
 export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionResult {
   const currentStaff = getCurrentStaff();
   const cleanPhone = params.studentPhone.replace(/\D/g, "").slice(-10);
+
+  // 1. Strict No-Free Lock for Sub-Admins
+  if (currentStaff.role === "sub_admin") {
+    if (params.paymentMode === "scholarship" || params.amountPaid <= 0) {
+      return {
+        success: false,
+        grantId: "",
+        grant: {} as any,
+        purchase: {} as any,
+        whatsappUrl: "",
+        receiptText: "",
+        expiresAt: "",
+        error: "Unauthorized: Sub-Admins are strictly locked from issuing ₹0 Free Scholarships. Only Main Admin (Prashant Sir) can grant free scholarships.",
+      };
+    }
+    if (params.paymentMode === "upi" && (!params.upiRef || !params.upiRef.trim())) {
+      return {
+        success: false,
+        grantId: "",
+        grant: {} as any,
+        purchase: {} as any,
+        whatsappUrl: "",
+        receiptText: "",
+        expiresAt: "",
+        error: "Mandatory UPI Reference (UTR) number is required for UPI admissions.",
+      };
+    }
+  }
+
   const students = getStaffStudents();
   let student = students.find((s) => s.phone.replace(/\D/g, "").slice(-10) === cleanPhone);
 
@@ -874,7 +934,7 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
       : isBook
       ? gCourseId === book!.id || gCourseId === book!.code
       : gCourseId === course!.id || gCourseId === course!.code;
-    const isActive = g.status === "active" && new Date(g.ends_at || g.endsAt).getTime() > Date.now();
+    const isActive = (g.status === "active" || g.status === "pending_approval") && new Date(g.ends_at || g.endsAt).getTime() > Date.now();
     return isSamePhone && isSameItem && isActive;
   });
 
@@ -888,7 +948,7 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
       whatsappUrl: "",
       receiptText: "",
       expiresAt: "",
-      error: `Student already has active access to "${itemTitle}" until ${expStr}. Cannot grant duplicate access.`,
+      error: `Student already has active/pending admission to "${itemTitle}" until ${expStr}. Cannot grant duplicate access.`,
     };
   }
 
@@ -941,6 +1001,12 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     validityText = `${months} Months`;
   }
 
+  // Maker-Checker Approval Mode Logic:
+  // If Sub-Admin has approvalMode enabled, grant status is 'pending_approval'
+  const requiresApproval = currentStaff.role === "sub_admin" && Boolean(currentStaff.approvalMode);
+  const grantStatus: "active" | "pending_approval" = requiresApproval ? "pending_approval" : "active";
+  const settlementStatus: "unsettled" | "settled" = params.paymentMode === "cash" ? "unsettled" : "settled";
+
   // 1. Create or Update Student Record
   if (!student) {
     const newRecord: StudentRecord = {
@@ -983,7 +1049,7 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     params.paymentMode === "cash"
       ? "Cash"
       : params.paymentMode === "upi"
-      ? "Direct UPI (PhonePe/GPay)"
+      ? `Direct UPI (${params.upiRef ? `UTR: ${params.upiRef.trim()}` : "PhonePe/GPay"})`
       : "Scholarship";
 
   const newGrant: Grant = {
@@ -1008,15 +1074,19 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     months,
     ends_at: endsAt,
     endsAt: endsAt,
-    reason: `Offline Admission [${modeLabel}]: ₹${params.amountPaid}. ${params.remarks || ""}`.trim(),
-    status: "active",
+    reason: `Offline Admission [${modeLabel}]: ₹${params.amountPaid}. ${params.remarks || ""}${requiresApproval ? " [Awaiting Main Admin Approval]" : ""}`.trim(),
+    status: grantStatus,
     created_at: now.toISOString(),
     createdAt: now.toISOString(),
     affectedStudentsCount: 1,
     payment_mode: params.paymentMode,
     paymentMode: params.paymentMode,
+    upi_ref: params.upiRef?.trim() || undefined,
+    upiRef: params.upiRef?.trim() || undefined,
     amount_paid: params.amountPaid,
     amountPaid: params.amountPaid,
+    settlement_status: settlementStatus,
+    settlementStatus: settlementStatus,
     whatsapp_sent: false,
     whatsappSent: false,
     student_phone: cleanPhone,
@@ -1047,7 +1117,7 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     createdAt: now.toISOString(),
     expires_at: endsAt,
     expiresAt: endsAt,
-    status: "active",
+    status: grantStatus,
   };
 
   const grants = getGrants();
@@ -1056,8 +1126,8 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
   const purchases = getGrantPurchases();
   saveGrantPurchases([newPurchase, ...purchases]);
 
-  // 4. Update localStorage active purchases for instant unlocked watch access
-  if (typeof window !== "undefined") {
+  // 4. Update localStorage active purchases ONLY IF status is 'active'
+  if (grantStatus === "active" && typeof window !== "undefined") {
     try {
       const activePurchases = JSON.parse(
         localStorage.getItem("mindmaster_active_purchases") || "{}"
@@ -1084,11 +1154,13 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
 
   // 5. Log to Staff Audit Log
   logStaffAction(
-    "OFFLINE_CASH_ADMISSION",
+    requiresApproval ? "OFFLINE_ADMISSION_PENDING" : "OFFLINE_CASH_ADMISSION",
     "grant",
     grantId,
     itemTitle || "Admission",
-    `Granted offline admission to ${studentName} (${cleanPhone}) for ${itemTitle}. Mode: ${modeLabel}, Fee Collected: ₹${params.amountPaid}. Valid until: ${endsAt.slice(0, 10)}.`
+    requiresApproval
+      ? `Sub-Admin submitted offline admission for ${studentName} (${cleanPhone}) for ${itemTitle}. Mode: ${modeLabel}, Fee: ₹${params.amountPaid}. Status: Pending Main Admin Approval.`
+      : `Granted offline admission to ${studentName} (${cleanPhone}) for ${itemTitle}. Mode: ${modeLabel}, Fee Collected: ₹${params.amountPaid}. Valid until: ${endsAt.slice(0, 10)}.`
   );
 
   const supabase = getSupabase();
@@ -1104,10 +1176,12 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
         granted_by: currentStaff.staffId || currentStaff.id,
         granted_by_name: currentStaff.name,
         payment_mode: params.paymentMode,
+        upi_ref: params.upiRef?.trim() || null,
         amount_paid: params.amountPaid,
+        settlement_status: settlementStatus,
         valid_until: endsAt,
         remarks: params.remarks || null,
-        status: "active",
+        status: grantStatus,
         whatsapp_sent: false,
       }).then(({ error }: any) => {
         if (error) console.warn("Supabase course_grants insert error:", error.message);
@@ -1115,21 +1189,24 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     } catch {}
   }
 
-  // 6. Send In-App Notification to Student
-  try {
-    addStudentNotification({
-      userId: student.id,
-      title: "🎉 Course Admission Confirmed!",
-      body: `Prashant Sir has granted you full access to "${itemTitle}". Start learning now!`,
-      type: "course",
-      actionUrl: isBook ? "/books" : isAllCourses ? "/courses" : `/watch/${course?.id || ""}`,
-    });
-  } catch (e) {
-    console.warn("Notification error:", e);
+  // 6. Send In-App Notification to Student (if active)
+  if (grantStatus === "active") {
+    try {
+      addStudentNotification({
+        userId: student.id,
+        title: "🎉 Course Admission Confirmed!",
+        body: `Prashant Sir has granted you full access to "${itemTitle}". Start learning now!`,
+        type: "course",
+        actionUrl: isBook ? "/books" : isAllCourses ? "/courses" : `/watch/${course?.id || ""}`,
+      });
+    } catch (e) {
+      console.warn("Notification error:", e);
+    }
   }
 
   // 7. Generate Pre-filled WhatsApp Share Message
-  const receiptText = `Hello ${studentName}!\n\nYour admission to "${itemTitle}" at MindMaster Academy is confirmed. ✅\n\n💵 Fee Paid: ₹${params.amountPaid} (${modeLabel})\n⏱️ Validity: ${validityText}\n📱 Login Mobile: ${cleanPhone}\n\n📲 Start learning in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! 🌟\n— Prashant Dhumal Sir, MindMaster Academy`;
+  const approvalNotice = requiresApproval ? "\n⏳ Status: Verification Pending by HQ (Will activate shortly)" : "";
+  const receiptText = `Hello ${studentName}!\n\nYour admission to "${itemTitle}" at MindMaster Academy is recorded. ✅\n\n💵 Fee Paid: ₹${params.amountPaid} (${modeLabel})${approvalNotice}\n⏱️ Validity: ${validityText}\n📱 Login Mobile: ${cleanPhone}\n\n📲 Access portal in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! 🌟\n— MindMaster Academy`;
   const whatsappUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(receiptText)}`;
 
   return {
@@ -1140,6 +1217,7 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     whatsappUrl,
     receiptText,
     expiresAt: endsAt,
+    isPendingApproval: requiresApproval,
   };
 }
 
@@ -1572,4 +1650,336 @@ export async function revokeStudentAccess(params: {
   );
 
   return { success: true };
+}
+
+// ----------------------------------------------------
+// MAKER-CHECKER APPROVAL QUEUE & CASH SETTLEMENT LEDGER
+// ----------------------------------------------------
+
+export interface SubAdminCashSummary {
+  staffId: string;
+  staffName: string;
+  totalCashCollected: number;
+  unsettledCash: number;
+  settledCash: number;
+  unsettledGrantsCount: number;
+  totalGrantsCount: number;
+  lastSettledAt?: string;
+}
+
+export function getPendingGrantApprovals(): Grant[] {
+  const grants = getGrants();
+  return grants.filter((g) => g.status === "pending_approval");
+}
+
+export function approveGrant(grantId: string): boolean {
+  const currentStaff = getCurrentStaff();
+  if (currentStaff.role !== "main_admin") {
+    throw new Error("Unauthorized: Only Main Admin can approve pending grants.");
+  }
+  const grants = getGrants();
+  const grant = grants.find((g) => g.id === grantId);
+  if (!grant) return false;
+  if (grant.status !== "pending_approval") return false;
+
+  const nowIso = new Date().toISOString();
+  const updatedGrants = grants.map((g) =>
+    g.id === grantId
+      ? {
+          ...g,
+          status: "active" as const,
+          approved_at: nowIso,
+          approvedAt: nowIso,
+          approved_by: currentStaff.id,
+          approvedBy: currentStaff.id,
+        }
+      : g
+  );
+  saveGrants(updatedGrants);
+
+  // Activate grant purchases
+  const purchases = getGrantPurchases();
+  const updatedPurchases = purchases.map((p) =>
+    p.grant_id === grantId || p.grantId === grantId
+      ? { ...p, status: "active" as const }
+      : p
+  );
+  saveGrantPurchases(updatedPurchases);
+
+  // Instant unlock in client localStorage
+  if (typeof window !== "undefined") {
+    try {
+      const activePurchases = JSON.parse(
+        localStorage.getItem("mindmaster_active_purchases") || "{}"
+      );
+      const endsAt = grant.ends_at || grant.endsAt;
+      if (grant.course_scope === "all") {
+        const courses = getStaffCourses();
+        courses.forEach((c) => {
+          activePurchases[c.id] = endsAt;
+          if (c.code) activePurchases[c.code] = endsAt;
+        });
+        activePurchases["all"] = endsAt;
+      } else if (grant.book_id || grant.bookId) {
+        const bId = grant.book_id || grant.bookId!;
+        activePurchases[bId] = endsAt;
+      } else if (grant.course_id || grant.courseId) {
+        const cId = grant.course_id || grant.courseId!;
+        activePurchases[cId] = endsAt;
+      }
+      localStorage.setItem("mindmaster_active_purchases", JSON.stringify(activePurchases));
+      window.dispatchEvent(new Event("storage"));
+    } catch (e) {}
+  }
+
+  // Update Supabase
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      supabase
+        .from("course_grants")
+        .update({
+          status: "active",
+          approved_at: nowIso,
+          approved_by: currentStaff.id,
+        })
+        .eq("id", grantId)
+        .then(() => {});
+    } catch {}
+  }
+
+  logStaffAction(
+    "GRANT_APPROVE",
+    "grant",
+    grantId,
+    grant.courseTitle || "Grant",
+    `Main Admin approved admission grant ${grantId} for ${grant.student_name || grant.scope_value} (Fee: ₹${grant.amount_paid || 0}).`
+  );
+
+  return true;
+}
+
+export function rejectGrant(grantId: string, reason?: string): boolean {
+  const currentStaff = getCurrentStaff();
+  if (currentStaff.role !== "main_admin") {
+    throw new Error("Unauthorized: Only Main Admin can reject pending grants.");
+  }
+  const grants = getGrants();
+  const grant = grants.find((g) => g.id === grantId);
+  if (!grant) return false;
+
+  const nowIso = new Date().toISOString();
+  const updatedGrants = grants.map((g) =>
+    g.id === grantId
+      ? {
+          ...g,
+          status: "rejected" as const,
+          rejection_reason: reason || "Rejected by Main Admin",
+          rejectionReason: reason || "Rejected by Main Admin",
+        }
+      : g
+  );
+  saveGrants(updatedGrants);
+
+  const purchases = getGrantPurchases();
+  const updatedPurchases = purchases.map((p) =>
+    p.grant_id === grantId || p.grantId === grantId
+      ? { ...p, status: "rejected" as const }
+      : p
+  );
+  saveGrantPurchases(updatedPurchases);
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      supabase
+        .from("course_grants")
+        .update({
+          status: "rejected",
+          remarks: `Rejected: ${reason || "By Main Admin"}`,
+        })
+        .eq("id", grantId)
+        .then(() => {});
+    } catch {}
+  }
+
+  logStaffAction(
+    "GRANT_REJECT",
+    "grant",
+    grantId,
+    grant.courseTitle || "Grant",
+    `Main Admin rejected admission grant ${grantId} for ${grant.student_name || grant.scope_value}. Reason: ${reason || "N/A"}`
+  );
+
+  return true;
+}
+
+export function getSubAdminCashSettlements(): SubAdminCashSummary[] {
+  const grants = getGrants();
+  const staffUsers = getStaffUsers();
+  const staffMap = new Map<string, SubAdminCashSummary>();
+
+  // Initialize map with all sub-admins
+  staffUsers
+    .filter((s) => s.role !== "main_admin")
+    .forEach((s) => {
+      const key = s.id;
+      staffMap.set(key, {
+        staffId: s.staffId || s.id,
+        staffName: s.name,
+        totalCashCollected: 0,
+        unsettledCash: 0,
+        settledCash: 0,
+        unsettledGrantsCount: 0,
+        totalGrantsCount: 0,
+      });
+    });
+
+  grants.forEach((g) => {
+    const authorId = g.created_by || g.createdBy;
+    if (!authorId) return;
+
+    let entry = staffMap.get(authorId);
+    if (!entry) {
+      const foundKey = Array.from(staffMap.entries()).find(
+        ([, v]) => v.staffId === authorId || v.staffName.toLowerCase() === g.createdByName?.toLowerCase()
+      );
+      if (foundKey) entry = staffMap.get(foundKey[0]);
+    }
+    if (!entry) return;
+
+    if (g.payment_mode === "cash" || g.paymentMode === "cash") {
+      const amt = Number(g.amount_paid || g.amountPaid || 0);
+      const isSettled = g.settlement_status === "settled" || g.settlementStatus === "settled";
+
+      entry.totalCashCollected += amt;
+      entry.totalGrantsCount += 1;
+      if (isSettled) {
+        entry.settledCash += amt;
+        if (g.settled_at && (!entry.lastSettledAt || g.settled_at > entry.lastSettledAt)) {
+          entry.lastSettledAt = g.settled_at;
+        }
+      } else {
+        entry.unsettledCash += amt;
+        entry.unsettledGrantsCount += 1;
+      }
+    }
+  });
+
+  return Array.from(staffMap.values());
+}
+
+export function settleSubAdminCash(staffIdentifier: string): number {
+  const currentStaff = getCurrentStaff();
+  if (currentStaff.role !== "main_admin") {
+    throw new Error("Unauthorized: Only Main Admin can settle cash.");
+  }
+  const grants = getGrants();
+  const nowIso = new Date().toISOString();
+  let settledAmount = 0;
+  let settledCount = 0;
+
+  const updatedGrants = grants.map((g) => {
+    const isMatchingStaff =
+      g.created_by === staffIdentifier ||
+      g.createdBy === staffIdentifier ||
+      (g as any).granted_by === staffIdentifier ||
+      g.createdByName?.toLowerCase() === staffIdentifier.toLowerCase();
+    const isCash = g.payment_mode === "cash" || g.paymentMode === "cash";
+    const isUnsettled = g.settlement_status !== "settled" && g.settlementStatus !== "settled";
+
+    if (isMatchingStaff && isCash && isUnsettled) {
+      const amt = Number(g.amount_paid || g.amountPaid || 0);
+      settledAmount += amt;
+      settledCount++;
+      return {
+        ...g,
+        settlement_status: "settled" as const,
+        settlementStatus: "settled" as const,
+        settled_at: nowIso,
+        settledAt: nowIso,
+        settled_by: currentStaff.id,
+        settledBy: currentStaff.id,
+        settled_by_name: currentStaff.name,
+      };
+    }
+    return g;
+  });
+
+  saveGrants(updatedGrants);
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      supabase
+        .from("course_grants")
+        .update({ settlement_status: "settled", settled_at: nowIso, settled_by: currentStaff.id })
+        .eq("payment_mode", "cash")
+        .eq("settlement_status", "unsettled")
+        .or(`granted_by.eq.${staffIdentifier},created_by.eq.${staffIdentifier}`)
+        .then(() => {});
+    } catch {}
+  }
+
+  logStaffAction(
+    "CASH_SETTLEMENT",
+    "grant",
+    staffIdentifier,
+    "Cash Settlement",
+    `Main Admin settled ₹${settledAmount.toLocaleString("en-IN")} cash collected across ${settledCount} grant(s) for staff ${staffIdentifier}.`
+  );
+
+  return settledAmount;
+}
+
+export function settleSingleGrant(grantId: string): boolean {
+  const currentStaff = getCurrentStaff();
+  if (currentStaff.role !== "main_admin") {
+    throw new Error("Unauthorized: Only Main Admin can settle cash.");
+  }
+  const grants = getGrants();
+  const grant = grants.find((g) => g.id === grantId);
+  if (!grant) return false;
+  const nowIso = new Date().toISOString();
+
+  const updatedGrants = grants.map((g) =>
+    g.id === grantId
+      ? {
+          ...g,
+          settlement_status: "settled" as const,
+          settlementStatus: "settled" as const,
+          settled_at: nowIso,
+          settledAt: nowIso,
+          settled_by: currentStaff.id,
+          settledBy: currentStaff.id,
+          settled_by_name: currentStaff.name,
+        }
+      : g
+  );
+  saveGrants(updatedGrants);
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      supabase
+        .from("course_grants")
+        .update({
+          settlement_status: "settled",
+          settled_at: nowIso,
+          settled_by: currentStaff.id,
+        })
+        .eq("id", grantId)
+        .then(() => {});
+    } catch {}
+  }
+
+  logStaffAction(
+    "CASH_SETTLEMENT_SINGLE",
+    "grant",
+    grantId,
+    grant.courseTitle || "Grant",
+    `Main Admin marked ₹${grant.amount_paid || 0} cash settled for grant ${grantId}.`
+  );
+
+  return true;
 }

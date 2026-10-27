@@ -319,6 +319,64 @@ export function toggleStaffStatus(staffId: string): void {
   }
 }
 
+export function freezeAllSubAdmins(): number {
+  const current = getCurrentStaff();
+  if (current.role !== "main_admin") {
+    safeAlert("Unauthorized: Only Main Admin can freeze staff.");
+    return 0;
+  }
+  const users = getStaffUsers();
+  let frozenCount = 0;
+  const updated = users.map((u) => {
+    if (u.role !== "main_admin" && u.staffId !== "MMA-000") {
+      frozenCount++;
+      return { ...u, status: "suspended" as const };
+    }
+    return u;
+  });
+  safeSetItem(KEYS.STAFF_USERS, updated);
+  logStaffAction(
+    "SUBADMIN_BULK_FREEZE",
+    "subadmin",
+    "all",
+    "Bulk Freeze",
+    `Main Admin froze all ${frozenCount} sub-admin accounts.`
+  );
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("mma_staff_changed"));
+  }
+  return frozenCount;
+}
+
+export function unfreezeAllSubAdmins(): number {
+  const current = getCurrentStaff();
+  if (current.role !== "main_admin") {
+    safeAlert("Unauthorized: Only Main Admin can unfreeze staff.");
+    return 0;
+  }
+  const users = getStaffUsers();
+  let unfrozenCount = 0;
+  const updated = users.map((u) => {
+    if (u.role !== "main_admin" && u.staffId !== "MMA-000") {
+      unfrozenCount++;
+      return { ...u, status: "active" as const };
+    }
+    return u;
+  });
+  safeSetItem(KEYS.STAFF_USERS, updated);
+  logStaffAction(
+    "SUBADMIN_BULK_UNFREEZE",
+    "subadmin",
+    "all",
+    "Bulk Unfreeze",
+    `Main Admin unfroze all ${unfrozenCount} sub-admin accounts.`
+  );
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("mma_staff_changed"));
+  }
+  return unfrozenCount;
+}
+
 export function deleteStaffUser(staffId: string): void {
   const current = getCurrentStaff();
   if (current.role !== "main_admin") {

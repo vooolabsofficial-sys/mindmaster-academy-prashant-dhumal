@@ -577,6 +577,7 @@ export async function getAvailableCoupons(params: {
       if (dbCoupons && Array.isArray(dbCoupons)) {
         for (const c of dbCoupons) {
           if (c.status === "disabled" || c.status === "paused" || c.status === "expired") continue;
+          if (c.is_public_chip === false || c.isPublicChip === false) continue;
           if (c.starts_at && new Date(c.starts_at) > now) continue;
           if (c.ends_at && new Date(c.ends_at) < now) continue;
           if (c.usage_limit && (c.used_count || 0) >= c.usage_limit) continue;
@@ -639,6 +640,7 @@ export async function getAvailableCoupons(params: {
   for (const c of staffCoupons) {
     if (seenCodes.has(c.code.toUpperCase())) continue;
     if (c.is_active === false || c.status === "disabled" || c.status === "paused" || c.status === "expired") continue;
+    if (c.is_public_chip === false || (c as any).isPublicChip === false) continue;
     if (c.starts_at && new Date(c.starts_at) > now) continue;
     if (c.ends_at && new Date(c.ends_at) < now) continue;
     const maxUses = c.maxTotalUses || c.usage_limit || 500;

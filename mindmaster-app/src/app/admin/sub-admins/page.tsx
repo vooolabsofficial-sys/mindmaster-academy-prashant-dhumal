@@ -9,11 +9,37 @@ import {
   getStaffUsers,
   saveStaffUser,
   toggleStaffStatus,
+  freezeAllSubAdmins,
+  unfreezeAllSubAdmins,
   deleteStaffUser,
   getAuditLogs,
   getPlatformSettings,
   PlatformSettings,
 } from "@/lib/staffStore";
+import { getSubAdminCashSettlements, settleSubAdminCash, SubAdminCashSummary } from "@/lib/grantStore";
+
+const MAHARASHTRA_DISTRICTS = [
+  "Pune",
+  "Satara",
+  "Kolhapur",
+  "Solapur",
+  "Sangli",
+  "Ahmednagar",
+  "Nashik",
+  "Thane",
+  "Mumbai",
+  "Chhatrapati Sambhajinagar",
+  "Nagpur",
+  "Amravati",
+  "Nanded",
+  "Jalgaon",
+  "Latur",
+  "Dhule",
+  "Beed",
+  "Raigad",
+  "Ratnagiri",
+  "Sindhudurg",
+];
 
 const ALL_PERMISSIONS: { key: StaffPermission; label: string; desc: string; icon: string }[] = [
   {
@@ -65,10 +91,13 @@ export default function SubAdminManagerPage() {
   const [staffList, setStaffList] = useState<StaffUser[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [settings, setSettings] = useState<PlatformSettings>(getPlatformSettings());
+  const [cashSettlements, setCashSettlements] = useState<SubAdminCashSummary[]>([]);
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
 
   // Filters State for Sub-Admins
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended" | "has_cash">("all");
+  const [districtFilter, setDistrictFilter] = useState<string>("all");
   const [permissionFilter, setPermissionFilter] = useState<string>("all");
 
   // Slide-over Drawer State
@@ -79,6 +108,9 @@ export default function SubAdminManagerPage() {
   const [formName, setFormName] = useState("");
   const [formEmail, setFormEmail] = useState("");
   const [formPhone, setFormPhone] = useState("");
+  const [formDistrict, setFormDistrict] = useState("Pune");
+  const [formCentre, setFormCentre] = useState("");
+  const [formApprovalMode, setFormApprovalMode] = useState(false);
   const [formPermissions, setFormPermissions] = useState<StaffPermission[]>([]);
   const [formMustReset, setFormMustReset] = useState(true);
 
@@ -105,15 +137,18 @@ export default function SubAdminManagerPage() {
     setStaffList(getStaffUsers());
     setAuditLogs(getAuditLogs());
     setSettings(getPlatformSettings());
+    setCashSettlements(getSubAdminCashSettlements());
   };
 
   useEffect(() => {
     reloadData();
     window.addEventListener("mma_staff_changed", reloadData);
     window.addEventListener("mma_settings_changed", reloadData);
+    window.addEventListener("mma_grants_changed", reloadData);
     return () => {
       window.removeEventListener("mma_staff_changed", reloadData);
       window.removeEventListener("mma_settings_changed", reloadData);
+      window.removeEventListener("mma_grants_changed", reloadData);
     };
   }, []);
 
@@ -156,6 +191,9 @@ export default function SubAdminManagerPage() {
     setFormName("");
     setFormEmail("");
     setFormPhone("+91 ");
+    setFormDistrict("Pune");
+    setFormCentre("");
+    setFormApprovalMode(false);
     setFormPermissions(["messages.manage", "students.view"]);
     setFormMustReset(true);
     setIsDrawerOpen(true);
@@ -166,6 +204,9 @@ export default function SubAdminManagerPage() {
     setFormName(staff.name);
     setFormEmail(staff.email);
     setFormPhone(staff.phone);
+    setFormDistrict(staff.district || "Pune");
+    setFormCentre(staff.centre || "");
+    setFormApprovalMode(staff.approvalMode || false);
     setFormPermissions(staff.permissions);
     setFormMustReset(staff.mustChangePassword || false);
     setIsDrawerOpen(true);
@@ -190,6 +231,9 @@ export default function SubAdminManagerPage() {
         name: formName.trim(),
         email: formEmail.trim() || `${formName.trim().toLowerCase().replace(/\s+/g, ".")}@mindmasteracademy.in`,
         phone: formPhone.trim(),
+        district: formDistrict,
+        centre: formCentre.trim() || undefined,
+        approvalMode: formApprovalMode,
         permissions: formPermissions,
         mustChangePassword: formMustReset,
       };
@@ -207,6 +251,9 @@ export default function SubAdminManagerPage() {
         name: formName.trim(),
         email: formEmail.trim() || `${formName.trim().toLowerCase().replace(/\s+/g, ".")}@mindmasteracademy.in`,
         phone: formPhone.trim(),
+        district: formDistrict,
+        centre: formCentre.trim() || undefined,
+        approvalMode: formApprovalMode,
         role: "sub_admin",
         permissions: formPermissions,
         status: "active",
@@ -235,6 +282,36 @@ export default function SubAdminManagerPage() {
     reloadData();
   };
 
+  const handleFreezeAll = () => {
+    if (!confirm("⚠️ Emergency Bulk Freeze: Are you sure you want to suspend ALL Sub-Admins immediately? This will instantly terminate their active sessions.")) {
+      return;
+    }
+    const count = freezeAllSubAdmins();
+    setActionFeedback(`Froze all ${count} Sub-Admin accounts successfully.`);
+    setTimeout(() => setActionFeedback(null), 3500);
+    reloadData();
+  };
+
+  const handleUnfreezeAll = () => {
+    if (!confirm("▶️ Bulk Unfreeze: Re-activate all Sub-Admin accounts?")) {
+      return;
+    }
+    const count = unfreezeAllSubAdmins();
+    setActionFeedback(`Re-activated all ${count} Sub-Admin accounts successfully.`);
+    setTimeout(() => setActionFeedback(null), 3500);
+    reloadData();
+  };
+
+  const handleSettleCash = (staffId: string) => {
+    if (!confirm(`Settle cash collected by Sub-Admin ${staffId}? This marks physical cash as received at HQ.`)) {
+      return;
+    }
+    const amt = settleSubAdminCash(staffId);
+    setActionFeedback(`Settled ₹${amt.toLocaleString("en-IN")} cash handover successfully!`);
+    setTimeout(() => setActionFeedback(null), 3500);
+    reloadData();
+  };
+
   const handleConfirmDelete = () => {
     if (!deleteModalStaff) return;
     deleteStaffUser(deleteModalStaff.id);
@@ -259,7 +336,13 @@ export default function SubAdminManagerPage() {
       s.name.toLowerCase().includes(query) ||
       s.email.toLowerCase().includes(query) ||
       s.phone.includes(query) ||
-      (s.staffId && s.staffId.toLowerCase().includes(query));
+      (s.staffId && s.staffId.toLowerCase().includes(query)) ||
+      (s.district && s.district.toLowerCase().includes(query)) ||
+      (s.centre && s.centre.toLowerCase().includes(query));
+
+    // District Filter
+    const matchesDistrict =
+      districtFilter === "all" || (s.district && s.district.toLowerCase() === districtFilter.toLowerCase());
 
     // Status Filter
     let matchesStatus = true;
@@ -267,6 +350,11 @@ export default function SubAdminManagerPage() {
       matchesStatus = s.status === "active";
     } else if (statusFilter === "suspended") {
       matchesStatus = s.status === "suspended" || s.status === "inactive";
+    } else if (statusFilter === "has_cash") {
+      const settlement = cashSettlements.find(
+        (cs) => cs.staffId === (s.staffId || s.id) || cs.staffName.toLowerCase() === s.name.toLowerCase()
+      );
+      matchesStatus = Boolean(settlement && settlement.unsettledCash > 0);
     }
 
     // Permission Filter
@@ -279,7 +367,7 @@ export default function SubAdminManagerPage() {
       }
     }
 
-    return matchesSearch && matchesStatus && matchesPermission;
+    return matchesSearch && matchesDistrict && matchesStatus && matchesPermission;
   });
 
   // Filter Audit Logs
@@ -333,25 +421,54 @@ export default function SubAdminManagerPage() {
                 </div>
               </div>
               <p className="text-xs text-[#5A6478] mt-1.5">
-                Provision staff members, configure granular permissions, suspend with instant session kill, and monitor audit trail.
+                Scale 50-60+ centre heads &amp; sub-admins, configure district assignment, Maker-Checker admissions, and track physical cash settlements.
               </p>
             </div>
 
-            <button
-              onClick={handleOpenAdd}
-              id="add-subadmin-btn"
-              disabled={quotaReached}
-              className={`px-5 py-2.5 rounded-full text-xs font-bold shadow-md transition-all flex items-center gap-2 self-start sm:self-auto ${
-                quotaReached
-                  ? "bg-slate-200 text-slate-500 cursor-not-allowed"
-                  : "bg-[#0B57D0] hover:bg-[#0842A0] text-white hover:shadow-lg cursor-pointer"
-              }`}
-            >
-              <span className="text-base leading-none">➕</span> Add New Sub-Admin
-            </button>
+            <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+              {/* Emergency Bulk Freeze / Unfreeze */}
+              <button
+                type="button"
+                onClick={handleFreezeAll}
+                className="px-3.5 py-2 rounded-full text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Emergency Freeze: Immediately suspend all Sub-Admins and kill active sessions"
+              >
+                <span>❄️</span> Freeze All
+              </button>
+              <button
+                type="button"
+                onClick={handleUnfreezeAll}
+                className="px-3.5 py-2 rounded-full text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Bulk Unfreeze: Re-activate all Sub-Admin accounts"
+              >
+                <span>▶️</span> Unfreeze All
+              </button>
+              <button
+                onClick={handleOpenAdd}
+                id="add-subadmin-btn"
+                disabled={quotaReached}
+                className={`px-5 py-2.5 rounded-full text-xs font-bold shadow-md transition-all flex items-center gap-2 ${
+                  quotaReached
+                    ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                    : "bg-[#0B57D0] hover:bg-[#0842A0] text-white hover:shadow-lg cursor-pointer"
+                }`}
+              >
+                <span className="text-base leading-none">➕</span> Add New Sub-Admin
+              </button>
+            </div>
           </div>
 
-          {/* Filters Bar: Search + Status + Permission Chips */}
+          {/* Action Feedback Banner */}
+          {actionFeedback && (
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between shadow-xs animate-fadeIn">
+              <span className="flex items-center gap-2">
+                <span>✅</span> {actionFeedback}
+              </span>
+              <button onClick={() => setActionFeedback(null)} className="text-emerald-700 hover:text-emerald-950 font-bold">✕</button>
+            </div>
+          )}
+
+          {/* Filters Bar: Search + District + Status + Permission Chips */}
           <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               {/* Search Bar */}
@@ -363,7 +480,7 @@ export default function SubAdminManagerPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search name, MMA ID, phone, email..."
+                  placeholder="Search name, MMA ID, phone, district, centre..."
                   className="w-full pl-9 pr-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-full text-xs text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0] transition-all"
                 />
                 {searchQuery && (
@@ -376,6 +493,22 @@ export default function SubAdminManagerPage() {
                 )}
               </div>
 
+              {/* District Filter Dropdown */}
+              <div className="w-full md:w-56">
+                <select
+                  value={districtFilter}
+                  onChange={(e) => setDistrictFilter(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-full text-xs font-bold text-[#0E1B3D] focus:outline-none"
+                >
+                  <option value="all">📍 All Districts ({MAHARASHTRA_DISTRICTS.length})</option>
+                  {MAHARASHTRA_DISTRICTS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Status Chips */}
               <div className="flex items-center gap-2 flex-wrap self-start md:self-auto">
                 <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mr-1">
@@ -385,6 +518,10 @@ export default function SubAdminManagerPage() {
                   { key: "all", label: "All Status" },
                   { key: "active", label: "Active" },
                   { key: "suspended", label: "Suspended" },
+                  {
+                    key: "has_cash",
+                    label: `💰 Has Cash (${cashSettlements.filter((cs) => cs.unsettledCash > 0).length})`,
+                  },
                 ].map((chip) => {
                   const isActive = statusFilter === chip.key;
                   return (
@@ -445,10 +582,12 @@ export default function SubAdminManagerPage() {
                 <thead>
                   <tr className="border-b border-[#E4E8F8] text-[#8A94A6] uppercase tracking-wider font-semibold">
                     <th className="pb-3.5 pl-3">Staff ID</th>
-                    <th className="pb-3.5">Staff Member</th>
+                    <th className="pb-3.5">Staff Member &amp; Location</th>
                     <th className="pb-3.5">Assigned Permissions</th>
+                    <th className="pb-3.5">Mode</th>
+                    <th className="pb-3.5">Cash in Hand</th>
                     <th className="pb-3.5">Status</th>
-                    <th className="pb-3.5">Suspend Toggle</th>
+                    <th className="pb-3.5">Suspend</th>
                     <th className="pb-3.5 text-right pr-3">Actions</th>
                   </tr>
                 </thead>
@@ -456,6 +595,11 @@ export default function SubAdminManagerPage() {
                   {filteredStaff.map((staff) => {
                     const isRoot = staff.role === "main_admin";
                     const isSuspended = staff.status === "suspended" || staff.status === "inactive";
+
+                    const settlement = cashSettlements.find(
+                      (cs) => cs.staffId === (staff.staffId || staff.id) || cs.staffName.toLowerCase() === staff.name.toLowerCase()
+                    );
+                    const unsettledCash = settlement ? settlement.unsettledCash : 0;
 
                     return (
                       <tr key={staff.id} className="hover:bg-[#F9FAFF] transition-colors group">
@@ -466,7 +610,7 @@ export default function SubAdminManagerPage() {
                           </span>
                         </td>
 
-                        {/* 2. Staff Member Details */}
+                        {/* 2. Staff Member Details & District/Centre */}
                         <td className="py-4">
                           <div className="flex items-center gap-3">
                             <div className={`w-9 h-9 rounded-full font-bold flex items-center justify-center text-xs ${
@@ -488,6 +632,18 @@ export default function SubAdminManagerPage() {
                               <p className="text-[#5A6478] text-[11px] mt-0.5">
                                 {staff.phone} • {staff.email}
                               </p>
+                              {!isRoot && (
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                                    📍 {staff.district || "Pune"}
+                                  </span>
+                                  {staff.centre && (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                                      🏢 {staff.centre}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -514,8 +670,47 @@ export default function SubAdminManagerPage() {
                           )}
                         </td>
 
-                        {/* 4. Status Badge */}
-                        <td className="py-4">
+                        {/* 4. Maker-Checker Governance Mode */}
+                        <td className="py-4 whitespace-nowrap">
+                          {isRoot ? (
+                            <span className="text-[10px] text-[#8A94A6]">—</span>
+                          ) : staff.approvalMode ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-900 border border-amber-300">
+                              ⏳ Approval Mode
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              ⚡ Direct Mode
+                            </span>
+                          )}
+                        </td>
+
+                        {/* 5. Cash in Hand & 1-Click Settle */}
+                        <td className="py-4 whitespace-nowrap">
+                          {isRoot ? (
+                            <span className="text-[10px] text-[#8A94A6]">—</span>
+                          ) : unsettledCash > 0 ? (
+                            <div>
+                              <span className="font-extrabold text-amber-950 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full text-[10px]">
+                                💰 ₹{unsettledCash.toLocaleString("en-IN")}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleSettleCash(staff.staffId || staff.id)}
+                                className="block mt-1 text-[10px] font-bold text-[#0B57D0] hover:underline cursor-pointer"
+                              >
+                                Settle Cash
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              ✅ Settled
+                            </span>
+                          )}
+                        </td>
+
+                        {/* 6. Status Badge */}
+                        <td className="py-4 whitespace-nowrap">
                           {isSuspended ? (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
                               ● Suspended
@@ -527,7 +722,7 @@ export default function SubAdminManagerPage() {
                           )}
                         </td>
 
-                        {/* 5. Suspend Toggle (Instant Session Kill) */}
+                        {/* 7. Suspend Toggle (Instant Session Kill) */}
                         <td className="py-4">
                           {isRoot ? (
                             <span className="text-[11px] text-slate-400 italic">Protected</span>
@@ -549,8 +744,8 @@ export default function SubAdminManagerPage() {
                           )}
                         </td>
 
-                        {/* 6. Edit & Admin-only Delete */}
-                        <td className="py-4 text-right pr-3">
+                        {/* 8. Edit & Admin-only Delete */}
+                        <td className="py-4 text-right pr-3 whitespace-nowrap">
                           {isRoot ? (
                             <span className="text-[11px] text-[#8A94A6] italic pr-2">Root Account</span>
                           ) : (
@@ -812,6 +1007,61 @@ export default function SubAdminManagerPage() {
                           className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                         />
                       </div>
+                    </div>
+
+                    {/* District & Centre / Branch */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                          📍 Assigned District *
+                        </label>
+                        <select
+                          value={formDistrict}
+                          onChange={(e) => setFormDistrict(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                        >
+                          {MAHARASHTRA_DISTRICTS.map((d) => (
+                            <option key={d} value={d}>
+                              {d}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                          🏢 Centre / Branch Name
+                        </label>
+                        <input
+                          type="text"
+                          value={formCentre}
+                          onChange={(e) => setFormCentre(e.target.value)}
+                          placeholder="e.g. Swargate Centre / Main Branch"
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Maker-Checker Admission Governance Toggle */}
+                    <div className="p-3.5 bg-[#EEF4FF] border border-[#D0E2FF] rounded-2xl flex items-center justify-between text-xs">
+                      <div>
+                        <p className="font-bold text-[#0B57D0] flex items-center gap-1.5">
+                          <span>⏳</span> Maker-Checker Approval Mode
+                        </p>
+                        <p className="text-[11px] text-[#5A6478] mt-0.5">
+                          {formApprovalMode
+                            ? "Approval Mode: Offline admissions by this sub-admin require Prashant Sir's approval before activating."
+                            : "Direct Mode: Offline admissions activate student course access immediately."}
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formApprovalMode}
+                          onChange={(e) => setFormApprovalMode(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0B57D0]"></div>
+                      </label>
                     </div>
 
                     {/* Permissions Checkboxes */}

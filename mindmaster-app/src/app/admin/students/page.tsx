@@ -114,6 +114,7 @@ export default function StudentFinderPage() {
   const [cashFixedDate, setCashFixedDate] = useState<string>("");
   const [cashAccessMonths, setCashAccessMonths] = useState(6);
   const [cashPaymentMode, setCashPaymentMode] = useState<"cash" | "upi" | "scholarship">("cash");
+  const [cashUpiRef, setCashUpiRef] = useState("");
   const [cashAmount, setCashAmount] = useState(199);
   const [cashRemarks, setCashRemarks] = useState("");
   const [cashSuccessReceipt, setCashSuccessReceipt] = useState<{
@@ -199,6 +200,7 @@ export default function StudentFinderPage() {
     setCashFixedDate("");
     setCashAccessMonths(defaultCourse?.accessMonths || 6);
     setCashPaymentMode("cash");
+    setCashUpiRef("");
     setCashAmount(defaultPrice);
     setCashRemarks("");
     setCashError("");
@@ -221,6 +223,22 @@ export default function StudentFinderPage() {
       return;
     }
 
+    if (currentStaff.role === "sub_admin") {
+      if (cashPaymentMode === "scholarship" || cashAmount <= 0) {
+        setCashError("Sub-Admins are strictly locked from issuing ₹0 Free Scholarships. Only Main Admin (Prashant Sir) can grant scholarships.");
+        return;
+      }
+      if (cashPaymentMode === "upi" && !cashUpiRef.trim()) {
+        setCashError("Mandatory UPI Reference (UTR) number is required for UPI admissions.");
+        return;
+      }
+    }
+
+    if (cashPaymentMode === "upi" && !cashUpiRef.trim()) {
+      setCashError("Please enter the UPI Reference / UTR number.");
+      return;
+    }
+
     const isAllCourses = cashCourseId === "all";
     const courseList = getStaffCourses();
     const bookList = getStaffBooks();
@@ -237,6 +255,7 @@ export default function StudentFinderPage() {
       customExpiryDate: cashValidityMode === "fixed_date" ? cashFixedDate : undefined,
       accessMonths: cashAccessMonths,
       paymentMode: cashPaymentMode,
+      upiRef: cashUpiRef.trim() || undefined,
       amountPaid: cashAmount,
       remarks: cashRemarks.trim() || undefined,
     });
@@ -256,7 +275,7 @@ export default function StudentFinderPage() {
         cashPaymentMode === "cash"
           ? "Cash"
           : cashPaymentMode === "upi"
-          ? "Direct UPI (PhonePe/GPay)"
+          ? `Direct UPI (${cashUpiRef.trim()})`
           : "Free Grant / Scholarship",
       expiresAt: result.expiresAt,
       whatsappUrl: result.whatsappUrl,
@@ -1914,21 +1933,53 @@ export default function StudentFinderPage() {
                         </label>
                         <select
                           value={cashPaymentMode}
-                          onChange={(e) => setCashPaymentMode(e.target.value as any)}
+                          onChange={(e) => {
+                            const mode = e.target.value as any;
+                            setCashPaymentMode(mode);
+                            if (mode === "scholarship") setCashAmount(0);
+                            else if (cashAmount === 0) setCashAmount(199);
+                          }}
                           className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none"
                         >
-                          <option value="cash">Cash</option>
-                          <option value="upi">Direct UPI (PhonePe/GPay)</option>
-                          <option value="scholarship">Free Grant / Scholarship</option>
+                          <option value="cash">💵 Cash Collected</option>
+                          <option value="upi">📱 Direct UPI (PhonePe/GPay)</option>
+                          {currentStaff.role === "main_admin" && (
+                            <option value="scholarship">🎓 Free Grant / Scholarship (₹0)</option>
+                          )}
                         </select>
+                        {currentStaff.role === "sub_admin" && (
+                          <p className="text-[10px] text-amber-700 font-semibold mt-1">
+                            🔒 No-Free Lock: Sub-Admins cannot issue ₹0 scholarships.
+                          </p>
+                        )}
                       </div>
                     </div>
+
+                    {/* Mandatory UPI UTR / Reference Number Input */}
+                    {cashPaymentMode === "upi" && (
+                      <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-2xl space-y-1">
+                        <label className="block text-xs font-bold text-blue-950">
+                          📱 Mandatory UPI Reference / UTR Number *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={cashUpiRef}
+                          onChange={(e) => setCashUpiRef(e.target.value)}
+                          placeholder="e.g. 4289XXXXXXXX (12-digit UTR from PhonePe/GPay)"
+                          className="w-full px-3 py-2 bg-white border border-blue-300 rounded-xl font-mono text-xs font-bold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                        />
+                        <p className="text-[10px] text-blue-800">
+                          UTR is required so Prashant Sir can reconcile incoming payment in HQ bank statement.
+                        </p>
+                      </div>
+                    )}
 
                     {/* Cash Amount Collected */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block font-bold text-[#0E1B3D]">
-                          Amount Collected (in ₹)
+                          Amount Collected (in ₹) {currentStaff.role === "sub_admin" && "*"}
                         </label>
                         <span className="text-[10px] text-slate-500 font-semibold">Cash or UPI Amount</span>
                       </div>
@@ -1936,7 +1987,7 @@ export default function StudentFinderPage() {
                         <span className="absolute left-3 top-2 text-slate-400 font-bold">₹</span>
                         <input
                           type="number"
-                          min={0}
+                          min={currentStaff.role === "sub_admin" ? 1 : 0}
                           value={cashAmount}
                           onChange={(e) => setCashAmount(Number(e.target.value))}
                           className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none"
@@ -1945,7 +1996,7 @@ export default function StudentFinderPage() {
 
                       {/* Quick presets */}
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        {[0, 99, 149, 199, 299, 499].map((amt) => (
+                        {(currentStaff.role === "sub_admin" ? [99, 149, 199, 299, 499] : [0, 99, 149, 199, 299, 499]).map((amt) => (
                           <button
                             key={amt}
                             type="button"

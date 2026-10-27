@@ -12,6 +12,7 @@ import {
   toggleStaffCouponStatus,
   getStaffCourses,
   getStaffBooks,
+  getStaffUsers,
 } from "@/lib/staffStore";
 import { getRedemptions, getRedemptionsByCoupon } from "@/lib/couponRedemptionStore";
 import {
@@ -35,6 +36,9 @@ export default function CouponManagerPage() {
   const [formCode, setFormCode] = useState("");
   const [formDesc, setFormDesc] = useState("");
   const [formSchool, setFormSchool] = useState("");
+  const [formAssignedPhone, setFormAssignedPhone] = useState("");
+  const [formPromoterStaffId, setFormPromoterStaffId] = useState("");
+  const [formIsPublicChip, setFormIsPublicChip] = useState(true);
   const [formDiscountType, setFormDiscountType] = useState<"percentage" | "flat">("percentage");
   const [formValue, setFormValue] = useState(25);
   const [formMinOrder, setFormMinOrder] = useState<number>(499);
@@ -48,6 +52,7 @@ export default function CouponManagerPage() {
   const [formEndsAt, setFormEndsAt] = useState("2026-11-30");
   const [formUsageLimit, setFormUsageLimit] = useState(100);
   const [formIsActive, setFormIsActive] = useState(true);
+  const [staffList, setStaffList] = useState<StaffUser[]>([]);
 
   // Redemptions Modal State
   const [viewingRedemptionsCoupon, setViewingRedemptionsCoupon] = useState<Coupon | null>(null);
@@ -62,6 +67,7 @@ export default function CouponManagerPage() {
   const reload = () => {
     setCoupons(getStaffCoupons());
     setStaff(getCurrentStaff());
+    setStaffList(getStaffUsers());
   };
 
   useEffect(() => {
@@ -78,6 +84,9 @@ export default function CouponManagerPage() {
     setFormCode("");
     setFormDesc("");
     setFormSchool("");
+    setFormAssignedPhone("");
+    setFormPromoterStaffId("");
+    setFormIsPublicChip(true);
     setFormDiscountType("percentage");
     setFormValue(20);
     setFormMinOrder(499);
@@ -102,6 +111,11 @@ export default function CouponManagerPage() {
     setFormCode(cpn.code);
     setFormDesc(cpn.description || "");
     setFormSchool(cpn.school || "");
+    setFormAssignedPhone(cpn.assigned_phone || cpn.assignedPhone || "");
+    setFormPromoterStaffId(cpn.promoter_staff_id || cpn.promoterStaffId || "");
+    setFormIsPublicChip(
+      cpn.is_public_chip !== undefined ? cpn.is_public_chip : cpn.isPublicChip !== undefined ? cpn.isPublicChip : true
+    );
     setFormDiscountType(
       cpn.discountType === "percentage" || cpn.discountType === "percent" ? "percentage" : "flat"
     );
@@ -181,11 +195,26 @@ export default function CouponManagerPage() {
     const valueInPaiseOrPct =
       formDiscountType === "percentage" ? Number(formValue) : Number(formValue) * 100;
 
+    const cleanAssignedPhone = formAssignedPhone.trim()
+      ? formAssignedPhone.trim().replace(/\D/g, "").slice(-10)
+      : undefined;
+
+    const promoterStaff = formPromoterStaffId
+      ? staffList.find((s) => s.id === formPromoterStaffId || s.staffId === formPromoterStaffId)
+      : null;
+
     const updatedCoupon: Coupon = {
       id: editingCoupon ? editingCoupon.id : `cpn-${Date.now()}`,
       code: cleanedCode,
       description: formDesc.trim() || `${cleanedCode} Discount Coupon`,
       school: formSchool.trim() || undefined,
+      assigned_phone: cleanAssignedPhone,
+      assignedPhone: cleanAssignedPhone,
+      promoter_staff_id: formPromoterStaffId || undefined,
+      promoterStaffId: formPromoterStaffId || undefined,
+      promoterStaffName: promoterStaff?.name || undefined,
+      is_public_chip: formIsPublicChip,
+      isPublicChip: formIsPublicChip,
       discountType: formDiscountType,
       discountValue: valueInPaiseOrPct,
       minOrderValuePaise: formMinOrder ? Number(formMinOrder) * 100 : undefined,
@@ -702,6 +731,25 @@ export default function CouponManagerPage() {
                                   👤 1x per student
                                 </span>
                               )}
+                              {c.assigned_phone && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
+                                  🎯 {c.assigned_phone}
+                                </span>
+                              )}
+                              {(c.promoter_staff_id || c.promoterStaffName) && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                                  🤝 Promoter: {c.promoterStaffName || c.promoter_staff_id}
+                                </span>
+                              )}
+                              {c.is_public_chip === false ? (
+                                <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                                  🔒 Secret Code
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  👁️ Public Chip
+                                </span>
+                              )}
                             </div>
                             {c.description && (
                               <p className="text-[#5A6478] text-[11px] mt-1 max-w-xs line-clamp-1 font-medium">
@@ -947,6 +995,74 @@ export default function CouponManagerPage() {
                           ? `This coupon will only apply to students from "${formSchool.trim()}".`
                           : "Leaving this blank allows students from all schools to use it."}
                       </p>
+                    </div>
+
+                    {/* Student Mobile Lock & Promoter Attribution */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                          🎯 Student Mobile Lock (Optional)
+                        </label>
+                        <input
+                          type="tel"
+                          maxLength={10}
+                          value={formAssignedPhone}
+                          onChange={(e) => setFormAssignedPhone(e.target.value.replace(/\D/g, ""))}
+                          placeholder="e.g. 9822012345"
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-mono font-bold text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                        />
+                        <p className="text-[10px] text-[#5A6478] mt-1">
+                          {formAssignedPhone.trim()
+                            ? `Only mobile +91 ${formAssignedPhone.trim()} can redeem.`
+                            : "Blank = any student can redeem."}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                          🤝 Sub-Admin Promoter / Referral
+                        </label>
+                        <select
+                          value={formPromoterStaffId}
+                          onChange={(e) => setFormPromoterStaffId(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                        >
+                          <option value="">None (Academy Direct Offer)</option>
+                          {staffList
+                            .filter((s) => s.role !== "main_admin")
+                            .map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.staffId || s.id} • {s.name} {s.district ? `(${s.district})` : ""}
+                              </option>
+                            ))}
+                        </select>
+                        <p className="text-[10px] text-[#5A6478] mt-1">
+                          Attribute coupon redemptions to a specific staff promoter.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Public 1-Click Chip Toggle on /checkout */}
+                    <div className="p-3 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl flex items-center justify-between text-xs">
+                      <div>
+                        <p className="font-bold text-[#0E1B3D] flex items-center gap-1.5">
+                          <span>👁️</span> Public /checkout 1-Click Chip
+                        </p>
+                        <p className="text-[11px] text-[#5A6478] mt-0.5">
+                          {formIsPublicChip
+                            ? "Visible as clickable '🏷️ Tap to Apply' chip on checkout page."
+                            : "Hidden from public checkout list (Secret VIP promo code)."}
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formIsPublicChip}
+                          onChange={(e) => setFormIsPublicChip(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0B57D0]"></div>
+                      </label>
                     </div>
 
                     {/* 2. Course & Books Applicability Scope */}
@@ -1244,12 +1360,31 @@ export default function CouponManagerPage() {
                                 🏫 {formSchool.trim()}
                               </span>
                             )}
+                            {formAssignedPhone.trim() && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
+                                🎯 {formAssignedPhone.trim()}
+                              </span>
+                            )}
+                            {formPromoterStaffId && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                                🤝 Promoter Linked
+                              </span>
+                            )}
                             <span className="text-xs font-black text-[#0E1B3D]">
                               {formDiscountType === "percentage" ? `${formValue}% OFF` : `₹${formValue} OFF`}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2">
+                            {formIsPublicChip ? (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                👁️ Public Chip
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                🔒 Secret Code
+                              </span>
+                            )}
                             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-violet-50 text-violet-700 border border-violet-200">
                               {formPerUserUsage === "once" ? "👤 Once per student" : "👥 Multiple uses"}
                             </span>

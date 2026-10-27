@@ -188,6 +188,9 @@ export interface StaffUser {
   role: StaffRole;
   permissions: StaffPermission[];
   status: "active" | "suspended" | "inactive";
+  district?: string;
+  centre?: string;
+  approvalMode?: boolean; // When true, offline grants by this sub-admin require Main Admin approval
   lastLoginAt: string;
   mustChangePassword?: boolean;
   password?: string;
@@ -221,6 +224,11 @@ export interface Coupon {
   school?: string; // school name; if set, only students whose profile school matches can use this coupon
   assigned_phone?: string; // specific student mobile number restriction (if set)
   assignedPhone?: string;
+  promoter_staff_id?: string; // linked sub-admin promoter / referral staff ID
+  promoterStaffId?: string;
+  promoterStaffName?: string;
+  is_public_chip?: boolean; // display as 1-click chip on public /checkout
+  isPublicChip?: boolean;
   discountType: "percentage" | "flat" | "percent";
   discountValue: number; // percentage (e.g. 25) or paise (e.g. 50000 = ₹500)
   minOrderValuePaise?: number; // minimum course price required in paise (e.g. 99900 = ₹999)
