@@ -34,7 +34,15 @@ import {
   Sparkles,
   Loader2,
   ExternalLink,
+  RotateCcw,
 } from "lucide-react";
+import RecycleBinModal from "@/components/admin/RecycleBinModal";
+import {
+  addToRecycleBin,
+  restoreFromRecycleBin,
+  getRecycleBinItems,
+  RecycleBinItem,
+} from "@/lib/categoryStore";
 
 function YoutubeIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
@@ -78,6 +86,11 @@ export default function VideoManagerPage() {
   const [deleteModalVideo, setDeleteModalVideo] = useState<ExtendedVideoRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Recycle Bin State
+  const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false);
+  const [recycleCount, setRecycleCount] = useState(0);
+  const [undoToast, setUndoToast] = useState<{ id: string; title: string } | null>(null);
+
   // 100% Live Supabase Sync on mount & reload
   const reloadFromSupabase = async () => {
     setIsLoading(true);
@@ -103,13 +116,18 @@ export default function VideoManagerPage() {
   };
 
   useEffect(() => {
+    setRecycleCount(getRecycleBinItems().length);
     reloadFromSupabase();
     const handleSync = () => reloadFromSupabase();
+    const handleBinChange = () => setRecycleCount(getRecycleBinItems().length);
+
     window.addEventListener("mma_videos_changed", handleSync);
     window.addEventListener("mma_courses_changed", handleSync);
+    window.addEventListener("mma_recycle_bin_changed", handleBinChange);
     return () => {
       window.removeEventListener("mma_videos_changed", handleSync);
       window.removeEventListener("mma_courses_changed", handleSync);
+      window.removeEventListener("mma_recycle_bin_changed", handleBinChange);
     };
   }, []);
 
@@ -250,27 +268,46 @@ export default function VideoManagerPage() {
     }
   };
 
-  // Confirm Delete (Admin-Only, Live Supabase Sync)
+  // Confirm Delete (Soft-Delete to Recycle Bin with Live Supabase sync)
   const handleConfirmDelete = async () => {
     if (!deleteModalVideo) return;
     setIsDeleting(true);
     try {
-      await deleteLessonFromSupabase(
-        deleteModalVideo.id || deleteModalVideo.lessonId || deleteModalVideo.videoId,
-        deleteModalVideo.courseId
-      );
-      await syncCourseLessonCount(deleteModalVideo.courseId);
+      const videoToDelete = deleteModalVideo;
+      const vidId = videoToDelete.id || videoToDelete.lessonId || videoToDelete.videoId;
+
+      // 1. Move to Recycle Bin
+      const binItem = addToRecycleBin({
+        itemType: "video",
+        itemId: vidId,
+        title: videoToDelete.lessonTitle,
+        subtitle: `${videoToDelete.courseTitle || "कोर्स"} • ${videoToDelete.durationSec ? Math.round(videoToDelete.durationSec / 60) + " min" : ""}`,
+        data: videoToDelete,
+      });
+
+      // 2. Remove lesson from Supabase and sync course count
+      await deleteLessonFromSupabase(vidId, videoToDelete.courseId);
+      await syncCourseLessonCount(videoToDelete.courseId);
 
       logStaffAction(
         "VIDEO_DELETE",
         "video",
-        deleteModalVideo.id,
-        deleteModalVideo.lessonTitle,
-        `Main admin removed video lecture ${deleteModalVideo.lessonTitle}`
+        vidId,
+        videoToDelete.lessonTitle,
+        `Main admin moved video lecture ${videoToDelete.lessonTitle} to Recycle Bin`
       );
 
       setDeleteModalVideo(null);
       await reloadFromSupabase();
+
+      // 3. Show 1-Click Undo Toast
+      setUndoToast({
+        id: binItem.id,
+        title: videoToDelete.lessonTitle,
+      });
+      setTimeout(() => {
+        setUndoToast((prev) => (prev?.id === binItem.id ? null : prev));
+      }, 8000);
     } catch (err: any) {
       alert(`व्हिडिओ हटवताना त्रुटी आली: ${err.message}`);
     } finally {
@@ -278,8 +315,32 @@ export default function VideoManagerPage() {
     }
   };
 
-  // Filter Logic
+  // 1-Click Undo Video Deletion
+  const handleUndoVideoDelete = async () => {
+    if (!undoToast) return;
+    const res = await restoreFromRecycleBin(undoToast.id);
+    if (res.success) {
+      setUndoToast(null);
+      await reloadFromSupabase();
+    }
+  };
+
+  // Filter Logic (Excludes videos currently in the Recycle Bin)
+  const recycleVideoIds = new Set(
+    getRecycleBinItems()
+      .filter((i) => i.itemType === "video")
+      .map((i) => i.itemId)
+  );
+
   const filteredVideos = videos.filter((v) => {
+    if (
+      recycleVideoIds.has(v.id) ||
+      recycleVideoIds.has(v.lessonId || "") ||
+      recycleVideoIds.has(v.videoId)
+    ) {
+      return false;
+    }
+
     const matchesQuery =
       v.lessonTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       v.videoId.toLowerCase().includes(searchQuery.toLowerCase());
@@ -314,13 +375,33 @@ export default function VideoManagerPage() {
               </p>
             </div>
 
-            <button
-              onClick={handleOpenAdd}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-2xl shadow-md transition-all shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>नवीन व्हिडिओ जोडा (+ Add Video)</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsRecycleBinOpen(true)}
+                className={`inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all border shadow-xs shrink-0 ${
+                  recycleCount > 0
+                    ? "bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100"
+                    : "bg-white border-[#CCD7E6] text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <Trash2 className="w-4 h-4 text-amber-600" />
+                <span>कचरापेटी (Recycle Bin)</span>
+                {recycleCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white leading-none">
+                    {recycleCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={handleOpenAdd}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-2xl shadow-md transition-all shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>नवीन व्हिडिओ जोडा (+ Add Video)</span>
+              </button>
+            </div>
           </div>
 
           {/* Filters Bar */}
@@ -720,19 +801,19 @@ export default function VideoManagerPage() {
             </div>
           )}
 
-          {/* Delete Confirmation Modal */}
+          {/* Move to Recycle Bin Confirmation Modal */}
           {deleteModalVideo && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-              <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-red-200 space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
+              <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-amber-200 space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
                   <Trash2 className="w-6 h-6" />
                 </div>
                 <div>
                   <h4 className="font-extrabold text-base text-[#0E1B3D]">
-                    हा व्हिडिओ कायमचा हटवायचा आहे का?
+                    हा व्हिडिओ रीसायकल बिनमध्ये हलवायचा आहे का?
                   </h4>
                   <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    <strong>{deleteModalVideo.lessonTitle}</strong> हा व्हिडिओ डेटाबेसमधून कायमचा काढून टाकला जाईल.
+                    <strong>{deleteModalVideo.lessonTitle}</strong> हा व्हिडिओ कोर्समधून तात्पुरता काढला जाईल आणि रीसायकल बिनमध्ये हलवला जाईल. तुम्ही तो कधीही <strong>पूर्ववत (Undo / Restore)</strong> करू शकता.
                   </p>
                 </div>
 
@@ -747,15 +828,49 @@ export default function VideoManagerPage() {
                   <button
                     disabled={isDeleting}
                     onClick={handleConfirmDelete}
-                    className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5"
+                    className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5"
                   >
                     {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                    <span>हटवा (Delete Permanently)</span>
+                    <span>रीसायकल बिनमध्ये हलवा (Trash)</span>
                   </button>
                 </div>
               </div>
             </div>
           )}
+
+          {/* 1-Click Undo Floating Toast */}
+          {undoToast && (
+            <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#0E1B3D] text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-blue-400/30">
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                <span className="text-amber-400">🗑️</span>
+                <span>
+                  <strong>{undoToast.title}</strong> कचरापेटीत हलवला आहे.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleUndoVideoDelete}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow-xs"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>पूर्ववत करा (Undo)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setUndoToast(null)}
+                className="text-slate-400 hover:text-white text-xs font-bold ml-1"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Recycle Bin Modal */}
+          <RecycleBinModal
+            isOpen={isRecycleBinOpen}
+            onClose={() => setIsRecycleBinOpen(false)}
+            onRestored={() => reloadFromSupabase()}
+          />
         </div>
       </AdminShell>
     </PermissionGuard>

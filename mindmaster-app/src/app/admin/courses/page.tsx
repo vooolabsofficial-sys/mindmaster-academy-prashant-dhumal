@@ -36,7 +36,20 @@ import {
   Tag,
   Shield,
   Loader2,
+  RotateCcw,
+  X,
 } from "lucide-react";
+import CategoryManagerModal from "@/components/admin/CategoryManagerModal";
+import RecycleBinModal from "@/components/admin/RecycleBinModal";
+import {
+  CategoryItem,
+  getCategories,
+  DEFAULT_CATEGORIES,
+  addToRecycleBin,
+  restoreFromRecycleBin,
+  getRecycleBinItems,
+  RecycleBinItem,
+} from "@/lib/categoryStore";
 
 function YoutubeIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
@@ -46,63 +59,8 @@ function YoutubeIcon({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
-// Target Category Single-Choice Presets
-const TARGET_CATEGORY_OPTIONS = [
-  {
-    key: "school_5_10",
-    label: "शालेय ५ वी ते १० वी (School 5th-10th)",
-    badge: "School 5th-10th",
-    category: "all" as const,
-    standards: [5, 6, 7, 8, 9, 10],
-    audienceType: "school" as const,
-    description: "५ वी ते १० वी विद्यार्थ्यांसाठी मेमरी, पाढे व अभ्यासाच्या युक्त्या",
-  },
-  {
-    key: "junior_college_11_12",
-    label: "११ वी व १२ वी (11th-12th Science / Commerce / Arts)",
-    badge: "11th-12th College",
-    category: "all" as const,
-    standards: [11, 12],
-    audienceType: "school" as const,
-    description: "११ वी व १२ वी बोर्ड परीक्षा आणि प्रवेश परीक्षांसाठी खास तंत्रे",
-  },
-  {
-    key: "police_bharti",
-    label: "पोलीस भरती विशेष (Maharashtra Police Bharti)",
-    badge: "Police Bharti",
-    category: "police" as const,
-    standards: undefined,
-    audienceType: "competitive" as const,
-    description: "पोलीस भरती, तलाठी व सरळसेवा परीक्षेसाठी गणित व बुद्धिमत्ता",
-  },
-  {
-    key: "mpsc_upsc",
-    label: "स्पर्धा परीक्षा MPSC / UPSC",
-    badge: "MPSC / UPSC",
-    category: "police" as const,
-    standards: undefined,
-    audienceType: "competitive" as const,
-    description: "MPSC राज्यसेवा, संयुक्त गट ब व क स्पर्धा परीक्षांसाठी",
-  },
-  {
-    key: "vedic_memory",
-    label: "वैदिक गणित आणि मेमरी सायन्स (Vedic Maths & Memory)",
-    badge: "Brain Science",
-    category: "memory" as const,
-    standards: undefined,
-    audienceType: "all" as const,
-    description: "२ सेकंदात कॅलेंडर, जलद गुणाकार व एका वाचनात पाठांतर तंत्र",
-  },
-  {
-    key: "scholarship_nmms",
-    label: "स्कॉलरशिप व NMMS परीक्षा (Scholarship & NMMS)",
-    badge: "Scholarship",
-    category: "all" as const,
-    standards: [5, 8],
-    audienceType: "school" as const,
-    description: "५ वी व ८ वी शिष्यवृत्ती, मंथन आणि NMMS परीक्षेची तयारी",
-  },
-];
+// Fallback / Initial Category Options
+const TARGET_CATEGORY_OPTIONS = DEFAULT_CATEGORIES;
 
 // Course Validity Presets
 const VALIDITY_PRESETS = [
@@ -181,6 +139,15 @@ export default function CourseManagerPage() {
 
   const [formStatus, setFormStatus] = useState<"live" | "upcoming" | "draft">("live");
 
+  // Dynamic Categories State
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+
+  // Recycle Bin & Undo Toast State
+  const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false);
+  const [recycleCount, setRecycleCount] = useState(0);
+  const [undoToast, setUndoToast] = useState<{ id: string; title: string } | null>(null);
+
   // Delete Modal State
   const [deleteModalCourse, setDeleteModalCourse] = useState<Course | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -201,10 +168,22 @@ export default function CourseManagerPage() {
   };
 
   useEffect(() => {
+    setCategories(getCategories());
+    setRecycleCount(getRecycleBinItems().length);
     reloadFromSupabase();
+
     const handleSync = () => reloadFromSupabase();
+    const handleCatsChange = () => setCategories(getCategories());
+    const handleBinChange = () => setRecycleCount(getRecycleBinItems().length);
+
     window.addEventListener("mma_courses_changed", handleSync);
-    return () => window.removeEventListener("mma_courses_changed", handleSync);
+    window.addEventListener("mma_categories_changed", handleCatsChange);
+    window.addEventListener("mma_recycle_bin_changed", handleBinChange);
+    return () => {
+      window.removeEventListener("mma_courses_changed", handleSync);
+      window.removeEventListener("mma_categories_changed", handleCatsChange);
+      window.removeEventListener("mma_recycle_bin_changed", handleBinChange);
+    };
   }, []);
 
   const isMainAdmin = staff.role === "main_admin";
@@ -280,13 +259,15 @@ export default function CourseManagerPage() {
     setFormStatus(c.status === "upcoming" ? "upcoming" : c.status === "closed" ? "draft" : "live");
 
     // Match Target Category
-    const matchedCategory = TARGET_CATEGORY_OPTIONS.find((t) => {
+    const currentCats = categories.length > 0 ? categories : TARGET_CATEGORY_OPTIONS;
+    const matchedCategory = currentCats.find((t) => {
+      if (t.key === c.category) return true;
       if (c.category === "police") return t.key === "police_bharti" || t.key === "mpsc_upsc";
       if (c.category === "memory") return t.key === "vedic_memory";
       if (c.standards && c.standards.includes(11)) return t.key === "junior_college_11_12";
       if (c.standards && c.standards.includes(5) && c.standards.length === 2) return t.key === "scholarship_nmms";
-      return t.key === "school_5_10";
-    });
+      return false;
+    }) || currentCats[0];
     setTargetCategoryKey(matchedCategory ? matchedCategory.key : "school_5_10");
 
     // Match Validity
@@ -399,8 +380,10 @@ export default function CourseManagerPage() {
     }
 
     setIsSaving(true);
+    const currentCats = categories.length > 0 ? categories : TARGET_CATEGORY_OPTIONS;
     const selectedTargetCategory =
-      TARGET_CATEGORY_OPTIONS.find((t) => t.key === targetCategoryKey) ||
+      currentCats.find((t) => t.key === targetCategoryKey) ||
+      currentCats[0] ||
       TARGET_CATEGORY_OPTIONS[0];
 
     const validity = getEffectiveValidity();
@@ -505,21 +488,44 @@ export default function CourseManagerPage() {
     }
   };
 
-  // Delete Course
+  // Move Course to Recycle Bin (Soft Delete with Undo Loop)
   const handleConfirmDelete = async () => {
     if (!deleteModalCourse) return;
     setIsDeleting(true);
     try {
-      await deleteCourseFromSupabase(deleteModalCourse.id);
+      const courseToDelete = deleteModalCourse;
+
+      // 1. Move to Recycle Bin
+      const binItem = addToRecycleBin({
+        itemType: "course",
+        itemId: courseToDelete.id,
+        title: courseToDelete.titleMr || courseToDelete.title,
+        subtitle: `${courseToDelete.code} • ${courseToDelete.badgeText || "कोर्स"}`,
+        data: courseToDelete,
+      });
+
+      // 2. Mark as closed in Supabase so students don't see it
+      await saveCourseToSupabase({ ...courseToDelete, status: "closed" });
+
       logStaffAction(
         "COURSE_DELETE",
         "course",
-        deleteModalCourse.id,
-        deleteModalCourse.title,
-        `Main admin deleted course ${deleteModalCourse.code}`
+        courseToDelete.id,
+        courseToDelete.title,
+        `Main admin moved course ${courseToDelete.code} to Recycle Bin`
       );
+
       setDeleteModalCourse(null);
       await reloadFromSupabase();
+
+      // 3. Show 1-Click Undo Toast
+      setUndoToast({
+        id: binItem.id,
+        title: courseToDelete.titleMr || courseToDelete.title,
+      });
+      setTimeout(() => {
+        setUndoToast((prev) => (prev?.id === binItem.id ? null : prev));
+      }, 8000);
     } catch (err: any) {
       alert(`कोर्स हटवताना त्रुटी आली: ${err.message}`);
     } finally {
@@ -527,8 +533,26 @@ export default function CourseManagerPage() {
     }
   };
 
-  // Filter Courses Logic
+  // 1-Click Undo Course Deletion
+  const handleUndoCourseDelete = async () => {
+    if (!undoToast) return;
+    const res = await restoreFromRecycleBin(undoToast.id);
+    if (res.success) {
+      setUndoToast(null);
+      await reloadFromSupabase();
+    }
+  };
+
+  // Filter Courses Logic (Excludes courses currently in the Recycle Bin)
+  const recycleCourseIds = new Set(
+    getRecycleBinItems()
+      .filter((i) => i.itemType === "course")
+      .map((i) => i.itemId)
+  );
+
   const filteredCourses = courses.filter((c) => {
+    if (recycleCourseIds.has(c.id)) return false;
+
     const q = searchQuery.toLowerCase();
     const matchesSearch =
       c.title.toLowerCase().includes(q) ||
@@ -572,13 +596,42 @@ export default function CourseManagerPage() {
               </p>
             </div>
 
-            <button
-              onClick={handleOpenAdd}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-2xl shadow-md transition-all shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>नवीन कोर्स तयार करा (+ Create Course)</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-3 bg-white border border-[#CCD7E6] hover:border-[#0B57D0] hover:bg-blue-50 text-[#0E1B3D] hover:text-[#0B57D0] text-xs font-bold rounded-2xl shadow-xs transition-all shrink-0"
+              >
+                <Tag className="w-4 h-4 text-purple-600" />
+                <span>प्रवर्ग व्यवस्थापन (Categories)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsRecycleBinOpen(true)}
+                className={`inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all border shadow-xs shrink-0 ${
+                  recycleCount > 0
+                    ? "bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100"
+                    : "bg-white border-[#CCD7E6] text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <Trash2 className="w-4 h-4 text-amber-600" />
+                <span>कचरापेटी (Recycle Bin)</span>
+                {recycleCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white leading-none">
+                    {recycleCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={handleOpenAdd}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-2xl shadow-md transition-all shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>नवीन कोर्स तयार करा (+ Create Course)</span>
+              </button>
+            </div>
           </div>
 
           {/* Filters Bar */}
@@ -951,16 +1004,26 @@ export default function CourseManagerPage() {
                       </div>
 
                       <div className="sm:col-span-2">
-                        <label className="block font-bold text-[#0E1B3D] mb-1 flex items-center gap-1">
-                          <Tag className="w-3 h-3 text-blue-600" />
-                          <span>लक्ष्य प्रवर्ग (Target Category) *</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="font-bold text-[#0E1B3D] flex items-center gap-1">
+                            <Tag className="w-3 h-3 text-purple-600" />
+                            <span>लक्ष्य प्रवर्ग (Target Category) *</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setIsCategoryModalOpen(true)}
+                            className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline"
+                          >
+                            <Edit2 className="w-2.5 h-2.5" />
+                            <span>प्रवर्गे मॅनेज / नवीन (+ / Edit)</span>
+                          </button>
+                        </div>
                         <select
                           value={targetCategoryKey}
                           onChange={(e) => setTargetCategoryKey(e.target.value)}
                           className="w-full px-3 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
                         >
-                          {TARGET_CATEGORY_OPTIONS.map((cat) => (
+                          {(categories.length > 0 ? categories : TARGET_CATEGORY_OPTIONS).map((cat) => (
                             <option key={cat.key} value={cat.key}>
                               {cat.label}
                             </option>
@@ -1256,19 +1319,19 @@ export default function CourseManagerPage() {
             </div>
           )}
 
-          {/* Delete Confirmation Modal */}
+          {/* Move to Recycle Bin Confirmation Modal */}
           {deleteModalCourse && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-              <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-red-200 space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
+              <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-amber-200 space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
                   <Trash2 className="w-6 h-6" />
                 </div>
                 <div>
                   <h4 className="font-extrabold text-base text-[#0E1B3D]">
-                    हा कोर्स कायमचा हटवायचा आहे का?
+                    हा कोर्स रीसायकल बिनमध्ये हलवायचा आहे का?
                   </h4>
                   <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    <strong>{deleteModalCourse.titleMr || deleteModalCourse.title}</strong> ({deleteModalCourse.code}) हा कोर्स आणि त्यातील लेक्चर्स डेटाबेसमधून कायमचे हटवले जातील.
+                    <strong>{deleteModalCourse.titleMr || deleteModalCourse.title}</strong> ({deleteModalCourse.code}) हा कोर्स विद्यार्थ्यांसाठी लपवला जाईल आणि रीसायकल बिनमध्ये हलवला जाईल. तुम्ही तो कधीही <strong>पूर्ववत (Undo / Restore)</strong> करू शकता.
                   </p>
                 </div>
 
@@ -1283,15 +1346,56 @@ export default function CourseManagerPage() {
                   <button
                     disabled={isDeleting}
                     onClick={handleConfirmDelete}
-                    className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5"
+                    className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5"
                   >
                     {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                    <span>हटवा (Delete Permanently)</span>
+                    <span>रीसायकल बिनमध्ये हलवा (Trash)</span>
                   </button>
                 </div>
               </div>
             </div>
           )}
+
+          {/* 1-Click Undo Floating Toast */}
+          {undoToast && (
+            <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#0E1B3D] text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-blue-400/30">
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                <span className="text-amber-400">🗑️</span>
+                <span>
+                  <strong>{undoToast.title}</strong> कचरापेटीत हलवला आहे.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleUndoCourseDelete}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow-xs"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>पूर्ववत करा (Undo)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setUndoToast(null)}
+                className="text-slate-400 hover:text-white text-xs font-bold ml-1"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Category Manager Modal */}
+          <CategoryManagerModal
+            isOpen={isCategoryModalOpen}
+            onClose={() => setIsCategoryModalOpen(false)}
+            onCategoriesChanged={() => setCategories(getCategories())}
+          />
+
+          {/* Recycle Bin Modal */}
+          <RecycleBinModal
+            isOpen={isRecycleBinOpen}
+            onClose={() => setIsRecycleBinOpen(false)}
+            onRestored={() => reloadFromSupabase()}
+          />
         </div>
       </AdminShell>
     </PermissionGuard>
