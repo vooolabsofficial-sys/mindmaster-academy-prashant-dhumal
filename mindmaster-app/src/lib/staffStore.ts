@@ -766,7 +766,66 @@ export function deleteStaffBook(bookId: string): void {
   );
 }
 
-export function toggleBookStatus(bookId: string): void {
+export async function saveBookToSupabase(book: Book): Promise<{ data: any; error: any }> {
+  saveStaffBook(book);
+  const supabase = getSupabase();
+  if (!supabase) return { data: book, error: null };
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(book.id);
+    const dbRecord: any = {
+      code: book.code || `BK-${Date.now().toString().slice(-4)}`,
+      course_id: book.courseId || null,
+      title: book.title,
+      subtitle: book.subtitle || null,
+      description: book.description || null,
+      file_path: book.filePath,
+      pages: book.pages || 1,
+      file_size_mb: book.fileSizeMb || 5.0,
+      cover_image: book.coverImage || null,
+      is_free: Boolean(book.isFree),
+      price_paise: book.pricePaise || 0,
+      original_price_paise: book.originalPricePaise || 0,
+      access_months: book.accessMonths || 6,
+      status: book.status || "live",
+      header_tint: book.headerTint || "sky",
+      badge_text: book.badgeText || null,
+    };
+    if (isUuid) {
+      dbRecord.id = book.id;
+    }
+    const res = await supabase.from("books").upsert(dbRecord, { onConflict: "code" });
+    if (res.error) {
+      console.warn("saveBookToSupabase error:", res.error.message);
+    }
+    return res;
+  } catch (err: any) {
+    return { data: null, error: err };
+  }
+}
+
+export async function deleteBookFromSupabase(bookId: string): Promise<boolean> {
+  deleteStaffBook(bookId);
+  const supabase = getSupabase();
+  if (!supabase) return true;
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bookId);
+    let q = supabase.from("books").delete();
+    if (isUuid) {
+      q = q.or(`id.eq.${bookId},code.eq.${bookId}`);
+    } else {
+      q = q.eq("code", bookId);
+    }
+    const { error } = await q;
+    if (error) {
+      console.warn("deleteBookFromSupabase error:", error.message);
+    }
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+export async function toggleBookStatus(bookId: string): Promise<void> {
   const books = getStaffBooks();
   const target = books.find((b) => b.id === bookId);
   if (!target) return;
@@ -783,7 +842,7 @@ export function toggleBookStatus(bookId: string): void {
   const supabase = getSupabase();
   if (supabase) {
     try {
-      supabase.from("books").update({ status: newStatus }).or(`id.eq.${bookId},code.eq.${bookId}`).then(() => {});
+      await supabase.from("books").update({ status: newStatus }).or(`id.eq.${bookId},code.eq.${bookId}`);
     } catch {}
   }
 
@@ -796,7 +855,7 @@ export function toggleBookStatus(bookId: string): void {
   );
 }
 
-export function toggleBookPricing(bookId: string): void {
+export async function toggleBookPricing(bookId: string): Promise<void> {
   const books = getStaffBooks();
   const target = books.find((b) => b.id === bookId);
   if (!target) return;
@@ -813,7 +872,7 @@ export function toggleBookPricing(bookId: string): void {
   const supabase = getSupabase();
   if (supabase) {
     try {
-      supabase.from("books").update({ is_free: newIsFree }).or(`id.eq.${bookId},code.eq.${bookId}`).then(() => {});
+      await supabase.from("books").update({ is_free: newIsFree }).or(`id.eq.${bookId},code.eq.${bookId}`);
     } catch {}
   }
 

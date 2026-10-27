@@ -87,7 +87,7 @@ export default function AdminTopbar() {
     { label: "Student Finder", href: "/admin/students", icon: "🎓", permission: "students.view" },
     { label: "Messages", href: "/admin/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
     { label: "Analytics Hub", href: "/admin/reports", icon: "📈", permission: "reports.view" },
-    { label: "Digital Books Manager", href: "/admin/notes", icon: "📖", permission: "notes.books.manage" },
+    { label: "Digital Books", href: "/admin/notes", icon: "📖", permission: "notes.books.manage" },
     { label: "My Activity", href: "/admin/my-activity", icon: "⏱️" },
     { label: "Settings", href: "/admin/settings", icon: "⚙️", badge: "Config", adminOnly: true },
     { label: "Audit Trail", href: "/admin/audit", icon: "📜", adminOnly: true },
