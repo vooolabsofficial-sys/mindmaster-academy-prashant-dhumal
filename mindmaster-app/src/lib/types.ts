@@ -219,6 +219,8 @@ export interface Coupon {
   code: string;
   description: string;
   school?: string; // school name; if set, only students whose profile school matches can use this coupon
+  assigned_phone?: string; // specific student mobile number restriction (if set)
+  assignedPhone?: string;
   discountType: "percentage" | "flat" | "percent";
   discountValue: number; // percentage (e.g. 25) or paise (e.g. 50000 = ₹500)
   minOrderValuePaise?: number; // minimum course price required in paise (e.g. 99900 = ₹999)

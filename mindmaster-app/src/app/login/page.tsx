@@ -408,7 +408,7 @@ function LoginContent() {
                     Password
                   </label>
                   <Link
-                    href="/forgot-password"
+                    href={`/forgot-password?next=${encodeURIComponent(nextParam)}`}
                     className="text-[11px] text-[#0052FF] hover:underline font-semibold"
                   >
                     Forgot Password?

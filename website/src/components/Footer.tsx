@@ -327,6 +327,12 @@ export const Footer: React.FC = () => {
                   <span>Terms &amp; Conditions</span>
                 </Link>
               </li>
+              <li>
+                <Link className="font-bold text-slate-900 hover:text-secondary transition-colors flex items-center gap-1.5" to="/refund">
+                  <span className="material-symbols-outlined text-secondary text-[15px]">sync_saved_locally</span>
+                  <span>Refund &amp; Cancellation</span>
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -382,6 +388,10 @@ export const Footer: React.FC = () => {
             <span>•</span>
             <Link to="/terms" className="hover:text-secondary transition-colors underline-offset-4 hover:underline">
               Terms & Conditions
+            </Link>
+            <span>•</span>
+            <Link to="/refund" className="hover:text-secondary transition-colors underline-offset-4 hover:underline">
+              Refund Policy
             </Link>
             <span>•</span>
             <Link to="/contact" className="hover:text-secondary transition-colors">

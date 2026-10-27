@@ -358,6 +358,29 @@ export default function ProfileSettingsPage() {
                 <ChevronRight className="w-4 h-4 text-[#94A3B8]" />
               </div>
             </a>
+
+            {/* Legal & Policies Center */}
+            <Link
+              href="/legal"
+              className="p-4 md:p-5 flex items-center justify-between hover:bg-[#F5F7FF] transition"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#EBF3FE] text-[#0B57D0] flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-sm text-[#0E1B3D]">Legal, Privacy &amp; Terms</h4>
+                  <p className="text-xs text-[#5A6478]">Single-device policy, refund terms &amp; data privacy</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-[#0B57D0] bg-[#EEF4FF] px-2.5 py-1 rounded-full">
+                  Policies
+                </span>
+                <ChevronRight className="w-4 h-4 text-[#94A3B8]" />
+              </div>
+            </Link>
           </div>
         </div>
 

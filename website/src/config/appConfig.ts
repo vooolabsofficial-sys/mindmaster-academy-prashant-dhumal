@@ -82,6 +82,14 @@ export const getAppCourseCheckoutUrl = (websiteCourseId: string): string => {
   return getAppUrl(`/checkout?course=${code}`);
 };
 
+export const getAppBookCheckoutUrl = (bookId: string): string => {
+  return getAppUrl(`/checkout?book=${bookId}`);
+};
+
+export const getAppLegalUrl = (tab: "privacy" | "terms" | "refund" = "privacy"): string => {
+  return getAppUrl(`/legal?tab=${tab}`);
+};
+
 export const getAppCourseDetailUrl = (websiteCourseId: string): string => {
   const code = COURSE_ID_MAP[websiteCourseId.toLowerCase()] || "MM-01";
   return getAppUrl(`/courses`);

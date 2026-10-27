@@ -31,7 +31,9 @@ import {
   validateCoupon, 
   createRazorpayOrder, 
   verifyRazorpayPayment,
-  CouponValidationResult 
+  getAvailableCoupons,
+  CouponValidationResult,
+  AvailableCouponChip
 } from "@/app/actions/checkout";
 import { triggerCourseUnlockConfetti } from "@/lib/celebration";
 import { generateFeeReceiptPdf } from "@/lib/pdfGenerator";
@@ -50,7 +52,7 @@ declare global {
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const rawBookId = searchParams.get("bookId") || "";
+  const rawBookId = searchParams.get("bookId") || searchParams.get("book") || "";
   const rawCourseId = searchParams.get("courseId") || searchParams.get("course") || "";
   const isBookCheckout = Boolean(rawBookId);
 
@@ -70,7 +72,8 @@ function CheckoutContent() {
     ? staffCourses.find(
         (c) =>
           c.id.toLowerCase() === rawCourseId.toLowerCase() ||
-          c.code.toLowerCase() === rawCourseId.toLowerCase()
+          c.code.toLowerCase() === rawCourseId.toLowerCase() ||
+          (COURSE_ID_MAP[rawCourseId.toLowerCase()] && (c.id === COURSE_ID_MAP[rawCourseId.toLowerCase()] || c.code.toLowerCase() === rawCourseId.toLowerCase()))
       ) || (!dbFetchedItem?.isBook ? dbFetchedItem : null)
     : null;
 
@@ -79,6 +82,7 @@ function CheckoutContent() {
   const [studentMobile, setStudentMobile] = useState("");
   const [district, setDistrict] = useState("Pune");
   const [studentSchool, setStudentSchool] = useState("");
+  const [availableCoupons, setAvailableCoupons] = useState<AvailableCouponChip[]>([]);
 
   // Ownership state to prevent duplicate purchases
   const [alreadyOwned, setAlreadyOwned] = useState<boolean>(false);
@@ -210,11 +214,14 @@ function CheckoutContent() {
       try {
         const supabase = createClient();
         if (isBookCheckout && rawBookId) {
-          const { data: bData } = await supabase
-            .from("books")
-            .select("*")
-            .or(`id.eq.${rawBookId},code.ilike.${rawBookId}`)
-            .maybeSingle();
+          const isBookUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawBookId);
+          let bQuery = supabase.from("books").select("*");
+          if (isBookUuid) {
+            bQuery = bQuery.or(`id.eq.${rawBookId},code.ilike.${rawBookId}`);
+          } else {
+            bQuery = bQuery.or(`code.ilike.${rawBookId},code.eq.${rawBookId.toUpperCase()}`);
+          }
+          const { data: bData } = await bQuery.maybeSingle();
           if (bData) {
             setDbFetchedItem({
               id: bData.id,
@@ -233,11 +240,19 @@ function CheckoutContent() {
             });
           }
         } else if (!isBookCheckout && rawCourseId) {
-          const { data: cData } = await supabase
-            .from("courses")
-            .select("*")
-            .or(`id.eq.${rawCourseId},code.ilike.${rawCourseId}`)
-            .maybeSingle();
+          const isCourseUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawCourseId);
+          let cQuery = supabase.from("courses").select("*");
+          if (isCourseUuid) {
+            cQuery = cQuery.or(`id.eq.${rawCourseId},code.ilike.${rawCourseId}`);
+          } else {
+            const mappedUuid = COURSE_ID_MAP[rawCourseId.toLowerCase()];
+            if (mappedUuid) {
+              cQuery = cQuery.or(`id.eq.${mappedUuid},code.ilike.${rawCourseId}`);
+            } else {
+              cQuery = cQuery.or(`code.ilike.${rawCourseId},code.eq.${rawCourseId.toUpperCase()}`);
+            }
+          }
+          const { data: cData } = await cQuery.maybeSingle();
           if (cData) {
             setDbFetchedItem({
               id: cData.id,
@@ -255,7 +270,22 @@ function CheckoutContent() {
       } catch {}
     }
     fetchItemFromDb();
-  }, [isBookCheckout, rawBookId, rawCourseId, book?.id, book?.code, course?.id, course?.code, studentMobile]);
+
+    // Fetch active available coupon chips for this item
+    const currentItemId = isBookCheckout ? (rawBookId || book?.id) : (rawCourseId || course?.id);
+    if (currentItemId) {
+      getAvailableCoupons({
+        itemId: currentItemId,
+        itemType: isBookCheckout ? "book" : "course",
+        studentMobile,
+        studentSchool,
+      }).then((chips) => {
+        if (chips && Array.isArray(chips)) {
+          setAvailableCoupons(chips);
+        }
+      }).catch(() => {});
+    }
+  }, [isBookCheckout, rawBookId, rawCourseId, book?.id, book?.code, course?.id, course?.code, studentMobile, studentSchool]);
 
   // Coupon state
   const [couponInput, setCouponInput] = useState("");
@@ -330,7 +360,7 @@ function CheckoutContent() {
   const basePriceRupees = Math.round(activePricePaise / 100);
   const originalPriceRupees = Math.round(activeOriginalPricePaise / 100);
   const discountRupees = appliedCoupon ? Math.round(appliedCoupon.discountAmountPaise / 100) : 0;
-  const finalPriceRupees = Math.max(1, basePriceRupees - discountRupees);
+  const finalPriceRupees = Math.max(0, basePriceRupees - discountRupees);
   const totalSavingsRupees = Math.max(0, originalPriceRupees - basePriceRupees) + discountRupees;
 
   // Coupon validation
@@ -373,7 +403,8 @@ function CheckoutContent() {
         isBookCheckout ? book!.id : course.id,
         undefined,
         currentSchool,
-        isBookCheckout ? "book" : "course"
+        isBookCheckout ? "book" : "course",
+        studentMobile
       );
       if (result.success && result.coupon) {
         setAppliedCoupon(result.coupon);
@@ -433,6 +464,33 @@ function CheckoutContent() {
 
       if (!orderResult.success || !orderResult.orderId) {
         throw new Error(orderResult.error || "Could not generate order ID.");
+      }
+
+      // 100% Free / Full Scholarship instant enrollment
+      if (orderResult.amountPaise === 0 || orderResult.orderId.startsWith("free_")) {
+        const freeVerification = await verifyRazorpayPayment({
+          razorpay_order_id: orderResult.orderId,
+          razorpay_payment_id: `pay_free_${Date.now()}`,
+          razorpay_signature: "free_scholarship_approved",
+          courseId: isBookCheckout ? undefined : course.id,
+          bookId: isBookCheckout ? book!.id : undefined,
+          itemType: isBookCheckout ? "book" : "course",
+          couponCode: appliedCoupon?.code,
+          amountPaise: 0,
+          studentName: studentName || "MindMaster Student",
+          studentMobile,
+        });
+
+        if (freeVerification.success) {
+          handlePaymentSuccess(
+            orderResult.orderId,
+            `pay_free_${Date.now()}`,
+            freeVerification.expiresAt || new Date(Date.now() + 180 * 86400000).toISOString()
+          );
+        } else {
+          handlePaymentFailure(freeVerification.error || "Enrollment processing failed.");
+        }
+        return;
       }
 
       // Offline / Mock fallback
@@ -588,11 +646,13 @@ function CheckoutContent() {
           </div>
 
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#0A8554] bg-[#E8F8F2] px-3.5 py-1 rounded-full mb-3">
-            Payment Successful • Instant Access Unlocked
+            {finalPriceRupees === 0
+              ? "🎉 100% Scholarship Enrollment Approved • Instant Access Unlocked"
+              : "Payment Successful • Instant Access Unlocked"}
           </span>
 
           <h1 className="text-2xl md:text-3xl font-black text-[#0E1B3D]">
-            Congratulations, {studentName}! 🎉
+            Congratulations, {studentName || "Student"}! 🎉
           </h1>
 
           <p className="text-xs md:text-sm text-[#5A6478] mt-2 max-w-md leading-relaxed">
@@ -622,7 +682,9 @@ function CheckoutContent() {
 
             <div className="flex justify-between items-center py-1 border-b border-[#E4E8F8]">
               <span className="text-[#5A6478]">Amount Paid:</span>
-              <span className="font-extrabold text-[#0E1B3D]">₹{finalPriceRupees}</span>
+              <span className="font-extrabold text-[#0E1B3D]">
+                {finalPriceRupees === 0 ? "₹0 (100% Free Scholarship)" : `₹${finalPriceRupees}`}
+              </span>
             </div>
 
             <div className="flex justify-between items-center py-1">
@@ -666,7 +728,7 @@ function CheckoutContent() {
             className="w-full mt-6 py-3 px-6 rounded-2xl bg-[#E8F8F2] hover:bg-[#D5F2E6] text-[#0A8554] border border-[#C6ECD9] text-xs font-black transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-2xs"
           >
             <FileText className="w-4 h-4" />
-            <span>Download Official Admission / Purchase Receipt</span>
+            <span>📄 Download Official GST Fee Receipt (PDF)</span>
           </button>
 
           {/* Action CTAs */}
@@ -677,7 +739,7 @@ function CheckoutContent() {
                 className="flex-1 py-3.5 px-6 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs md:text-sm font-extrabold shadow-lg shadow-[#0B57D0]/30 transition inline-flex items-center justify-center gap-2"
               >
                 <BookOpen className="w-4 h-4" />
-                <span>Read Book Now</span>
+                <span>▶️ Start Reading Book Now</span>
               </Link>
             ) : (
               <Link
@@ -685,7 +747,7 @@ function CheckoutContent() {
                 className="flex-1 py-3.5 px-6 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs md:text-sm font-extrabold shadow-lg shadow-[#0B57D0]/30 transition inline-flex items-center justify-center gap-2"
               >
                 <Zap className="w-4 h-4" />
-                <span>Start Learning Now</span>
+                <span>▶️ Start Learning Now</span>
               </Link>
             )}
 
@@ -742,7 +804,29 @@ function CheckoutContent() {
             </ul>
           </div>
 
-          <div className="w-full mt-8 flex flex-col sm:flex-row gap-3">
+          {/* Payment Interrupted / Debited WhatsApp Recovery Card */}
+          <div className="w-full mt-4 p-4 rounded-2xl bg-[#F0FDF4] border border-[#BBF7D0] text-xs text-[#166534] text-left space-y-2">
+            <p className="font-extrabold flex items-center gap-1.5 text-[#15803D]">
+              <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
+              <span>पैसे कट झाले असल्यास काळजी करू नका (100% Safe &amp; Verified)</span>
+            </p>
+            <p className="text-[11px] text-[#166534] leading-relaxed">
+              तांत्रिक अडचणीमुळे किंवा UPI ॲप कनेक्शन तुटल्यामुळे खात्यातून पैसे वजा झाले असल्यास आणि ॲक्सेस अनलॉक झाला नसल्यास, त्वरित खालील बटनावर क्लिक करून प्रशांत धुमाळ सरांच्या अकॅडमी हेल्पडेस्कवर WhatsApp स्क्रीनशॉट पाठवा:
+            </p>
+            <a
+              href={`https://wa.me/918459344077?text=${encodeURIComponent(
+                `Namaskar MindMaster Academy Desk, My payment was debited/interrupted during enrollment for "${isBookCheckout ? (book?.title || 'Digital Book') : (course?.title || 'Video Course')}".\nStudent Name: ${studentName || 'Student'}\nMobile: ${studentMobile || 'Not provided'}\nPlease verify and activate my access.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full mt-1 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-xs font-black transition inline-flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
+            >
+              <span className="text-base">📲</span>
+              <span>पैसे कट झाले असल्यास WhatsApp वर स्क्रीनशॉट पाठवा (Contact Support Desk)</span>
+            </a>
+          </div>
+
+          <div className="w-full mt-6 flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleRetry}
               className="flex-1 py-3.5 px-6 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs md:text-sm font-extrabold shadow-lg shadow-[#0B57D0]/30 transition inline-flex items-center justify-center gap-2 cursor-pointer"
@@ -1039,24 +1123,30 @@ function CheckoutContent() {
                 </div>
               )}
 
-              {/* Quick Coupon Chips */}
-              {!appliedCoupon && (
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] text-[#5A6478]">Available Coupons:</span>
-                  <button
-                    type="button"
-                    onClick={() => handleApplyCoupon(undefined, "PRASHANT50")}
-                    className="text-[10px] font-bold text-[#0B57D0] bg-[#E8F1FD] px-2.5 py-0.5 rounded-full hover:bg-[#D4E4FA] transition border border-[#C7DEFB] cursor-pointer"
-                  >
-                    PRASHANT50
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleApplyCoupon(undefined, "FIRST100")}
-                    className="text-[10px] font-bold text-[#0B57D0] bg-[#E8F1FD] px-2.5 py-0.5 rounded-full hover:bg-[#D4E4FA] transition border border-[#C7DEFB] cursor-pointer"
-                  >
-                    FIRST100
-                  </button>
+              {/* 1-Click Available Coupon Chips */}
+              {!appliedCoupon && availableCoupons.length > 0 && (
+                <div className="mt-3">
+                  <div className="text-[11px] font-bold text-[#5A6478] mb-1.5 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-[#0B57D0]" />
+                    <span>Available Offers &amp; Scholarships (Tap to Apply):</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableCoupons.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => handleApplyCoupon(undefined, c.code)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#EEF4FF] hover:bg-[#DCE8FE] border border-[#CCDDFE] text-[#0B57D0] text-xs font-bold transition active:scale-95 cursor-pointer shadow-2xs"
+                        title={c.description}
+                      >
+                        <Tag className="w-3 h-3" />
+                        <span className="font-mono font-black">{c.code}</span>
+                        <span className="text-[10px] bg-white px-1.5 py-0.5 rounded-md font-extrabold text-[#0B57D0] border border-[#CCDDFE]/60">
+                          {c.badgeText}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -1142,14 +1232,26 @@ function CheckoutContent() {
                 </>
               ) : (
                 <>
-                  <Lock className="w-4 h-4" />
-                  <span>Pay Securely Now (₹{finalPriceRupees})</span>
+                  {finalPriceRupees === 0 ? (
+                    <>
+                      <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+                      <span>Complete 100% Free Enrollment (₹0)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4" />
+                      <span>Pay Securely Now (₹{finalPriceRupees})</span>
+                    </>
+                  )}
                 </>
               )}
             </button>
 
-            <div className="text-center text-[10px] text-[#94A3B8]">
-              By clicking pay, you agree to MindMaster Academy&apos;s terms &amp; conditions.
+            <div className="text-center text-[10px] text-[#5A6478] leading-relaxed pt-2">
+              By proceeding, you agree to MindMaster Academy&apos;s{" "}
+              <Link href="/legal?tab=terms" target="_blank" className="text-[#0B57D0] underline hover:text-[#0842A0] font-bold">Terms of Service</Link>,{" "}
+              <Link href="/legal?tab=privacy" target="_blank" className="text-[#0B57D0] underline hover:text-[#0842A0] font-bold">Privacy Policy</Link>, and{" "}
+              <Link href="/legal?tab=refund" target="_blank" className="text-[#0B57D0] underline hover:text-[#0842A0] font-bold">Cancellation &amp; Refund Policy</Link>.
             </div>
           </div>
         </div>

@@ -16,6 +16,7 @@ const DemoHub = lazy(() => import('./pages/DemoHub').then((m) => ({ default: m.D
 const DesignSystem = lazy(() => import('./pages/DesignSystem').then((m) => ({ default: m.DesignSystem })));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy })));
 const Terms = lazy(() => import('./pages/Terms').then((m) => ({ default: m.Terms })));
+const RefundPolicy = lazy(() => import('./pages/RefundPolicy').then((m) => ({ default: m.RefundPolicy })));
 
 // Fast minimalist loader for lazy components
 const PageLoader: React.FC = () => (
@@ -53,6 +54,8 @@ export const App: React.FC = () => {
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/terms-and-conditions" element={<Terms />} />
+            <Route path="/refund" element={<RefundPolicy />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/brain-games" element={<BrainGames />} />
             <Route path="/games" element={<BrainGames />} />
             <Route path="/play" element={<BrainGames />} />

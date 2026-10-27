@@ -108,6 +108,15 @@ export interface CouponValidationResult {
   error?: string;
 }
 
+export interface AvailableCouponChip {
+  id: string;
+  code: string;
+  description: string;
+  discountType: "flat" | "percent";
+  discountValue: number;
+  badgeText: string;
+}
+
 export interface RazorpayOrderResult {
   success: boolean;
   orderId?: string;
@@ -135,13 +144,15 @@ export interface PaymentVerificationResult {
  * 3. applies_all or item in coupon_courses / coupon_books
  * 4. total limit left (used_count < usage_limit)
  * 5. per-user once check via coupon_redemptions
+ * 6. student-specific assigned_phone validation
  */
 export async function validateCoupon(
   code: string,
   itemId: string,
   userId?: string,
   studentSchool?: string,
-  itemType: "course" | "book" = "course"
+  itemType: "course" | "book" = "course",
+  studentMobile?: string
 ): Promise<CouponValidationResult> {
   const cleanCode = code.trim().toUpperCase();
   if (!cleanCode) {
@@ -267,6 +278,19 @@ export async function validateCoupon(
           }
         }
 
+        // Check 5b: Student-Specific Assigned Phone
+        const assignedPhone = (coupon.assigned_phone || coupon.assignedPhone || "").trim();
+        if (assignedPhone) {
+          const normAssigned = normalizePhone(assignedPhone);
+          const normStudent = normalizePhone(studentMobile || "");
+          if (!normStudent || normAssigned !== normStudent) {
+            return {
+              success: false,
+              error: `This coupon code is valid only for student mobile ending in ...${normAssigned.slice(-4)}.`,
+            };
+          }
+        }
+
         // Check 6: applies_all or Course/Book mapping
         const appliesAll =
           coupon.applies_all !== false && coupon.applies_all !== null
@@ -324,6 +348,7 @@ export async function validateCoupon(
           coupon.per_user_usage || coupon.usage_limit_per_user || coupon.usageLimitPerUser || "once";
 
         if (perUserRule === "once") {
+          let alreadyUsed = false;
           const { data: existingRedemption } = await supabase
             .from("coupon_redemptions")
             .select("id")
@@ -331,10 +356,24 @@ export async function validateCoupon(
             .eq("user_id", studentUserId)
             .maybeSingle();
 
+          if (existingRedemption) alreadyUsed = true;
+
+          const cleanMobile = normalizePhone(studentMobile || "");
+          if (!alreadyUsed && cleanMobile) {
+            const { data: phoneRedemption } = await supabase
+              .from("coupon_redemptions")
+              .select("id")
+              .eq("coupon_id", coupon.id)
+              .eq("student_mobile", cleanMobile)
+              .maybeSingle();
+            if (phoneRedemption) alreadyUsed = true;
+          }
+
           if (
-            existingRedemption ||
+            alreadyUsed ||
             hasUserRedeemedCoupon(studentUserId, coupon.id) ||
-            hasUserRedeemedCoupon(studentUserId, coupon.code)
+            hasUserRedeemedCoupon(studentUserId, coupon.code) ||
+            (cleanMobile && (hasUserRedeemedCoupon(cleanMobile, coupon.id) || hasUserRedeemedCoupon(cleanMobile, coupon.code)))
           ) {
             return {
               success: false,
@@ -414,6 +453,18 @@ export async function validateCoupon(
       }
     }
 
+    const mockAssignedPhone = (mockCoupon.assigned_phone || (mockCoupon as any).assignedPhone || "").trim();
+    if (mockAssignedPhone) {
+      const normAssigned = normalizePhone(mockAssignedPhone);
+      const normStudent = normalizePhone(studentMobile || "");
+      if (!normStudent || normAssigned !== normStudent) {
+        return {
+          success: false,
+          error: `This coupon code is valid only for student mobile ending in ...${normAssigned.slice(-4)}.`,
+        };
+      }
+    }
+
     const appliesAll =
       mockCoupon.applies_all !== false &&
       (mockCoupon.appliesTo === "all" ||
@@ -447,9 +498,11 @@ export async function validateCoupon(
 
     const perUser = mockCoupon.per_user_usage || mockCoupon.usageLimitPerUser || "once";
     if (perUser === "once") {
+      const cleanMobile = normalizePhone(studentMobile || "");
       if (
         hasUserRedeemedCoupon(studentUserId, mockCoupon.id) ||
-        hasUserRedeemedCoupon(studentUserId, mockCoupon.code)
+        hasUserRedeemedCoupon(studentUserId, mockCoupon.code) ||
+        (cleanMobile && (hasUserRedeemedCoupon(cleanMobile, mockCoupon.id) || hasUserRedeemedCoupon(cleanMobile, mockCoupon.code)))
       ) {
         return {
           success: false,
@@ -490,6 +543,142 @@ export async function validateCoupon(
     success: false,
     error: "Invalid coupon code. Please enter a valid coupon code.",
   };
+}
+
+/**
+ * Server Action: getAvailableCoupons
+ * Returns active, public coupons that can be applied to the current course/book
+ */
+export async function getAvailableCoupons(params: {
+  itemId: string;
+  itemType?: "course" | "book";
+  studentMobile?: string;
+  studentSchool?: string;
+}): Promise<AvailableCouponChip[]> {
+  const { itemId, itemType = "course", studentMobile, studentSchool } = params;
+  const isBook = itemType === "book";
+  const now = new Date();
+  const cleanPhone = normalizePhone(studentMobile || "");
+  const chips: AvailableCouponChip[] = [];
+  const seenCodes = new Set<string>();
+
+  const isSupabaseConfigured =
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("dummy.supabase.co");
+
+  if (isSupabaseConfigured) {
+    try {
+      const supabase = createAdminClient();
+      const { data: dbCoupons } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("is_active", true);
+
+      if (dbCoupons && Array.isArray(dbCoupons)) {
+        for (const c of dbCoupons) {
+          if (c.status === "disabled" || c.status === "paused" || c.status === "expired") continue;
+          if (c.starts_at && new Date(c.starts_at) > now) continue;
+          if (c.ends_at && new Date(c.ends_at) < now) continue;
+          if (c.usage_limit && (c.used_count || 0) >= c.usage_limit) continue;
+
+          // Check assigned phone
+          if (c.assigned_phone) {
+            if (!cleanPhone || normalizePhone(c.assigned_phone) !== cleanPhone) continue;
+          }
+
+          // Check school
+          if (c.school && studentSchool && c.school.toLowerCase() !== studentSchool.toLowerCase()) {
+            continue;
+          }
+
+          // Check applicability
+          const appliesAll = c.applies_all !== false && c.appliesTo !== "selected";
+          if (!appliesAll) {
+            let matches = false;
+            if (isBook) {
+              const { data: bMap } = await supabase
+                .from("coupon_books")
+                .select("book_id")
+                .eq("coupon_id", c.id);
+              matches = (bMap || []).some(
+                (m) => m.book_id === itemId || (c.selected_book_ids || []).includes(itemId)
+              );
+            } else {
+              const { data: cMap } = await supabase
+                .from("coupon_courses")
+                .select("course_id")
+                .eq("coupon_id", c.id);
+              matches = (cMap || []).some(
+                (m) => m.course_id === itemId || (c.selected_course_ids || []).includes(itemId)
+              );
+            }
+            if (!matches) continue;
+          }
+
+          const isPercent = c.discount_type === "percent" || c.discount_type === "percentage";
+          const badgeText = isPercent
+            ? `${c.value}% OFF`
+            : `₹${c.value < 1000 ? c.value : Math.round(c.value / 100)} OFF`;
+
+          chips.push({
+            id: c.id,
+            code: c.code.toUpperCase(),
+            description: c.description || "Official Academy Offer",
+            discountType: isPercent ? "percent" : "flat",
+            discountValue: c.value,
+            badgeText,
+          });
+          seenCodes.add(c.code.toUpperCase());
+        }
+      }
+    } catch {}
+  }
+
+  // Fallback to staff store coupons
+  const staffCoupons = getStaffCoupons ? getStaffCoupons() : [];
+  for (const c of staffCoupons) {
+    if (seenCodes.has(c.code.toUpperCase())) continue;
+    if (c.is_active === false || c.status === "disabled" || c.status === "paused" || c.status === "expired") continue;
+    if (c.starts_at && new Date(c.starts_at) > now) continue;
+    if (c.ends_at && new Date(c.ends_at) < now) continue;
+    const maxUses = c.maxTotalUses || c.usage_limit || 500;
+    const totalUsed = c.totalUsed || c.used_count || 0;
+    if (totalUsed >= maxUses) continue;
+
+    const assigned = c.assigned_phone || (c as any).assignedPhone;
+    if (assigned) {
+      if (!cleanPhone || normalizePhone(assigned) !== cleanPhone) continue;
+    }
+    if (c.school && studentSchool && c.school.toLowerCase() !== studentSchool.toLowerCase()) continue;
+
+    const appliesAll = c.applies_all !== false && (c.appliesTo === "all" || (!c.selectedCourseIds?.length && !c.selectedBookIds?.length));
+    if (!appliesAll) {
+      if (isBook) {
+        const matches = (c.selectedBookIds || []).some((b) => b === itemId || itemId.includes(b));
+        if (!matches) continue;
+      } else {
+        const matches = (c.selectedCourseIds || []).some((cid) => cid === itemId || itemId.includes(cid));
+        if (!matches) continue;
+      }
+    }
+
+    const isPercent = c.discountType === "percentage" || c.discountType === "percent";
+    const badgeText = isPercent
+      ? `${c.discountValue}% OFF`
+      : `₹${c.discountValue < 1000 ? c.discountValue : Math.round(c.discountValue / 100)} OFF`;
+
+    chips.push({
+      id: c.id,
+      code: c.code.toUpperCase(),
+      description: c.description || "Special Academy Offer",
+      discountType: isPercent ? "percent" : "flat",
+      discountValue: c.discountValue,
+      badgeText,
+    });
+    seenCodes.add(c.code.toUpperCase());
+  }
+
+  return chips;
 }
 
 /**
@@ -630,10 +819,30 @@ export async function createRazorpayOrder({
   let finalPaise = item.pricePaise;
 
   if (couponCode) {
-    const couponValidation = await validateCoupon(couponCode, itemId, studentUserId, studentSchool, actualItemType);
+    const couponValidation = await validateCoupon(
+      couponCode,
+      itemId,
+      studentUserId,
+      studentSchool,
+      actualItemType,
+      studentMobile
+    );
     if (couponValidation.success && couponValidation.coupon) {
-      finalPaise = Math.max(100, item.pricePaise - couponValidation.coupon.discountAmountPaise);
+      finalPaise = Math.max(0, item.pricePaise - couponValidation.coupon.discountAmountPaise);
     }
+  }
+
+  // 100% Free / Full Scholarship Enrollment: No payment gateway required
+  if (finalPaise <= 0) {
+    const freeOrderId = `free_scholarship_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    return {
+      success: true,
+      orderId: freeOrderId,
+      amountPaise: 0,
+      currency: "INR",
+      keyId: "free_enrollment",
+      isMock: true,
+    };
   }
 
   const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
@@ -741,8 +950,9 @@ export async function verifyRazorpayPayment({
 
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
+  const isFreeOrder = razorpay_order_id.startsWith("free_") || amountPaise === 0;
   const isMockOrder = razorpay_order_id.startsWith("order_mock_");
-  if (!isMockOrder && keySecret && !keySecret.includes("yourRazorpayKeySecret")) {
+  if (!isFreeOrder && !isMockOrder && keySecret && !keySecret.includes("yourRazorpayKeySecret")) {
     const generatedSignature = crypto
       .createHmac("sha256", keySecret)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)

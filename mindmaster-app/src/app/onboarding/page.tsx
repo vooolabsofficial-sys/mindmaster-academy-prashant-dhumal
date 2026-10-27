@@ -36,7 +36,10 @@ function OnboardingForm() {
     // If onboarding is already marked completed, navigate forward
     const completed = localStorage.getItem("mindmaster_onboarding_completed");
     if (completed === "true") {
-      const nextParam = searchParams.get("next") || "/home";
+      const rawNext = searchParams.get("next");
+      const nextParam = (rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.startsWith("/login"))
+        ? rawNext
+        : "/home";
       window.location.href = nextParam;
       return;
     }
@@ -153,7 +156,10 @@ function OnboardingForm() {
       document.cookie = `mindmaster_onboarding_pending=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
 
       // Redirect to ?next or /home using hard navigation for clean cookie and localStorage sync
-      const nextParam = searchParams.get("next") || "/home";
+      const rawNext = searchParams.get("next");
+      const nextParam = (rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.startsWith("/login"))
+        ? rawNext
+        : "/home";
       window.location.href = nextParam;
     } catch (err: any) {
       console.error("Onboarding submission error:", err);
