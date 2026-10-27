@@ -4,216 +4,278 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
-import { LessonWatchStat, StaffUser, Course } from "@/lib/types";
+import { StaffUser, Course } from "@/lib/types";
 import {
   getCurrentStaff,
-  getLessonWatchStats,
-  getStaffCourses,
+  fetchDbCourses,
   logStaffAction,
+  getStaffCourses,
 } from "@/lib/staffStore";
 import {
   ExtendedVideoRow,
-  getStoredVideos,
-  saveStoredVideos,
   extractYouTubeVideoId,
   fetchDbVideos,
   saveLessonToSupabase,
   deleteLessonFromSupabase,
+  syncCourseLessonCount,
+  getStoredVideos,
 } from "@/lib/playlistStore";
+import {
+  Play,
+  Plus,
+  Search,
+  Trash2,
+  Edit2,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Video,
+  Layers,
+  Sparkles,
+  Loader2,
+  ExternalLink,
+} from "lucide-react";
+
+function YoutubeIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  );
+}
 
 export default function VideoManagerPage() {
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
   const [courses, setCourses] = useState<Course[]>([]);
   const [videos, setVideos] = useState<ExtendedVideoRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState("");
   const [courseFilter, setCourseFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "expiring_soon" | "expired">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "free">("all");
 
   // Drawer State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<ExtendedVideoRow | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Drawer Form State
-  const [videoType, setVideoType] = useState<"youtube" | "custom">("youtube");
+  // Simplified Form State (No HLS, No Part Number, No Series Title)
+  const [selectedCourseId, setSelectedCourseId] = useState("");
   const [videoLink, setVideoLink] = useState("");
   const [lessonTitle, setLessonTitle] = useState("");
-  const [selectedCourseId, setSelectedCourseId] = useState("");
-  const [publishAt, setPublishAt] = useState("");
-  const [validityMode, setValidityMode] = useState<"days" | "date">("days");
-  const [validityDays, setValidityDays] = useState(30);
-  const [specificRemoveAt, setSpecificRemoveAt] = useState("");
-  const [isFreePreview, setIsFreePreview] = useState(false);
-  const [durationMinutes, setDurationMinutes] = useState(15);
-  const [lessonDescription, setLessonDescription] = useState("");
   const [lessonPosition, setLessonPosition] = useState(1);
-  const [partNumber, setPartNumber] = useState(1);
-  const [seriesTitle, setSeriesTitle] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState(15);
+  const [isFreePreview, setIsFreePreview] = useState(false);
+  const [lessonDescription, setLessonDescription] = useState("");
+
+  // YouTube Auto-Fetch Title State
+  const [isFetchingTitle, setIsFetchingTitle] = useState(false);
+  const [fetchTitleSuccess, setFetchTitleSuccess] = useState<string | null>(null);
+  const [fetchTitleError, setFetchTitleError] = useState<string | null>(null);
 
   // Admin-Only Delete Modal State
   const [deleteModalVideo, setDeleteModalVideo] = useState<ExtendedVideoRow | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // 100% Live Supabase Sync on mount & reload
+  const reloadFromSupabase = async () => {
+    setIsLoading(true);
+    setStaff(getCurrentStaff());
+    try {
+      const [cList, vList] = await Promise.all([
+        fetchDbCourses(),
+        fetchDbVideos(),
+      ]);
+      setCourses(cList);
+      if (cList.length > 0 && !selectedCourseId) {
+        setSelectedCourseId(cList[0].id);
+      }
+      setVideos(vList);
+    } catch (err) {
+      console.warn("Failed to load live data, falling back to local cache:", err);
+      const cList = getStaffCourses();
+      setCourses(cList);
+      setVideos(getStoredVideos());
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setStaff(getCurrentStaff());
-    const cList = getStaffCourses();
-    setCourses(cList);
-    if (cList.length > 0) {
-      setSelectedCourseId(cList[0].id);
-    }
-
-    const loadVideos = () => {
-      fetchDbVideos().then((vList) => {
-        if (vList) setVideos(vList);
-      });
+    reloadFromSupabase();
+    const handleSync = () => reloadFromSupabase();
+    window.addEventListener("mma_videos_changed", handleSync);
+    window.addEventListener("mma_courses_changed", handleSync);
+    return () => {
+      window.removeEventListener("mma_videos_changed", handleSync);
+      window.removeEventListener("mma_courses_changed", handleSync);
     };
-    loadVideos();
-    window.addEventListener("mma_videos_changed", loadVideos);
-    return () => window.removeEventListener("mma_videos_changed", loadVideos);
   }, []);
 
   const isMainAdmin = staff.role === "main_admin";
 
-  // Calculate days left helper
-  const getDaysLeft = (removeAt: string | null) => {
-    if (!removeAt) return null;
-    const diff = new Date(removeAt).getTime() - Date.now();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  };
-
   // Open Drawer for New Video
   const handleOpenAdd = () => {
     setEditingVideo(null);
-    setVideoType("youtube");
     setVideoLink("");
     setLessonTitle("");
-    setPublishAt(new Date().toISOString().slice(0, 16));
-    setValidityMode("days");
-    setValidityDays(30);
-    setSpecificRemoveAt("");
-    setIsFreePreview(false);
+    if (courses.length > 0) {
+      setSelectedCourseId(courses[0].id);
+    }
+    const filteredByCourse = videos.filter((v) => v.courseId === (selectedCourseId || courses[0]?.id));
+    setLessonPosition(filteredByCourse.length + 1);
     setDurationMinutes(15);
+    setIsFreePreview(false);
     setLessonDescription("");
-    setLessonPosition(videos.length + 1);
-    setPartNumber(1);
-    setSeriesTitle("");
+    setFetchTitleError(null);
+    setFetchTitleSuccess(null);
     setIsDrawerOpen(true);
   };
 
   // Open Drawer for Edit
   const handleOpenEdit = (video: ExtendedVideoRow) => {
     setEditingVideo(video);
-    setVideoType(video.videoType);
     setVideoLink(video.videoId);
     setLessonTitle(video.lessonTitle);
     setSelectedCourseId(video.courseId);
-    setPublishAt(video.publishAt ? new Date(video.publishAt).toISOString().slice(0, 16) : "");
-    if (video.removeAt) {
-      setValidityMode("date");
-      setSpecificRemoveAt(new Date(video.removeAt).toISOString().slice(0, 16));
-    } else {
-      setValidityMode("days");
-      setValidityDays(video.validityDays || 30);
-    }
-    setIsFreePreview(video.isFree);
-    setDurationMinutes(Math.round(video.durationSec / 60) || 15);
-    setLessonDescription(video.description || "");
     setLessonPosition(video.position || 1);
-    setPartNumber(video.partNumber || 1);
-    setSeriesTitle(video.seriesTitle || "");
+    setDurationMinutes(Math.round((video.durationSec || 900) / 60));
+    setIsFreePreview(Boolean(video.isFree));
+    setLessonDescription(video.description || "");
+    setFetchTitleError(null);
+    setFetchTitleSuccess(null);
     setIsDrawerOpen(true);
   };
 
-  // Save Video
-  const handleSaveVideo = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!lessonTitle.trim() || !videoLink.trim() || !selectedCourseId) {
-      alert("Please provide video title, link/ID, and target course.");
+  // Auto-Fetch Title & Details from YouTube URL
+  const handleFetchYouTubeTitle = async () => {
+    if (!videoLink.trim()) {
+      setFetchTitleError("कृपया प्रथम YouTube व्हिडिओची लिंक किंवा ID प्रविष्ट करा.");
       return;
     }
 
-    let computedRemoveAt: string | null = null;
-    if (validityMode === "days") {
-      const pub = publishAt ? new Date(publishAt).getTime() : Date.now();
-      computedRemoveAt = new Date(pub + validityDays * 24 * 60 * 60 * 1000).toISOString();
-    } else if (specificRemoveAt) {
-      computedRemoveAt = new Date(specificRemoveAt).toISOString();
+    setIsFetchingTitle(true);
+    setFetchTitleError(null);
+    setFetchTitleSuccess(null);
+
+    try {
+      const res = await fetch("/api/youtube/playlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: videoLink.trim() }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "YouTube व्हिडिओ माहिती मिळवता आली नाही.");
+      }
+
+      if (data.title) {
+        setLessonTitle(data.title);
+      }
+
+      if (data.videoId) {
+        setVideoLink(data.videoId);
+      }
+
+      if (data.description && !lessonDescription) {
+        setLessonDescription(data.description);
+      }
+
+      if (data.items && data.items[0]?.durationSec) {
+        setDurationMinutes(Math.max(1, Math.round(data.items[0].durationSec / 60)));
+      }
+
+      setFetchTitleSuccess(`🎉 "${data.title}" नाव व कालावधी आपोआप भरले गेले!`);
+    } catch (err: any) {
+      setFetchTitleError(err.message || "YouTube URL तपासा किंवा इंटरनेट कनेक्शन तपासा.");
+    } finally {
+      setIsFetchingTitle(false);
+    }
+  };
+
+  // Save Video (100% Live Supabase Sync)
+  const handleSaveVideo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!lessonTitle.trim() || !videoLink.trim() || !selectedCourseId) {
+      alert("कृपया व्हिडिओचे नाव, YouTube लिंक, आणि अभ्यासक्रम (Course) निवडा.");
+      return;
     }
 
-    let status: ExtendedVideoRow["status"] = "active";
-    if (computedRemoveAt) {
-      const days = Math.ceil((new Date(computedRemoveAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      if (days <= 0) status = "expired";
-      else if (days <= 7) status = "expiring_soon";
-    }
-
-    const courseObj = courses.find((c) => c.id === selectedCourseId);
-    const cleanVideoId =
-      videoType === "youtube"
-        ? extractYouTubeVideoId(videoLink) || videoLink.trim()
-        : videoLink.trim();
+    setIsSaving(true);
+    const cleanVideoId = extractYouTubeVideoId(videoLink) || videoLink.trim();
+    const courseObj = courses.find((c) => c.id === selectedCourseId || c.code === selectedCourseId);
 
     const newVideo: ExtendedVideoRow = {
       id: editingVideo ? editingVideo.id : `vid-${Date.now()}`,
       lessonId: editingVideo ? editingVideo.lessonId : `les-${Date.now()}`,
       lessonTitle: lessonTitle.trim(),
       courseId: selectedCourseId,
-      courseTitle: courseObj ? courseObj.title : "MindMaster Curriculum",
-      videoType,
+      courseTitle: courseObj ? (courseObj.titleMr || courseObj.title) : "MindMaster Curriculum",
+      videoType: "youtube",
       videoId: cleanVideoId,
-      publishAt: publishAt ? new Date(publishAt).toISOString() : new Date().toISOString(),
-      removeAt: computedRemoveAt,
-      validityDays,
+      position: lessonPosition,
       isFree: isFreePreview,
       durationSec: durationMinutes * 60,
+      description: lessonDescription.trim() || undefined,
+      status: "active",
+      publishAt: new Date().toISOString(),
+      removeAt: null,
+      validityDays: 30,
       views: editingVideo ? editingVideo.views : 0,
       avgWatchPercent: editingVideo ? editingVideo.avgWatchPercent : 0,
-      status,
-      description: lessonDescription.trim() || undefined,
-      position: lessonPosition,
-      partNumber,
-      seriesTitle: seriesTitle.trim() || undefined,
       likesCount: editingVideo ? editingVideo.likesCount : 0,
     };
 
-    const currentVideos = getStoredVideos();
-    const updated = editingVideo
-      ? currentVideos.map((v) => (v.id === editingVideo.id ? newVideo : v))
-      : [newVideo, ...currentVideos];
+    try {
+      await saveLessonToSupabase(newVideo);
+      await syncCourseLessonCount(selectedCourseId);
 
-    setVideos(updated);
-    saveStoredVideos(updated);
-    saveLessonToSupabase(newVideo);
+      logStaffAction(
+        editingVideo ? "VIDEO_UPDATE" : "VIDEO_CREATE",
+        "video",
+        newVideo.id,
+        newVideo.lessonTitle,
+        `${editingVideo ? "Updated" : "Added"} video lecture: ${newVideo.lessonTitle} in ${newVideo.courseTitle}`
+      );
 
-    logStaffAction(
-      editingVideo ? "VIDEO_UPDATE" : "VIDEO_CREATE",
-      "video",
-      newVideo.id,
-      newVideo.lessonTitle,
-      `${editingVideo ? "Updated" : "Added"} video lecture (${videoType}): ${newVideo.lessonTitle}, Free: ${isFreePreview}`
-    );
-
-    setIsDrawerOpen(false);
+      setIsDrawerOpen(false);
+      await reloadFromSupabase();
+    } catch (err: any) {
+      console.error("Save video error:", err);
+      alert(`व्हिडिओ सेव्ह करताना त्रुटी आली: ${err.message}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  // Confirm Delete (Admin-Only)
-  const handleConfirmDelete = () => {
+  // Confirm Delete (Admin-Only, Live Supabase Sync)
+  const handleConfirmDelete = async () => {
     if (!deleteModalVideo) return;
-    const currentVideos = getStoredVideos();
-    const updated = currentVideos.filter((v) => v.id !== deleteModalVideo.id);
-    setVideos(updated);
-    saveStoredVideos(updated);
-    deleteLessonFromSupabase(deleteModalVideo.id || deleteModalVideo.lessonId || deleteModalVideo.videoId, deleteModalVideo.courseId);
+    setIsDeleting(true);
+    try {
+      await deleteLessonFromSupabase(
+        deleteModalVideo.id || deleteModalVideo.lessonId || deleteModalVideo.videoId,
+        deleteModalVideo.courseId
+      );
+      await syncCourseLessonCount(deleteModalVideo.courseId);
 
-    logStaffAction(
-      "VIDEO_DELETE",
-      "video",
-      deleteModalVideo.id,
-      deleteModalVideo.lessonTitle,
-      `Main admin permanently removed video lecture ${deleteModalVideo.lessonTitle}`
-    );
+      logStaffAction(
+        "VIDEO_DELETE",
+        "video",
+        deleteModalVideo.id,
+        deleteModalVideo.lessonTitle,
+        `Main admin removed video lecture ${deleteModalVideo.lessonTitle}`
+      );
 
-    setDeleteModalVideo(null);
+      setDeleteModalVideo(null);
+      await reloadFromSupabase();
+    } catch (err: any) {
+      alert(`व्हिडिओ हटवताना त्रुटी आली: ${err.message}`);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Filter Logic
@@ -222,7 +284,12 @@ export default function VideoManagerPage() {
       v.lessonTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       v.videoId.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCourse = courseFilter === "all" || v.courseId === courseFilter;
-    const matchesStatus = statusFilter === "all" || v.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all"
+        ? true
+        : statusFilter === "free"
+        ? Boolean(v.isFree)
+        : !v.isFree;
     return matchesQuery && matchesCourse && matchesStatus;
   });
 
@@ -233,82 +300,74 @@ export default function VideoManagerPage() {
           {/* Header Banner */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm">
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-extrabold text-[#0E1B3D] font-heading">
-                  Video Lecture Manager
-                </h1>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#EBF3FE] text-[#0B57D0]">
-                  videos.manage
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-red-50 text-red-600 border border-red-200">
+                  व्हिडिओ लेक्चर्स (Video Lectures Hub)
                 </span>
+                <span className="text-xs text-slate-400 font-semibold">• {videos.length} लेक्चर्स सेव्ह आहेत</span>
               </div>
+              <h2 className="text-2xl font-extrabold text-[#0E1B3D] font-heading">
+                Video Lectures Manager
+              </h2>
               <p className="text-xs text-[#5A6478] mt-1">
-                Link YouTube & Custom HLS streams, configure countdown removals, and inspect student watch progress.
+                YouTube लिंकवरून लेक्चर्स जोडा, मोफत डेमो प्रिव्ह्यू सेट करा आणि थेट डेटाबेसवर मॅनेज करा.
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Link
-                href={staff.role === "sub_admin" ? "/sub/playlist" : "/admin/playlist"}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#F5F7FF] hover:bg-[#EBF3FE] text-[#0B57D0] border border-[#DDE3EA] text-xs font-bold rounded-full transition-all"
-              >
-                <span>📥</span> Import Playlist
-              </Link>
-              <button
-                onClick={handleOpenAdd}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-full shadow-md transition-all"
-              >
-                <span>🎬</span> Add Video Lecture
-              </button>
-            </div>
+            <button
+              onClick={handleOpenAdd}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-2xl shadow-md transition-all shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>नवीन व्हिडिओ जोडा (+ Add Video)</span>
+            </button>
           </div>
 
-          {/* Filters Bar: Search, Course Selector, Status Chips */}
+          {/* Filters Bar */}
           <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Search */}
-              <div className="md:col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="relative sm:col-span-2">
+                <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search video lectures by title or YouTube ID..."
+                  placeholder="व्हिडिओचे नाव किंवा YouTube ID शोधा..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full text-xs px-4 py-3 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl focus:outline-none focus:border-[#0B57D0] text-[#0E1B3D]"
+                  className="w-full text-xs pl-10 pr-4 py-3 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl focus:outline-none focus:border-[#0B57D0] text-[#0E1B3D]"
                 />
               </div>
 
-              {/* Course Selector */}
               <div>
                 <select
                   value={courseFilter}
                   onChange={(e) => setCourseFilter(e.target.value)}
-                  className="w-full text-xs px-4 py-3 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl font-bold text-[#0E1B3D] focus:outline-none cursor-pointer"
+                  className="w-full text-xs px-4 py-3 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl focus:outline-none focus:border-[#0B57D0] text-[#0E1B3D] font-bold"
                 >
-                  <option value="all">All Associated Courses</option>
+                  <option value="all">सर्व कोर्सेस (All Courses)</option>
                   {courses.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.code}: {c.title}
+                      {c.code} - {c.titleMr || c.title}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            {/* Status Chips */}
             <div className="flex items-center gap-2 pt-1">
               <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mr-1">
-                Status:
+                प्रकार (Type):
               </span>
-              {(["all", "active", "expiring_soon", "expired"] as const).map((st) => (
+              {(["all", "free", "active"] as const).map((st) => (
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-all ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                     statusFilter === st
                       ? "bg-[#0B57D0] text-white shadow-sm"
                       : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0B57D0]"
                   }`}
                 >
-                  {st === "all" ? "All Videos" : st.replace("_", " ")}
+                  {st === "all" ? "सर्व (All)" : st === "free" ? "मोफत डेमो (Free Preview)" : "Paid Only"}
                 </button>
               ))}
             </div>
@@ -318,486 +377,341 @@ export default function VideoManagerPage() {
           <div className="bg-white rounded-3xl border border-[#E4E8F8] shadow-sm overflow-hidden">
             <div className="p-4 bg-[#FAFBFD] border-b border-[#E4E8F8] flex items-center justify-between text-xs">
               <span className="font-bold text-[#0E1B3D]">
-                Showing {filteredVideos.length} Video Lectures
+                एकूण {filteredVideos.length} व्हिडिओ सापडले
               </span>
-              <span className="text-[11px] text-[#8A94A6]">
-                Automated cron marks expired lectures daily at 00:00 UTC
+              <span className="text-[11px] text-[#8A94A6] flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live Supabase `lessons` Sync
               </span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="bg-[#F5F7FF] text-[#5A6478] uppercase text-[10px] tracking-wider border-b border-[#E4E8F8]">
-                    <th className="py-3 px-4 rounded-l-xl">Lesson Details</th>
-                    <th className="py-3 px-4">Publish Date</th>
-                    <th className="py-3 px-4">Peach Remove Countdown</th>
-                    <th className="py-3 px-4">Type</th>
-                    {/* Admin-only watch stats column per design */}
-                    {isMainAdmin && (
-                      <th className="py-3 px-4">
-                        <span className="text-purple-700 font-extrabold flex items-center gap-1">
-                          👑 Watch Stats (Admin)
-                        </span>
-                      </th>
-                    )}
-                    <th className="py-3 px-4 text-right rounded-r-xl">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E4E8F8]">
-                  {filteredVideos.map((video) => {
-                    const daysLeft = getDaysLeft(video.removeAt);
-
-                    return (
-                      <tr key={video.id} className="hover:bg-[#FAFBFD] transition-colors">
-                        {/* Lesson Details */}
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">
-                              {video.videoType === "youtube" ? "🔴" : "🟣"}
-                            </span>
-                            <div>
-                              <p className="font-bold text-[#0E1B3D] text-xs">
-                                {video.lessonTitle}
-                              </p>
-                              <p className="text-[11px] text-[#5A6478]">
-                                {video.courseTitle} • {Math.round(video.durationSec / 60)} mins
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Publish Date */}
-                        <td className="py-3.5 px-4 text-[#5A6478] font-medium">
-                          {video.publishAt ? video.publishAt.slice(0, 10) : "Immediate"}
-                        </td>
-
-                        {/* Peach Remove Countdown Chip per design */}
-                        <td className="py-3.5 px-4">
-                          {video.status === "expired" || (daysLeft !== null && daysLeft <= 0) ? (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA]">
-                              <span>⛔</span> Expired
-                            </span>
-                          ) : daysLeft !== null ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FFEDD5] text-[#C2410C] border border-[#FED7AA] shadow-sm">
-                              <span>⏳</span> {daysLeft} days left
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-[#8A94A6]">
-                              No Expiry Set
-                            </span>
-                          )}
-                        </td>
-
-                        {/* Free / Paid Chip */}
-                        <td className="py-3.5 px-4">
-                          {video.isFree ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Free Preview
-                            </span>
-                          ) : (
-                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                              Enrolled Only
-                            </span>
-                          )}
-                        </td>
-
-                        {/* Admin-Only Watch Stats Column */}
-                        {isMainAdmin && (
+            {isLoading ? (
+              <div className="p-12 text-center text-slate-400 text-xs">
+                डेटाबेसमधून लेक्चर्स लोड होत आहेत...
+              </div>
+            ) : filteredVideos.length === 0 ? (
+              <div className="p-16 text-center flex flex-col items-center justify-center">
+                <div className="w-16 h-16 rounded-3xl bg-red-50 text-red-600 flex items-center justify-center text-3xl mb-4 shadow-inner">
+                  🎬
+                </div>
+                <h4 className="font-extrabold text-base text-[#0E1B3D]">
+                  कोणताही व्हिडिओ सापडला नाही
+                </h4>
+                <p className="text-xs text-[#5A6478] max-w-md mt-1 mb-5 leading-relaxed">
+                  वरील <strong>&quot;+ Add Video&quot;</strong> बटणावर क्लिक करा आणि YouTube व्हिडिओ जोडा.
+                </p>
+                <button
+                  onClick={handleOpenAdd}
+                  className="px-6 py-2.5 bg-[#0B57D0] text-white text-xs font-bold rounded-full shadow hover:bg-blue-700 transition"
+                >
+                  + पहिला व्हिडिओ जोडा
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-[#FAFBFD] border-b border-[#E4E8F8] text-[#8A94A6] font-bold uppercase tracking-wider text-[10px]">
+                      <th className="py-3.5 px-4"># / Video</th>
+                      <th className="py-3.5 px-4">Course</th>
+                      <th className="py-3.5 px-4">कालावधी (Duration)</th>
+                      <th className="py-3.5 px-4">मोफत प्रिव्ह्यू?</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E8F8]">
+                    {filteredVideos.map((video) => {
+                      const detectedId = extractYouTubeVideoId(video.videoId) || video.videoId;
+                      return (
+                        <tr key={video.id} className="hover:bg-[#FAFBFD] transition-colors">
                           <td className="py-3.5 px-4">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2 font-semibold text-[#0E1B3D]">
-                                <span>{video.views} Views</span>
-                                <span className="text-[#8A94A6]">•</span>
-                                <span className="text-[#0B57D0]">{video.avgWatchPercent}% Avg</span>
+                            <div className="flex items-center gap-3">
+                              <div className="relative w-16 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-900 shrink-0">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={`https://img.youtube.com/vi/${detectedId}/mqdefault.jpg`}
+                                  alt="Thumb"
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = "none";
+                                  }}
+                                />
                               </div>
-                              <div className="flex items-center gap-3">
-                                <div className="w-20 bg-[#E4E8F8] h-1.5 rounded-full overflow-hidden">
-                                  <div
-                                    className="bg-[#0B57D0] h-full rounded-full"
-                                    style={{ width: `${video.avgWatchPercent}%` }}
-                                  />
+                              <div className="space-y-0.5 min-w-0">
+                                <div className="font-extrabold text-[#0E1B3D] truncate max-w-xs sm:max-w-md">
+                                  {video.lessonTitle}
                                 </div>
-                                <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-0.5">
-                                  <span>👍</span>
-                                  <span>{video.likesCount !== undefined ? video.likesCount : Math.floor((video.views || 8) * 0.42)}</span>
-                                </span>
+                                <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5">
+                                  <span className="font-bold text-blue-600">#{video.position || 1}</span>
+                                  <span>•</span>
+                                  <span className="truncate">{detectedId}</span>
+                                </div>
                               </div>
                             </div>
                           </td>
-                        )}
 
-                        {/* Actions */}
-                        <td className="py-3.5 px-4 text-right space-x-2">
-                          <button
-                            onClick={() => handleOpenEdit(video)}
-                            className="px-3 py-1.5 bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0B57D0] font-bold rounded-lg border border-[#E4E8F8] transition-colors"
-                          >
-                            Edit
-                          </button>
+                          <td className="py-3.5 px-4">
+                            <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-[#0B57D0] border border-blue-200 font-bold text-[11px]">
+                              {video.courseTitle || "Course"}
+                            </span>
+                          </td>
 
-                          {isMainAdmin && (
+                          <td className="py-3.5 px-4 text-slate-700 font-bold">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-slate-400" />
+                              {Math.round((video.durationSec || 900) / 60)} मिनिटे
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            {video.isFree ? (
+                              <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                ✓ Free Demo
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                Paid Only
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right space-x-2">
                             <button
-                              onClick={() => setDeleteModalVideo(video)}
-                              className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg border border-red-200 transition-colors"
-                              title="Delete Video (Admin Only)"
+                              onClick={() => handleOpenEdit(video)}
+                              className="px-3 py-1.5 bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0B57D0] font-bold rounded-xl border border-[#E4E8F8] transition-colors"
                             >
-                              Delete
+                              Edit
                             </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+
+                            {isMainAdmin && (
+                              <button
+                                onClick={() => setDeleteModalVideo(video)}
+                                className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl border border-red-200 transition-colors"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* ========================================================= */}
-          {/* SLIDE-OVER DRAWER FORM FOR VIDEO LECTURE */}
+          {/* SIMPLIFIED SLIDE-OVER DRAWER FORM */}
           {/* ========================================================= */}
           {isDrawerOpen && (
             <div className="fixed inset-0 z-50 overflow-hidden">
               <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-                onClick={() => setIsDrawerOpen(false)}
+                className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+                onClick={() => !isSaving && setIsDrawerOpen(false)}
               />
 
               <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex">
-                <div className="w-screen max-w-xl bg-white shadow-2xl flex flex-col justify-between overflow-y-auto">
+                <div className="w-screen max-w-lg bg-white shadow-2xl flex flex-col justify-between">
                   {/* Drawer Header */}
-                  <div className="p-6 border-b border-[#E4E8F8] flex items-center justify-between bg-[#FAFBFD]">
+                  <div className="p-6 bg-[#0E1B3D] text-white flex items-center justify-between shrink-0">
                     <div>
-                      <h2 className="text-lg font-bold text-[#0E1B3D]">
-                        {editingVideo ? "Edit Video Lecture" : "Upload / Link Video Lecture"}
+                      <h2 className="text-lg font-bold font-heading">
+                        {editingVideo ? "व्हिडिओ संपादित करा (Edit Video)" : "नवीन व्हिडिओ जोडा (Add Video)"}
                       </h2>
-                      <p className="text-xs text-[#5A6478] mt-0.5">
-                        Configure YouTube or HLS stream, preview mode, and peach countdown removal.
+                      <p className="text-xs text-blue-200 mt-0.5">
+                        YouTube लिंक टाका आणि एका क्लिकवर व्हिडिओ सेव्ह करा.
                       </p>
                     </div>
                     <button
-                      onClick={() => setIsDrawerOpen(false)}
-                      className="w-8 h-8 rounded-full bg-white border border-[#E4E8F8] flex items-center justify-center text-sm text-[#5A6478] hover:bg-slate-100"
+                      onClick={() => !isSaving && setIsDrawerOpen(false)}
+                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center font-bold text-sm"
                     >
                       ✕
                     </button>
                   </div>
 
                   {/* Drawer Form Body */}
-                  <form onSubmit={handleSaveVideo} className="p-6 space-y-5 text-xs">
-                    {/* YouTube / Stream Segmented Control */}
-                    <div>
-                      <label className="block font-bold text-[#0E1B3D] mb-1.5">
-                        Stream Source (Segmented Control)
-                      </label>
-                      <div className="grid grid-cols-2 p-1 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl">
-                        <button
-                          type="button"
-                          onClick={() => setVideoType("youtube")}
-                          className={`py-2 rounded-xl font-bold transition-all ${
-                            videoType === "youtube"
-                              ? "bg-white text-red-600 shadow-sm border border-[#E4E8F8]"
-                              : "text-[#5A6478]"
-                          }`}
-                        >
-                          🔴 YouTube Video ID
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setVideoType("custom")}
-                          className={`py-2 rounded-xl font-bold transition-all ${
-                            videoType === "custom"
-                              ? "bg-white text-[#0B57D0] shadow-sm border border-[#E4E8F8]"
-                              : "text-[#5A6478]"
-                          }`}
-                        >
-                          🟣 Custom HLS Stream
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Video Link / ID Input with Live YouTube Extraction */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block font-bold text-[#0E1B3D]">
-                          {videoType === "youtube" ? "YouTube Video Link or ID (Unlisted)" : "Custom Stream URL"}
-                        </label>
-                        {videoType === "youtube" && (
-                          <span className="text-[10px] text-blue-600 font-bold">Auto-Extracts ID</span>
-                        )}
-                      </div>
-                      <input
-                        type="text"
-                        required
-                        value={videoLink}
-                        onChange={(e) => setVideoLink(e.target.value)}
-                        placeholder={videoType === "youtube" ? "e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ or dQw4w9WgXcQ" : "https://stream.mindmasteracademy.in/hls/lesson.m3u8"}
-                        className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none"
-                      />
-
-                      {/* YouTube Detection Badge & Preview */}
-                      {videoType === "youtube" && videoLink.trim() && (
-                        <div className="mt-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3">
-                          {(() => {
-                            const detectedId = extractYouTubeVideoId(videoLink);
-                            if (detectedId) {
-                              return (
-                                <>
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={`https://img.youtube.com/vi/${detectedId}/mqdefault.jpg`}
-                                    alt="YouTube Preview"
-                                    className="w-16 h-10 rounded-lg object-cover border border-slate-300 shrink-0"
-                                    onError={(e) => {
-                                      (e.target as HTMLElement).style.display = "none";
-                                    }}
-                                  />
-                                  <div className="text-[11px]">
-                                    <div className="text-emerald-700 font-extrabold flex items-center gap-1">
-                                      <span>✅</span> Valid YouTube Video ID Detected
-                                    </div>
-                                    <code className="text-slate-600 font-mono text-[10px]">{detectedId}</code>
-                                  </div>
-                                </>
-                              );
-                            }
-                            return (
-                              <div className="text-[11px] text-amber-700 font-medium">
-                                ⚠️ Please enter a valid YouTube link or 11-character video ID (e.g. youtube.com/watch?v=...)
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Lesson Title & Order */}
-                    <div className="grid grid-cols-4 gap-3">
-                      <div className="col-span-3">
-                        <label className="block font-bold text-[#0E1B3D] mb-1">
-                          Lesson Title *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={lessonTitle}
-                          onChange={(e) => setLessonTitle(e.target.value)}
-                          placeholder="e.g. 16 Vedic Sutras: Speed Math Foundation"
-                          className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none"
-                        />
-                      </div>
-
-                      <div className="col-span-1">
-                        <label className="block font-bold text-[#0E1B3D] mb-1">
-                          Order
-                        </label>
-                        <input
-                          type="number"
-                          min={1}
-                          value={lessonPosition}
-                          onChange={(e) => setLessonPosition(Number(e.target.value))}
-                          placeholder="1"
-                          className="w-full px-3 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-center text-[#0E1B3D] focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Multi-Part Series / Episode Chaining */}
-                    <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="font-bold text-[#0E1B3D] text-xs flex items-center gap-1.5">
-                          <span>🎬</span>
-                          <span>Multi-Part Series</span>
-                        </label>
-                        <span className="text-[10px] text-indigo-600 font-bold">Optional</span>
-                      </div>
-                      <p className="text-[11px] text-[#5A6478]">
-                        If this video is part of a series (e.g. Part 1, Part 2), specify the series title and part number.
-                      </p>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="col-span-2">
-                          <input
-                            type="text"
-                            value={seriesTitle}
-                            onChange={(e) => setSeriesTitle(e.target.value)}
-                            placeholder="e.g. 500 Year Calendar Masterclass"
-                            className="w-full px-3 py-2 bg-white border border-indigo-200 rounded-lg text-xs text-[#0E1B3D] focus:outline-none"
-                          />
-                        </div>
-                        <div className="col-span-1">
-                          <select
-                            value={partNumber}
-                            onChange={(e) => setPartNumber(Number(e.target.value))}
-                            className="w-full px-2 py-2 bg-white border border-indigo-200 rounded-lg text-xs font-bold text-[#0E1B3D] focus:outline-none"
-                          >
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                              <option key={num} value={num}>
-                                Part {num}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Lesson Description */}
+                  <form onSubmit={handleSaveVideo} className="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
+                    {/* 1. Target Course Selector */}
                     <div>
                       <label className="block font-bold text-[#0E1B3D] mb-1">
-                        Lesson Description
-                      </label>
-                      <textarea
-                        value={lessonDescription}
-                        onChange={(e) => setLessonDescription(e.target.value)}
-                        placeholder="What students will learn in this video lesson..."
-                        rows={2}
-                        className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none resize-none"
-                      />
-                    </div>
-
-                    {/* Associated Course */}
-                    <div>
-                      <label className="block font-bold text-[#0E1B3D] mb-1">
-                        Associated Course
+                        अभ्यासक्रम निवडा (Target Course) *
                       </label>
                       <select
+                        required
                         value={selectedCourseId}
                         onChange={(e) => setSelectedCourseId(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl font-bold text-[#0E1B3D] text-xs focus:outline-none"
+                        className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
                       >
                         {courses.map((c) => (
                           <option key={c.id} value={c.id}>
-                            {c.code}: {c.title}
+                            {c.code} - {c.titleMr || c.title}
                           </option>
                         ))}
                       </select>
                     </div>
 
-                    {/* Duration & Free Preview Toggle */}
-                    <div className="grid grid-cols-2 gap-3 p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl">
-                      <div>
-                        <label className="block font-bold text-[#0E1B3D] mb-1">Duration (Mins)</label>
+                    {/* 2. YouTube Link & Auto-Fetch Button */}
+                    <div className="p-4 bg-red-50/50 border border-red-200 rounded-2xl space-y-2">
+                      <label className="block font-bold text-[#0E1B3D] flex items-center gap-1.5">
+                        <YoutubeIcon className="w-4 h-4 text-red-600" />
+                        <span>YouTube Video URL किंवा Video ID *</span>
+                      </label>
+                      <div className="flex items-center gap-2">
                         <input
-                          type="number"
-                          min={1}
-                          max={300}
-                          value={durationMinutes}
-                          onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                          className="w-full px-3 py-2 bg-white border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none"
+                          type="text"
+                          required
+                          value={videoLink}
+                          onChange={(e) => {
+                            setVideoLink(e.target.value);
+                            setFetchTitleError(null);
+                          }}
+                          placeholder="उदा. https://youtu.be/dQw4w9WgXcQ किंवा dQw4w9WgXcQ"
+                          className="flex-1 px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-red-500 font-mono"
                         />
-                      </div>
-
-                      <div>
-                        <label className="block font-bold text-[#0E1B3D] mb-1">Free Preview Toggle</label>
                         <button
                           type="button"
-                          onClick={() => setIsFreePreview(!isFreePreview)}
-                          className={`w-full py-2 px-3 rounded-xl font-bold text-xs transition-all ${
-                            isFreePreview
-                              ? "bg-emerald-600 text-white shadow-sm"
-                              : "bg-white text-[#5A6478] border border-[#E4E8F8]"
-                          }`}
+                          onClick={handleFetchYouTubeTitle}
+                          disabled={isFetchingTitle || !videoLink.trim()}
+                          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-xs transition flex items-center gap-1 shrink-0"
                         >
-                          {isFreePreview ? "🟢 Free for all" : "🔒 Enrolled only"}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Validity Days or Specific Remove Date */}
-                    <div className="p-4 bg-orange-50/50 border border-orange-200/60 rounded-2xl space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="font-bold text-[#0E1B3D]">
-                          Peach Remove Countdown Policy
-                        </label>
-                        <span className="text-[10px] text-orange-700 font-bold uppercase">
-                          Auto-Removal
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 p-1 bg-white border border-orange-200 rounded-xl">
-                        <button
-                          type="button"
-                          onClick={() => setValidityMode("days")}
-                          className={`py-1.5 rounded-lg font-bold text-[11px] transition-all ${
-                            validityMode === "days"
-                              ? "bg-orange-500 text-white shadow-sm"
-                              : "text-[#5A6478]"
-                          }`}
-                        >
-                          Validity Days (30d)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setValidityMode("date")}
-                          className={`py-1.5 rounded-lg font-bold text-[11px] transition-all ${
-                            validityMode === "date"
-                              ? "bg-orange-500 text-white shadow-sm"
-                              : "text-[#5A6478]"
-                          }`}
-                        >
-                          Specific Remove Date
+                          {isFetchingTitle ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Sparkles className="w-3.5 h-3.5" />
+                          )}
+                          <span>नाव मिळवा (Fetch)</span>
                         </button>
                       </div>
 
-                      {validityMode === "days" ? (
-                        <div>
-                          <label className="block font-semibold text-[#5A6478] mb-1">
-                            Days video remains live after publish
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min={1}
-                              max={365}
-                              value={validityDays}
-                              onChange={(e) => setValidityDays(Number(e.target.value))}
-                              className="w-24 px-3 py-2 bg-white border border-orange-200 rounded-xl font-bold text-xs focus:outline-none"
-                            />
-                            <span className="text-[#5A6478] font-bold">Days live</span>
-                          </div>
+                      {fetchTitleError && (
+                        <div className="text-[11px] text-red-700 font-semibold flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          <span>{fetchTitleError}</span>
                         </div>
-                      ) : (
-                        <div>
-                          <label className="block font-semibold text-[#5A6478] mb-1">
-                            Specific remove_at Date & Time
-                          </label>
-                          <input
-                            type="datetime-local"
-                            value={specificRemoveAt}
-                            onChange={(e) => setSpecificRemoveAt(e.target.value)}
-                            className="w-full px-3 py-2 bg-white border border-orange-200 rounded-xl text-xs focus:outline-none"
-                          />
+                      )}
+
+                      {fetchTitleSuccess && (
+                        <div className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{fetchTitleSuccess}</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Publish At */}
+                    {/* 3. Lesson Title */}
                     <div>
                       <label className="block font-bold text-[#0E1B3D] mb-1">
-                        publish_at (Scheduled Start)
+                        लेक्चरचे नाव (Lesson Title) *
                       </label>
                       <input
-                        type="datetime-local"
-                        value={publishAt}
-                        onChange={(e) => setPublishAt(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs focus:outline-none"
+                        type="text"
+                        required
+                        value={lessonTitle}
+                        onChange={(e) => setLessonTitle(e.target.value)}
+                        placeholder="उदा. ०१. ५०० वर्षांचे कॅलेंडर तंत्र डेमो व सराव"
+                        className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
                       />
                     </div>
 
-                    {/* Drawer Footer Actions */}
-                    <div className="pt-4 border-t border-[#E4E8F8] flex items-center justify-end gap-2">
+                    {/* 4. Position & Duration */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-bold text-[#0E1B3D] mb-1">
+                          अनुक्रमांक (Position / Order) *
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          required
+                          value={lessonPosition}
+                          onChange={(e) => setLessonPosition(Number(e.target.value))}
+                          className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-[#0E1B3D] mb-1">
+                          कालावधी (Minutes) *
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          required
+                          value={durationMinutes}
+                          onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                          className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 5. Free Preview Toggle */}
+                    <div className="p-4 bg-emerald-50/50 border border-emerald-200 rounded-2xl flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-emerald-950 block text-xs">
+                          मोफत डेमो लेक्चर (Free Demo Preview)
+                        </span>
+                        <span className="text-[11px] text-emerald-700">
+                          हा व्हिडिओ खरेदी न केलेल्या विद्यार्थ्यांनाही पाहता येईल का?
+                        </span>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => setIsDrawerOpen(false)}
-                        className="px-4 py-2.5 rounded-full border border-[#E4E8F8] text-[#5A6478] font-bold"
+                        onClick={() => setIsFreePreview(!isFreePreview)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          isFreePreview ? "bg-emerald-600" : "bg-slate-300"
+                        }`}
                       >
-                        Cancel
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            isFreePreview ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
                       </button>
+                    </div>
+
+                    {/* 6. Optional Description */}
+                    <div>
+                      <label className="block font-bold text-[#0E1B3D] mb-1">
+                        लेक्चर नोट्स किंवा वर्णन (Description / Notes)
+                      </label>
+                      <textarea
+                        value={lessonDescription}
+                        onChange={(e) => setLessonDescription(e.target.value)}
+                        placeholder="या लेक्चरबद्दल महत्त्वाची माहिती..."
+                        rows={3}
+                        className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs focus:outline-none resize-none"
+                      />
+                    </div>
+
+                    {/* Submit Actions */}
+                    <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-200">
+                      <button
+                        type="button"
+                        disabled={isSaving}
+                        onClick={() => setIsDrawerOpen(false)}
+                        className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
+                      >
+                        रद्द करा (Cancel)
+                      </button>
+
                       <button
                         type="submit"
-                        className="px-6 py-2.5 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white font-bold shadow-md"
+                        disabled={isSaving}
+                        className="px-6 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-2"
                       >
-                        Save Video Lecture
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>सेव्ह करत आहे...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>व्हिडिओ सेव्ह करा (Save Video)</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </form>
@@ -806,35 +720,37 @@ export default function VideoManagerPage() {
             </div>
           )}
 
-          {/* ========================================================= */}
-          {/* ADMIN-ONLY CONFIRM DELETE MODAL */}
-          {/* ========================================================= */}
+          {/* Delete Confirmation Modal */}
           {deleteModalVideo && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-red-200">
-                <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center text-2xl mx-auto mb-3">
-                  ⚠️
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+              <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-red-200 space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
+                  <Trash2 className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-[#0E1B3D] text-center">
-                  Delete Video Lecture?
-                </h3>
-                <p className="text-xs text-[#5A6478] text-center mt-2 leading-relaxed">
-                  Are you sure you want to permanently delete <strong>"{deleteModalVideo.lessonTitle}"</strong>?
-                  This action is strictly restricted to the <strong>Main Admin</strong> and is recorded in the audit trail.
-                </p>
+                <div>
+                  <h4 className="font-extrabold text-base text-[#0E1B3D]">
+                    हा व्हिडिओ कायमचा हटवायचा आहे का?
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    <strong>{deleteModalVideo.lessonTitle}</strong> हा व्हिडिओ डेटाबेसमधून कायमचा काढून टाकला जाईल.
+                  </p>
+                </div>
 
-                <div className="mt-6 flex items-center justify-end gap-2">
+                <div className="flex items-center justify-end gap-3 pt-2">
                   <button
+                    disabled={isDeleting}
                     onClick={() => setDeleteModalVideo(null)}
-                    className="px-4 py-2 rounded-xl border border-[#E4E8F8] text-[#5A6478] text-xs font-semibold"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
                   >
-                    Cancel
+                    रद्द करा (Cancel)
                   </button>
                   <button
+                    disabled={isDeleting}
                     onClick={handleConfirmDelete}
-                    className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-md"
+                    className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5"
                   >
-                    Confirm & Delete
+                    {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    <span>हटवा (Delete Permanently)</span>
                   </button>
                 </div>
               </div>

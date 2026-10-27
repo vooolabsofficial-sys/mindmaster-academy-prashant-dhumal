@@ -65,6 +65,10 @@ export interface Course {
   standards?: number[]; // e.g. [5,6,7]; empty/undefined = for all (other courses)
   audienceType?: "all" | "competitive" | "school";
   likesCount?: number;
+  validityDays?: number;
+  validityLabel?: string;
+  youtubeUrl?: string;
+  youtubePlaylistId?: string;
 }
 
 export interface Note {

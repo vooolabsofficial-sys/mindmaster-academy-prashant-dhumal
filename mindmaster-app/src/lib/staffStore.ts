@@ -552,6 +552,91 @@ export function toggleCourseStatus(courseId: string): void {
   );
 }
 
+export async function saveCourseToSupabase(course: Course): Promise<{ data: Course | null; error: any }> {
+  // Update local cache synchronously for instant UI update
+  saveStaffCourse(course);
+
+  const supabase = getSupabase();
+  if (!supabase) return { data: course, error: null };
+
+  try {
+    const payload: any = {
+      code: course.code,
+      title: course.title,
+      title_mr: course.titleMr || course.title,
+      subtitle: course.subtitle || null,
+      description: course.description || "",
+      header_tint: course.headerTint || "sky",
+      price_paise: course.pricePaise || 0,
+      original_price_paise: course.originalPricePaise || course.pricePaise || 0,
+      is_free: Boolean(course.isFree),
+      access_months: course.accessMonths || 3,
+      status: course.status === "scheduled" ? "draft" : (course.status || "live"),
+      target_segment: course.targetSegment || "general",
+      standards: course.standards || null,
+      publish_at: course.publishAt || null,
+      remove_at: course.removeAt || null,
+      badge_text: course.badgeText || null,
+      badge_type: course.badgeType || null,
+      image_src: course.imageSrc || null,
+      instructor_name: course.instructorName || "Prashant Dhumal Sir",
+      instructor_title: course.instructorTitle || "International Memory Trainer & Author",
+      category: course.category || "memory",
+      features: course.features || [],
+    };
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(course.id);
+    if (isUuid) {
+      payload.id = course.id;
+    }
+
+    const { data, error } = await supabase
+      .from("courses")
+      .upsert(payload, { onConflict: "code" })
+      .select()
+      .single();
+
+    if (error) {
+      console.warn("Supabase saveCourseToSupabase error:", error);
+      return { data: null, error };
+    }
+
+    if (data) {
+      const savedCourse: Course = {
+        ...course,
+        id: data.id,
+      };
+      saveStaffCourse(savedCourse);
+      return { data: savedCourse, error: null };
+    }
+
+    return { data: course, error: null };
+  } catch (err: any) {
+    console.warn("Supabase course exception:", err);
+    return { data: null, error: err };
+  }
+}
+
+export async function deleteCourseFromSupabase(courseId: string): Promise<boolean> {
+  deleteStaffCourse(courseId);
+  const supabase = getSupabase();
+  if (!supabase) return true;
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId);
+    let q = supabase.from("courses").delete();
+    if (isUuid) {
+      q = q.or(`id.eq.${courseId},code.eq.${courseId}`);
+    } else {
+      q = q.eq("code", courseId);
+    }
+    const { error } = await q;
+    if (error) console.warn("Supabase deleteCourseFromSupabase error:", error);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 export function deleteStaffCourse(courseId: string): void {
   const current = getCurrentStaff();
   if (current.role !== "main_admin") {
