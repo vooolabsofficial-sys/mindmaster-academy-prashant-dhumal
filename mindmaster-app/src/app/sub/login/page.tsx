@@ -4,11 +4,12 @@ import React, { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { setCurrentStaff } from "@/lib/staffStore";
+import AuthRoleSwitcher from "@/components/auth/AuthRoleSwitcher";
 
 function SubAdminLoginContent() {
   const searchParams = useSearchParams();
-  const [staffId, setStaffId] = useState("MMA-001");
-  const [password, setPassword] = useState("Staff@2026");
+  const [staffId, setStaffId] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,29 +22,38 @@ function SubAdminLoginContent() {
     setLoading(true);
 
     try {
-      // 1. Direct local storage seed for instant reliability
-      setCurrentStaff({
-        id: "staff-mma-001",
-        staffId: "MMA-001",
-        name: "Staff Coordinator (Sub Admin)",
-        email: "subadmin@mindmasteracademy.in",
-        phone: "+91 98765 43211",
-        role: "sub_admin",
-        permissions: ["messages.manage", "students.view", "freegrant.manage"],
-        status: "active",
-        lastLoginAt: "Just now",
-        mustChangePassword: false,
-      });
-
-      // 2. Set mock sub-admin session cookie directly for Edge Middleware
-      document.cookie = "mma_staff_session=mock-subadmin-token; path=/; max-age=604800; SameSite=Lax";
-
-      // 3. Background server auth sync
-      fetch("/api/staff/login", {
+      const res = await fetch("/api/staff/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staff_id: idToUse.trim(), password: passToUse }),
-      }).catch(() => {});
+        body: JSON.stringify({
+          staff_id: idToUse.trim(),
+          password: passToUse,
+          role: "sub_admin",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Authentication failed.");
+        setLoading(false);
+        return;
+      }
+
+      if (data.staff) {
+        setCurrentStaff({
+          id: data.staff.staff_id,
+          staffId: data.staff.staff_id,
+          name: data.staff.name,
+          email: `${data.staff.staff_id.toLowerCase()}@mindmasteracademy.in`,
+          phone: data.staff.phone,
+          role: data.staff.role,
+          permissions: data.staff.permissions,
+          status: data.staff.status,
+          lastLoginAt: "Just now",
+          mustChangePassword: data.must_change_password,
+        });
+      }
 
       setSuccessMsg("Welcome! Opening Sub-Admin Staff Console...");
       setTimeout(() => {
@@ -51,18 +61,18 @@ function SubAdminLoginContent() {
       }, 200);
     } catch (err: any) {
       console.error(err);
-      setError("Failed to open sub-admin dashboard. Please try 1-Click Login.");
+      setError("Failed to communicate with authentication server.");
       setLoading(false);
     }
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!staffId.trim() || !password.trim()) {
+      setError("Please enter your Staff ID and Password.");
+      return;
+    }
     executeSubLogin(staffId, password);
-  };
-
-  const handleQuickLogin = () => {
-    executeSubLogin("MMA-001", "Staff@2026");
   };
 
   return (
@@ -82,6 +92,9 @@ function SubAdminLoginContent() {
 
       {/* Main Card */}
       <div className="w-full max-w-md bg-white border border-[#E4E8F8] rounded-3xl p-8 shadow-sm my-6">
+        {/* Role Switcher */}
+        <AuthRoleSwitcher activeRole="sub_admin" />
+
         <div className="mb-6">
           <h2 className="text-lg font-bold text-[#0E1B3D]">Staff Sign In</h2>
           <p className="text-xs text-[#5A6478] mt-1">
@@ -101,24 +114,6 @@ function SubAdminLoginContent() {
             <span className="font-semibold">{successMsg}</span>
           </div>
         )}
-
-        {/* 1-Click Instant Login Button */}
-        <button
-          type="button"
-          onClick={handleQuickLogin}
-          disabled={loading}
-          className="w-full py-3.5 px-4 mb-5 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 text-white font-bold rounded-2xl shadow-md shadow-blue-500/20 text-xs sm:text-sm flex items-center justify-center gap-2 transition-all transform active:scale-[0.99] cursor-pointer"
-        >
-          <span>⚡ Instant 1-Click Sub-Admin Login →</span>
-        </button>
-
-        <div className="relative flex py-2 items-center mb-5">
-          <div className="flex-grow border-t border-slate-200" />
-          <span className="flex-shrink mx-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-            Or Login with ID & Password
-          </span>
-          <div className="flex-grow border-t border-slate-200" />
-        </div>
 
         <form onSubmit={handleFormSubmit} className="space-y-4">
           <div>

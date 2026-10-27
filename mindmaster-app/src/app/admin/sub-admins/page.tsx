@@ -15,21 +15,48 @@ import {
   PlatformSettings,
 } from "@/lib/staffStore";
 
-const ALL_PERMISSIONS: { key: StaffPermission; label: string; desc: string }[] = [
-  {
-    key: "messages.manage",
-    label: "Messages",
-    desc: "Reply to student queries and send in-app support messages",
-  },
+const ALL_PERMISSIONS: { key: StaffPermission; label: string; desc: string; icon: string }[] = [
   {
     key: "students.view",
-    label: "Student Finder",
-    desc: "Search students and view 360 profile without per-lesson watch tracking",
+    label: "Student Finder & 360° Profile",
+    desc: "Search students, view admission history, and manage offline access (telemetry watch drilldown locked to Main Admin)",
+    icon: "🎓",
+  },
+  {
+    key: "messages.manage",
+    label: "Student Support Messages",
+    desc: "Reply to student queries and send in-app support messages",
+    icon: "💬",
   },
   {
     key: "freegrant.manage",
-    label: "Offline Admissions (Grants)",
-    desc: "Issue direct offline Cash/UPI course and book admissions to students",
+    label: "Offline Admissions & Grants",
+    desc: "Issue direct offline Cash/UPI course and digital book admissions to students",
+    icon: "🎁",
+  },
+  {
+    key: "courses.manage",
+    label: "Courses Manager",
+    desc: "Create and edit academy courses, pricing, categories, and validity",
+    icon: "📚",
+  },
+  {
+    key: "videos.manage",
+    label: "YouTube Videos & Playlists",
+    desc: "Add YouTube lessons, configure free previews, and import playlists",
+    icon: "🎬",
+  },
+  {
+    key: "notes.books.manage",
+    label: "Digital Books Manager",
+    desc: "Upload and manage PDF books, pricing, and access permissions",
+    icon: "📖",
+  },
+  {
+    key: "coupons.manage",
+    label: "Discount Coupons",
+    desc: "Create and manage promo discount coupon codes",
+    icon: "🏷️",
   },
 ];
 
@@ -829,8 +856,9 @@ export default function SubAdminManagerPage() {
                               />
                               <div className="flex-1">
                                 <div className="flex items-center justify-between">
-                                  <span className="font-bold text-[#0E1B3D] text-xs">
-                                    {p.label}
+                                  <span className="font-bold text-[#0E1B3D] text-xs flex items-center gap-1.5">
+                                    <span>{p.icon}</span>
+                                    <span>{p.label}</span>
                                   </span>
                                   <span className="font-mono text-[10px] text-[#0B57D0] bg-[#EEF4FF] px-2 py-0.5 rounded-md font-semibold">
                                     {p.key}
@@ -843,6 +871,17 @@ export default function SubAdminManagerPage() {
                             </div>
                           );
                         })}
+                      </div>
+
+                      {/* Strict Admin Security Notice */}
+                      <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
+                        <span className="text-sm">🔒</span>
+                        <div>
+                          <p className="font-bold">Strict Main Admin Security Locks:</p>
+                          <p className="text-[10px] text-amber-800 mt-0.5 leading-relaxed">
+                            Master Settings, Sub-Admin management, System Audit Trail, Financial/Watch Telemetry Reports, and Deletion actions cannot be assigned to Sub-Admins. They are permanently locked to Main Admin (Prashant Sir).
+                          </p>
+                        </div>
                       </div>
                     </div>
 

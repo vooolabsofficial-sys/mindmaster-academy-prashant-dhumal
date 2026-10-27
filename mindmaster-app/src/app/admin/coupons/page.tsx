@@ -264,6 +264,11 @@ export default function CouponManagerPage() {
 
   const handleConfirmDelete = () => {
     if (!deleteModalCoupon) return;
+    if (!isMainAdmin) {
+      toast.error("Unauthorized: Coupon deletion is strictly reserved for Main Admin.");
+      setDeleteModalCoupon(null);
+      return;
+    }
     deleteStaffCoupon(deleteModalCoupon.id);
     reload();
     toast.success(`Coupon "${deleteModalCoupon.code}" deleted successfully.`);

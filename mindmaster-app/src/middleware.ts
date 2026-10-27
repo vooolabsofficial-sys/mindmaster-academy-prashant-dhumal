@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { recordServerAuditLog } from "@/lib/auditLogger";
 import { verifyStaffSession } from "@/lib/staffSession";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ASSIGNABLE_PERMISSIONS } from "@/lib/types";
 
 // Permission mapping for /sub/* routes per specifications:
 // videos -> videos.manage
@@ -118,7 +119,7 @@ export async function middleware(req: NextRequest | Request) {
       // Data migration check: sanitize sub-admin permissions
       if (staffSession && staffSession.role === "sub_admin") {
         staffSession.permissions = (staffSession.permissions || []).filter(
-          (p: string) => p === "messages.manage" || p === "students.view" || p === "freegrant.manage"
+          (p: string) => ASSIGNABLE_PERMISSIONS.includes(p as any)
         );
         // Instant Live DB check: verify account is still active in staff_accounts
         try {
@@ -334,13 +335,58 @@ export async function middleware(req: NextRequest | Request) {
       return NextResponse.redirect(new URL("/staff/change-password", req.url));
     }
 
-    // D. /admin/* strictly requires main_admin; returns 403 for sub_admin
+    // Strict Main Admin Lock on all DELETE operations
+    if (staffSession.role === "sub_admin" && req.method === "DELETE") {
+      return NextResponse.json(
+        { error: "Forbidden: Delete actions are strictly reserved for Main Admin." },
+        { status: 403 }
+      );
+    }
+
+    // D. /admin/* route enforcement
     if (isAdminRoute) {
       if (staffSession.role !== "main_admin") {
-        return NextResponse.rewrite(
-          new URL("/forbidden?reason=main_admin_required", req.url),
-          { status: 403 }
-        );
+        // Master Admin Only locks
+        if (
+          pathname.startsWith("/admin/settings") ||
+          pathname.startsWith("/admin/sub-admins") ||
+          pathname.startsWith("/admin/audit") ||
+          pathname.startsWith("/admin/reports")
+        ) {
+          return NextResponse.rewrite(
+            new URL("/forbidden?reason=main_admin_required", req.url),
+            { status: 403 }
+          );
+        }
+
+        // Sub-admin visiting /admin overview redirects to /sub
+        if (pathname === "/admin" || pathname === "/admin/") {
+          return NextResponse.redirect(new URL("/sub", req.url));
+        }
+
+        // Operational permissions verification for sub-admins accessing /admin/* routes
+        const userPerms: string[] = staffSession.permissions || [];
+        if (pathname.startsWith("/admin/courses") && !userPerms.includes("courses.manage")) {
+          return NextResponse.rewrite(new URL("/forbidden?perm=courses.manage", req.url), { status: 403 });
+        }
+        if ((pathname.startsWith("/admin/videos") || pathname.startsWith("/admin/playlist")) && !userPerms.includes("videos.manage")) {
+          return NextResponse.rewrite(new URL("/forbidden?perm=videos.manage", req.url), { status: 403 });
+        }
+        if (pathname.startsWith("/admin/notes") && !userPerms.includes("notes.books.manage")) {
+          return NextResponse.rewrite(new URL("/forbidden?perm=notes.books.manage", req.url), { status: 403 });
+        }
+        if (pathname.startsWith("/admin/coupons") && !userPerms.includes("coupons.manage")) {
+          return NextResponse.rewrite(new URL("/forbidden?perm=coupons.manage", req.url), { status: 403 });
+        }
+        if (pathname.startsWith("/admin/grants") && !userPerms.includes("freegrant.manage")) {
+          return NextResponse.rewrite(new URL("/forbidden?perm=freegrant.manage", req.url), { status: 403 });
+        }
+        if (pathname.startsWith("/admin/students") && !userPerms.includes("students.view")) {
+          return NextResponse.rewrite(new URL("/forbidden?perm=students.view", req.url), { status: 403 });
+        }
+        if (pathname.startsWith("/admin/messages") && !userPerms.includes("messages.manage")) {
+          return NextResponse.rewrite(new URL("/forbidden?perm=messages.manage", req.url), { status: 403 });
+        }
       }
       return NextResponse.next();
     }

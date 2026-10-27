@@ -58,11 +58,16 @@ export default function AdminSidebar() {
     { label: "Audit Trail", href: "/admin/audit", icon: "📜", adminOnly: true },
   ];
 
-  // Navigation tabs for SUB-ADMIN (/sub/*) hard-coded strictly per final authority model
+  // Dynamic navigation tabs for SUB-ADMIN matching assigned operational permissions
   const subNavItems: NavItem[] = [
     { label: "Dashboard", href: "/sub", icon: "📊" },
-    { label: "Messages", href: "/sub/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
     { label: "Student Finder", href: "/sub/students", icon: "🎓", permission: "students.view" },
+    { label: "Messages", href: "/sub/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
+    { label: "Offline Grants", href: "/sub/grants", icon: "🎁", permission: "freegrant.manage" },
+    { label: "Courses", href: "/admin/courses", icon: "📚", permission: "courses.manage" },
+    { label: "Videos", href: "/admin/videos", icon: "🎬", permission: "videos.manage" },
+    { label: "Digital Books", href: "/admin/notes", icon: "📖", permission: "notes.books.manage" },
+    { label: "Coupons", href: "/admin/coupons", icon: "🏷️", permission: "coupons.manage" },
     { label: "My Activity", href: "/sub/activity", icon: "⏱️" },
   ];
 
@@ -108,7 +113,7 @@ export default function AdminSidebar() {
                 <span>🛡️</span> Sub-Admin Scoped
               </span>
               <span className="px-2 py-0.5 bg-white text-[#5E35B1] rounded-full text-[10px] font-bold shadow-xs border border-[#E9E3FF]">
-                {staff.permissions.length} of 2 Permitted
+                {staff.permissions.length} Modules Active
               </span>
             </div>
             <div className="flex flex-wrap gap-1 pt-0.5">

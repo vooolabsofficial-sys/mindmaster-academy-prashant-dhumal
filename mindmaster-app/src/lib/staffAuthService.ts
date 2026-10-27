@@ -1,4 +1,4 @@
-import { StaffUser, StaffRole, StaffPermission, AuditLogEntry } from "./types";
+import { StaffUser, StaffRole, StaffPermission, AuditLogEntry, ASSIGNABLE_PERMISSIONS } from "./types";
 import { INITIAL_STAFF_USERS } from "./mockStaffData";
 import { getStaffUsers } from "./staffStore";
 
@@ -93,8 +93,8 @@ export function findStaffAccount(identifier: string): StaffUser | null {
   if (user && user.role === "sub_admin") {
     return {
       ...user,
-      permissions: (user.permissions || []).filter(
-        (p) => p === "messages.manage" || p === "students.view" || p === "freegrant.manage"
+      permissions: (user.permissions || []).filter((p) =>
+        ASSIGNABLE_PERMISSIONS.includes(p as any)
       ),
     };
   }

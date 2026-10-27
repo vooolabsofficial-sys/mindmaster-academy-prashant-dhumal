@@ -491,6 +491,11 @@ export default function CourseManagerPage() {
   // Move Course to Recycle Bin (Soft Delete with Undo Loop)
   const handleConfirmDelete = async () => {
     if (!deleteModalCourse) return;
+    if (staff.role !== "main_admin") {
+      alert("Unauthorized: Course deletion is strictly reserved for Main Admin.");
+      setDeleteModalCourse(null);
+      return;
+    }
     setIsDeleting(true);
     try {
       const courseToDelete = deleteModalCourse;

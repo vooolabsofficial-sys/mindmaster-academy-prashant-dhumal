@@ -95,9 +95,13 @@ export default function AdminTopbar() {
 
   const subNavItems: NavItem[] = [
     { label: "Dashboard", href: "/sub", icon: "📊" },
-    { label: "Messages", href: "/sub/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
     { label: "Student Finder", href: "/sub/students", icon: "🎓", permission: "students.view" },
+    { label: "Messages", href: "/sub/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
     { label: "Offline Grants", href: "/sub/grants", icon: "🎁", permission: "freegrant.manage" },
+    { label: "Courses", href: "/admin/courses", icon: "📚", permission: "courses.manage" },
+    { label: "Videos", href: "/admin/videos", icon: "🎬", permission: "videos.manage" },
+    { label: "Digital Books", href: "/admin/notes", icon: "📖", permission: "notes.books.manage" },
+    { label: "Coupons", href: "/admin/coupons", icon: "🏷️", permission: "coupons.manage" },
     { label: "My Activity", href: "/sub/activity", icon: "⏱️" },
   ];
 

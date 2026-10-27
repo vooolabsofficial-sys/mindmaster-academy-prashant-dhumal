@@ -257,7 +257,9 @@ export function createGrant(params: {
   courseId?: string;
   itemType?: "course" | "book";
   bookId?: string;
-  months: number;
+  months?: number;
+  validityDays?: number;
+  customExpiryDate?: string;
   reason: string;
 }): Grant {
   const currentStaff = getCurrentStaff();
@@ -289,7 +291,21 @@ export function createGrant(params: {
   }
 
   const now = new Date();
-  const endsAt = new Date(now.getTime() + params.months * 30 * 24 * 60 * 60 * 1000).toISOString();
+  let endsAt: string;
+  let months = params.months || 3;
+  if (params.customExpiryDate) {
+    endsAt = new Date(params.customExpiryDate).toISOString();
+    months = Math.max(1, Math.round((new Date(params.customExpiryDate).getTime() - now.getTime()) / (30 * 86400000)));
+  } else if (params.validityDays) {
+    endsAt = new Date(now.getTime() + params.validityDays * 86400000).toISOString();
+    months = Math.max(1, Math.round(params.validityDays / 30));
+  } else if ((params.months || 0) >= 36) {
+    endsAt = new Date(now.getTime() + 3650 * 86400000).toISOString();
+    months = 120;
+  } else {
+    endsAt = new Date(now.getTime() + months * 30 * 24 * 60 * 60 * 1000).toISOString();
+  }
+
   const grantId = `grant-${Date.now()}`;
 
   const itemTitle = isBookGrant
@@ -340,7 +356,7 @@ export function createGrant(params: {
     course_id: isBookGrant ? targetBook?.id : params.courseScope === "one" ? targetCourses[0]?.id : undefined,
     courseId: isBookGrant ? targetBook?.id : params.courseScope === "one" ? targetCourses[0]?.id : undefined,
     courseTitle: itemTitle,
-    months: params.months,
+    months,
     ends_at: endsAt,
     endsAt,
     reason: params.reason.trim(),
@@ -796,7 +812,10 @@ export interface CashAdmissionParams {
   studentPhone: string;
   studentName?: string;
   courseId: string;
-  accessMonths: number;
+  itemType?: "course" | "book" | "all_courses";
+  accessMonths?: number;
+  validityDays?: number;
+  customExpiryDate?: string;
   paymentMode: "cash" | "upi" | "scholarship";
   amountPaid: number;
   remarks?: string;
@@ -819,14 +838,19 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
   const students = getStaffStudents();
   let student = students.find((s) => s.phone.replace(/\D/g, "").slice(-10) === cleanPhone);
 
+  const isAllCourses = params.courseId === "all" || params.itemType === "all_courses";
   const courses = getStaffCourses();
   const books = getStaffBooks();
-  const course = courses.find((c) => c.id === params.courseId || c.code === params.courseId);
-  const book = !course ? books.find((b) => b.id === params.courseId || b.code === params.courseId) : null;
+  const course = !isAllCourses ? courses.find((c) => c.id === params.courseId || c.code === params.courseId) : null;
+  const book = !isAllCourses && !course ? books.find((b) => b.id === params.courseId || b.code === params.courseId) : null;
   const isBook = Boolean(book);
-  const itemTitle = isBook ? book!.title : course?.title;
+  const itemTitle = isAllCourses
+    ? "All Academy Courses (सर्व कोर्सेस)"
+    : isBook
+    ? book!.title
+    : course?.title;
 
-  if (!course && !book) {
+  if (!isAllCourses && !course && !book) {
     return {
       success: false,
       grantId: "",
@@ -845,7 +869,9 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     const gPhone = normalizePhone(g.scope_value || g.scopeValue || g.student_phone || g.studentPhone || "");
     const gCourseId = g.course_id || g.courseId || g.book_id || g.bookId;
     const isSamePhone = gPhone === cleanPhone;
-    const isSameItem = isBook
+    const isSameItem = isAllCourses
+      ? gCourseId === "all" || g.course_scope === "all" || g.courseScope === "all"
+      : isBook
       ? gCourseId === book!.id || gCourseId === book!.code
       : gCourseId === course!.id || gCourseId === course!.code;
     const isActive = g.status === "active" && new Date(g.ends_at || g.endsAt).getTime() > Date.now();
@@ -866,10 +892,15 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     };
   }
 
-  if (student && student.coursesTaken && !isBook && course) {
-    const existingActiveEnrollment = student.coursesTaken.find(
-      (ct) => (ct.courseId === course.id || ct.courseCode === course.code) && !ct.isExpired && ct.daysLeft > 0
-    );
+  if (student && student.coursesTaken) {
+    const existingActiveEnrollment = student.coursesTaken.find((ct) => {
+      const match = isAllCourses
+        ? ct.courseId === "all"
+        : !isBook && course
+        ? ct.courseId === course.id || ct.courseCode === course.code
+        : false;
+      return match && !ct.isExpired && ct.daysLeft > 0;
+    });
     if (existingActiveEnrollment) {
       return {
         success: false,
@@ -879,13 +910,36 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
         whatsappUrl: "",
         receiptText: "",
         expiresAt: "",
-        error: `Student already has active enrolled access to "${course.title}" (${existingActiveEnrollment.daysLeft} days left). Cannot grant duplicate access.`,
+        error: `Student already has active enrolled access to "${existingActiveEnrollment.courseTitle}" (${existingActiveEnrollment.daysLeft} days left). Cannot grant duplicate access.`,
       };
     }
   }
 
   const studentName = params.studentName?.trim() || student?.name || "Student";
   const newStudentId = student?.id || `student-${cleanPhone}`;
+
+  // Calculate Expiry
+  const now = new Date();
+  let endsAt: string;
+  let months = params.accessMonths || 6;
+  let validityText = "";
+
+  if (params.customExpiryDate) {
+    endsAt = new Date(params.customExpiryDate).toISOString();
+    months = Math.max(1, Math.round((new Date(params.customExpiryDate).getTime() - now.getTime()) / (30 * 86400000)));
+    validityText = `Until ${new Date(params.customExpiryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`;
+  } else if (params.validityDays) {
+    endsAt = new Date(now.getTime() + params.validityDays * 86400000).toISOString();
+    months = Math.max(1, Math.round(params.validityDays / 30));
+    validityText = `${params.validityDays} Days`;
+  } else if ((params.accessMonths || 0) >= 36) {
+    endsAt = new Date(now.getTime() + 3650 * 86400000).toISOString();
+    months = 120;
+    validityText = "Lifetime Access";
+  } else {
+    endsAt = new Date(now.getTime() + months * 30 * 86400000).toISOString();
+    validityText = `${months} Months`;
+  }
 
   // 1. Create or Update Student Record
   if (!student) {
@@ -896,7 +950,7 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
       phone: cleanPhone,
       district: "Maharashtra",
       school: "Direct Offline Admission",
-      enrolledCourseCodes: isBook ? [] : (course ? [course.code] : []),
+      enrolledCourseCodes: isAllCourses ? ["ALL"] : isBook ? [] : (course ? [course.code] : []),
       enrolledCourseTitles: [itemTitle || "Admission"],
       completedCourseCodes: [],
       totalPaidPaise: params.amountPaid * 100,
@@ -910,8 +964,9 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     student = newRecord;
   } else {
     const existingCodes = student.enrolledCourseCodes || [];
-    const updatedCodes = !isBook && course && !existingCodes.includes(course.code)
-      ? [...existingCodes, course.code]
+    const codeToAdd = isAllCourses ? "ALL" : !isBook && course ? course.code : null;
+    const updatedCodes = codeToAdd && !existingCodes.includes(codeToAdd)
+      ? [...existingCodes, codeToAdd]
       : existingCodes;
     saveStaffStudent({
       ...student,
@@ -931,13 +986,6 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
       ? "Direct UPI (PhonePe/GPay)"
       : "Scholarship";
 
-  const now = new Date();
-  const months = params.accessMonths >= 36 ? 36 : params.accessMonths;
-  const endsAt =
-    params.accessMonths >= 36
-      ? new Date(now.getTime() + 3650 * 86400000).toISOString()
-      : new Date(now.getTime() + months * 30 * 86400000).toISOString();
-
   const newGrant: Grant = {
     id: grantId,
     created_by: currentStaff.id,
@@ -947,15 +995,15 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     scopeType: "student",
     scope_value: cleanPhone,
     scopeValue: cleanPhone,
-    course_scope: "one",
-    courseScope: "one",
+    course_scope: isAllCourses ? "all" : "one",
+    courseScope: isAllCourses ? "all" : "one",
     item_type: isBook ? "book" : "course",
     itemType: isBook ? "book" : "course",
     book_id: isBook ? book!.id : undefined,
     bookId: isBook ? book!.id : undefined,
     bookTitle: isBook ? book!.title : undefined,
-    course_id: isBook ? book!.id : course!.id,
-    courseId: isBook ? book!.id : course!.id,
+    course_id: isAllCourses ? "all" : isBook ? book!.id : course!.id,
+    courseId: isAllCourses ? "all" : isBook ? book!.id : course!.id,
     courseTitle: itemTitle,
     months,
     ends_at: endsAt,
@@ -987,9 +1035,9 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     studentId: student.id,
     studentName: studentName,
     studentPhone: cleanPhone,
-    course_id: isBook ? book!.id : (course?.id || ""),
-    courseId: isBook ? book!.id : (course?.id || ""),
-    courseCode: isBook ? (book!.code || "BK") : (course?.code || "MM"),
+    course_id: isAllCourses ? "all" : isBook ? book!.id : (course?.id || ""),
+    courseId: isAllCourses ? "all" : isBook ? book!.id : (course?.id || ""),
+    courseCode: isAllCourses ? "ALL" : isBook ? (book!.code || "BK") : (course?.code || "MM"),
     courseTitle: itemTitle || "Enrolled Item",
     amount: 0,
     amount_paise: 0,
@@ -1014,7 +1062,13 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
       const activePurchases = JSON.parse(
         localStorage.getItem("mindmaster_active_purchases") || "{}"
       );
-      if (isBook) {
+      if (isAllCourses) {
+        courses.forEach((c) => {
+          activePurchases[c.id] = endsAt;
+          if (c.code) activePurchases[c.code] = endsAt;
+        });
+        activePurchases["all"] = endsAt;
+      } else if (isBook) {
         activePurchases[book!.id] = endsAt;
         if (book!.code) activePurchases[book!.code] = endsAt;
       } else if (course) {
@@ -1043,8 +1097,8 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
       supabase.from("course_grants").insert({
         student_phone: cleanPhone,
         student_name: studentName,
-        course_id: isBook ? book!.id : (course?.id || ""),
-        item_type: isBook ? "book" : "course",
+        course_id: isAllCourses ? "all" : isBook ? book!.id : (course?.id || ""),
+        item_type: isAllCourses ? "all_courses" : isBook ? "book" : "course",
         book_id: isBook ? book!.id : null,
         course_title: itemTitle,
         granted_by: currentStaff.staffId || currentStaff.id,
@@ -1068,14 +1122,13 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
       title: "🎉 Course Admission Confirmed!",
       body: `Prashant Sir has granted you full access to "${itemTitle}". Start learning now!`,
       type: "course",
-      actionUrl: isBook ? "/books" : `/watch/${course?.id || ""}`,
+      actionUrl: isBook ? "/books" : isAllCourses ? "/courses" : `/watch/${course?.id || ""}`,
     });
   } catch (e) {
     console.warn("Notification error:", e);
   }
 
   // 7. Generate Pre-filled WhatsApp Share Message
-  const validityText = params.accessMonths >= 36 ? "Lifetime Access" : `${params.accessMonths} Months`;
   const receiptText = `Hello ${studentName}!\n\nYour admission to "${itemTitle}" at MindMaster Academy is confirmed. ✅\n\n💵 Fee Paid: ₹${params.amountPaid} (${modeLabel})\n⏱️ Validity: ${validityText}\n📱 Login Mobile: ${cleanPhone}\n\n📲 Start learning in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! 🌟\n— Prashant Dhumal Sir, MindMaster Academy`;
   const whatsappUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(receiptText)}`;
 

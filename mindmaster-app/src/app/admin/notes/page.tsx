@@ -356,6 +356,11 @@ export default function DigitalBooksManagerPage() {
   // Delete Book (100% Live Supabase Sync)
   const handleDeleteConfirm = async () => {
     if (!deleteModalBook) return;
+    if (!isMainAdmin) {
+      toast.error("Unauthorized: Digital Book deletion is strictly reserved for Main Admin.");
+      setDeleteModalBook(null);
+      return;
+    }
     setIsDeleting(true);
     try {
       await deleteBookFromSupabase(deleteModalBook.id);

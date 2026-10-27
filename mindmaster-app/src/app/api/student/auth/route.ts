@@ -569,6 +569,79 @@ async function handlePost(req: NextRequest) {
       return response;
     }
 
+    // -----------------------------------------------------------------------
+    // ACTION: ADMIN RESET PASSWORD (ARGON2ID HASHED)
+    // -----------------------------------------------------------------------
+    if (action === "admin-reset-password") {
+      const { phone, newPassword } = body;
+      const clean = normalizePhone(phone);
+      if (!clean || !newPassword || newPassword.length < 6) {
+        return NextResponse.json(
+          { success: false, error: "Valid 10-digit phone and 6+ character password required." },
+          { status: 400 }
+        );
+      }
+
+      try {
+        const { hashArgon2 } = await import("@/lib/argon2");
+        const newHash = await hashArgon2(newPassword);
+
+        // Update server-side in-memory / disk student accounts
+        const { getStudentAccounts, saveStudentAccounts } = await import("@/lib/studentAuthService");
+        const accounts = getStudentAccounts();
+        const student = accounts.find((a) => a.cleanPhone === clean || a.phone.endsWith(clean));
+        if (student) {
+          student.password_hash = newHash;
+          const all = accounts.map((acc) => (acc.cleanPhone === clean ? student : acc));
+          saveStudentAccounts(all);
+        }
+
+        // Sync directly to Supabase profiles table
+        const { createAdminClient } = await import("@/lib/supabase/admin");
+        const supabase = createAdminClient();
+        await supabase
+          .from("profiles")
+          .update({
+            password_hash: newHash,
+            updated_at: new Date().toISOString(),
+          })
+          .or(`phone.eq.${clean},phone.eq.+91${clean}`);
+
+        return NextResponse.json({ success: true, message: "Password updated successfully." });
+      } catch (err: any) {
+        console.error("admin-reset-password API error:", err);
+        return NextResponse.json(
+          { success: false, error: err?.message || "Failed to update password on server." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // ACTION: ADMIN RESET SESSION LOCK
+    // -----------------------------------------------------------------------
+    if (action === "admin-reset-session") {
+      const { phone } = body;
+      const clean = normalizePhone(phone);
+      if (clean) {
+        const { resetStudentDeviceSessionLock } = await import("@/lib/studentAuthService");
+        resetStudentDeviceSessionLock(clean);
+        try {
+          const { createAdminClient } = await import("@/lib/supabase/admin");
+          const supabase = createAdminClient();
+          await supabase
+            .from("profiles")
+            .update({
+              active_session_token: null,
+              session_token: null,
+              updated_at: new Date().toISOString(),
+            })
+            .or(`phone.eq.${clean},phone.eq.+91${clean}`);
+        } catch {}
+      }
+      return NextResponse.json({ success: true, message: "Session lock reset." });
+    }
+
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (err: any) {
     console.error("Student auth route error:", err);

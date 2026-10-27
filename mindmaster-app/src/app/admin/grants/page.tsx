@@ -20,7 +20,6 @@ import {
 } from "@/lib/grantStore";
 
 const POPULAR_DISTRICTS = ["Pune", "Satara", "Kolhapur", "Solapur", "Sangli", "Ahmednagar", "Nashik", "Thane", "Mumbai"];
-const POPULAR_SCHOOLS = ["Narhe Model High School", "Pune ZP High School", "Shivaji Vidyalaya", "Saraswati Mandir"];
 
 export default function GrantsManagerPage() {
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
@@ -34,7 +33,7 @@ export default function GrantsManagerPage() {
   const [scopeFilter, setScopeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "revoked">("all");
 
-  // Cash vs UPI Collection Tally Filter: Today, This Week, This Month, All Time
+  // Cash vs UPI Collection Tally Filter: Today, Last 7 Days, This Month, All Time
   const [tallyTimeframe, setTallyTimeframe] = useState<"today" | "week" | "month" | "all">("today");
 
   // Drawer Form State
@@ -46,6 +45,10 @@ export default function GrantsManagerPage() {
   const [courseScope, setCourseScope] = useState<"one" | "all">("one");
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [months, setMonths] = useState(3);
+  const [grantValidityMode, setGrantValidityMode] = useState<"preset" | "custom_days" | "fixed_date">("preset");
+  const [grantPresetDays, setGrantPresetDays] = useState<number>(90);
+  const [grantCustomDays, setGrantCustomDays] = useState<number>(45);
+  const [grantFixedDate, setGrantFixedDate] = useState<string>("");
   const [reason, setReason] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -220,7 +223,9 @@ export default function GrantsManagerPage() {
         bookId: grantItemType === "book" ? selectedBookId : undefined,
         courseScope: grantItemType === "course" ? courseScope : "one",
         courseId: grantItemType === "course" && courseScope === "one" ? selectedCourseId : undefined,
-        months,
+        months: grantValidityMode === "preset" ? Math.max(1, Math.round(grantPresetDays / 30)) : months,
+        validityDays: grantValidityMode === "custom_days" ? grantCustomDays : grantValidityMode === "preset" ? grantPresetDays : undefined,
+        customExpiryDate: grantValidityMode === "fixed_date" ? grantFixedDate : undefined,
         reason,
       });
 
@@ -364,7 +369,7 @@ export default function GrantsManagerPage() {
                   {(
                     [
                       { id: "today", label: "Today" },
-                      { id: "week", label: "This Week" },
+                      { id: "week", label: "Last 7 Days" },
                       { id: "month", label: "This Month" },
                       { id: "all", label: "All Time" },
                     ] as const
@@ -925,27 +930,11 @@ export default function GrantsManagerPage() {
                         <div className="space-y-2">
                           <input
                             type="text"
-                            placeholder="e.g. Narhe Model High School..."
+                            placeholder="e.g. Enter School or Academic Wing Name..."
                             value={scopeValue}
                             onChange={(e) => setScopeValue(e.target.value)}
                             className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl font-medium text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
                           />
-                          <div className="flex flex-wrap gap-1.5">
-                            {POPULAR_SCHOOLS.map((sch) => (
-                              <button
-                                key={sch}
-                                type="button"
-                                onClick={() => setScopeValue(sch)}
-                                className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${
-                                  scopeValue.toLowerCase() === sch.toLowerCase()
-                                    ? "bg-[#0B57D0] text-white border-[#0B57D0]"
-                                    : "bg-white text-[#5A6478] border-[#E4E8F8] hover:border-gray-300"
-                                }`}
-                              >
-                                {sch}
-                              </button>
-                            ))}
-                          </div>
                         </div>
                       ) : scopeType === "taluka" ? (
                         <input
@@ -1056,26 +1045,109 @@ export default function GrantsManagerPage() {
                       )}
                     </div>
 
-                    {/* Access Duration (Months) */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="font-bold text-[#0E1B3D]">Access Duration</label>
-                        <span className="font-bold text-[#0B57D0]">{months} Months</span>
+                    {/* Full Custom Validity Configuration */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="font-bold text-[#0E1B3D]">Grant Validity Duration *</label>
+                        <div className="flex items-center gap-1 text-[10px] font-bold">
+                          <button
+                            type="button"
+                            onClick={() => setGrantValidityMode("preset")}
+                            className={`px-2 py-0.5 rounded-lg border transition ${
+                              grantValidityMode === "preset"
+                                ? "bg-[#0B57D0] text-white border-[#0B57D0]"
+                                : "bg-slate-100 text-slate-600 border-slate-200"
+                            }`}
+                          >
+                            Presets
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGrantValidityMode("custom_days")}
+                            className={`px-2 py-0.5 rounded-lg border transition ${
+                              grantValidityMode === "custom_days"
+                                ? "bg-[#0B57D0] text-white border-[#0B57D0]"
+                                : "bg-slate-100 text-slate-600 border-slate-200"
+                            }`}
+                          >
+                            Custom Days
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGrantValidityMode("fixed_date")}
+                            className={`px-2 py-0.5 rounded-lg border transition ${
+                              grantValidityMode === "fixed_date"
+                                ? "bg-[#0B57D0] text-white border-[#0B57D0]"
+                                : "bg-slate-100 text-slate-600 border-slate-200"
+                            }`}
+                          >
+                            Exam Date
+                          </button>
+                        </div>
                       </div>
-                      <input
-                        type="range"
-                        min={1}
-                        max={12}
-                        value={months}
-                        onChange={(e) => setMonths(Number(e.target.value))}
-                        className="w-full accent-[#0B57D0]"
-                      />
-                      <div className="flex justify-between text-[10px] text-[#8A94A6]">
-                        <span>1 month</span>
-                        <span>3 months (Standard)</span>
-                        <span>6 months</span>
-                        <span>12 months (Full Year)</span>
-                      </div>
+
+                      {grantValidityMode === "preset" && (
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {[
+                            { label: "7 Days Demo", days: 7, months: 0 },
+                            { label: "15 Days", days: 15, months: 0 },
+                            { label: "1 Month", days: 30, months: 1 },
+                            { label: "3 Months", days: 90, months: 3 },
+                            { label: "6 Months", days: 180, months: 6 },
+                            { label: "12M (1 Year)", days: 365, months: 12 },
+                            { label: "24M (2 Years)", days: 730, months: 24 },
+                            { label: "Lifetime", days: 3650, months: 120 },
+                          ].map((preset) => (
+                            <button
+                              key={preset.label}
+                              type="button"
+                              onClick={() => {
+                                setGrantPresetDays(preset.days);
+                                setMonths(preset.months || 1);
+                              }}
+                              className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition cursor-pointer text-center ${
+                                grantPresetDays === preset.days
+                                  ? "bg-[#0B57D0] text-white border-[#0B57D0] shadow-xs"
+                                  : "bg-slate-50 text-slate-700 border-slate-200 hover:border-[#0B57D0]"
+                              }`}
+                            >
+                              {preset.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {grantValidityMode === "custom_days" && (
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <input
+                              type="number"
+                              min={1}
+                              max={3650}
+                              value={grantCustomDays}
+                              onChange={(e) => setGrantCustomDays(Math.max(1, Number(e.target.value)))}
+                              placeholder="e.g. 45"
+                              className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
+                            />
+                            <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">Days</span>
+                          </div>
+                          <p className="text-[11px] text-[#5A6478]">Valid for {grantCustomDays} days</p>
+                        </div>
+                      )}
+
+                      {grantValidityMode === "fixed_date" && (
+                        <div>
+                          <input
+                            type="date"
+                            required={grantValidityMode === "fixed_date"}
+                            min={new Date().toISOString().slice(0, 10)}
+                            value={grantFixedDate}
+                            onChange={(e) => setGrantFixedDate(e.target.value)}
+                            className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#0B57D0] rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none"
+                          />
+                          <p className="text-[10px] text-slate-500 mt-1">Free access automatically terminates on this examination date</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Live Matching Count Preview Card (Server Query) */}

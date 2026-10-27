@@ -6,6 +6,7 @@ import {
   StudentRecord,
   Course,
   Book,
+  ASSIGNABLE_PERMISSIONS,
 } from "./types";
 import {
   INITIAL_STAFF_USERS,
@@ -92,8 +93,8 @@ function safeAlert(msg: string): void {
 export function getCurrentStaff(): StaffUser {
   const staff = safeGetItem<StaffUser>(KEYS.CURRENT_STAFF, INITIAL_STAFF_USERS[0]);
   if (staff && staff.role === "sub_admin") {
-    staff.permissions = (staff.permissions || []).filter(
-      (p) => p === "messages.manage" || p === "students.view" || p === "freegrant.manage"
+    staff.permissions = (staff.permissions || []).filter((p) =>
+      ASSIGNABLE_PERMISSIONS.includes(p as any)
     );
   }
   return staff;
@@ -101,8 +102,8 @@ export function getCurrentStaff(): StaffUser {
 
 export function setCurrentStaff(staff: StaffUser): void {
   if (staff && staff.role === "sub_admin") {
-    staff.permissions = (staff.permissions || []).filter(
-      (p) => p === "messages.manage" || p === "students.view"
+    staff.permissions = (staff.permissions || []).filter((p) =>
+      ASSIGNABLE_PERMISSIONS.includes(p as any)
     );
   }
   safeSetItem(KEYS.CURRENT_STAFF, staff);
@@ -191,8 +192,8 @@ export function getStaffUsers(): StaffUser[] {
     if (u.role === "sub_admin") {
       return {
         ...u,
-        permissions: (u.permissions || []).filter(
-          (p) => p === "messages.manage" || p === "students.view" || p === "freegrant.manage"
+        permissions: (u.permissions || []).filter((p) =>
+          ASSIGNABLE_PERMISSIONS.includes(p as any)
         ),
       };
     }
@@ -212,8 +213,8 @@ export function saveStaffUser(staff: StaffUser): void {
     ...staff,
     permissions:
       staff.role === "sub_admin"
-        ? (staff.permissions || []).filter(
-            (p) => p === "messages.manage" || p === "students.view" || p === "freegrant.manage"
+        ? (staff.permissions || []).filter((p) =>
+            ASSIGNABLE_PERMISSIONS.includes(p as any)
           )
         : staff.permissions,
   };
@@ -1348,7 +1349,11 @@ export async function fetchDbStudents(): Promise<StudentRecord[]> {
 
     const nowMs = Date.now();
 
-    const mapped: StudentRecord[] = profiles.map((p: any) => {
+    const studentProfiles = profiles.filter(
+      (p: any) => p.role !== "main_admin" && p.role !== "sub_admin"
+    );
+
+    const mapped: StudentRecord[] = studentProfiles.map((p: any) => {
       const cleanPhone = normalizePhone(p.phone);
       const activePurchases = (p.purchases || []).filter((pur: any) => pur.status === "active");
       const userGrants = grantsByPhone.get(cleanPhone) || [];
@@ -1418,6 +1423,23 @@ export async function fetchDbStudents(): Promise<StudentRecord[]> {
               expiresAt: g.valid_until || expDate.toISOString(),
               daysLeft,
               isExpired,
+              grantId: g.id,
+            });
+          }
+        } else if (g.course_id === "all" || g.course_scope === "all" || g.courseScope === "all") {
+          if (!coursesTakenList.some((c) => c.courseId === "all")) {
+            coursesTakenList.push({
+              courseId: "all",
+              courseCode: "ALL",
+              courseTitle: "All Academy Courses (सर्व कोर्सेस)",
+              purchasedAt: g.created_at ? g.created_at.slice(0, 10) : "",
+              expiresAt: g.valid_until || expDate.toISOString(),
+              daysLeft,
+              isExpired,
+              progressPct: completedLessons > 0 ? Math.min(100, completedLessons * 5) : 0,
+              completedLessons,
+              totalLessons: allCourses.reduce((sum, c) => sum + (c.lessonsCount || 0), 0) || 30,
+              itemType: "course",
               grantId: g.id,
             });
           }

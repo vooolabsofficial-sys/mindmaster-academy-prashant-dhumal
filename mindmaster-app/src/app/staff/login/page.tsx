@@ -4,10 +4,12 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { setCurrentStaff } from "@/lib/staffStore";
+import AuthRoleSwitcher from "@/components/auth/AuthRoleSwitcher";
 
 function StaffLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const roleParam = searchParams.get("role") || "sub_admin";
   const [staffId, setStaffId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -43,7 +45,11 @@ function StaffLoginContent() {
       const res = await fetch("/api/staff/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staff_id: staffId.trim(), password }),
+        body: JSON.stringify({
+          staff_id: staffId.trim(),
+          password,
+          role: roleParam || undefined,
+        }),
       });
 
       const data = await res.json();
@@ -111,8 +117,13 @@ function StaffLoginContent() {
 
       {/* Login Card */}
       <div className="w-full max-w-md bg-white border border-[#E4E8F8] rounded-3xl p-8 shadow-sm my-8">
+        {/* Role Switcher */}
+        <AuthRoleSwitcher activeRole={roleParam === "main_admin" ? "main_admin" : "sub_admin"} />
+
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-[#0E1B3D]">Staff Sign In</h2>
+          <h2 className="text-xl font-bold text-[#0E1B3D]">
+            {roleParam === "main_admin" ? "Main Admin Sign In" : "Sub-Admin Sign In"}
+          </h2>
           <p className="text-xs text-[#5A6478] mt-1">
             Argon2 password verification • Lockout after 5 failures • Auto session kill
           </p>
@@ -196,14 +207,6 @@ function StaffLoginContent() {
             )}
           </button>
         </form>
-
-        <div className="mt-4 p-3 bg-blue-50/70 border border-blue-100 rounded-2xl text-[11px] text-[#0E1B3D]">
-          <p className="font-bold text-[#0B57D0] mb-1">🔑 Direct Dashboard Logins:</p>
-          <div className="space-y-1">
-            <p className="font-mono text-[10px] text-slate-600">Admin: <span className="font-bold text-slate-800">MMA-000</span> (Pass: <span className="font-bold text-slate-800">Owner@2026</span>) → <span className="text-[#0B57D0]">/admin</span></p>
-            <p className="font-mono text-[10px] text-slate-600">Sub-Admin: <span className="font-bold text-slate-800">MMA-001</span> (Pass: <span className="font-bold text-slate-800">Staff@2026</span>) → <span className="text-[#0B57D0]">/sub</span></p>
-          </div>
-        </div>
 
         <div className="mt-8 text-center">
           <Link

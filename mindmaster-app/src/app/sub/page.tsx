@@ -53,58 +53,63 @@ export default function SubAdminRootPage() {
 
   const hasStudentPerm = hasStaffPermission(staff, "students.view");
   const hasMsgPerm = hasStaffPermission(staff, "messages.manage");
+  const hasGrantPerm = hasStaffPermission(staff, "freegrant.manage");
+  const hasCoursePerm = hasStaffPermission(staff, "courses.manage");
+  const hasVideoPerm = hasStaffPermission(staff, "videos.manage");
+  const hasBookPerm = hasStaffPermission(staff, "notes.books.manage");
+  const hasCouponPerm = hasStaffPermission(staff, "coupons.manage");
 
   return (
     <AdminShell>
       <div className="space-y-6 pb-12">
         {/* ========================================================================= */}
-        {/* SECTION 0: ASSIGNED OPERATIONAL AUTHORITY BANNER (Stitch sub-03 layout) */}
+        {/* SECTION 0: WELCOME & ASSIGNED OPERATIONAL AUTHORITY BANNER */}
         {/* ========================================================================= */}
-        <section className="w-full bg-[#FAF8FF] border border-[#E9E3FF] rounded-3xl p-6 sm:p-7 relative overflow-hidden shadow-xs">
+        <section className="w-full bg-white border border-[#E4E8F8] rounded-3xl p-6 sm:p-7 relative overflow-hidden shadow-xs">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-2xl bg-[#EDE8FF] border border-[#D5CCFF] text-[#5E35B1] flex items-center justify-center shrink-0 shadow-xs text-2xl">
-                🛡️
+                🧑‍💼
               </div>
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="text-xl font-black text-[#0E1B3D] font-heading tracking-tight">
-                    Assigned Operational Authority
+                  <h1 className="text-xl font-bold text-[#0E1B3D] font-heading tracking-tight">
+                    Welcome, {staff.name}!
                   </h1>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#EDE8FF] text-[#5E35B1] border border-[#D5CCFF]">
-                    Scoped Sub-Admin Access
+                    Sub-Admin Console
                   </span>
-                  <span className="font-mono text-[11px] font-bold text-[#5A6478] bg-white border border-[#E4E8F8] px-2 py-0.5 rounded-full">
-                    MMA-000 Provisioned
+                  <span className="font-mono text-[11px] font-bold text-[#5A6478] bg-[#F5F7FF] border border-[#E4E8F8] px-2 py-0.5 rounded-full">
+                    {staff.staffId || staff.id}
                   </span>
                 </div>
-                <p className="text-xs text-[#0E1B3D] font-medium leading-relaxed">
-                  Welcome, <strong className="text-[#0B57D0]">{staff.name}</strong> ({staff.email}). Your access:{" "}
+                <p className="text-xs text-[#5A6478] font-medium leading-relaxed">
+                  MindMaster Academy Staff Console • Operational authority assigned by Main Admin.
+                </p>
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[11px] font-bold text-[#0E1B3D]">Active Modules:</span>
                   {staff.permissions && staff.permissions.length > 0 ? (
-                    staff.permissions.map((p, idx) => (
-                      <span key={p} className="font-bold text-[#5E35B1]">
+                    staff.permissions.map((p) => (
+                      <span
+                        key={p}
+                        className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#F5F7FF] text-[#5E35B1] border border-[#E9E3FF]"
+                      >
                         {p}
-                        {idx < staff.permissions.length - 1 ? ", " : ""}
                       </span>
                     ))
                   ) : (
-                    <span className="text-[#5A6478]">Standard workspace preview (no operational keys assigned)</span>
-                  )}{" "}
-                  — granted directly by Main Admin (MMA-000).
-                </p>
-                <p className="text-[11px] text-[#5A6478] flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#137333] animate-pulse" />
-                  Narhe Study Centre Node • Scoped operator permissions active • Audit logging enabled
-                </p>
+                    <span className="text-[11px] text-slate-400 italic">No operational permissions assigned yet</span>
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
               <Link
                 href="/sub/activity"
-                className="px-4 py-2 bg-white hover:bg-[#F5F7FF] border border-[#E4E8F8] text-[#0E1B3D] text-xs font-bold rounded-full transition-colors shadow-xs"
+                className="px-4 py-2 bg-[#F5F7FF] hover:bg-[#EDE8FF] border border-[#E4E8F8] text-[#0E1B3D] text-xs font-bold rounded-full transition-colors shadow-xs"
               >
-                View My Audit Log
+                ⏱️ View My Activity
               </Link>
             </div>
           </div>
@@ -211,32 +216,12 @@ export default function SubAdminRootPage() {
               </p>
             </div>
             <span className="text-xs font-bold text-[#5E35B1] bg-[#EDE8FF] px-3 py-1 rounded-full border border-[#D5CCFF]">
-              {staff.permissions.length} of 2 Keys Active
+              {staff.permissions.length} Modules Active
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-            {/* 1. Messages Launcher */}
-            {hasMsgPerm && (
-              <Link
-                href="/sub/messages"
-                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#5E35B1] hover:bg-white transition-all flex items-start gap-3.5 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
-                  💬
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#5E35B1]">
-                    In-App Messages
-                  </h3>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">
-                    Direct two-pane messaging and student support
-                  </p>
-                </div>
-              </Link>
-            )}
-
-            {/* 2. Student Finder Launcher */}
+            {/* 1. Student Finder Launcher */}
             {hasStudentPerm && (
               <Link
                 href="/sub/students"
@@ -247,16 +232,136 @@ export default function SubAdminRootPage() {
                 </div>
                 <div>
                   <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#0B57D0]">
-                    Student Finder
+                    Student Finder &amp; 360° Profile
                   </h3>
                   <p className="text-[11px] text-[#5A6478] mt-0.5">
-                    Look up students, courses, and access dates (view-only)
+                    Look up students, offline admissions &amp; access validity
                   </p>
                 </div>
               </Link>
             )}
 
-            {/* 3. My Activity Launcher */}
+            {/* 2. Messages Launcher */}
+            {hasMsgPerm && (
+              <Link
+                href="/sub/messages"
+                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#5E35B1] hover:bg-white transition-all flex items-start gap-3.5 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
+                  💬
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#5E35B1]">
+                    Student Support Messages
+                  </h3>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                    Direct two-pane messaging and student assistance
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            {/* 3. Offline Grants Launcher */}
+            {hasGrantPerm && (
+              <Link
+                href="/sub/grants"
+                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#137333] hover:bg-white transition-all flex items-start gap-3.5 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
+                  🎁
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#137333]">
+                    Offline Admissions &amp; Grants
+                  </h3>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                    Grant offline Cash / UPI course and book access
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            {/* 4. Courses Launcher */}
+            {hasCoursePerm && (
+              <Link
+                href="/admin/courses"
+                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#0B57D0] hover:bg-white transition-all flex items-start gap-3.5 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
+                  📚
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#0B57D0]">
+                    Courses Manager
+                  </h3>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                    Create and edit academy courses and validity
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            {/* 5. Videos Launcher */}
+            {hasVideoPerm && (
+              <Link
+                href="/admin/videos"
+                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#E53935] hover:bg-white transition-all flex items-start gap-3.5 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
+                  🎬
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#E53935]">
+                    YouTube Videos &amp; Playlists
+                  </h3>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                    Manage lecture videos, free previews &amp; playlists
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            {/* 6. Digital Books Launcher */}
+            {hasBookPerm && (
+              <Link
+                href="/admin/notes"
+                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#8E24AA] hover:bg-white transition-all flex items-start gap-3.5 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
+                  📖
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#8E24AA]">
+                    Digital Books Manager
+                  </h3>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                    Upload and manage PDF books and access
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            {/* 7. Coupons Launcher */}
+            {hasCouponPerm && (
+              <Link
+                href="/admin/coupons"
+                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#FB8C00] hover:bg-white transition-all flex items-start gap-3.5 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
+                  🏷️
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#FB8C00]">
+                    Discount Coupons
+                  </h3>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                    Create and manage promo discount coupon codes
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            {/* 8. My Activity Launcher */}
             <Link
               href="/sub/activity"
               className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#137333] hover:bg-white transition-all flex items-start gap-3.5 group"
@@ -326,7 +431,7 @@ export default function SubAdminRootPage() {
 
           {/* Scope Note */}
           <div className="p-3 bg-[#FAF8FF] border border-[#E9E3FF] rounded-2xl text-[11px] text-[#5E35B1]">
-            🔒 <strong>Scoped Sub-Admin Policy:</strong> Courses, video catalog, playlist importer, coupons, grants, books, analytics, settings, and all delete operations are strictly reserved for Main Admin (MMA-000). Per-lesson playback history is restricted to Main Admin.
+            🔒 <strong>Main Admin Safeguards:</strong> Master Settings, Sub-Admin management, System Audit Trail, Financial/Watch Telemetry Reports, and Deletion operations remain securely reserved for Main Admin (Prashant Sir).
           </div>
         </div>
       </div>

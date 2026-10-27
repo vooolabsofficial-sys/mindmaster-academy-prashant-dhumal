@@ -14,7 +14,7 @@ import { normalizePhone } from "@/lib/phoneUtils";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { staff_id, password } = body;
+    const { staff_id, password, role: expectedRole } = body;
 
     if (!staff_id || !password) {
       return NextResponse.json(
@@ -123,11 +123,26 @@ export async function POST(req: Request) {
     // 3. Suspend Check (Instant session kill)
     if (staff.status === "suspended" || (staff.status as any) === "inactive") {
       const res = NextResponse.json(
-        { error: "This staff account is suspended. Session killed.", isSuspended: true },
+        { error: "This staff account is suspended or inactive. Please contact Main Admin.", isSuspended: true },
         { status: 403 }
       );
       res.cookies.delete("mma_staff_session");
       return res;
+    }
+
+    // 3b. Role Mode Strict Separation
+    if (expectedRole === "main_admin" && staff.role !== "main_admin") {
+      return NextResponse.json(
+        { error: "Access denied: This login window is strictly for Main Admin (Prashant Sir). Please use Sub-Admin Login." },
+        { status: 403 }
+      );
+    }
+
+    if (expectedRole === "sub_admin" && staff.role !== "sub_admin") {
+      return NextResponse.json(
+        { error: "Access denied: This login window is strictly for Sub-Admin staff. Please use Main Admin Login." },
+        { status: 403 }
+      );
     }
 
     // 4. Verify Password (Argon2 or Plain or Demo Fallback)

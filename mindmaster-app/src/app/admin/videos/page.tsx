@@ -271,6 +271,11 @@ export default function VideoManagerPage() {
   // Confirm Delete (Soft-Delete to Recycle Bin with Live Supabase sync)
   const handleConfirmDelete = async () => {
     if (!deleteModalVideo) return;
+    if (staff.role !== "main_admin") {
+      alert("Unauthorized: Video deletion is strictly reserved for Main Admin.");
+      setDeleteModalVideo(null);
+      return;
+    }
     setIsDeleting(true);
     try {
       const videoToDelete = deleteModalVideo;

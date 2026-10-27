@@ -584,6 +584,17 @@ export function resetStudentDeviceSessionLock(rawPhoneOrId: string): boolean {
   });
   saveStudentAccounts(updated);
 
+  // If in browser, notify server endpoint to clear server memory session & disk store
+  if (typeof window !== "undefined" && clean) {
+    try {
+      fetch("/api/student/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "admin-reset-session", phone: clean }),
+      }).catch(() => {});
+    } catch {}
+  }
+
   // Sync to Supabase profiles
   try {
     let supabase: any = null;
@@ -597,13 +608,114 @@ export function resetStudentDeviceSessionLock(rawPhoneOrId: string): boolean {
 
     if (supabase) {
       if (clean) {
-        supabase.from("profiles").update({ active_session_token: null }).eq("phone", clean).then(() => {});
+        supabase
+          .from("profiles")
+          .update({ active_session_token: null, session_token: null })
+          .or(`phone.eq.${clean},phone.eq.+91${clean}`)
+          .then(() => {});
       } else if (rawPhoneOrId) {
-        supabase.from("profiles").update({ active_session_token: null }).eq("id", rawPhoneOrId).then(() => {});
+        supabase
+          .from("profiles")
+          .update({ active_session_token: null, session_token: null })
+          .eq("id", rawPhoneOrId)
+          .then(() => {});
       }
     }
   } catch {}
 
   return true;
 }
+
+/**
+ * Admin Power Action: Reset student password directly using Argon2id.
+ * Updates in-memory accounts, local/disk store, and Supabase profiles table.
+ */
+export async function adminResetStudentPassword(
+  rawPhoneOrId: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  const clean = normalizePhone(rawPhoneOrId);
+  if (!newPassword || newPassword.length < 6) {
+    return { success: false, error: "New password must be at least 6 characters long." };
+  }
+
+  try {
+    const newHash = await hashArgon2(newPassword);
+
+    // 1. Update in-memory / local storage accounts
+    const accounts = getStudentAccounts();
+    let accountUpdated = false;
+    const updated = accounts.map((acc) => {
+      if (
+        (clean && acc.cleanPhone === clean) ||
+        acc.id === rawPhoneOrId ||
+        (clean && acc.phone.endsWith(clean))
+      ) {
+        accountUpdated = true;
+        return {
+          ...acc,
+          password_hash: newHash,
+        };
+      }
+      return acc;
+    });
+
+    if (accountUpdated) {
+      saveStudentAccounts(updated);
+    }
+
+    // 2. Client-side fetch to server API route for .data/students-store.json update
+    if (typeof window !== "undefined") {
+      try {
+        await fetch("/api/student/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "admin-reset-password",
+            phone: clean || rawPhoneOrId,
+            newPassword,
+          }),
+        });
+      } catch (err) {
+        console.warn("Server reset API call warning:", err);
+      }
+    }
+
+    // 3. Update Supabase profiles table
+    let supabase: any = null;
+    if (typeof window === "undefined") {
+      const { createAdminClient } = require("./supabase/admin");
+      supabase = createAdminClient();
+    } else {
+      const { createClient } = require("./supabase/client");
+      supabase = createClient();
+    }
+
+    if (supabase) {
+      if (clean) {
+        await supabase
+          .from("profiles")
+          .update({
+            password_hash: newHash,
+            updated_at: new Date().toISOString(),
+          })
+          .or(`phone.eq.${clean},phone.eq.+91${clean}`);
+      } else {
+        await supabase
+          .from("profiles")
+          .update({
+            password_hash: newHash,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", rawPhoneOrId);
+      }
+    }
+
+    return { success: true };
+  } catch (e: any) {
+    console.error("adminResetStudentPassword error:", e);
+    return { success: false, error: e?.message || "Failed to reset student password." };
+  }
+}
+
 

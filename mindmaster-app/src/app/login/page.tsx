@@ -19,6 +19,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { createClient, getCookieDomain } from "@/lib/supabase/client";
+import AuthRoleSwitcher from "@/components/auth/AuthRoleSwitcher";
 
 function LoginContent() {
   const router = useRouter();
@@ -32,8 +33,8 @@ function LoginContent() {
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
 
   // Form states
-  const [phone, setPhone] = useState("9876500001");
-  const [password, setPassword] = useState("Student@123");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [recoveryPin, setRecoveryPin] = useState("");
@@ -43,30 +44,6 @@ function LoginContent() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-
-  const handleQuickStudentLogin = () => {
-    setLoading(true);
-    setSuccessMessage("Demo student authenticated! Opening student portal...");
-    const profileData = {
-      id: "std-demo-01",
-      phone: "+919876500001",
-      cleanPhone: "9876500001",
-      full_name: "MindMaster Demo Student",
-      role: "student",
-      onboardingCompleted: true,
-    };
-    try {
-      localStorage.setItem("mindmaster_session_token", "tok-demo-student");
-      localStorage.setItem("mindmaster_verified_phone", "+919876500001");
-      localStorage.setItem("mindmaster_user_profile", JSON.stringify(profileData));
-      localStorage.setItem("mindmaster_onboarding_completed", "true");
-    } catch {}
-    document.cookie = "mindmaster_session=tok-demo-student; path=/; max-age=604800; SameSite=Lax";
-    const targetUrl = (!nextParam || nextParam === "/" || nextParam.startsWith("/login")) ? "/home" : nextParam;
-    setTimeout(() => {
-      window.location.href = targetUrl;
-    }, 150);
-  };
 
   // 1. Check existing session on mount
   useEffect(() => {
@@ -292,6 +269,9 @@ function LoginContent() {
       <main className="flex-1 flex items-center justify-center p-4 z-10 my-4 sm:my-6">
         <div className="w-full max-w-[440px] bg-white/85 backdrop-blur-3xl border border-white/80 rounded-3xl p-6 sm:p-8 shadow-[0_24px_70px_rgba(0,82,255,0.12)] relative overflow-hidden ring-1 ring-slate-900/5">
           
+          {/* Top Role Switcher */}
+          <AuthRoleSwitcher activeRole="student" />
+
           {/* Subtle liquid reflection gradient overlay */}
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-sky-400/10 rounded-full blur-2xl pointer-events-none" />
@@ -310,16 +290,6 @@ function LoginContent() {
               ? "Sign in with your 10-digit mobile number"
               : "Enter your name, mobile number and password to start learning"}
           </p>
-
-          {/* Instant 1-Click Student Login */}
-          <button
-            type="button"
-            onClick={handleQuickStudentLogin}
-            disabled={loading}
-            className="w-full py-3.5 px-4 mb-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-md shadow-blue-500/20 text-xs sm:text-sm flex items-center justify-center gap-2 transition-all transform active:scale-[0.99] cursor-pointer"
-          >
-            <span>⚡ Instant 1-Click Student Login (Demo) →</span>
-          </button>
 
           {/* Official Google 1-Click Button (Google Brand Guidelines) */}
           <button

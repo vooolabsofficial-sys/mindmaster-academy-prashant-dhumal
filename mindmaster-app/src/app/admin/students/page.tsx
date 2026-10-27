@@ -18,7 +18,7 @@ import {
 import { exportStudentsToExcel } from "@/lib/excelExporter";
 import { createStudentFuzzySearch } from "@/lib/fuzzySearch";
 import { grantCashAdmission, extendStudentAccess, revokeStudentAccess } from "@/lib/grantStore";
-import { resetStudentDeviceSessionLock } from "@/lib/studentAuthService";
+import { resetStudentDeviceSessionLock, adminResetStudentPassword } from "@/lib/studentAuthService";
 import { hasStaffPermission } from "@/lib/types";
 
 export default function StudentFinderPage() {
@@ -47,7 +47,7 @@ export default function StudentFinderPage() {
     purchaseId?: string;
     grantId?: string;
   } | null>(null);
-  const [extendOption, setExtendOption] = useState<"7" | "15" | "30" | "custom">("15");
+  const [extendOption, setExtendOption] = useState<"7" | "15" | "30" | "90" | "custom">("15");
   const [extendCustomDate, setExtendCustomDate] = useState("");
   const [isExtending, setIsExtending] = useState(false);
 
@@ -63,6 +63,18 @@ export default function StudentFinderPage() {
   const [revokeReason, setRevokeReason] = useState("");
   const [isRevoking, setIsRevoking] = useState(false);
   const [revokeError, setRevokeError] = useState("");
+
+  // Power Actions: Reset Password Modal State
+  const [resetPasswordModalStudent, setResetPasswordModalStudent] = useState<StudentRecord | null>(null);
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [passwordResetSuccess, setPasswordResetSuccess] = useState<{
+    phone: string;
+    studentName: string;
+    newPass: string;
+    whatsappUrl: string;
+  } | null>(null);
+  const [passwordResetError, setPasswordResetError] = useState("");
 
   // Power Actions: Edit Student Profile Modal State
   const [editStudentModal, setEditStudentModal] = useState<StudentRecord | null>(null);
@@ -96,6 +108,10 @@ export default function StudentFinderPage() {
   const [cashPhone, setCashPhone] = useState("");
   const [cashName, setCashName] = useState("");
   const [cashCourseId, setCashCourseId] = useState("");
+  const [cashValidityMode, setCashValidityMode] = useState<"preset" | "custom_days" | "fixed_date">("preset");
+  const [cashPresetDays, setCashPresetDays] = useState<number>(180);
+  const [cashCustomDays, setCashCustomDays] = useState<number>(45);
+  const [cashFixedDate, setCashFixedDate] = useState<string>("");
   const [cashAccessMonths, setCashAccessMonths] = useState(6);
   const [cashPaymentMode, setCashPaymentMode] = useState<"cash" | "upi" | "scholarship">("cash");
   const [cashAmount, setCashAmount] = useState(199);
@@ -176,7 +192,11 @@ export default function StudentFinderPage() {
 
     setCashPhone(student ? student.phone.replace(/\D/g, "").slice(-10) : "");
     setCashName(student ? student.name : "");
-    setCashCourseId(defaultCourse?.id || "");
+    setCashCourseId(defaultCourse?.id || "all");
+    setCashValidityMode("preset");
+    setCashPresetDays(180);
+    setCashCustomDays(45);
+    setCashFixedDate("");
     setCashAccessMonths(defaultCourse?.accessMonths || 6);
     setCashPaymentMode("cash");
     setCashAmount(defaultPrice);
@@ -197,20 +217,24 @@ export default function StudentFinderPage() {
       return;
     }
     if (!cashCourseId) {
-      setCashError("Please select a course.");
+      setCashError("Please select a course or digital book.");
       return;
     }
 
+    const isAllCourses = cashCourseId === "all";
     const courseList = getStaffCourses();
     const bookList = getStaffBooks();
-    const selectedCourse = courseList.find((c) => c.id === cashCourseId || c.code === cashCourseId);
-    const selectedBook = !selectedCourse ? bookList.find((b) => b.id === cashCourseId || b.code === cashCourseId) : null;
-    const itemTitle = selectedCourse?.title || selectedBook?.title || "MindMaster Item";
+    const selectedCourse = !isAllCourses ? courseList.find((c) => c.id === cashCourseId || c.code === cashCourseId) : null;
+    const selectedBook = !isAllCourses && !selectedCourse ? bookList.find((b) => b.id === cashCourseId || b.code === cashCourseId) : null;
+    const itemTitle = isAllCourses ? "All Academy Courses (सर्व कोर्सेस)" : selectedCourse?.title || selectedBook?.title || "MindMaster Item";
 
     const result = grantCashAdmission({
       studentPhone: clean,
       studentName: cashName.trim() || undefined,
       courseId: cashCourseId,
+      itemType: isAllCourses ? "all_courses" : selectedBook ? "book" : "course",
+      validityDays: cashValidityMode === "custom_days" ? cashCustomDays : cashValidityMode === "preset" ? cashPresetDays : undefined,
+      customExpiryDate: cashValidityMode === "fixed_date" ? cashFixedDate : undefined,
       accessMonths: cashAccessMonths,
       paymentMode: cashPaymentMode,
       amountPaid: cashAmount,
@@ -302,6 +326,56 @@ export default function StudentFinderPage() {
       `Staff (${currentStaff.role} - ${currentStaff.name}) reset device session lock for ${student.name} (${student.phone}).`
     );
     showToast(`Device session lock cleared for ${student.name}! Learner can now login from a new phone.`);
+  };
+
+  // Open Reset Password Modal
+  const handleOpenResetPassword = (student: StudentRecord) => {
+    setResetPasswordModalStudent(student);
+    setNewPasswordInput("");
+    setPasswordResetError("");
+    setPasswordResetSuccess(null);
+  };
+
+  // Confirm Reset Password
+  const handleConfirmResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetPasswordModalStudent) return;
+    if (!newPasswordInput || newPasswordInput.trim().length < 6) {
+      setPasswordResetError("Password must be at least 6 characters long.");
+      return;
+    }
+    setIsResettingPassword(true);
+    setPasswordResetError("");
+
+    const clean = resetPasswordModalStudent.phone.replace(/\D/g, "").slice(-10);
+    const pass = newPasswordInput.trim();
+    const res = await adminResetStudentPassword(clean, pass);
+
+    if (!res.success) {
+      setPasswordResetError(res.error || "Failed to reset password.");
+      setIsResettingPassword(false);
+      return;
+    }
+
+    logStaffAction(
+      "STUDENT_PASSWORD_RESET",
+      "student",
+      clean,
+      resetPasswordModalStudent.name,
+      `Staff (${currentStaff.role} - ${currentStaff.name}) reset password for ${resetPasswordModalStudent.name} (${clean}).`
+    );
+
+    const waMsg = `Namaskar ${resetPasswordModalStudent.name.split(" ")[0]}!\n\nYour MindMaster Academy login password has been reset by Admin.\n\n📱 Mobile: ${clean}\n🔑 New Password: ${pass}\n\n📲 Login now:\nhttps://mindmaster.academy/login\n\n— Prashant Dhumal Sir, MindMaster Academy`;
+    const waUrl = `https://wa.me/91${clean}?text=${encodeURIComponent(waMsg)}`;
+
+    setPasswordResetSuccess({
+      phone: clean,
+      studentName: resetPasswordModalStudent.name,
+      newPass: pass,
+      whatsappUrl: waUrl,
+    });
+    showToast(`Password successfully reset for ${resetPasswordModalStudent.name}!`);
+    setIsResettingPassword(false);
   };
 
   // Open Edit Profile Modal
@@ -510,8 +584,8 @@ export default function StudentFinderPage() {
         const regTime = new Date(
           s.registeredAt || (s as any).joinedAt || (s as any).created_at || 0
         ).getTime();
-        const fourteenDaysAgo = Date.now() - 14 * 86400000;
-        if (regTime < fourteenDaysAgo) return false;
+        const sevenDaysAgo = Date.now() - 7 * 86400000;
+        if (regTime < sevenDaysAgo) return false;
       }
 
       if (expiring7DaysOnly) {
@@ -1043,6 +1117,18 @@ export default function StudentFinderPage() {
                           title="Edit Student Profile & Phone"
                         >
                           <span>✏️</span> Edit Profile
+                        </button>
+                      )}
+
+                      {/* RESET PASSWORD */}
+                      {(isMainAdmin || canManageGrants) && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenResetPassword(drawerStudent)}
+                          className="px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                          title="Reset student password / PIN"
+                        >
+                          <span>🔑</span> Reset Password
                         </button>
                       )}
 
@@ -1674,6 +1760,11 @@ export default function StudentFinderPage() {
                         onChange={(e) => {
                           const cId = e.target.value;
                           setCashCourseId(cId);
+                          if (cId === "all") {
+                            setCashAmount(cashPaymentMode === "scholarship" ? 0 : 999);
+                            setCashAccessMonths(12);
+                            return;
+                          }
                           const sel = courses.find((c) => c.id === cId || c.code === cId);
                           if (sel) {
                             setCashAmount(cashPaymentMode === "scholarship" ? 0 : Math.round(sel.pricePaise / 100));
@@ -1689,6 +1780,7 @@ export default function StudentFinderPage() {
                         }}
                         className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
                       >
+                        <option value="all">🌟 All Academy Courses (सर्व कोर्सेस - Full Bundle)</option>
                         <optgroup label="🎓 Academy Courses">
                           {courses.map((c) => (
                             <option key={c.id} value={c.id}>
@@ -1709,21 +1801,111 @@ export default function StudentFinderPage() {
                     </div>
 
                     {/* Validity Duration & Payment Mode */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-3">
                       <div>
-                        <label className="block font-bold text-[#0E1B3D] mb-1">
-                          Validity Duration
-                        </label>
-                        <select
-                          value={cashAccessMonths}
-                          onChange={(e) => setCashAccessMonths(Number(e.target.value))}
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none"
-                        >
-                          <option value={3}>3 Months</option>
-                          <option value={6}>6 Months</option>
-                          <option value={12}>1 Year (12 Months)</option>
-                          <option value={100}>Lifetime Access</option>
-                        </select>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="block font-bold text-[#0E1B3D]">
+                            Access Validity Duration *
+                          </label>
+                          <div className="flex items-center gap-1 text-[10px] font-bold">
+                            <button
+                              type="button"
+                              onClick={() => setCashValidityMode("preset")}
+                              className={`px-2 py-0.5 rounded-lg border transition ${
+                                cashValidityMode === "preset"
+                                  ? "bg-[#0B57D0] text-white border-[#0B57D0]"
+                                  : "bg-slate-100 text-slate-600 border-slate-200"
+                              }`}
+                            >
+                              Presets
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCashValidityMode("custom_days")}
+                              className={`px-2 py-0.5 rounded-lg border transition ${
+                                cashValidityMode === "custom_days"
+                                  ? "bg-[#0B57D0] text-white border-[#0B57D0]"
+                                  : "bg-slate-100 text-slate-600 border-slate-200"
+                              }`}
+                            >
+                              Custom Days
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCashValidityMode("fixed_date")}
+                              className={`px-2 py-0.5 rounded-lg border transition ${
+                                cashValidityMode === "fixed_date"
+                                  ? "bg-[#0B57D0] text-white border-[#0B57D0]"
+                                  : "bg-slate-100 text-slate-600 border-slate-200"
+                              }`}
+                            >
+                              Exam Date
+                            </button>
+                          </div>
+                        </div>
+
+                        {cashValidityMode === "preset" && (
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {[
+                              { label: "7 Days Demo", days: 7, months: 0 },
+                              { label: "15 Days", days: 15, months: 0 },
+                              { label: "1 Month", days: 30, months: 1 },
+                              { label: "3 Months", days: 90, months: 3 },
+                              { label: "6 Months", days: 180, months: 6 },
+                              { label: "12M (1 Year)", days: 365, months: 12 },
+                              { label: "24M (2 Years)", days: 730, months: 24 },
+                              { label: "Lifetime", days: 3650, months: 120 },
+                            ].map((preset) => (
+                              <button
+                                key={preset.label}
+                                type="button"
+                                onClick={() => {
+                                  setCashPresetDays(preset.days);
+                                  setCashAccessMonths(preset.months || 1);
+                                }}
+                                className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition cursor-pointer text-center ${
+                                  cashPresetDays === preset.days
+                                    ? "bg-[#0B57D0] text-white border-[#0B57D0] shadow-xs"
+                                    : "bg-slate-50 text-slate-700 border-slate-200 hover:border-[#0B57D0]"
+                                }`}
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {cashValidityMode === "custom_days" && (
+                          <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                              <input
+                                type="number"
+                                min={1}
+                                max={3650}
+                                value={cashCustomDays}
+                                onChange={(e) => setCashCustomDays(Math.max(1, Number(e.target.value)))}
+                                placeholder="e.g. 45"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
+                              />
+                              <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">Days</span>
+                            </div>
+                            <p className="text-[11px] text-[#5A6478]">Valid for {cashCustomDays} days</p>
+                          </div>
+                        )}
+
+                        {cashValidityMode === "fixed_date" && (
+                          <div>
+                            <input
+                              type="date"
+                              required={cashValidityMode === "fixed_date"}
+                              min={new Date().toISOString().slice(0, 10)}
+                              value={cashFixedDate}
+                              onChange={(e) => setCashFixedDate(e.target.value)}
+                              className="w-full px-3 py-2 bg-slate-50 border border-[#0B57D0] rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none"
+                            />
+                            <p className="text-[10px] text-slate-500 mt-1">Access automatically expires on this examination date</p>
+                          </div>
+                        )}
                       </div>
 
                       <div>
@@ -1849,17 +2031,18 @@ export default function StudentFinderPage() {
                   <label className="block text-xs font-bold text-[#0E1B3D]">
                     Choose Extension Duration:
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {[
                       { label: "+7 Days", val: "7" },
                       { label: "+15 Days", val: "15" },
                       { label: "+30 Days", val: "30" },
+                      { label: "+90 Days", val: "90" },
                     ].map((opt) => (
                       <button
                         key={opt.val}
                         type="button"
                         onClick={() => setExtendOption(opt.val as any)}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition cursor-pointer text-center ${
                           extendOption === opt.val
                             ? "bg-[#0B57D0] text-white border-[#0B57D0] shadow-xs"
                             : "bg-[#F5F7FF] text-[#0E1B3D] border-[#E4E8F8] hover:border-[#0B57D0]"
@@ -2118,8 +2301,115 @@ export default function StudentFinderPage() {
           )}
 
           {/* ========================================================= */}
-          {/* FLOATING ACTION FEEDBACK TOAST */}
+          {/* POWER ACTION: RESET PASSWORD MODAL */}
           {/* ========================================================= */}
+          {resetPasswordModalStudent && (
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl border border-amber-200 max-w-md w-full p-6 shadow-2xl space-y-4 animate-fadeIn">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🔑</span>
+                    <div>
+                      <h3 className="text-base font-bold text-[#0E1B3D]">Reset Student Password</h3>
+                      <p className="text-[11px] text-[#5A6478]">
+                        Instantly update password with Argon2id hash & generate WhatsApp credentials receipt
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setResetPasswordModalStudent(null)}
+                    className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900">
+                  Student: <span className="font-bold">{resetPasswordModalStudent.name}</span> (
+                  <span className="font-mono font-bold">{resetPasswordModalStudent.phone}</span>)
+                </div>
+
+                {passwordResetSuccess ? (
+                  <div className="py-3 space-y-3 text-center">
+                    <span className="text-3xl">✅</span>
+                    <h4 className="text-sm font-bold text-slate-900">Password Updated Successfully!</h4>
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-left text-xs font-mono space-y-1">
+                      <p><span className="text-slate-500 font-sans">Mobile:</span> +91 {passwordResetSuccess.phone}</p>
+                      <p><span className="text-slate-500 font-sans">New Password:</span> <span className="font-bold text-[#0B57D0]">{passwordResetSuccess.newPass}</span></p>
+                    </div>
+                    <a
+                      href={passwordResetSuccess.whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-full shadow flex items-center justify-center gap-2 transition"
+                    >
+                      <span>📲 Send New Password on WhatsApp</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setResetPasswordModalStudent(null)}
+                      className="w-full py-2 rounded-full border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                    >
+                      Done
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleConfirmResetPassword} className="space-y-3.5">
+                    {passwordResetError && (
+                      <p className="text-xs text-rose-600 font-bold bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                        {passwordResetError}
+                      </p>
+                    )}
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-bold text-[#0E1B3D]">
+                          New Password / PIN *
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setNewPasswordInput(`Mind@${Math.floor(1000 + Math.random() * 9000)}`)}
+                          className="text-[10px] font-bold text-[#0B57D0] hover:underline cursor-pointer"
+                        >
+                          ⚡ Generate Easy Password
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        minLength={6}
+                        value={newPasswordInput}
+                        onChange={(e) => setNewPasswordInput(e.target.value)}
+                        placeholder="e.g. Mind@1234 or Student@2026"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                      />
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        Minimum 6 characters. Immediately replaces previous password.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                      <button
+                        type="button"
+                        disabled={isResettingPassword}
+                        onClick={() => setResetPasswordModalStudent(null)}
+                        className="px-4 py-2 rounded-full border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isResettingPassword}
+                        className="px-5 py-2 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold shadow-xs transition cursor-pointer disabled:opacity-50"
+                      >
+                        {isResettingPassword ? "Updating Hash..." : "Set New Password 🔑"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
           {actionFeedbackToast && (
             <div
               className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-2.5 animate-fadeIn text-xs font-bold ${
