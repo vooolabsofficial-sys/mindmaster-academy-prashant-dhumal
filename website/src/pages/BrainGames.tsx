@@ -575,7 +575,7 @@ const LANG = {
     stroopWrong: (c: string) => `Distracted by text! The ink color was "${c}".`,
     nextReflex: 'Next Reflex Challenge',
     ctaTitle: 'Ready to train your mind into a calculation engine?',
-    ctaDesc: 'Master rapid mental calculation and memory indexing under Sagar (Prashant) Dhumal Sir. Register for an orientation session today.',
+    ctaDesc: 'Master rapid mental calculation and memory indexing under Prashant Dhumal Sir. Register for an orientation session today.',
     ctaBtn: 'Book Orientation Session',
     whatsapp: 'WhatsApp: +91 84593 44077',
     starsLabel: 'Performance Rating',
@@ -1131,6 +1131,12 @@ export const BrainGames: React.FC = () => {
   const [memSelectedCard, setMemSelectedCard] = useState<number | null>(null);
   const memTimerRef = useRef<number | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (memTimerRef.current) clearInterval(memTimerRef.current);
+    };
+  }, []);
+
   const startMemoryGame = () => {
     sfx.playClick();
     setMemStarted(true);
@@ -1655,7 +1661,7 @@ export const BrainGames: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <a
-                      href="https://wa.me/918459344077?text=Hello%20Sagar%20Sir%2C%20I%20played%20the%20Calendar%20Game%20and%20want%20to%20learn%20MM-04%20course."
+                      href="https://wa.me/918459344077?text=Hello%20Prashant%20Sir%2C%20I%20played%20the%20Calendar%20Game%20and%20want%20to%20learn%20MM-04%20course."
                       target="_blank"
                       rel="noreferrer"
                       className="px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
@@ -1927,7 +1933,7 @@ export const BrainGames: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <a
-                      href="https://wa.me/918459344077?text=Hello%20Sagar%20Sir%2C%20I%20want%20to%20learn%20MM-05%20Vedic%20Maths."
+                      href="https://wa.me/918459344077?text=Hello%20Prashant%20Sir%2C%20I%20want%20to%20learn%20MM-05%20Vedic%20Maths."
                       target="_blank"
                       rel="noreferrer"
                       className="px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
@@ -2197,12 +2203,12 @@ export const BrainGames: React.FC = () => {
                                 {lang === 'mr' ? 'MM-03: पोलीस भरती १००% लेखी परीक्षा तयारी' : 'MM-03: Police Bharti 100% Written Test Preparation'}
                               </h4>
                               <p className="text-xs text-sky-100 mt-1" style={textFont}>
-                                {lang === 'mr' ? 'सागर सरांच्या मार्गदर्शनाखाली आकाश मोरे सरांसारखे १००/१०० गुण मिळवा.' : "Score 100/100 in Police Bharti Written Test under Sagar Sir's guidance."}
+                                {lang === 'mr' ? 'प्रशांत सरांच्या मार्गदर्शनाखाली आकाश मोरे सरांसारखे १००/१०० गुण मिळवा.' : "Score 100/100 in Police Bharti Written Test under Prashant Sir's guidance."}
                               </p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <a
-                                href="https://wa.me/918459344077?text=Hello%20Sagar%20Sir%2C%20I%20want%20information%20about%20Police%20Bharti%20Memory%20Course."
+                                href="https://wa.me/918459344077?text=Hello%20Prashant%20Sir%2C%20I%20want%20information%20about%20Police%20Bharti%20Memory%20Course."
                                 target="_blank"
                                 rel="noreferrer"
                                 className="px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
@@ -2492,7 +2498,7 @@ export const BrainGames: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <a
-                      href="https://wa.me/918459344077?text=Hello%20Sagar%20Sir%2C%20I%20want%20to%20learn%20Focus%20and%20Memory%20Techniques."
+                      href="https://wa.me/918459344077?text=Hello%20Prashant%20Sir%2C%20I%20want%20to%20learn%20Focus%20and%20Memory%20Techniques."
                       target="_blank"
                       rel="noreferrer"
                       className="px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
@@ -2588,7 +2594,7 @@ export const BrainGames: React.FC = () => {
               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </Link>
             <a
-              href="https://wa.me/918459344077?text=Hello%20Sagar%20Sir%2C%20I%20want%20to%20know%20more%20about%20your%20courses."
+              href="https://wa.me/918459344077?text=Hello%20Prashant%20Sir%2C%20I%20want%20to%20know%20more%20about%20your%20courses."
               target="_blank"
               rel="noreferrer"
               className="px-6 py-3.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 font-bold text-xs sm:text-sm transition-all shadow-2xs flex items-center gap-2"

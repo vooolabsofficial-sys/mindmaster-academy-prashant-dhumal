@@ -17,6 +17,7 @@ const DesignSystem = lazy(() => import('./pages/DesignSystem').then((m) => ({ de
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy })));
 const Terms = lazy(() => import('./pages/Terms').then((m) => ({ default: m.Terms })));
 const RefundPolicy = lazy(() => import('./pages/RefundPolicy').then((m) => ({ default: m.RefundPolicy })));
+const VerifyCertificate = lazy(() => import('./pages/VerifyCertificate').then((m) => ({ default: m.VerifyCertificate })));
 
 // Fast minimalist loader for lazy components
 const PageLoader: React.FC = () => (
@@ -59,6 +60,8 @@ export const App: React.FC = () => {
             <Route path="/brain-games" element={<BrainGames />} />
             <Route path="/games" element={<BrainGames />} />
             <Route path="/play" element={<BrainGames />} />
+            <Route path="/verify-certificate" element={<VerifyCertificate />} />
+            <Route path="/verify" element={<VerifyCertificate />} />
           </Routes>
         </Suspense>
       </div>

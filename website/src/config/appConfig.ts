@@ -58,8 +58,9 @@ export interface LiveDbCourse {
 // Fetch live courses from student app API / Supabase sync
 export const fetchLiveCoursesFromApp = async (): Promise<LiveDbCourse[]> => {
   try {
-    const res = await fetch(getAppUrl("/api/courses"), {
+    const res = await fetch(`${getAppUrl("/api/courses")}?t=${Date.now()}`, {
       headers: { Accept: "application/json" },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -313,11 +314,11 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
     },
     {
       id: "fac-2",
-      name: "Sagar Dhumal Sir",
+      name: "Prashant Dhumal Sir",
       role: "Senior Mentor & Speed Maths Trainer",
       qualification: "M.Sc. Mathematics",
       bio: "Specialist in Vedic Mathematics and speed arithmetic. Known for simplifying complex calculations into rapid mental shortcuts.",
-      photoUrl: "/assets/images/sagar_dhumal_educator.png",
+      photoUrl: "/assets/images/prashant_dhumal_studio_portrait.png",
       order: 2,
     },
   ],
@@ -407,8 +408,9 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
 
 export const fetchLiveWebsiteCms = async (): Promise<WebsiteCmsData> => {
   try {
-    const res = await fetch(getAppUrl("/api/website-cms"), {
+    const res = await fetch(`${getAppUrl("/api/website-cms")}?t=${Date.now()}`, {
       headers: { Accept: "application/json" },
+      cache: "no-store",
     });
     if (res.ok) {
       const json = await res.json();
@@ -428,7 +430,12 @@ export const fetchLiveWebsiteCms = async (): Promise<WebsiteCmsData> => {
     try {
       const cached = localStorage.getItem("mma_website_cms_cache");
       if (cached) {
-        return JSON.parse(cached);
+        // If cached data contains outdated mentor names, purge stale cache immediately
+        if (cached.includes("Sagar") || cached.includes("sagar")) {
+          localStorage.removeItem("mma_website_cms_cache");
+        } else {
+          return JSON.parse(cached);
+        }
       }
     } catch {}
   }

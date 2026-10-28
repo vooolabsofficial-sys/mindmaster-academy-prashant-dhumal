@@ -187,7 +187,7 @@ export interface StaffUser {
   phone: string;
   role: StaffRole;
   permissions: StaffPermission[];
-  status: "active" | "suspended" | "inactive";
+  status: "active" | "suspended" | "inactive" | "frozen";
   district?: string;
   centre?: string;
   approvalMode?: boolean; // When true, offline grants by this sub-admin require Main Admin approval

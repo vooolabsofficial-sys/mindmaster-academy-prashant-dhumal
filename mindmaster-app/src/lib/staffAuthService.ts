@@ -105,14 +105,14 @@ export function findStaffAccount(identifier: string): StaffUser | null {
 /**
  * Generate SMS OTP for password reset (valid for 5 minutes).
  */
-export function generateSmsOtp(staffId: string): { success: boolean; phone?: string; error?: string; otpDebug?: string } {
+export function generateSmsOtp(staffId: string): { success: boolean; phone?: string; error?: string } {
   const user = findStaffAccount(staffId);
   if (!user) {
     return { success: false, error: "No staff account found with this Staff ID or Phone." };
   }
 
-  if (user.status === "suspended" || (user.status as any) === "inactive") {
-    return { success: false, error: "This staff account is suspended. Contact Main Admin." };
+  if (user.status === "frozen" || user.status === "suspended" || (user.status as any) === "inactive") {
+    return { success: false, error: "This staff account is frozen or suspended. Contact Main Admin." };
   }
 
   // Generate 6-digit OTP
@@ -122,12 +122,10 @@ export function generateSmsOtp(staffId: string): { success: boolean; phone?: str
   const key = (user.staffId || user.id).toUpperCase();
   OTP_MAP.set(key, { otp, expiresAt, phone: user.phone });
 
-  console.log(`[SMS GATEWAY SIMULATION] Sent OTP ${otp} to ${user.phone} for staff ${key}`);
-
+  // In production SMS integration, send through SMS provider. Never leak OTP in API response.
   return {
     success: true,
     phone: user.phone,
-    otpDebug: otp, // Returned for dev/testing verification
   };
 }
 

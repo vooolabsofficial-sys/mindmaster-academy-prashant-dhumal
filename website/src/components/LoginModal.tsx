@@ -8,8 +8,8 @@ interface LoginModalProps {
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const [tab, setTab] = useState<'signin' | 'signup'>('signin');
-  const [phone, setPhone] = useState('9876500001');
-  const [password, setPassword] = useState('Student@123');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [recoveryPin, setRecoveryPin] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,14 +23,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
   const handleGoogleLogin = () => {
     window.location.href = `${appBaseUrl}/login?google=1`;
-  };
-
-  const handleQuickStudentLogin = () => {
-    setLoading(true);
-    setSuccessMessage('Demo student authenticated! Opening student portal...');
-    setTimeout(() => {
-      window.location.href = `${appBaseUrl}/home`;
-    }, 250);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -249,16 +241,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             <span>{successMessage}</span>
           </div>
         )}
-
-        {/* Instant 1-Click Student Login */}
-        <button
-          type="button"
-          onClick={handleQuickStudentLogin}
-          disabled={loading}
-          className="w-full py-2.5 px-3 mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-md shadow-blue-500/20 text-xs flex items-center justify-center gap-1.5 transition-all transform active:scale-[0.99] cursor-pointer"
-        >
-          <span>⚡ Instant 1-Click Student Login (Demo) →</span>
-        </button>
 
         {/* Auth Form */}
         <form onSubmit={handleSubmit} className="space-y-3">

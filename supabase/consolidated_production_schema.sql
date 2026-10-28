@@ -44,12 +44,24 @@ CREATE TABLE IF NOT EXISTS profiles (
   role VARCHAR(20) DEFAULT 'student' CHECK (role IN ('student', 'instructor', 'admin')),
   target_exam VARCHAR(150) DEFAULT 'पोलीस भरती (Maharashtra Police Bharti 2026)',
   is_verified BOOLEAN DEFAULT FALSE,
+  password_hash TEXT,
+  recovery_pin VARCHAR(10),
+  email VARCHAR(255),
+  onboarding_completed BOOLEAN DEFAULT FALSE,
   active_session_token TEXT,
+  session_token TEXT,
+  standard VARCHAR(50),
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()),
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW())
 );
 
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS active_session_token TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS session_token TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS recovery_pin VARCHAR(10);
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS standard VARCHAR(50);
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE;
 
 CREATE INDEX IF NOT EXISTS idx_profiles_phone ON profiles(phone);
 CREATE INDEX IF NOT EXISTS idx_profiles_district ON profiles(district);
@@ -382,6 +394,75 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW())
 );
 
+-- Additional Schema Alterations & Migrations
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS standard VARCHAR(50);
+ALTER TABLE staff_accounts ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW());
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW());
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS details TEXT;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS meta JSONB DEFAULT '{}'::jsonb;
+
+CREATE OR REPLACE VIEW audit_logs AS 
+SELECT 
+  id, 
+  staff_id, 
+  action, 
+  entity_type, 
+  entity_id, 
+  details, 
+  meta, 
+  at, 
+  COALESCE(created_at, at) AS created_at 
+FROM audit_log;
+
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS razorpay_key_id VARCHAR(100) DEFAULT 'rzp_live_8F91kM4892482';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS razorpay_key_secret VARCHAR(100) DEFAULT 'sec_live_99d14a2f8b894ce12a';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS razorpay_mode VARCHAR(20) DEFAULT 'live';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS concurrent_devices INT DEFAULT 1;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS auto_send_reminders BOOLEAN DEFAULT TRUE;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS academy_title VARCHAR(255) DEFAULT 'MindMaster Academy';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS founder_name VARCHAR(150) DEFAULT 'Prashant Dhumal';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS centre_address TEXT DEFAULT 'Narhe Centre Desk, Pune, Maharashtra 411041';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS support_phone VARCHAR(50) DEFAULT '+91 84593 44077';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS support_email VARCHAR(100) DEFAULT 'mindmasterdhumal@gmail.com';
+
+-- Live Support Messaging Tables
+CREATE TABLE IF NOT EXISTS support_conversations (
+  id TEXT PRIMARY KEY DEFAULT ('conv-' || gen_random_uuid()::text),
+  student_id TEXT NOT NULL,
+  student_name VARCHAR(255) NOT NULL,
+  student_phone VARCHAR(20),
+  district VARCHAR(100),
+  course_id VARCHAR(100),
+  unread_count INT DEFAULT 0,
+  unread_student INT DEFAULT 0,
+  unread_staff INT DEFAULT 0,
+  last_message TEXT,
+  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()),
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_support_conv_student ON support_conversations(student_id);
+CREATE INDEX IF NOT EXISTS idx_support_conv_updated ON support_conversations(updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS support_messages (
+  id TEXT PRIMARY KEY DEFAULT ('msg-' || gen_random_uuid()::text),
+  conversation_id TEXT NOT NULL REFERENCES support_conversations(id) ON DELETE CASCADE,
+  sender_role VARCHAR(20) NOT NULL CHECK (sender_role IN ('student', 'staff')),
+  sender_id VARCHAR(100) NOT NULL,
+  sender_name VARCHAR(255) NOT NULL,
+  body TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_support_msg_conv ON support_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_support_msg_created ON support_messages(created_at ASC);
+
+ALTER TABLE support_conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE support_messages ENABLE ROW LEVEL SECURITY;
+
 -- ==============================================================================
 -- 10. ROW LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
@@ -418,14 +499,44 @@ CREATE POLICY "Public can view live courses" ON courses FOR SELECT USING (
   AND (publish_at IS NULL OR publish_at <= TIMEZONE('utc', NOW()))
   AND (remove_at IS NULL OR remove_at >= TIMEZONE('utc', NOW()))
 );
-CREATE POLICY "Public can view lessons" ON lessons FOR SELECT USING (true);
-CREATE POLICY "Public can view books" ON books FOR SELECT USING (true);
-CREATE POLICY "Public can view coupon books" ON coupon_books FOR SELECT USING (true);
-CREATE POLICY "Public can read video likes" ON video_likes FOR SELECT USING (true);
-CREATE POLICY "Anyone can read settings" ON settings FOR SELECT USING (true);
-CREATE POLICY "Students can manage likes" ON video_likes FOR ALL USING (true);
-CREATE POLICY "Students can read notifications" ON in_app_notifications FOR SELECT USING (true);
-CREATE POLICY "System manage notifications" ON in_app_notifications FOR ALL USING (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public can view lessons' AND tablename = 'lessons') THEN
+    CREATE POLICY "Public can view lessons" ON lessons FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public can view books' AND tablename = 'books') THEN
+    CREATE POLICY "Public can view books" ON books FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public can view coupon books' AND tablename = 'coupon_books') THEN
+    CREATE POLICY "Public can view coupon books" ON coupon_books FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public can read video likes' AND tablename = 'video_likes') THEN
+    CREATE POLICY "Public can read video likes" ON video_likes FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can read settings' AND tablename = 'settings') THEN
+    CREATE POLICY "Anyone can read settings" ON settings FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can update settings' AND tablename = 'settings') THEN
+    CREATE POLICY "Anyone can update settings" ON settings FOR ALL USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Students can manage likes' AND tablename = 'video_likes') THEN
+    CREATE POLICY "Students can manage likes" ON video_likes FOR ALL USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Students can read notifications' AND tablename = 'in_app_notifications') THEN
+    CREATE POLICY "Students can read notifications" ON in_app_notifications FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'System manage notifications' AND tablename = 'in_app_notifications') THEN
+    CREATE POLICY "System manage notifications" ON in_app_notifications FOR ALL USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can manage support_conversations' AND tablename = 'support_conversations') THEN
+    CREATE POLICY "Anyone can manage support_conversations" ON support_conversations FOR ALL USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can manage support_messages' AND tablename = 'support_messages') THEN
+    CREATE POLICY "Anyone can manage support_messages" ON support_messages FOR ALL USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can manage audit_log' AND tablename = 'audit_log') THEN
+    CREATE POLICY "Anyone can manage audit_log" ON audit_log FOR ALL USING (true);
+  END IF;
+END $$;
 
 -- Canonical Phone Normalization Trigger Function
 CREATE OR REPLACE FUNCTION normalize_phone_canonical(raw TEXT)
@@ -548,3 +659,35 @@ VALUES
   ('MMA-000', 'messages.manage')
 ON CONFLICT (staff_id, permission_key) DO NOTHING;
 
+
+-- =========================================================================
+-- STUDENT CERTIFICATES TABLE (Tamper-Proof Ledger)
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS student_certificates (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  certificate_no VARCHAR(64) UNIQUE NOT NULL,
+  student_id TEXT NOT NULL,
+  student_name VARCHAR(255) NOT NULL,
+  student_phone VARCHAR(20) NOT NULL,
+  student_phone_masked VARCHAR(30),
+  course_id TEXT NOT NULL,
+  course_title VARCHAR(255) NOT NULL,
+  course_code VARCHAR(30),
+  category VARCHAR(100) DEFAULT 'Vedic Maths & Mind Memory',
+  issued_at_ist VARCHAR(60) NOT NULL,
+  completion_percentage INTEGER DEFAULT 100,
+  signatory_name VARCHAR(120) DEFAULT 'Prashant Dhumal Sir',
+  signatory_title VARCHAR(150) DEFAULT 'Founder & International Memory Trainer',
+  signature_url TEXT,
+  stamp_url TEXT,
+  academy_name VARCHAR(150) DEFAULT 'MindMaster Academy',
+  centres VARCHAR(200) DEFAULT 'Pune & Satara Centres, Maharashtra',
+  status VARCHAR(20) DEFAULT 'active',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT uq_student_course_certificate UNIQUE (student_id, course_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_student_certificates_cert_no ON student_certificates(certificate_no);
+CREATE INDEX IF NOT EXISTS idx_student_certificates_phone ON student_certificates(student_phone);
+
+ALTER TABLE student_certificates ENABLE ROW LEVEL SECURITY;

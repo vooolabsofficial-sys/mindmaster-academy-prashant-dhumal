@@ -659,3 +659,35 @@ VALUES
   ('MMA-000', 'messages.manage')
 ON CONFLICT (staff_id, permission_key) DO NOTHING;
 
+
+-- =========================================================================
+-- STUDENT CERTIFICATES TABLE (Tamper-Proof Ledger)
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS student_certificates (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  certificate_no VARCHAR(64) UNIQUE NOT NULL,
+  student_id TEXT NOT NULL,
+  student_name VARCHAR(255) NOT NULL,
+  student_phone VARCHAR(20) NOT NULL,
+  student_phone_masked VARCHAR(30),
+  course_id TEXT NOT NULL,
+  course_title VARCHAR(255) NOT NULL,
+  course_code VARCHAR(30),
+  category VARCHAR(100) DEFAULT 'Vedic Maths & Mind Memory',
+  issued_at_ist VARCHAR(60) NOT NULL,
+  completion_percentage INTEGER DEFAULT 100,
+  signatory_name VARCHAR(120) DEFAULT 'Prashant Dhumal Sir',
+  signatory_title VARCHAR(150) DEFAULT 'Founder & International Memory Trainer',
+  signature_url TEXT,
+  stamp_url TEXT,
+  academy_name VARCHAR(150) DEFAULT 'MindMaster Academy',
+  centres VARCHAR(200) DEFAULT 'Pune & Satara Centres, Maharashtra',
+  status VARCHAR(20) DEFAULT 'active',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT uq_student_course_certificate UNIQUE (student_id, course_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_student_certificates_cert_no ON student_certificates(certificate_no);
+CREATE INDEX IF NOT EXISTS idx_student_certificates_phone ON student_certificates(student_phone);
+
+ALTER TABLE student_certificates ENABLE ROW LEVEL SECURITY;

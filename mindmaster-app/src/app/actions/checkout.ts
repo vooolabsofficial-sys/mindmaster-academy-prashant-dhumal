@@ -9,6 +9,7 @@ import { getStaffCoupons, getStaffStudents, saveStaffCoupon, getStaffCourses, ge
 import { hasUserRedeemedCoupon, recordCouponRedemption } from "@/lib/couponRedemptionStore";
 import { normalizePhone } from "@/lib/phoneUtils";
 import { calculateExpiryIST, extendExpiryIST, formatIST } from "@/lib/istTime";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function resolveCourse(courseId: string) {
   try {
@@ -158,6 +159,16 @@ export async function validateCoupon(
   const cleanCode = code.trim().toUpperCase();
   if (!cleanCode) {
     return { success: false, error: "Please enter a coupon code." };
+  }
+
+  // Rate limit: 10 attempts per minute per student
+  const rateTarget = userId || studentMobile || "anon";
+  const rate = checkRateLimit(`coupon_validate:${rateTarget}`, 10, 60000);
+  if (!rate.success) {
+    return {
+      success: false,
+      error: `Too many coupon attempts. Please wait ${rate.resetInSec} seconds before trying again.`,
+    };
   }
 
   let studentUserId = userId;
@@ -870,7 +881,7 @@ export async function createRazorpayOrder({
           studentName,
           studentMobile: cleanMobile,
           couponCode: couponCode || "",
-          userId: studentUserId || "22222222-2222-2222-2222-222222222201",
+          userId: studentUserId || cleanMobile,
         },
       };
 

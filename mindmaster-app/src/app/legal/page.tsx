@@ -201,7 +201,7 @@ function LegalContent() {
           <div className="space-y-4">
             <h3 className="text-base font-extrabold text-[#0E1B3D]">2. Anti-Piracy, Recording &amp; Copyright Notice</h3>
             <p>
-              All video lectures, Vedic Maths mnemonic tables, 500-year calendar speed shortcuts, test series questions, and digital books are the exclusive intellectual property of <strong>Prashant (Sagar) Dhumal Sir / MindMaster Academy</strong>.
+              All video lectures, Vedic Maths mnemonic tables, 500-year calendar speed shortcuts, test series questions, and digital books are the exclusive intellectual property of <strong>Prashant Dhumal Sir / MindMaster Academy</strong>.
             </p>
             <div className="p-4 rounded-2xl bg-[#FEECEB] border border-[#FCD3CF] text-xs text-red-800 space-y-2">
               <div className="font-black flex items-center gap-1.5">

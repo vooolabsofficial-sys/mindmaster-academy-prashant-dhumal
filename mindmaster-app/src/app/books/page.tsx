@@ -73,6 +73,25 @@ function BooksLibraryContent() {
   const [pdfZoom, setPdfZoom] = useState<number>(100);
   const [isSavingOffline, setIsSavingOffline] = useState<string | null>(null);
 
+  const handleOpenBook = (book: Book) => {
+    setReadingBook(book);
+    try {
+      const savedPage = localStorage.getItem(`mma_book_page_${book.id}`);
+      setReadingPage(savedPage ? Math.max(1, parseInt(savedPage, 10)) : 1);
+    } catch {
+      setReadingPage(1);
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (!readingBook) return;
+    const clamped = Math.max(1, Math.min(readingBook.pages, newPage));
+    setReadingPage(clamped);
+    try {
+      localStorage.setItem(`mma_book_page_${readingBook.id}`, clamped.toString());
+    } catch {}
+  };
+
   // 1. Load Student Profile
   useEffect(() => {
     try {
@@ -240,8 +259,7 @@ function BooksLibraryContent() {
     if (openParam) {
       const target = bookList.find((b) => b.id === openParam || b.code === openParam);
       if (target) {
-        setReadingBook(target);
-        setReadingPage(1);
+        handleOpenBook(target);
       }
     }
   };
@@ -656,10 +674,7 @@ function BooksLibraryContent() {
                           {/* Read Button */}
                           <button
                             type="button"
-                            onClick={() => {
-                              setReadingBook(book);
-                              setReadingPage(1);
-                            }}
+                            onClick={() => handleOpenBook(book)}
                             className="px-5 py-2 rounded-full border border-[#0B57D0] text-[#0B57D0] hover:bg-[#0B57D0] hover:text-white text-xs font-black transition cursor-pointer inline-flex items-center gap-1.5 active:scale-95 shadow-2xs"
                           >
                             <BookOpen className="w-3.5 h-3.5" />
@@ -720,10 +735,14 @@ function BooksLibraryContent() {
           {readingBook && (
             <div 
               onClick={() => setReadingBook(null)}
+              onContextMenu={(e) => e.preventDefault()}
+              onCopy={(e) => e.preventDefault()}
               className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 select-none"
             >
               <div 
                 onClick={(e) => e.stopPropagation()}
+                onContextMenu={(e) => e.preventDefault()}
+                onCopy={(e) => e.preventDefault()}
                 className="bg-white rounded-3xl w-full max-w-5xl h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95 relative"
               >
                 {/* Modal Top Header (No native print/download toolbar) */}
@@ -858,7 +877,7 @@ function BooksLibraryContent() {
                     <button
                       type="button"
                       disabled={readingPage <= 1}
-                      onClick={() => setReadingPage((p) => Math.max(1, p - 1))}
+                      onClick={() => handlePageChange(readingPage - 1)}
                       className="p-1 rounded-full hover:bg-white/10 disabled:opacity-30 cursor-pointer"
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -869,7 +888,7 @@ function BooksLibraryContent() {
                     <button
                       type="button"
                       disabled={readingPage >= readingBook.pages}
-                      onClick={() => setReadingPage((p) => Math.min(readingBook.pages, p + 1))}
+                      onClick={() => handlePageChange(readingPage + 1)}
                       className="p-1 rounded-full hover:bg-white/10 disabled:opacity-30 cursor-pointer"
                     >
                       <ChevronRight className="w-4 h-4" />

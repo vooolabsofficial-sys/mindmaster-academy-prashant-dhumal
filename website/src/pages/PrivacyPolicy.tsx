@@ -22,7 +22,7 @@ export const PrivacyPolicy: React.FC = () => {
             Privacy Policy & Data Protection
           </h1>
           <p className="text-sm sm:text-base text-slate-600 mt-2 leading-relaxed">
-            MindMaster Academy (Mentored by Sagar / Prashant Dhumal, Satara HQ) is deeply committed to safeguarding the privacy and confidential information of all students, parents, and website visitors.
+            MindMaster Academy (Mentored by Prashant Dhumal, Satara HQ) is deeply committed to safeguarding the privacy and confidential information of all students, parents, and website visitors.
           </p>
           <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500">
             <span><strong>Effective Date:</strong> January 1, 2025</span>
@@ -65,7 +65,7 @@ export const PrivacyPolicy: React.FC = () => {
             <ul className="list-disc pl-6 space-y-1.5 text-slate-600 text-sm">
               <li>Scheduling physical and online batch sessions, masterclasses, and weekend workshops in Satara and regional centres.</li>
               <li>Sending essential reminders about test series, batch timings, and study materials via WhatsApp and SMS.</li>
-              <li>Providing 1-on-1 mentorship feedback by Sagar Dhumal Sir and certified memory instructors.</li>
+              <li>Providing 1-on-1 mentorship feedback by Prashant Dhumal Sir and certified memory instructors.</li>
               <li>Issuing verified Course Completion & Trainer Certification credentials.</li>
             </ul>
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs sm:text-sm text-amber-900">
@@ -116,7 +116,7 @@ export const PrivacyPolicy: React.FC = () => {
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2 text-xs sm:text-sm">
               <p className="font-bold text-slate-900">MindMaster Academy (HQ)</p>
               <p className="text-slate-600">Near Powai Naka, Sadar Bazar, Satara, Maharashtra - 415001</p>
-              <p className="text-slate-600"><strong>Mentor & Director:</strong> Sagar (Prashant) Dhumal</p>
+              <p className="text-slate-600"><strong>Mentor & Director:</strong> Prashant Dhumal</p>
               <p className="text-slate-600"><strong>Phone / WhatsApp:</strong> +91 84593 44077</p>
               <p className="text-slate-600"><strong>Email:</strong> mindmasterdhumal@gmail.com</p>
             </div>

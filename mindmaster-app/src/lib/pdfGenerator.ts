@@ -532,7 +532,11 @@ export function generateCourseCertificatePdf(data: CertificateData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(71, 85, 105);
-  doc.text(`Awarded on: ${data.completionDate}  |  Certificate ID: ${data.certificateNo}`, 148.5, 134, { align: "center" });
+  doc.text(`Awarded on: ${data.completionDate}  |  Certificate Serial No: ${data.certificateNo}`, 148.5, 134, { align: "center" });
+
+  doc.setFontSize(8.5);
+  doc.setTextColor(...primaryColor);
+  doc.text("Official Online Verification: mindmasteracademy.in/verify-certificate", 148.5, 142, { align: "center" });
 
   // Signature lines
   const sigY = 165;

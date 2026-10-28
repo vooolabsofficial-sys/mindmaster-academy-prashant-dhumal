@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LessonWatchStat } from "@/lib/types";
+import { authenticateStaffRequest } from "@/lib/serverAuthGuard";
 
 export async function GET(req: NextRequest) {
   try {
@@ -60,19 +61,13 @@ export async function GET(req: NextRequest) {
     }
 
     // Case 2: Staff / Admin viewing aggregated analytics
-    // Check staff session
-    const staffCookie = req.cookies.get("mma_staff_session")?.value;
-    let staffSession: any = null;
-    if (staffCookie) {
-      try {
-        staffSession = JSON.parse(staffCookie);
-      } catch {}
-    }
-
-    if (!staffSession || staffSession.role !== "main_admin") {
-      return NextResponse.json(
-        { error: "Forbidden: Watch statistics require main_admin authority" },
-        { status: 403 }
+    const { session: staffSession, errorResponse } = authenticateStaffRequest(req, {
+      requiredRole: "main_admin",
+    });
+    if (errorResponse || !staffSession) {
+      return (
+        errorResponse ||
+        NextResponse.json({ error: "Forbidden: Watch statistics require main_admin authority" }, { status: 403 })
       );
     }
 

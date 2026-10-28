@@ -38,6 +38,36 @@ export default function MyLearningPage() {
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
   const [likedLessons, setLikedLessons] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isClaimingCert, setIsClaimingCert] = useState<string | null>(null);
+
+  const handleClaimCertificate = async (courseTitle: string, courseId: string) => {
+    try {
+      setIsClaimingCert(courseId);
+      const res = await fetch("/api/certificates/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: studentPhone ? `std-${studentPhone.replace(/\D/g, "").slice(-6)}` : "std-learner",
+          studentName: studentName || "Verified Learner",
+          studentPhone: studentPhone || "9876500001",
+          courseId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.certificate) {
+        generateCourseCertificatePdf({
+          certificateNo: data.certificate.certificate_no,
+          studentName: data.certificate.student_name,
+          courseTitle: data.certificate.course_title,
+          completionDate: data.certificate.issued_at_ist,
+        });
+      }
+    } catch (err) {
+      console.error("Certificate claim error:", err);
+    } finally {
+      setIsClaimingCert(null);
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -485,18 +515,17 @@ export default function MyLearningPage() {
             <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
               <button
                 type="button"
+                disabled={isClaimingCert === "c-mm-04"}
                 onClick={() =>
-                  generateCourseCertificatePdf({
-                    certificateNo: "MMA-CERT-2026-0492",
-                    studentName: "Tanvi Deshpande",
-                    courseTitle: "Master The 500-Year Calendar Technique",
-                    completionDate: "12 Aug 2026",
-                  })
+                  handleClaimCertificate(
+                    "Master The 500-Year Calendar Technique",
+                    "c-mm-04"
+                  )
                 }
-                className="touch-target-44 min-h-[44px] px-4 py-2 rounded-full bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-900 text-xs font-extrabold shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                className="touch-target-44 min-h-[44px] px-4 py-2 rounded-full bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-900 text-xs font-extrabold shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
               >
                 <Award className="w-3.5 h-3.5 text-amber-600" />
-                <span>Certificate</span>
+                <span>{isClaimingCert === "c-mm-04" ? "Issuing..." : "Certificate"}</span>
               </button>
 
               <Link

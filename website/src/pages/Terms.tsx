@@ -59,7 +59,7 @@ export const Terms: React.FC = () => {
               <span>Proprietary Intellectual Property & Memory Methods</span>
             </h2>
             <p className="text-slate-600">
-              All cognitive formulas, mnemonic associations, rapid calendar calculation matrices, and GK memory peg lists developed by <strong>Sagar (Prashant) Dhumal</strong> are the exclusive intellectual property of MindMaster Academy.
+              All cognitive formulas, mnemonic associations, rapid calendar calculation matrices, and GK memory peg lists developed by <strong>Prashant Dhumal</strong> are the exclusive intellectual property of MindMaster Academy.
             </p>
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs sm:text-sm text-slate-700 space-y-1.5">
               <p><strong>Strict Restriction:</strong> Course handbooks, workbook PDFs, and audio-visual recordings are licensed exclusively for the enrolled student’s personal academic use.</p>
@@ -112,7 +112,7 @@ export const Terms: React.FC = () => {
               <span>Certificates & Trainer Accreditation</span>
             </h2>
             <p className="text-slate-600 text-sm">
-              Certificates of Mastery and "Train the Trainer" (TTT) licenses are awarded strictly upon passing the practical speed recall and live demonstration evaluations conducted by Sagar Dhumal Sir. An enrollment does not automatically guarantee accreditation without demonstrated competence.
+              Certificates of Mastery and "Train the Trainer" (TTT) licenses are awarded strictly upon passing the practical speed recall and live demonstration evaluations conducted by Prashant Dhumal Sir. An enrollment does not automatically guarantee accreditation without demonstrated competence.
             </p>
           </section>
 

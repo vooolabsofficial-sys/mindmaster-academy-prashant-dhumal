@@ -21,7 +21,13 @@ export const Contact: React.FC = () => {
   const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
 
   useEffect(() => {
-    fetchLiveWebsiteCms().then((data) => setCms(data));
+    let isMounted = true;
+    fetchLiveWebsiteCms().then((data) => {
+      if (isMounted) setCms(data);
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -170,13 +176,13 @@ export const Contact: React.FC = () => {
                       <div>
                         <h4 className="font-bold text-xl text-emerald-900">Thank You, {firstName}!</h4>
                         <p className="text-sm text-emerald-800 mt-1 max-w-md mx-auto">
-                          Your message has been dispatched to Founder Sagar Dhumal & Senior Deans. We will call you on <strong>{phone}</strong> shortly.
+                          Your message has been dispatched to Founder Prashant Dhumal & Senior Deans. We will call you on <strong>{phone}</strong> shortly.
                         </p>
                       </div>
 
                       <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
                         <a
-                          href={`https://wa.me/918459344077?text=Hi%20Sagar%20Sir%2C%20I%20am%20${firstName}%20and%20I%20submitted%20an%20inquiry.`}
+                          href={`https://wa.me/918459344077?text=Hi%20Prashant%20Sir%2C%20I%20am%20${firstName}%20and%20I%20submitted%20an%20inquiry.`}
                           target="_blank"
                           rel="noreferrer"
                           className="px-6 py-2.5 rounded-full bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shadow-xs flex items-center gap-1.5"

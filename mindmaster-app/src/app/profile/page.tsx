@@ -58,6 +58,7 @@ export default function ProfileSettingsPage() {
   // App & Video Preferences
   const [playbackSpeed, setPlaybackSpeed] = useState("1x");
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [isClaimingCert, setIsClaimingCert] = useState(false);
 
   // Security & PIN state
   const [newPassword, setNewPassword] = useState("");
@@ -926,24 +927,53 @@ export default function ProfileSettingsPage() {
                       ★ ISO CERTIFIED
                     </span>
                     <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-1.5">Course Completion Certificate</h4>
-                    <p className="text-[11px] text-[#5A6478]">Signed credential for academic and competitive verification.</p>
+                    <p className="text-[11px] text-[#5A6478]">Signed credential with verifiable serial number.</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      generateCourseCertificatePdf({
-                        certificateNo: "MMA-CERT-2026-001",
-                        studentName: fullName,
-                        courseTitle: targetExam,
-                        completionDate: new Date().toLocaleDateString("en-IN"),
-                        grade: "A+",
-                      })
-                    }
-                    className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-2xs"
-                  >
-                    <Award className="w-3.5 h-3.5" />
-                    <span>Download Certificate (PDF)</span>
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      disabled={isClaimingCert}
+                      onClick={async () => {
+                        try {
+                          setIsClaimingCert(true);
+                          const res = await fetch("/api/certificates/claim", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              studentId: phone ? `std-${phone.replace(/\D/g, "").slice(-6)}` : "std-learner",
+                              studentName: fullName || "Verified Student",
+                              studentPhone: phone || "9876500001",
+                              courseId: "c-mm-01",
+                            }),
+                          });
+                          const data = await res.json();
+                          if (data.success && data.certificate) {
+                            generateCourseCertificatePdf({
+                              certificateNo: data.certificate.certificate_no,
+                              studentName: data.certificate.student_name,
+                              courseTitle: data.certificate.course_title,
+                              completionDate: data.certificate.issued_at_ist,
+                            });
+                          }
+                        } catch {
+                          toast.error("Failed to generate certificate.");
+                        } finally {
+                          setIsClaimingCert(false);
+                        }
+                      }}
+                      className="w-full py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-2xs"
+                    >
+                      <Award className="w-3.5 h-3.5" />
+                      <span>{isClaimingCert ? "Issuing..." : "Download Certificate (PDF)"}</span>
+                    </button>
+                    <Link
+                      href="/verify-certificate"
+                      className="text-[11px] font-bold text-[#0B57D0] hover:underline flex items-center justify-center gap-1 pt-1"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Verify Certificate Online →</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>

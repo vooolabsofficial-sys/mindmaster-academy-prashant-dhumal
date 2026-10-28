@@ -164,6 +164,41 @@ async function handleCleanup(req: Request) {
       }
     }
 
+    // 2b. Database Diet & Pruning (Supabase free-tier preservation)
+    let prunedGrantsCount = 0;
+    let prunedNotificationsCount = 0;
+    try {
+      const { createAdminClient } = await import("@/lib/supabase/admin");
+      const supabase = createAdminClient();
+
+      // Mark expired grants in Supabase
+      const { data: expiredGrants } = await supabase
+        .from("course_grants")
+        .update({ status: "expired" })
+        .eq("status", "active")
+        .lt("valid_until", nowIso)
+        .select("id");
+
+      if (expiredGrants) {
+        prunedGrantsCount = expiredGrants.length;
+      }
+
+      // Prune read notifications older than 30 days
+      const thirtyDaysAgoIso = new Date(nowMs - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: deletedNotifs } = await supabase
+        .from("notifications")
+        .delete()
+        .eq("is_read", true)
+        .lt("created_at", thirtyDaysAgoIso)
+        .select("id");
+
+      if (deletedNotifs) {
+        prunedNotificationsCount = deletedNotifs.length;
+      }
+    } catch (pruneErr) {
+      console.warn("Supabase database pruning warning:", pruneErr);
+    }
+
     // 3. Record immutable audit log entry for this daily job
     try {
       await fetch(new URL("/api/staff/audit", req.url), {
@@ -184,6 +219,8 @@ async function handleCleanup(req: Request) {
             expiredLessonsCount,
             remindersCreatedCount,
             generatedCoupons,
+            prunedGrantsCount,
+            prunedNotificationsCount,
             status: "SUCCESS",
           },
         }),
@@ -200,9 +237,11 @@ async function handleCleanup(req: Request) {
         scheduledToLiveCoursesCount,
         expiredLessonsCount,
         remindersCreatedCount,
+        prunedGrantsCount,
+        prunedNotificationsCount,
         renewalCoupons: generatedCoupons,
       },
-      message: `Daily cron executed: ${expiredCoursesCount} course(s) expired, ${scheduledToLiveCoursesCount} course(s) went live, ${remindersCreatedCount} 7-day expiry reminder(s) & personal renewal coupon(s) issued.`,
+      message: `Daily cron executed: ${expiredCoursesCount} course(s) expired, ${prunedGrantsCount} grant(s) marked expired, ${prunedNotificationsCount} old notifications purged, ${scheduledToLiveCoursesCount} course(s) went live, ${remindersCreatedCount} 7-day expiry reminder(s) issued.`,
     });
   } catch (err: any) {
     console.error("Cron cleanup error:", err);

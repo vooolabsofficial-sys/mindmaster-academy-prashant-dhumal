@@ -18,54 +18,8 @@ export interface StudentAccount {
 }
 
 
-// Production Initial Seed Students (for test & verification)
-const INITIAL_STUDENT_ACCOUNTS: StudentAccount[] = [
-  {
-    id: "std-demo-01",
-    phone: "+919876500001",
-    cleanPhone: "9876500001",
-    full_name: "Demo Student",
-    email: "student@mindmasteracademy.in",
-    password_hash: "Student@123",
-    recovery_pin: "1234",
-    onboarding_completed: true,
-    district: "Pune",
-    taluka: "Haveli",
-    village: "Narhe",
-    school_name: "MindMaster High School",
-    created_at: "2026-01-01T00:00:00.000Z",
-  },
-  {
-    id: "std-rohan",
-    phone: "+919823456789",
-    cleanPhone: "9823456789",
-    full_name: "Rohan Kulkarni",
-    email: "rohan@example.com",
-    password_hash: "$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$dGVzdHBhc3N3b3JkaGFzaA",
-    recovery_pin: "1234",
-    onboarding_completed: true,
-    district: "Pune",
-    taluka: "Haveli",
-    village: "Dhayari",
-    school_name: "New English School, Pune",
-    created_at: "2026-01-01T00:00:00.000Z",
-  },
-  {
-    id: "std-pooja",
-    phone: "+919876543210",
-    cleanPhone: "9876543210",
-    full_name: "Pooja Patil",
-    email: "pooja@example.com",
-    password_hash: "$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$dGVzdHBhc3N3b3JkaGFzaA",
-    recovery_pin: "1234",
-    onboarding_completed: true,
-    district: "Satara",
-    taluka: "Karad",
-    village: "Karad",
-    school_name: "Satara High School",
-    created_at: "2026-01-01T00:00:00.000Z",
-  },
-];
+// Production Clean Slate: 0 Fake Students
+const INITIAL_STUDENT_ACCOUNTS: StudentAccount[] = [];
 
 const STORAGE_KEY = "mma_student_accounts";
 const SERVER_STORE = new Map<string, StudentAccount[]>();

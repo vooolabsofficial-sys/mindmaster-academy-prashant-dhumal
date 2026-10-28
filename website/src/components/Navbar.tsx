@@ -11,7 +11,13 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    fetchLiveWebsiteCms().then((data) => setCms(data));
+    let isMounted = true;
+    fetchLiveWebsiteCms().then((data) => {
+      if (isMounted) setCms(data);
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -34,6 +40,7 @@ export const Navbar: React.FC = () => {
     { name: 'Courses', path: '/courses' },
     { name: 'About', path: '/about' },
     { name: 'Results', path: '/results' },
+    { name: 'Verify', path: '/verify-certificate' },
     { name: 'Contact', path: '/contact' },
     { name: 'Brain Games', path: '/brain-games', isGame: true },
   ];

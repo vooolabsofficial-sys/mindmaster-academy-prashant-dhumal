@@ -1870,10 +1870,10 @@ export default function WebsiteCmsPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditingFaculty({ ...editingFaculty, photoUrl: "/assets/images/sagar_dhumal_educator.png" })}
+                    onClick={() => setEditingFaculty({ ...editingFaculty, photoUrl: "/assets/images/prashant_dhumal_studio_portrait.png" })}
                     className="px-2 py-0.5 bg-[#F5F7FF] border border-[#D5D9EB] rounded text-[11px] text-[#0B57D0]"
                   >
-                    Sagar Sir Educator
+                    Prashant Sir Educator
                   </button>
                 </div>
               </div>

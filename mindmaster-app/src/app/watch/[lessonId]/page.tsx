@@ -575,8 +575,8 @@ function WatchLessonContent({
               savePlaybackOffline(lesson.id, t, isCompleted).catch(() => {});
             }
 
-            // Remote save throttled to 15s (or upon reaching 100% completion)
-            if (timeSinceLastRemote >= 15000 || (isCompleted && !lastRemoteSaveSecRef.current)) {
+            // Remote save throttled to 3 minutes (180,000ms) or upon reaching completion / pause / exit
+            if (timeSinceLastRemote >= 180000 || (isCompleted && !lastRemoteSaveSecRef.current)) {
               flushProgress(t, isCompleted);
             }
           }

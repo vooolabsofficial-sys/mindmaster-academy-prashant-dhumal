@@ -10,9 +10,19 @@ import {
 import { verifyArgon2 } from "@/lib/argon2";
 import { logStaffAction } from "@/lib/staffStore";
 import { normalizePhone } from "@/lib/phoneUtils";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const rateCheck = checkRateLimit(`staff_login:${ip}`, 5, 60000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: `Too many login attempts. Please wait ${rateCheck.resetInSec} seconds before trying again.` },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { staff_id, password, role: expectedRole } = body;
 
@@ -73,57 +83,17 @@ export async function POST(req: Request) {
       }
     } catch {}
 
-    const isSubAdminRequest =
-      cleanStaffId.toLowerCase().includes("sub") ||
-      cleanStaffId.includes("001") ||
-      cleanStaffId === "9876543211";
-
     if (!staff) {
-      // Mock fallback for direct instant testing
-      if (isSubAdminRequest) {
-        staff = {
-          id: "staff-mma-001",
-          staffId: "MMA-001",
-          name: "Staff Coordinator (Sub Admin)",
-          email: "subadmin@mindmasteracademy.in",
-          phone: "+919876543211",
-          role: "sub_admin",
-          password: "Staff@2026",
-          mustChangePassword: false,
-          status: "active",
-          permissions: ["messages.manage", "students.view", "freegrant.manage"],
-          lastLoginAt: new Date().toISOString(),
-        };
-      } else {
-        staff = {
-          id: "staff-mma-000",
-          staffId: "MMA-000",
-          name: "Prashant Dhumal (Owner)",
-          email: "mindmasterdhumal@gmail.com",
-          phone: "+918459344077",
-          role: "main_admin",
-          password: "Owner@2026",
-          mustChangePassword: false,
-          status: "active",
-          permissions: [
-            "messages.manage",
-            "students.view",
-            "videos.manage",
-            "courses.manage",
-            "coupons.manage",
-            "reports.view",
-            "notes.books.manage",
-            "freegrant.manage",
-          ],
-          lastLoginAt: new Date().toISOString(),
-        };
-      }
+      return NextResponse.json(
+        { error: "No staff account found with this ID or Phone." },
+        { status: 401 }
+      );
     }
 
     // 3. Suspend Check (Instant session kill)
-    if (staff.status === "suspended" || (staff.status as any) === "inactive") {
+    if (staff.status === "frozen" || staff.status === "suspended" || (staff.status as any) === "inactive") {
       const res = NextResponse.json(
-        { error: "This staff account is suspended or inactive. Please contact Main Admin.", isSuspended: true },
+        { error: "This staff account is frozen or suspended. Please contact Main Admin.", isSuspended: true },
         { status: 403 }
       );
       res.cookies.delete("mma_staff_session");
@@ -145,14 +115,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4. Verify Password (Argon2 or Plain or Demo Fallback)
-    const isValid =
-      (await verifyArgon2(password, staff.password || "")) ||
-      password === staff.password ||
-      password === "Owner@2026" ||
-      password === "Staff@2026" ||
-      password === "admin" ||
-      password.length >= 4;
+    // 4. Verify Password (Argon2 hash or configured stored password)
+    const isValid = staff.password
+      ? ((await verifyArgon2(password, staff.password)) || password === staff.password)
+      : false;
 
     if (!isValid) {
       const { locked, attemptsLeft } = recordFailedAttempt(cleanStaffId);

@@ -15,7 +15,13 @@ export const Footer: React.FC = () => {
   const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
 
   useEffect(() => {
-    fetchLiveWebsiteCms().then((data) => setCms(data));
+    let isMounted = true;
+    fetchLiveWebsiteCms().then((data) => {
+      if (isMounted) setCms(data);
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleCallbackSubmit = async (e: React.FormEvent) => {
@@ -133,7 +139,7 @@ export const Footer: React.FC = () => {
             </div>
 
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Maharashtra’s premier institute for scientific memory systems, Maharashtra Police Bharti 100% written test preparation, and Vedic mathematics. Founded and mentored by <strong>Sagar (Prashant) Dhumal</strong> in Satara.
+              Maharashtra’s premier institute for scientific memory systems, Maharashtra Police Bharti 100% written test preparation, and Vedic mathematics. Founded and mentored by <strong>Prashant Dhumal</strong> in Satara.
             </p>
 
             {/* Official Social Media Buttons */}
@@ -306,7 +312,7 @@ export const Footer: React.FC = () => {
               <li>
                 <Link className="hover:text-secondary transition-colors flex items-center gap-1.5 group" to="/about">
                   <span className="text-secondary text-xs group-hover:translate-x-0.5 transition-transform">▸</span>
-                  <span>About Sagar Sir</span>
+                  <span>About Prashant Sir</span>
                 </Link>
               </li>
               <li>
@@ -331,6 +337,12 @@ export const Footer: React.FC = () => {
                 <Link className="hover:text-secondary transition-colors flex items-center gap-1.5 group font-semibold text-slate-800" to="/brain-games">
                   <span className="material-symbols-outlined text-amber-500 text-[16px]">sports_esports</span>
                   <span>🎮 Brain Games</span>
+                </Link>
+              </li>
+              <li>
+                <Link className="font-bold text-emerald-700 hover:text-emerald-800 transition-colors flex items-center gap-1.5" to="/verify-certificate">
+                  <span className="material-symbols-outlined text-emerald-600 text-[16px]">verified</span>
+                  <span>🛡️ Verify Certificate</span>
                 </Link>
               </li>
               <li className="pt-2 border-t border-slate-200">
@@ -397,7 +409,7 @@ export const Footer: React.FC = () => {
         {/* Bottom Legal Copyright Bar */}
         <div className="border-t border-slate-200 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-xs text-slate-500">
           <p>
-            © 2026 MindMaster Academy • Founded & Mentored by <strong>Sagar (Prashant) Dhumal</strong> • Satara, Maharashtra.
+            © 2026 MindMaster Academy • Founded & Mentored by <strong>Prashant Dhumal</strong> • Satara, Maharashtra.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-medium text-slate-600">
             <Link to="/privacy" className="hover:text-secondary transition-colors underline-offset-4 hover:underline">

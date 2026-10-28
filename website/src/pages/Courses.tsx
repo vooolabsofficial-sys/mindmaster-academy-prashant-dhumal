@@ -326,9 +326,13 @@ export const Courses: React.FC = () => {
   const [liveDbCourses, setLiveDbCourses] = useState<LiveDbCourse[]>([]);
 
   useEffect(() => {
+    let isMounted = true;
     fetchLiveCoursesFromApp().then((courses) => {
-      setLiveDbCourses(courses);
+      if (isMounted) setLiveDbCourses(courses);
     });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {

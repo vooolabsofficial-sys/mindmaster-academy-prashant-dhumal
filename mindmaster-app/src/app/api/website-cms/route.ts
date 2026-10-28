@@ -8,6 +8,8 @@ import {
   DEFAULT_WEBSITE_CMS,
   WebsiteCmsData,
 } from "@/lib/websiteCmsStore";
+import { authenticateStaffRequest } from "@/lib/serverAuthGuard";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +50,17 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // 1. Lead submission from marketing website (Public)
+    // 1. Lead submission from marketing website (Public with rate limit)
     if (body.action === "submit_lead" || (!body.action && body.phone && body.name)) {
+      const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+      const rate = checkRateLimit(`cms_lead:${ip}`, 5, 60000);
+      if (!rate.success) {
+        return NextResponse.json(
+          { success: false, error: `Too many submissions. Please wait ${rate.resetInSec} seconds.` },
+          { status: 429, headers: CORS_HEADERS }
+        );
+      }
+
       const leadPayload = body.lead || body;
       if (!leadPayload.name || !leadPayload.phone) {
         return NextResponse.json(
@@ -70,6 +81,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: true, message: "Inquiry received successfully!", lead: newLead },
         { status: 201, headers: CORS_HEADERS }
+      );
+    }
+
+    // All subsequent actions strictly require Main Admin authority
+    const { session, errorResponse } = authenticateStaffRequest(req, { requiredRole: "main_admin" });
+    if (errorResponse || !session) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: Website CMS modifications require main_admin authority" },
+        { status: 403, headers: CORS_HEADERS }
       );
     }
 
@@ -124,6 +144,14 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const { session, errorResponse } = authenticateStaffRequest(req, { requiredRole: "main_admin" });
+    if (errorResponse || !session) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: Website CMS modifications require main_admin authority" },
+        { status: 403, headers: CORS_HEADERS }
+      );
+    }
+
     const body = await req.json();
     const updated = writeWebsiteCmsSync(body);
     return NextResponse.json(
@@ -140,6 +168,14 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const { session, errorResponse } = authenticateStaffRequest(req, { requiredRole: "main_admin" });
+    if (errorResponse || !session) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: Website CMS deletions require main_admin authority" },
+        { status: 403, headers: CORS_HEADERS }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const leadId = searchParams.get("leadId");
     if (leadId) {

@@ -40,7 +40,7 @@ export const SyllabusModal: React.FC<SyllabusModalProps> = ({
     // Simulate real file download
     const element = document.createElement('a');
     const file = new Blob([
-      `MINDMASTER ACADEMY — OFFICIAL CURRICULUM SYLLABUS\n\nCourse: ${course.title} (${course.code})\nInstructor: Sagar (Prashant) Dhumal\nDuration: ${course.duration}\nAudience: ${course.audience}\n\nWEEK-BY-WEEK MODULES:\n` +
+      `MINDMASTER ACADEMY — OFFICIAL CURRICULUM SYLLABUS\n\nCourse: ${course.title} (${course.code})\nInstructor: Prashant Dhumal\nDuration: ${course.duration}\nAudience: ${course.audience}\n\nWEEK-BY-WEEK MODULES:\n` +
       course.curriculum.map((c) => `${c.week}: ${c.title}\n${c.topics.map((t) => `  - ${t}`).join('\n')}`).join('\n\n') +
       `\n\nINCLUDED KITS & KITS:\n${course.includedKits.map((k) => `* ${k}`).join('\n')}\n\nHelpline: +91 84593 44077\nSatara Flagship HQ: Near Powai Naka, Sadar Bazar, Satara 415001`
     ], { type: 'text/plain' });

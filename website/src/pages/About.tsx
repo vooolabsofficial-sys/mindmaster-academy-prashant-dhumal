@@ -4,7 +4,13 @@ import { Link } from 'react-router-dom'; export const About: React.FC = () => {
   const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
 
   useEffect(() => {
-    fetchLiveWebsiteCms().then((data) => setCms(data));
+    let isMounted = true;
+    fetchLiveWebsiteCms().then((data) => {
+      if (isMounted) setCms(data);
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return ( <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen"> <div className="flex flex-col w-full"> <div className="relative w-full overflow-hidden">
@@ -33,11 +39,11 @@ import { Link } from 'react-router-dom'; export const About: React.FC = () => {
 <div className="bg-secondary-fixed/30 rounded-[28px] p-space-lg md:p-space-2xl shadow-sm">
 <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-2xl items-center"> <div className="lg:col-span-5 relative flex justify-center">
 <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-md bg-surface-container">
-<img alt="Sagar Dhumal — Founder & Memory Coach" className="w-full h-[460px] object-cover object-top transition-transform duration-500 hover:scale-105" data-alt="Professional modern executive portrait of Sagar Dhumal, educator and founder of MindMaster Academy, in dark navy business suit and tie." src="/assets/images/prashant_dhumal_executive_portrait.png" />
+<img alt="Prashant Dhumal — Founder & Memory Coach" className="w-full h-[460px] object-cover object-top transition-transform duration-500 hover:scale-105" data-alt="Professional modern executive portrait of Prashant Dhumal, educator and founder of MindMaster Academy, in dark navy business suit and tie." src="/assets/images/prashant_dhumal_executive_portrait.png" />
 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary-container/85 via-primary-container/30 to-transparent p-space-lg flex items-end">
 <div className="bg-surface-container-lowest/95 backdrop-blur-md px-space-md py-space-xs rounded-full shadow-md flex items-center gap-space-xs">
 <span className="material-symbols-outlined text-secondary text-[20px]" style={{ fontVariationSettings: "\'FILL\' 1" }}>verified</span>
-<span className="font-title-md text-title-md text-primary-container text-xs sm:text-sm">Sagar Dhumal — Founder & Memory Coach</span>
+<span className="font-title-md text-title-md text-primary-container text-xs sm:text-sm">Prashant Dhumal — Founder & Memory Coach</span>
 </div>
 </div>
 </div>
@@ -73,7 +79,7 @@ import { Link } from 'react-router-dom'; export const About: React.FC = () => {
 <span className="font-title-md text-body-md text-primary-container">Confidence under exam pressure</span>
 </div>
 </div> <div className="pt-space-md flex flex-col items-start">
-<span className="font-headline-md text-headline-md italic font-serif text-secondary tracking-wide select-none" > Sagar Dhumal </span>
+<span className="font-headline-md text-headline-md italic font-serif text-secondary tracking-wide select-none" > Prashant Dhumal </span>
 <span className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mt-1">Founder & Lead Coach</span>
 </div>
 </div>
@@ -253,7 +259,7 @@ import { Link } from 'react-router-dom'; export const About: React.FC = () => {
 </div>
 </div>
 <div className="group relative rounded-2xl overflow-hidden shadow-sm aspect-[4/3] bg-surface-container sm:col-span-2 lg:col-span-1">
-<img className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Coach Sagar Dhumal mentoring a small group of competitive examination aspirants around an oak study table in Maharashtra academy, sharing strategic timetable notes." src="/assets/images/instructor_coaching_adults.png" />
+<img className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Coach Prashant Dhumal mentoring a small group of competitive examination aspirants around an oak study table in Maharashtra academy, sharing strategic timetable notes." src="/assets/images/instructor_coaching_adults.png" />
 <div className="absolute inset-0 bg-gradient-to-t from-primary-container/80 via-transparent to-transparent flex items-end p-space-md">
 <span className="text-on-primary font-title-md text-title-md">Mentorship & Goal Alignment</span>
 </div>

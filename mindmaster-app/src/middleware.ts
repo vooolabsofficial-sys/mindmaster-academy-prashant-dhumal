@@ -195,9 +195,14 @@ export async function middleware(req: NextRequest | Request) {
   // =========================================================================
   if (pathname.startsWith("/api/")) {
     // Suspend check for staff API requests
-    if (staffSession && (staffSession.status === "suspended" || staffSession.status === "inactive")) {
+    if (
+      staffSession &&
+      (staffSession.status === "frozen" ||
+        staffSession.status === "suspended" ||
+        staffSession.status === "inactive")
+    ) {
       const killRes = NextResponse.json(
-        { error: "Staff account is suspended. Session killed.", isSuspended: true },
+        { error: "Staff account is suspended or frozen. Session killed.", isSuspended: true },
         { status: 403 }
       );
       killRes.cookies.delete("mma_staff_session");
@@ -210,6 +215,7 @@ export async function middleware(req: NextRequest | Request) {
       pathname.startsWith("/api/staff/logout") ||
       pathname.startsWith("/api/staff/forgot-password") ||
       pathname.startsWith("/api/student/auth") ||
+      pathname.startsWith("/api/certificates/verify") ||
       pathname.startsWith("/api/razorpay/webhook");
 
     if (isPublicApi) {
@@ -323,7 +329,11 @@ export async function middleware(req: NextRequest | Request) {
     }
 
     // B. Suspend Check on every request with instant session kill
-    if (staffSession.status === "suspended" || staffSession.status === "inactive") {
+    if (
+      staffSession.status === "frozen" ||
+      staffSession.status === "suspended" ||
+      staffSession.status === "inactive"
+    ) {
       const loginDest = isAdminRoute ? "/admin/login" : "/sub/login";
       const killRes = NextResponse.redirect(new URL(`${loginDest}?error=suspended`, req.url));
       killRes.cookies.delete("mma_staff_session");
@@ -351,7 +361,8 @@ export async function middleware(req: NextRequest | Request) {
           pathname.startsWith("/admin/settings") ||
           pathname.startsWith("/admin/sub-admins") ||
           pathname.startsWith("/admin/audit") ||
-          pathname.startsWith("/admin/reports")
+          pathname.startsWith("/admin/reports") ||
+          pathname.startsWith("/admin/website-cms")
         ) {
           return NextResponse.rewrite(
             new URL("/forbidden?reason=main_admin_required", req.url),

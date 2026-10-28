@@ -2,9 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { authenticateStaffRequest } from "@/lib/serverAuthGuard";
 
 export async function POST(req: NextRequest) {
   try {
+    const { session, errorResponse } = authenticateStaffRequest(req, {
+      requiredPermission: "notes.books.manage",
+    });
+    if (errorResponse || !session) {
+      return (
+        errorResponse ||
+        NextResponse.json({ error: "Unauthorized: Staff permission required" }, { status: 401 })
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const type = (formData.get("type") as string) || "pdf"; // "pdf" | "cover"

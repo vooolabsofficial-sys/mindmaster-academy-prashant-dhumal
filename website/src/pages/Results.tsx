@@ -42,7 +42,7 @@ const TESTIMONIALS: TestimonialItem[] = [
     name: 'Akash More',
     category: 'police',
     badge: 'SELECTED • POLICE BHARTI 2025',
-    quote: 'The physical training calmness under Sagar Sir and rapid GK anchoring gave me 100% written test marks in Maharashtra Police Bharti.',
+    quote: 'The physical training calmness under Prashant Sir and rapid GK anchoring gave me 100% written test marks in Maharashtra Police Bharti.',
     batch: 'Batch of 2025',
     location: 'Nashik Centre',
     image: '/assets/images/akash_police_testimonial.png',
@@ -84,7 +84,7 @@ const TESTIMONIALS: TestimonialItem[] = [
     name: 'Swapnali Patil',
     category: 'police',
     badge: 'POLICE BHARTI MERIT 2024',
-    quote: 'As a female aspirant from rural Maharashtra, mental calmness was key. Sagar Sir\'s memory anchoring made GK formulas stick effortlessly.',
+    quote: 'As a female aspirant from rural Maharashtra, mental calmness was key. Prashant Sir\'s memory anchoring made GK formulas stick effortlessly.',
     batch: 'Batch of 2024',
     location: 'Kolhapur Centre',
     image: '/assets/images/police_bharti_celebration.jpg',
@@ -112,7 +112,7 @@ const TESTIMONIALS: TestimonialItem[] = [
     name: 'Dr. Sunita Gaikwad',
     category: 'trainer',
     badge: 'CERTIFIED MASTER TRAINER',
-    quote: 'Graduated from Train the Trainer and now running memory workshops for 400+ school students. Sagar Sir taught us pedagogy, student psychology and business execution.',
+    quote: 'Graduated from Train the Trainer and now running memory workshops for 400+ school students. Prashant Sir taught us pedagogy, student psychology and business execution.',
     batch: 'Batch of 2023',
     location: 'Kolhapur Centre',
     image: '/assets/images/instructor_coaching_adults.png',
@@ -146,7 +146,13 @@ export const Results: React.FC = () => {
   const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
 
   useEffect(() => {
-    fetchLiveWebsiteCms().then((data) => setCms(data));
+    let isMounted = true;
+    fetchLiveWebsiteCms().then((data) => {
+      if (isMounted) setCms(data);
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Sync state if URL query param changes
@@ -477,7 +483,7 @@ export const Results: React.FC = () => {
                 </h2>
               </div>
               <p className="font-body-md text-body-md text-on-surface-variant max-w-md mt-2 md:mt-0">
-                Each aspirant practiced the exact MindMaster memory systems developed by Sagar Dhumal in Satara.
+                Each aspirant practiced the exact MindMaster memory systems developed by Prashant Dhumal in Satara.
               </p>
             </div>
 

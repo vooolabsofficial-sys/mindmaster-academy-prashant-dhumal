@@ -12,6 +12,7 @@ import {
 } from "@/lib/studentAuthService";
 import { normalizePhone } from "@/lib/phoneUtils";
 import { getCookieDomain } from "@/lib/supabase/client";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 function getCorsHeaders(req: NextRequest) {
   const origin = req.headers.get("origin") || "*";
@@ -45,6 +46,17 @@ async function handlePost(req: NextRequest) {
     const host = req.headers.get("host") || "";
     const cookieDomain = getCookieDomain(host);
     const isProd = process.env.NODE_ENV === "production";
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+
+    if (action === "login" || action === "register" || action === "reset_password") {
+      const rate = checkRateLimit(`student_auth:${ip}`, 5, 60000);
+      if (!rate.success) {
+        return NextResponse.json(
+          { success: false, error: `Too many authentication attempts. Please wait ${rate.resetInSec} seconds.` },
+          { status: 429 }
+        );
+      }
+    }
 
     // -----------------------------------------------------------------------
     // ACTION: LOGIN
@@ -53,25 +65,18 @@ async function handlePost(req: NextRequest) {
       const { phone, password } = body;
       const result = await authenticateStudent(phone, password);
 
-      let student: any = result.student;
-      if (!student) {
-        const cleanDigits = (phone || "").replace(/\D/g, "").slice(-10) || "9876500001";
-        student = {
-          id: `std-demo-${cleanDigits}`,
-          phone: `+91${cleanDigits}`,
-          cleanPhone: cleanDigits,
-          full_name: "MindMaster Demo Student",
-          email: `student-${cleanDigits}@mindmasteracademy.in`,
-          district: "Pune",
-          taluka: "Haveli",
-          village: "Narhe",
-          school: "MindMaster Academy",
-          role: "student",
-          onboardingCompleted: true,
-          onboarding_completed: true,
-          status: "active",
-        } as any;
+      if (!result.success || !result.student) {
+        return NextResponse.json(
+          {
+            success: false,
+            code: result.code || "AUTH_FAILED",
+            error: result.error || "Invalid mobile number or password.",
+          },
+          { status: 401 }
+        );
       }
+
+      const student = result.student;
       const clean = student.cleanPhone || normalizePhone(student.phone);
       const sessionToken = `mma-std-${student.id}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
       recordActiveStudentSession(student.id, clean, sessionToken);

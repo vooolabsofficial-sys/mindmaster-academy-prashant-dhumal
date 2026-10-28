@@ -21,16 +21,27 @@ export const Home: React.FC = () => {
   const [showPromoPopup, setShowPromoPopup] = useState(false);
 
   useEffect(() => {
+    let timer: any = null;
+    let isMounted = true;
+
     fetchLiveCoursesFromApp().then((courses) => {
-      setLiveDbCourses(courses);
+      if (isMounted) setLiveDbCourses(courses);
     });
     fetchLiveWebsiteCms().then((data) => {
-      setCms(data);
-      if (data.sectionVisibility?.promoPopup && data.promoPopup?.enabled) {
-        const timer = setTimeout(() => setShowPromoPopup(true), 2500);
-        return () => clearTimeout(timer);
+      if (isMounted) {
+        setCms(data);
+        if (data.sectionVisibility?.promoPopup && data.promoPopup?.enabled) {
+          timer = setTimeout(() => {
+            if (isMounted) setShowPromoPopup(true);
+          }, 2500);
+        }
       }
     });
+
+    return () => {
+      isMounted = false;
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   return (
@@ -587,7 +598,7 @@ export const Home: React.FC = () => {
                         location: 'Satara / Nashik Centre',
                         batchYear: 'Batch of 2025',
                         quote:
-                          'The physical training calmness under Sagar Sir and rapid GK anchoring gave me 100% written test marks in Maharashtra Police Bharti.',
+                          'The physical training calmness under Prashant Sir and rapid GK anchoring gave me 100% written test marks in Maharashtra Police Bharti.',
                         posterImg: '/assets/images/police_bharti_celebration.jpg',
                         videoDuration: '2:14',
                         marksheetScore: '100% Written Test Marks • 1st In District',
@@ -631,7 +642,7 @@ export const Home: React.FC = () => {
                           location: 'Satara / Nashik Centre',
                           batchYear: 'Batch of 2025',
                           quote:
-                            'The physical training calmness under Sagar Sir and rapid GK anchoring gave me 100% written test marks in Maharashtra Police Bharti.',
+                            'The physical training calmness under Prashant Sir and rapid GK anchoring gave me 100% written test marks in Maharashtra Police Bharti.',
                           posterImg: '/assets/images/police_bharti_celebration.jpg',
                           videoDuration: '2:14',
                           marksheetScore: '100% Written Test Marks • 1st In District',

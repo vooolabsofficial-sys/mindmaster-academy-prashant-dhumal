@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { computeAnalyticsData, AnalyticsFilter } from "@/lib/analyticsEngine";
 import { getStaffStudents } from "@/lib/staffStore";
 import { getGrants } from "@/lib/grantStore";
+import { authenticateStaffRequest } from "@/lib/serverAuthGuard";
 
 function escapeCsvCell(val: string | number | undefined | null): string {
   if (val === undefined || val === null) return '""';
@@ -17,19 +18,9 @@ function buildCsv(headers: string[], rows: (string | number)[][]): string {
 
 export async function GET(req: NextRequest) {
   try {
-    const staffCookie = req.cookies.get("mma_staff_session")?.value;
-    let staffSession: any = null;
-    if (staffCookie) {
-      try {
-        staffSession = JSON.parse(staffCookie);
-      } catch {}
-    }
-
-    if (!staffSession || staffSession.role !== "main_admin") {
-      return NextResponse.json(
-        { success: false, error: "Forbidden: CSV exports require main_admin authority" },
-        { status: 403 }
-      );
+    const { session, errorResponse } = authenticateStaffRequest(req, { requiredRole: "main_admin" });
+    if (errorResponse || !session) {
+      return errorResponse || NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);

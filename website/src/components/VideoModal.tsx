@@ -169,7 +169,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-surface-container text-primary-container text-xs font-title-md hover:bg-surface-container-high transition-colors"
             >
               <span className="material-symbols-outlined text-[16px]">call</span>
-              Speak with Mentor Sagar Dhumal
+              Speak with Mentor Prashant Dhumal
             </a>
             <a
               href="https://wa.me/918459344077?text=Hello%20MindMaster%2C%20I%20saw%20the%20student%20story%20and%20want%20to%20enroll."

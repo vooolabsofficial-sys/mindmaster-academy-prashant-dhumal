@@ -1,5 +1,6 @@
-import { StaffRole, StaffPermission } from "./types";
+import { StaffRole, StaffPermission, ASSIGNABLE_PERMISSIONS } from "./types";
 import crypto from "crypto";
+import { getStaffUsers } from "./staffStore";
 
 export interface StaffSessionData {
   staff_id: string;
@@ -7,7 +8,7 @@ export interface StaffSessionData {
   phone: string;
   role: StaffRole;
   permissions: StaffPermission[];
-  status: "active" | "suspended" | "inactive";
+  status: "active" | "suspended" | "inactive" | "frozen";
   must_change_password: boolean;
   logged_at: number;
 }
@@ -36,125 +37,97 @@ export function createStaffSessionToken(session: StaffSessionData): string {
   return signStaffSession(session);
 }
 
+/**
+ * Strict Zero-Backdoor Server-Side Staff Session Verification
+ * Requires valid HMAC-SHA256 signature and live active account status.
+ * Rejects forged tokens, raw JSON payloads, and frozen/suspended accounts.
+ */
 export function verifyStaffSession(tokenOrCookie: string): StaffSessionData | null {
   if (!tokenOrCookie) return null;
   const trimmed = tokenOrCookie.trim();
 
-  // 0. Mock tokens for demo testing
-  if (
-    trimmed === "mock-admin-token" ||
-    trimmed === "mock-admin" ||
-    trimmed.includes("demo-admin")
-  ) {
-    return {
-      staff_id: "MMA-000",
-      name: "Prashant Dhumal (Owner)",
-      phone: "+918459344077",
-      role: "main_admin",
-      permissions: [
-        "messages.manage",
-        "students.view",
-        "videos.manage",
-        "courses.manage",
-        "coupons.manage",
-        "reports.view",
-        "notes.books.manage",
-        "freegrant.manage",
-      ],
-      status: "active",
-      must_change_password: false,
-      logged_at: Date.now(),
-    };
-  }
-
-  if (
-    trimmed === "mock-subadmin-token" ||
-    trimmed === "mock-subadmin" ||
-    trimmed.includes("demo-subadmin")
-  ) {
-    return {
-      staff_id: "MMA-001",
-      name: "Staff Coordinator (Sub Admin)",
-      phone: "+919876543211",
-      role: "sub_admin",
-      permissions: ["messages.manage", "students.view", "freegrant.manage"],
-      status: "active",
-      must_change_password: false,
-      logged_at: Date.now(),
-    };
-  }
-
-  // 1. Raw JSON fallback (used in test cases or direct unencoded payloads)
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-    try {
-      const session = JSON.parse(trimmed);
-      if (session && session.staff_id) {
-        if (session.role === "sub_admin") {
-          session.permissions = (session.permissions || []).filter(
-            (p: any) => p === "messages.manage" || p === "students.view" || p === "freegrant.manage"
-          );
-        }
-        return session;
-      }
-    } catch {}
-  }
-
-  // 2. Signed token format (payloadB64.signature)
+  // Strict: Only accept signed token format (payloadB64.signature)
   const dotIdx = trimmed.indexOf(".");
-  if (dotIdx > 0) {
-    const payloadB64 = trimmed.slice(0, dotIdx);
-    const signature = trimmed.slice(dotIdx + 1);
+  if (dotIdx <= 0) {
+    return null; // Reject raw JSON strings, mock strings, or unencoded tokens
+  }
 
-    for (const sec of CANDIDATE_SECRETS) {
+  const payloadB64 = trimmed.slice(0, dotIdx);
+  const signature = trimmed.slice(dotIdx + 1);
+
+  let verifiedPayloadJson: string | null = null;
+
+  for (const sec of CANDIDATE_SECRETS) {
+    try {
+      const expectedSig = crypto
+        .createHmac("sha256", sec)
+        .update(payloadB64)
+        .digest("base64url");
+
+      let matches = false;
       try {
-        const expectedSig = crypto
-          .createHmac("sha256", sec)
-          .update(payloadB64)
-          .digest("base64url");
-
-        let matches = false;
-        try {
-          if (
-            typeof crypto.timingSafeEqual === "function" &&
-            signature.length === expectedSig.length
-          ) {
-            matches = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig));
-          } else {
-            matches = signature === expectedSig;
-          }
-        } catch {
+        if (
+          typeof crypto.timingSafeEqual === "function" &&
+          signature.length === expectedSig.length
+        ) {
+          matches = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig));
+        } else {
           matches = signature === expectedSig;
         }
+      } catch {
+        matches = signature === expectedSig;
+      }
 
-        if (matches) {
-          const json = Buffer.from(payloadB64, "base64url").toString("utf-8");
-          const session: StaffSessionData = JSON.parse(json);
-          if (session && session.role === "sub_admin") {
-            session.permissions = (session.permissions || []).filter(
-              (p) => p === "messages.manage" || p === "students.view" || p === "freegrant.manage"
-            );
-          }
-          return session;
-        }
-      } catch {}
+      if (matches) {
+        verifiedPayloadJson = Buffer.from(payloadB64, "base64url").toString("utf-8");
+        break;
+      }
+    } catch {}
+  }
+
+  if (!verifiedPayloadJson) {
+    return null; // Signature verification failed
+  }
+
+  try {
+    const session: StaffSessionData = JSON.parse(verifiedPayloadJson);
+    if (!session || !session.staff_id || !session.role) {
+      return null;
     }
 
-    // Direct payload decode fallback for valid JSON structures
+    // Live Account Check: If account is frozen or suspended, immediately invalidate session
+    if (session.status === "frozen" || session.status === "suspended" || session.status === "inactive") {
+      return null;
+    }
+
+    // Verify against current staff store / database if on server
     try {
-      const json = Buffer.from(payloadB64, "base64url").toString("utf-8");
-      const session: StaffSessionData = JSON.parse(json);
-      if (session && session.staff_id && session.role) {
-        if (session.role === "sub_admin") {
-          session.permissions = (session.permissions || []).filter(
-            (p) => p === "messages.manage" || p === "students.view" || p === "freegrant.manage"
+      const currentStaffList = getStaffUsers();
+      const liveStaff = currentStaffList.find(
+        (s) =>
+          (s.staffId && s.staffId.toUpperCase() === session.staff_id.toUpperCase()) ||
+          s.id.toLowerCase() === session.staff_id.toLowerCase()
+      );
+
+      if (liveStaff) {
+        if (
+          liveStaff.status === "frozen" ||
+          liveStaff.status === "suspended" ||
+          liveStaff.status === "inactive"
+        ) {
+          return null; // Account frozen or suspended in live database!
+        }
+        // Sync live permissions
+        if (liveStaff.permissions && liveStaff.role === "sub_admin") {
+          session.permissions = (liveStaff.permissions || []).filter((p) =>
+            ASSIGNABLE_PERMISSIONS.includes(p as any)
           );
         }
-        return session;
       }
     } catch {}
 
+    return session;
+  } catch {
     return null;
   }
-
-  return null;
 }

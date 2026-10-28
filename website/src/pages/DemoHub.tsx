@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { submitWebsiteLead } from '../config/appConfig';
 
 export const DemoHub: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'enquiry' | 'call'>('enquiry');
@@ -24,17 +25,32 @@ export const DemoHub: React.FC = () => {
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  const handleEnquirySubmit = (e: React.FormEvent) => {
+  const handleEnquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormSubmitted(true);
+    await submitWebsiteLead({
+      name: formData.name,
+      phone: formData.phone,
+      email: formData.email,
+      courseInterest: formData.program,
+      message: `Location: ${formData.location}. Notes: ${formData.notes}`,
+      source: 'DemoHub Enquiry Tab',
+    });
     setTimeout(() => {
       setFormSubmitted(false);
     }, 6000);
   };
 
-  const handleDemoSubmit = (e: React.FormEvent) => {
+  const handleDemoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setDemoBooked(true);
+    await submitWebsiteLead({
+      name: demoName,
+      phone: demoPhone,
+      courseInterest: `Free Demo: ${attendee} (${demoDate}, ${timeSlot})`,
+      message: `Weekend demo booking for ${attendee} on ${demoDate} (${timeSlot})`,
+      source: 'DemoHub Weekend Booking',
+    });
     setTimeout(() => {
       setDemoBooked(false);
       setDemoName('');
@@ -49,11 +65,11 @@ export const DemoHub: React.FC = () => {
     },
     {
       q: "What happens in the 90-minute Free Demo Session?",
-      a: "The demo features a live, interactive 40-item rapid memory challenge where the audience gives random words and numbers and Sagar Sir recalls them instantly. Students learn their first 20-word peg system during the session itself."
+      a: "The demo features a live, interactive 40-item rapid memory challenge where the audience gives random words and numbers and Prashant Sir recalls them instantly. Students learn their first 20-word peg system during the session itself."
     },
     {
       q: "Are classes available in Marathi or English?",
-      a: "All concepts, mnemonic peg charts, and curriculum workbooks are bilingual in Marathi and simple English. Sagar Dhumal conducts interactive explanations primarily in fluent Marathi for relatable learning."
+      a: "All concepts, mnemonic peg charts, and curriculum workbooks are bilingual in Marathi and simple English. Prashant Dhumal conducts interactive explanations primarily in fluent Marathi for relatable learning."
     },
     {
       q: "Can outstation students attend online from any district in Maharashtra?",
@@ -83,7 +99,7 @@ export const DemoHub: React.FC = () => {
               Academy
             </h1>
             <p className="font-body-lg text-sm sm:text-base text-on-surface-variant mt-4 leading-relaxed">
-              Directly access academic counsellors, verify physical centre schedules in Satara HQ, Pune & Nashik, or reserve an executive consultation with Founder Sagar Dhumal.
+              Directly access academic counsellors, verify physical centre schedules in Satara HQ, Pune & Nashik, or reserve an executive consultation with Founder Prashant Dhumal.
             </p>
           </div>
 
@@ -94,7 +110,7 @@ export const DemoHub: React.FC = () => {
               <div className="bg-gradient-to-r from-primary-container to-[#1a2d5e] text-white p-5 rounded-2xl shadow-sm relative overflow-hidden flex items-center gap-4">
                 <div className="relative shrink-0">
                   <img
-                    alt="Sagar Dhumal"
+                    alt="Prashant Dhumal"
                     className="w-16 h-16 rounded-full object-cover object-top border-2 border-secondary-fixed shadow-md"
                     src="/assets/images/prashant_dhumal_studio_portrait.png"
                   />
@@ -106,7 +122,7 @@ export const DemoHub: React.FC = () => {
                     <span>Founder Direct Academic Hotline</span>
                   </div>
                   <h4 className="font-title-md text-[17px] font-bold text-white tracking-tight mt-0.5">
-                    Sagar Dhumal & Senior Faculty
+                    Prashant Dhumal & Senior Faculty
                   </h4>
                   <p className="text-white/80 text-[12px] font-body-sm leading-snug mt-0.5">
                     Rapid guidance on competitive exams, memory bottlenecks, & batch placements.
@@ -118,7 +134,7 @@ export const DemoHub: React.FC = () => {
                     <span className="text-white/40">•</span>
                     <a
                       className="inline-flex items-center gap-1.5 text-[12px] font-bold text-emerald-300 hover:text-emerald-200 transition-colors"
-                      href="https://wa.me/918459344077?text=Hi%20Sagar%20Sir%2C%20I%20want%20to%20inquire%20about%20MindMaster%20courses"
+                      href="https://wa.me/918459344077?text=Hi%20Prashant%20Sir%2C%20I%20want%20to%20inquire%20about%20MindMaster%20courses"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -422,7 +438,7 @@ export const DemoHub: React.FC = () => {
                   <div>
                     <h4 className="font-title-md text-[15px] text-primary-container font-bold">The 40-Item Live Recall Challenge</h4>
                     <p className="font-body-sm text-[12px] text-on-surface-variant mt-0.5">
-                      Audience throws 40 random words & 8-digit numbers. Sagar Sir reproduces them forwards and backwards immediately.
+                      Audience throws 40 random words & 8-digit numbers. Prashant Sir reproduces them forwards and backwards immediately.
                     </p>
                   </div>
                 </div>
@@ -555,7 +571,7 @@ export const DemoHub: React.FC = () => {
                         <span className="text-[11px] font-label-caps text-secondary uppercase font-bold block">Sunday (Featured)</span>
                         <span className="font-headline-sm text-sm sm:text-base font-bold text-secondary block">Upcoming Sun</span>
                         <span className="inline-block mt-1 text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                          Sagar Sir Live
+                          Prashant Sir Live
                         </span>
                       </button>
 
@@ -674,7 +690,7 @@ export const DemoHub: React.FC = () => {
               Questions, answered <span className="relative inline-block text-secondary italic">plainly.</span>
             </h2>
             <p className="font-body-lg text-sm sm:text-base text-on-surface-variant mt-2">
-              Everything you need to know about batch sizes, Sagar Sir's methodology, offline campuses, and results guarantee.
+              Everything you need to know about batch sizes, Prashant Sir's methodology, offline campuses, and results guarantee.
             </p>
           </div>
 
