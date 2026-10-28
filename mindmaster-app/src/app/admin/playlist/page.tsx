@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AdminShell from "@/components/admin/AdminShell";
@@ -522,15 +523,15 @@ export default function PlaylistImportPage() {
                     </div>
 
                     {/* Thumbnail */}
-                    <div className="w-24 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
-                      <img
-                        src={item.thumbnailUrl}
+                    <div className="w-24 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200 relative">
+                      <Image
+                        src={item.thumbnailUrl || "https://placehold.co/120x80/0E1B3D/FFFFFF?text=Video"}
                         alt={item.title}
+                        width={96}
+                        height={64}
+                        sizes="96px"
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as any).src =
-                            "https://placehold.co/120x80/0E1B3D/FFFFFF?text=Video";
-                        }}
+                        unoptimized
                       />
                     </div>
 

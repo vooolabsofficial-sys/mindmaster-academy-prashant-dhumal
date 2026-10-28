@@ -33,3 +33,21 @@ backups/
 
 # Repomix bundles
 repomix-output.*
+
+# Internal & Non-Production AI/Design/Audit Files
+.agents/
+**/.agents/
+AGENTS.md
+**/AGENTS.md
+CLAUDE.md
+**/CLAUDE.md
+design-reference/
+**/design-reference/
+DUMMY_DATA_REPLACEMENT_PLAN.md
+**/DUMMY_DATA_REPLACEMENT_PLAN.md
+STUDENT_AND_WEBSITE_AUDIT_REPORT.md
+**/STUDENT_AND_WEBSITE_AUDIT_REPORT.md
+STUDENT_AUTH_DIAGNOSTIC_REPORT.md
+**/STUDENT_AUTH_DIAGNOSTIC_REPORT.md
+ADMIN_SUBADMIN_RBAC_AUDIT_REPORT.md
+**/ADMIN_SUBADMIN_RBAC_AUDIT_REPORT.md

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { getCurrentStaff } from "@/lib/staffStore";
 import { StaffUser } from "@/lib/types";
 import {
@@ -629,14 +630,12 @@ export default function WebsiteCmsPage() {
                     key={idx}
                     className="relative group rounded-xl overflow-hidden border border-[#D5D9EB] bg-[#F5F7FF] aspect-[16/9]"
                   >
-                    <img
+                    <Image
                       src={img}
                       alt={`Banner ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "/assets/images/classroom_students_group.png";
-                      }}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 320px"
+                      className="object-cover"
                     />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
                       <button
@@ -1019,15 +1018,14 @@ export default function WebsiteCmsPage() {
                 className="bg-[#F8FAFF] border border-[#E4E8F8] rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-[#0B57D0]/40 transition-all shadow-2xs"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-white border border-[#D5D9EB] shrink-0">
-                    <img
-                      src={topper.photoUrl}
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-white border border-[#D5D9EB] shrink-0 relative">
+                    <Image
+                      src={topper.photoUrl || "/assets/images/akash_police_testimonial.png"}
                       alt={topper.name}
+                      width={56}
+                      height={56}
+                      sizes="56px"
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "/assets/images/akash_police_testimonial.png";
-                      }}
                     />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1185,15 +1183,14 @@ export default function WebsiteCmsPage() {
                   key={fac.id}
                   className="bg-[#F8FAFF] border border-[#E4E8F8] rounded-xl p-4 flex gap-4 hover:border-[#0B57D0]/40 transition-all"
                 >
-                  <div className="w-16 h-20 rounded-xl overflow-hidden bg-white border border-[#D5D9EB] shrink-0">
-                    <img
-                      src={fac.photoUrl}
+                  <div className="w-16 h-20 rounded-xl overflow-hidden bg-white border border-[#D5D9EB] shrink-0 relative">
+                    <Image
+                      src={fac.photoUrl || "/assets/images/prashant_dhumal_studio_portrait.png"}
                       alt={fac.name}
+                      width={64}
+                      height={80}
+                      sizes="64px"
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "/assets/images/prashant_dhumal_studio_portrait.png";
-                      }}
                     />
                   </div>
                   <div className="min-w-0 flex-1 flex flex-col justify-between">

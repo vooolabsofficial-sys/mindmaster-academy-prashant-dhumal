@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
@@ -513,14 +514,14 @@ export default function VideoManagerPage() {
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-3">
                               <div className="relative w-16 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-900 shrink-0">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
+                                <Image
                                   src={`https://img.youtube.com/vi/${detectedId}/mqdefault.jpg`}
                                   alt="Thumb"
+                                  width={64}
+                                  height={40}
+                                  sizes="64px"
                                   className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    (e.target as HTMLElement).style.display = "none";
-                                  }}
+                                  unoptimized
                                 />
                               </div>
                               <div className="space-y-0.5 min-w-0">

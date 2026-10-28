@@ -40,3 +40,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Internal & Non-Production AI/Design/Audit Files
+.agents/
+AGENTS.md
+CLAUDE.md
+design-reference/
+DUMMY_DATA_REPLACEMENT_PLAN.md
+STUDENT_AND_WEBSITE_AUDIT_REPORT.md
+STUDENT_AUTH_DIAGNOSTIC_REPORT.md
+ADMIN_SUBADMIN_RBAC_AUDIT_REPORT.md
