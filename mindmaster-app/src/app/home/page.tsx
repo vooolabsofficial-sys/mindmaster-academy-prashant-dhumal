@@ -23,10 +23,12 @@ import {
 import AppShell from "@/components/navigation/AppShell";
 import { getStaffCourses, StaffCourse, fetchDbCourses } from "@/lib/staffStore";
 import { createClient } from "@/lib/supabase/client";
+import { ACADEMY_CATEGORIES, AcademyCategory, matchesAcademyCategory } from "@/lib/academyCategories";
 
 export default function StudentHomePage() {
   const [studentName, setStudentName] = useState<string>("Student");
   const [courses, setCourses] = useState<StaffCourse[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<AcademyCategory>("All Categories");
   const [freeLessons, setFreeLessons] = useState<any[]>([]);
   const [completedCount, setCompletedCount] = useState<number>(0);
   const [activeStreakDays, setActiveStreakDays] = useState<number>(1);
@@ -351,6 +353,27 @@ export default function StudentHomePage() {
             </Link>
           </div>
 
+          {/* Category Tabs: 6 Core Academy Categories */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {ACADEMY_CATEGORIES.map((cat) => {
+              const isActive = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`min-h-[32px] px-3.5 py-1 rounded-full text-xs font-bold shrink-0 transition-all border cursor-pointer active:scale-95 ${
+                    isActive
+                      ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                      : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:text-blue-600"
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+
           {courses.length === 0 ? (
             <div className="bg-gradient-to-br from-blue-50/90 via-white to-indigo-50/90 rounded-3xl p-8 md:p-12 border border-blue-200/80 shadow-sm text-center flex flex-col items-center justify-center max-w-2xl mx-auto my-4 animate-fadeIn">
               <div className="w-16 h-16 rounded-3xl bg-blue-100/80 text-blue-600 flex items-center justify-center mb-4 shadow-inner">
@@ -388,7 +411,10 @@ export default function StudentHomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {courses.slice(0, 4).map((c) => {
+              {courses
+                .filter((c) => matchesAcademyCategory(c, selectedCategory))
+                .slice(0, 4)
+                .map((c) => {
                 const isFree = c.isFree || c.pricePaise === 0;
                 return (
                   <div

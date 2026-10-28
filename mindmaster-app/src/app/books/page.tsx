@@ -41,6 +41,7 @@ import {
   isBookSavedOffline,
   OfflineBookRecord 
 } from "@/lib/offlineStorage";
+import { ACADEMY_CATEGORIES, AcademyCategory, matchesAcademyCategory } from "@/lib/academyCategories";
 import { toast } from "sonner";
 
 type FilterTab = "all" | "my_books" | "free" | "offline";
@@ -52,6 +53,7 @@ function BooksLibraryContent() {
   const [books, setBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [selectedCategory, setSelectedCategory] = useState<AcademyCategory>("All Categories");
   const [searchQuery, setSearchQuery] = useState("");
   
   // Student identification for watermarking and access
@@ -295,7 +297,7 @@ function BooksLibraryContent() {
     }
   };
 
-  // Filtered books based on search & active tab
+  // Filtered books based on search & active tab & academy category
   const filteredBooks = useMemo(() => {
     return books.filter((book) => {
       const isUnlocked = unlockedBookIds.has(book.id) || (book.code ? unlockedBookIds.has(book.code) : false) || book.isFree;
@@ -305,6 +307,18 @@ function BooksLibraryContent() {
       if (activeTab === "my_books" && !isUnlocked) return false;
       if (activeTab === "free" && !book.isFree) return false;
       if (activeTab === "offline" && !isOffline) return false;
+
+      // Category Filter (6 Core Academy Categories)
+      if (selectedCategory !== "All Categories") {
+        const isMatch = matchesAcademyCategory({
+          title: book.title,
+          description: book.description,
+          code: book.code,
+          badgeText: book.badgeText,
+          standards: (book as any).standards,
+        }, selectedCategory);
+        if (!isMatch) return false;
+      }
 
       // Search Query
       if (searchQuery.trim()) {
@@ -318,7 +332,7 @@ function BooksLibraryContent() {
 
       return true;
     });
-  }, [books, activeTab, searchQuery, unlockedBookIds, offlineSavedIds]);
+  }, [books, activeTab, selectedCategory, searchQuery, unlockedBookIds, offlineSavedIds]);
 
   // Tint mapper for card styling
   const getTintStyles = (tint?: string) => {
@@ -507,6 +521,27 @@ function BooksLibraryContent() {
                 className="w-full pl-9 pr-3 py-2.5 rounded-full bg-white border border-[#E4E8F8] text-xs font-semibold text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:border-[#0B57D0] shadow-2xs"
               />
             </div>
+          </div>
+
+          {/* Category Tabs: 6 Main Academy Categories */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-1">
+            {ACADEMY_CATEGORIES.map((cat) => {
+              const isActive = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`min-h-[34px] px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all duration-150 border cursor-pointer active:scale-95 touch-manipulation flex items-center justify-center ${
+                    isActive
+                      ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                      : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/50"
+                  }`}
+                >
+                  <span>{cat}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Books 2-Column Grid (Direct Reference to 02-notes-course-books.png) */}

@@ -5,6 +5,7 @@ import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
 import { Course, StaffUser, StudentRecord, Book } from "@/lib/types";
 import { getCurrentStaff, getStaffCourses, getStaffBooks, getStaffStudents } from "@/lib/staffStore";
+import BulkGrantCustomizerModal from "@/components/admin/BulkGrantCustomizerModal";
 import {
   Grant,
   GrantScopeType,
@@ -50,6 +51,7 @@ export default function GrantsManagerPage() {
 
   // Drawer Form State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isBulkCustomizerOpen, setIsBulkCustomizerOpen] = useState(false);
   const [grantItemType, setGrantItemType] = useState<"course" | "book">("course");
   const [selectedBookId, setSelectedBookId] = useState("");
   const [scopeType, setScopeType] = useState<GrantScopeType>("district");
@@ -355,12 +357,22 @@ export default function GrantsManagerPage() {
               </p>
             </div>
 
-            <button
-              onClick={handleOpenDrawer}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-full shadow-md transition self-start md:self-auto"
-            >
-              <span>🎁</span> + New Grant
-            </button>
+            <div className="flex items-center gap-2.5 self-start md:self-auto flex-wrap">
+              <button
+                type="button"
+                onClick={() => setIsBulkCustomizerOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-full shadow-md transition cursor-pointer active:scale-95"
+              >
+                <span>📋</span> Bulk Excel / CSV Customizer
+              </button>
+
+              <button
+                onClick={handleOpenDrawer}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-full shadow-md transition cursor-pointer active:scale-95"
+              >
+                <span>🎁</span> + New Grant
+              </button>
+            </div>
           </div>
 
           {/* Action Feedback Banner */}
@@ -1569,6 +1581,18 @@ export default function GrantsManagerPage() {
               </div>
             </div>
           )}
+
+          {/* Bulk Excel / CSV Customizer Modal */}
+          <BulkGrantCustomizerModal
+            isOpen={isBulkCustomizerOpen}
+            onClose={() => setIsBulkCustomizerOpen(false)}
+            courses={courses}
+            books={books}
+            onSuccess={(msg) => {
+              setActionFeedback(msg);
+              loadData();
+            }}
+          />
         </div>
       </AdminShell>
     </PermissionGuard>

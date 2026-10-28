@@ -17,21 +17,12 @@ import {
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
 import FilterChips, { StandardFilter } from "@/components/courses/FilterChips";
-import { isCourseVisibleToStudent } from "@/lib/courseVisibility";
 import { getStaffCourses, getStaffStudents, fetchDbCourses } from "@/lib/staffStore";
+import { ACADEMY_CATEGORIES, AcademyCategory, matchesAcademyCategory } from "@/lib/academyCategories";
 import EmptyState from "@/components/common/EmptyState";
 
-type FilterType = "All" | "Free" | "Paid" | "Memory" | "Vedic Maths" | "Police Bharti" | "Calendar Technique";
-
-const FILTER_CHIPS: FilterType[] = [
-  "All",
-  "Free",
-  "Paid",
-  "Memory",
-  "Vedic Maths",
-  "Police Bharti",
-  "Calendar Technique",
-];
+type FeeFilter = "All" | "Free" | "Paid";
+const FEE_CHIPS: FeeFilter[] = ["All", "Free", "Paid"];
 
 interface CatalogCourse {
   id: string;
@@ -102,8 +93,9 @@ function extractStandardNumber(val: any): number | null {
 }
 
 export default function CoursesCatalogPage() {
+  const [selectedCategory, setSelectedCategory] = useState<AcademyCategory>("All Categories");
+  const [feeFilter, setFeeFilter] = useState<FeeFilter>("All");
   const [activeStandard, setActiveStandard] = useState<StandardFilter>("all");
-  const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [studentProfile, setStudentProfile] = useState<any>(null);
   const [staffCourses, setStaffCourses] = useState(() => (typeof window !== "undefined" ? getStaffCourses() : []));
 
@@ -200,15 +192,8 @@ export default function CoursesCatalogPage() {
 
   const activeCatalog = dynamicCatalogCourses;
 
-  const visibleCourses = activeCatalog.filter((course) => {
-    const staffMatch = staffCourses.find(
-      (sc) => sc.code === course.code || sc.id === course.id
-    );
-    if (staffMatch) {
-      return isCourseVisibleToStudent(staffMatch, studentProfile);
-    }
-    return true;
-  });
+  // Unrestricted Student Access: Students can view & enroll in all courses across categories
+  const visibleCourses = activeCatalog;
 
   const filteredCourses = visibleCourses.filter((course) => {
     const staffMatch = staffCourses.find(
@@ -216,7 +201,21 @@ export default function CoursesCatalogPage() {
     );
     const courseStandards = staffMatch?.standards ?? course.standards;
 
-    // 1. Standard Filter ("All", "5th"..."12th", "Other Courses")
+    // 1. Primary Category Filter (6 Core Academic & Memory Tracks)
+    if (selectedCategory !== "All Categories") {
+      const isMatch = matchesAcademyCategory({
+        title: course.title,
+        description: course.description,
+        category: course.category,
+        code: course.code,
+        badge: course.badge,
+        badgeText: course.subBadge,
+        standards: courseStandards,
+      }, selectedCategory);
+      if (!isMatch) return false;
+    }
+
+    // 2. Standard Filter ("All", "5th"..."12th", "Other Courses")
     if (activeStandard !== "all") {
       if (activeStandard === "other") {
         if (courseStandards && courseStandards.length > 0) return false;
@@ -227,11 +226,10 @@ export default function CoursesCatalogPage() {
       }
     }
 
-    // 2. Category / Pricing Filter
-    if (activeFilter === "All") return true;
-    if (activeFilter === "Free") return course.isFree;
-    if (activeFilter === "Paid") return !course.isFree;
-    return course.category === activeFilter;
+    // 3. Fee Filter (All / Free / Paid)
+    if (feeFilter === "Free") return course.isFree;
+    if (feeFilter === "Paid") return !course.isFree;
+    return true;
   });
 
   return (
@@ -261,47 +259,79 @@ export default function CoursesCatalogPage() {
           </p>
         </div>
 
-        {/* 1. Primary Filter: Standard Chips ("All", "5th"…"12th", "Other Courses") */}
-        <div className="flex flex-col gap-1.5">
+        {/* 1. Primary Category Tabs: 6 Main Academy Categories */}
+        <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between text-xs text-slate-600 font-medium px-0.5">
             <span className="flex items-center gap-1.5 font-bold text-slate-800">
-              <span>🎓</span> Select Standard:
+              <span>🏷️</span> Course Categories:
             </span>
-            {activeStandard !== "all" && (
-              <button
-                onClick={() => setActiveStandard("all")}
-                className="text-[11px] text-blue-600 hover:underline font-bold cursor-pointer"
-              >
-                Show All (Reset)
-              </button>
-            )}
+            <span className="text-[11px] text-blue-600 font-semibold">
+              Open to all learners
+            </span>
           </div>
-          <FilterChips
-            activeStandard={activeStandard}
-            onSelect={(std) => setActiveStandard(std)}
-          />
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none touch-pan-x" role="tablist" aria-label="Academy categories">
+            {ACADEMY_CATEGORIES.map((cat) => {
+              const isActive = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`min-h-[38px] px-4 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all duration-150 border cursor-pointer active:scale-95 touch-manipulation flex items-center justify-center gap-1.5 ${
+                    isActive
+                      ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/25"
+                      : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/50"
+                  }`}
+                >
+                  <span>{cat}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* 2. Secondary Filter: Course Track & Fee Categories */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none touch-pan-x" role="tablist" aria-label="Course categories">
-          {FILTER_CHIPS.map((chip) => {
-            const isActive = activeFilter === chip;
-            return (
-              <button
-                key={chip}
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setActiveFilter(chip)}
-                className={`min-h-[36px] px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 border cursor-pointer active:scale-95 touch-manipulation flex items-center justify-center ${
-                  isActive
-                    ? "bg-slate-900 text-white border-slate-900 shadow-sm font-bold"
-                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {chip}
-              </button>
-            );
-          })}
+        {/* 2. Secondary Filter: Standard & Fee Pills */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-slate-100">
+          <div className="flex-1">
+            <div className="flex items-center justify-between text-xs text-slate-600 font-medium px-0.5 mb-1.5">
+              <span className="flex items-center gap-1.5 font-bold text-slate-800">
+                <span>🎓</span> Select Standard:
+              </span>
+              {activeStandard !== "all" && (
+                <button
+                  onClick={() => setActiveStandard("all")}
+                  className="text-[11px] text-blue-600 hover:underline font-bold cursor-pointer"
+                >
+                  Show All (Reset)
+                </button>
+              )}
+            </div>
+            <FilterChips
+              activeStandard={activeStandard}
+              onSelect={(std) => setActiveStandard(std)}
+            />
+          </div>
+
+          {/* Pricing Chips */}
+          <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-end sm:mb-1">
+            {FEE_CHIPS.map((chip) => {
+              const isActive = feeFilter === chip;
+              return (
+                <button
+                  key={chip}
+                  onClick={() => setFeeFilter(chip)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
+                    isActive
+                      ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  {chip}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Course Cards Grid or Attractive Empty State */}

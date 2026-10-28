@@ -849,6 +849,7 @@ export interface CashAdmissionParams {
   upiRef?: string;
   amountPaid: number;
   remarks?: string;
+  allowExtension?: boolean;
 }
 
 export interface CashAdmissionResult {
@@ -938,7 +939,7 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     return isSamePhone && isSameItem && isActive;
   });
 
-  if (duplicateActiveGrant) {
+  if (duplicateActiveGrant && !params.allowExtension) {
     const expStr = (duplicateActiveGrant.ends_at || duplicateActiveGrant.endsAt).slice(0, 10);
     return {
       success: false,
@@ -948,11 +949,11 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
       whatsappUrl: "",
       receiptText: "",
       expiresAt: "",
-      error: `Student already has active/pending admission to "${itemTitle}" until ${expStr}. Cannot grant duplicate access.`,
+      error: `Student already has active/pending admission to "${itemTitle}" until ${expStr}. Use "+ Extend Validity" or allow renewal.`,
     };
   }
 
-  if (student && student.coursesTaken) {
+  if (student && student.coursesTaken && !params.allowExtension) {
     const existingActiveEnrollment = student.coursesTaken.find((ct) => {
       const match = isAllCourses
         ? ct.courseId === "all"
@@ -970,7 +971,7 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
         whatsappUrl: "",
         receiptText: "",
         expiresAt: "",
-        error: `Student already has active enrolled access to "${existingActiveEnrollment.courseTitle}" (${existingActiveEnrollment.daysLeft} days left). Cannot grant duplicate access.`,
+        error: `Student already has active enrolled access to "${existingActiveEnrollment.courseTitle}" (${existingActiveEnrollment.daysLeft} days left). Use "+ Extend Validity" or allow renewal.`,
       };
     }
   }
@@ -1982,4 +1983,235 @@ export function settleSingleGrant(grantId: string): boolean {
   );
 
   return true;
+}
+
+// ----------------------------------------------------
+// MULTI-COURSE & REPEAT PURCHASE ADMISSION ENGINE
+// ----------------------------------------------------
+
+export interface StudentActiveAccessItem {
+  id: string;
+  itemId: string;
+  itemTitle: string;
+  itemType: "course" | "book" | "all_courses";
+  expiresAt: string;
+  daysLeft: number;
+  isExpired: boolean;
+  paymentMode: string;
+  amountPaid: number;
+  grantId?: string;
+  purchaseId?: string;
+  remarks?: string;
+  status: string;
+}
+
+export function getStudentActiveGrants(phone: string): StudentActiveAccessItem[] {
+  const cleanPhone = normalizePhone(phone);
+  if (!cleanPhone) return [];
+
+  const now = Date.now();
+  const results: StudentActiveAccessItem[] = [];
+  const seenItems = new Set<string>();
+
+  // 1. From local grants
+  const grants = getGrants();
+  grants.forEach((g) => {
+    const gPhone = normalizePhone(g.scope_value || g.scopeValue || g.student_phone || g.studentPhone || "");
+    if (gPhone === cleanPhone) {
+      const expMs = new Date(g.ends_at || g.endsAt).getTime();
+      const daysLeft = Math.ceil((expMs - now) / 86400000);
+      const isExpired = expMs <= now;
+      const itemId = g.course_id || g.courseId || g.book_id || g.bookId || (g.course_scope === "all" ? "all" : "");
+      if (itemId && !seenItems.has(itemId) && g.status !== "revoked") {
+        seenItems.add(itemId);
+        results.push({
+          id: g.id,
+          itemId,
+          itemTitle: g.courseTitle || g.bookTitle || "Enrolled Curriculum",
+          itemType: g.item_type || (g.book_id ? "book" : g.course_scope === "all" ? "all_courses" : "course"),
+          expiresAt: g.ends_at || g.endsAt,
+          daysLeft: Math.max(0, daysLeft),
+          isExpired,
+          paymentMode: g.payment_mode || g.paymentMode || "cash",
+          amountPaid: g.amount_paid || g.amountPaid || 0,
+          grantId: g.id,
+          remarks: g.reason,
+          status: g.status,
+        });
+      }
+    }
+  });
+
+  // 2. From student record in staffStore
+  const students = getStaffStudents();
+  const student = students.find((s) => normalizePhone(s.phone) === cleanPhone);
+  if (student?.coursesTaken) {
+    student.coursesTaken.forEach((ct) => {
+      if (!seenItems.has(ct.courseId) && !ct.isExpired) {
+        seenItems.add(ct.courseId);
+        results.push({
+          id: ct.courseId,
+          itemId: ct.courseId,
+          itemTitle: ct.courseTitle,
+          itemType: "course",
+          expiresAt: ct.expiresAt || new Date(now + ct.daysLeft * 86400000).toISOString(),
+          daysLeft: ct.daysLeft,
+          isExpired: ct.isExpired,
+          paymentMode: "enrolled",
+          amountPaid: 0,
+          status: "active",
+        });
+      }
+    });
+  }
+  if (student?.enrolledBooks) {
+    student.enrolledBooks.forEach((eb) => {
+      if (!seenItems.has(eb.id) && !eb.isExpired) {
+        seenItems.add(eb.id);
+        results.push({
+          id: eb.id,
+          itemId: eb.id,
+          itemTitle: eb.title,
+          itemType: "book",
+          expiresAt: eb.expiresAt || new Date(now + eb.daysLeft * 86400000).toISOString(),
+          daysLeft: eb.daysLeft,
+          isExpired: eb.isExpired,
+          paymentMode: "enrolled",
+          amountPaid: 0,
+          status: "active",
+        });
+      }
+    });
+  }
+
+  return results;
+}
+
+export interface MultiCourseAdmissionParams {
+  studentPhone: string;
+  studentName?: string;
+  itemIds: string[];
+  validityDays?: number;
+  customExpiryDate?: string;
+  accessMonths?: number;
+  paymentMode: "cash" | "upi" | "scholarship";
+  upiRef?: string;
+  totalAmountPaid: number;
+  remarks?: string;
+}
+
+export interface MultiCourseAdmissionResult {
+  success: boolean;
+  results: CashAdmissionResult[];
+  totalActivated: number;
+  totalAmount: number;
+  whatsappUrl?: string;
+  receiptText?: string;
+  error?: string;
+}
+
+export function grantMultiCourseAdmission(params: MultiCourseAdmissionParams): MultiCourseAdmissionResult {
+  const cleanPhone = normalizePhone(params.studentPhone);
+  if (!cleanPhone || cleanPhone.length !== 10) {
+    return {
+      success: false,
+      results: [],
+      totalActivated: 0,
+      totalAmount: 0,
+      error: "Please enter a valid 10-digit mobile number.",
+    };
+  }
+
+  if (!params.itemIds || params.itemIds.length === 0) {
+    return {
+      success: false,
+      results: [],
+      totalActivated: 0,
+      totalAmount: 0,
+      error: "Please select at least one course or digital book.",
+    };
+  }
+
+  const currentStaff = getCurrentStaff();
+  if (currentStaff.role === "sub_admin") {
+    if (params.paymentMode === "scholarship" || params.totalAmountPaid <= 0) {
+      return {
+        success: false,
+        results: [],
+        totalActivated: 0,
+        totalAmount: 0,
+        error: "Sub-Admins are strictly locked from issuing ₹0 Free Scholarships. Only Main Admin (Prashant Sir) can grant scholarships.",
+      };
+    }
+    if (params.paymentMode === "upi" && (!params.upiRef || !params.upiRef.trim())) {
+      return {
+        success: false,
+        results: [],
+        totalActivated: 0,
+        totalAmount: 0,
+        error: "Mandatory UPI Reference (UTR) number is required for UPI admissions.",
+      };
+    }
+  }
+
+  const results: CashAdmissionResult[] = [];
+  const itemCount = params.itemIds.length;
+  const perItemAmount = Math.round(params.totalAmountPaid / itemCount);
+
+  for (let i = 0; i < params.itemIds.length; i++) {
+    const itemId = params.itemIds[i];
+    const isLast = i === params.itemIds.length - 1;
+    const allocatedAmount = isLast
+      ? params.totalAmountPaid - perItemAmount * (itemCount - 1)
+      : perItemAmount;
+
+    const res = grantCashAdmission({
+      studentPhone: cleanPhone,
+      studentName: params.studentName,
+      courseId: itemId,
+      validityDays: params.validityDays,
+      customExpiryDate: params.customExpiryDate,
+      accessMonths: params.accessMonths,
+      paymentMode: params.paymentMode,
+      upiRef: params.upiRef,
+      amountPaid: allocatedAmount,
+      remarks: params.remarks,
+      allowExtension: true,
+    });
+
+    if (res.success) {
+      results.push(res);
+    }
+  }
+
+  if (results.length === 0) {
+    return {
+      success: false,
+      results: [],
+      totalActivated: 0,
+      totalAmount: 0,
+      error: "Failed to activate selected items. Please verify student details.",
+    };
+  }
+
+  const studentName = params.studentName?.trim() || `Student ${cleanPhone.slice(-4)}`;
+  const modeLabel =
+    params.paymentMode === "cash"
+      ? "Cash"
+      : params.paymentMode === "upi"
+      ? `Direct UPI (${params.upiRef?.trim() || "Verified"})`
+      : "Free Grant / Scholarship";
+
+  const receiptText = `Hello ${studentName}!\n\nYour admission to ${results.length} curriculum program(s) at MindMaster Academy is confirmed. ✅\n\n📚 Enrolled:\n${results.map((r, i) => `${i + 1}. ${r.grant.courseTitle} (Expires: ${r.expiresAt.slice(0, 10)})`).join("\n")}\n\n💵 Total Fee Paid: ₹${params.totalAmountPaid} (${modeLabel})${params.remarks ? `\n📝 Note: ${params.remarks}` : ""}\n📱 Login Mobile: ${cleanPhone}\n\n📲 Start learning in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! 🌟\n— MindMaster Academy`;
+
+  const whatsappUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(receiptText)}`;
+
+  return {
+    success: true,
+    results,
+    totalActivated: results.length,
+    totalAmount: params.totalAmountPaid,
+    whatsappUrl,
+    receiptText,
+  };
 }

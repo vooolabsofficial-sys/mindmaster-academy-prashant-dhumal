@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
 import { StaffUser } from "@/lib/types";
-import { getCurrentStaff } from "@/lib/staffStore";
+import { getCurrentStaff, getStaffCourses } from "@/lib/staffStore";
+import BroadcastNotificationModal from "@/components/admin/BroadcastNotificationModal";
 import {
   Conversation,
   Message,
@@ -25,6 +26,7 @@ export default function StaffMessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [composerText, setComposerText] = useState("");
   const [totalUnread, setTotalUnread] = useState(0);
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,6 +141,17 @@ export default function StaffMessagesPage() {
               <p className="text-xs text-[#5A6478] mt-1">
                 In-app student conversations — reply, filter, and manage support threads.
               </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setIsBroadcastModalOpen(true)}
+                className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <span>📢</span>
+                <span>Send Broadcast Alert</span>
+              </button>
             </div>
           </div>
 
@@ -332,6 +345,13 @@ export default function StaffMessagesPage() {
               )}
             </div>
           </div>
+
+          {/* Broadcast Notification Modal */}
+          <BroadcastNotificationModal
+            isOpen={isBroadcastModalOpen}
+            onClose={() => setIsBroadcastModalOpen(false)}
+            courses={getStaffCourses()}
+          />
         </div>
       </AdminShell>
     </PermissionGuard>

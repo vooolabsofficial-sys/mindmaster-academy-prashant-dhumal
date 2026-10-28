@@ -17,7 +17,17 @@ import {
 } from "@/lib/staffStore";
 import { exportStudentsToExcel } from "@/lib/excelExporter";
 import { createStudentFuzzySearch } from "@/lib/fuzzySearch";
-import { grantCashAdmission, extendStudentAccess, revokeStudentAccess } from "@/lib/grantStore";
+import {
+  grantCashAdmission,
+  grantMultiCourseAdmission,
+  extendStudentAccess,
+  revokeStudentAccess,
+  getStudentActiveGrants,
+  StudentActiveAccessItem,
+} from "@/lib/grantStore";
+import { ACADEMY_CATEGORIES, AcademyCategory, matchesAcademyCategory } from "@/lib/academyCategories";
+import BulkGrantCustomizerModal from "@/components/admin/BulkGrantCustomizerModal";
+import BroadcastNotificationModal from "@/components/admin/BroadcastNotificationModal";
 import { resetStudentDeviceSessionLock, adminResetStudentPassword } from "@/lib/studentAuthService";
 import { hasStaffPermission } from "@/lib/types";
 
@@ -103,11 +113,20 @@ export default function StudentFinderPage() {
   const [notifMessage, setNotifMessage] = useState("");
   const [notifySuccess, setNotifySuccess] = useState(false);
 
+  // Multi-Student Directory Selection & Modals
+  const [selectedStudentPhones, setSelectedStudentPhones] = useState<Set<string>>(new Set());
+  const [isBulkCustomizerOpen, setIsBulkCustomizerOpen] = useState(false);
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+  const [broadcastDefaultTarget, setBroadcastDefaultTarget] = useState<"all" | "course" | "expiring_7d">("all");
+
   // Offline Cash Admission / Direct Course Grant Modal State
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
   const [cashPhone, setCashPhone] = useState("");
   const [cashName, setCashName] = useState("");
   const [cashCourseId, setCashCourseId] = useState("");
+  const [cashSelectedCourseIds, setCashSelectedCourseIds] = useState<string[]>([]);
+  const [existingStudentAccess, setExistingStudentAccess] = useState<StudentActiveAccessItem[]>([]);
+  const [cashModalCategory, setCashModalCategory] = useState<AcademyCategory>("All Categories");
   const [cashValidityMode, setCashValidityMode] = useState<"preset" | "custom_days" | "fixed_date">("preset");
   const [cashPresetDays, setCashPresetDays] = useState<number>(180);
   const [cashCustomDays, setCashCustomDays] = useState<number>(45);
@@ -191,9 +210,17 @@ export default function StudentFinderPage() {
     const defaultCourse = courseList[0];
     const defaultPrice = defaultCourse ? Math.round(defaultCourse.pricePaise / 100) : 199;
 
-    setCashPhone(student ? student.phone.replace(/\D/g, "").slice(-10) : "");
+    const phone = student ? student.phone.replace(/\D/g, "").slice(-10) : "";
+    setCashPhone(phone);
     setCashName(student ? student.name : "");
     setCashCourseId(defaultCourse?.id || "all");
+    setCashSelectedCourseIds([defaultCourse?.id || "all"]);
+    if (phone) {
+      setExistingStudentAccess(getStudentActiveGrants(phone));
+    } else {
+      setExistingStudentAccess([]);
+    }
+    setCashModalCategory("All Categories");
     setCashValidityMode("preset");
     setCashPresetDays(180);
     setCashCustomDays(45);
@@ -218,8 +245,9 @@ export default function StudentFinderPage() {
       setCashError("Please enter a valid 10-digit mobile number.");
       return;
     }
-    if (!cashCourseId) {
-      setCashError("Please select a course or digital book.");
+    const chosenIds = cashSelectedCourseIds.length > 0 ? cashSelectedCourseIds : [cashCourseId || "all"];
+    if (chosenIds.length === 0) {
+      setCashError("Please select at least one course or digital book.");
       return;
     }
 
@@ -239,37 +267,32 @@ export default function StudentFinderPage() {
       return;
     }
 
-    const isAllCourses = cashCourseId === "all";
-    const courseList = getStaffCourses();
-    const bookList = getStaffBooks();
-    const selectedCourse = !isAllCourses ? courseList.find((c) => c.id === cashCourseId || c.code === cashCourseId) : null;
-    const selectedBook = !isAllCourses && !selectedCourse ? bookList.find((b) => b.id === cashCourseId || b.code === cashCourseId) : null;
-    const itemTitle = isAllCourses ? "All Academy Courses (सर्व कोर्सेस)" : selectedCourse?.title || selectedBook?.title || "MindMaster Item";
-
-    const result = grantCashAdmission({
+    const multiRes = grantMultiCourseAdmission({
       studentPhone: clean,
       studentName: cashName.trim() || undefined,
-      courseId: cashCourseId,
-      itemType: isAllCourses ? "all_courses" : selectedBook ? "book" : "course",
+      itemIds: chosenIds,
       validityDays: cashValidityMode === "custom_days" ? cashCustomDays : cashValidityMode === "preset" ? cashPresetDays : undefined,
       customExpiryDate: cashValidityMode === "fixed_date" ? cashFixedDate : undefined,
       accessMonths: cashAccessMonths,
       paymentMode: cashPaymentMode,
       upiRef: cashUpiRef.trim() || undefined,
-      amountPaid: cashAmount,
+      totalAmountPaid: cashAmount,
       remarks: cashRemarks.trim() || undefined,
     });
 
-    if (!result.success) {
-      setCashError(result.error || "Failed to grant admission.");
+    if (!multiRes.success || multiRes.results.length === 0) {
+      setCashError(multiRes.error || "Failed to grant admission.");
       return;
     }
 
+    const firstResult = multiRes.results[0];
+    const allTitles = multiRes.results.map((r) => r.grant.courseTitle).join(", ");
+
     setCashSuccessReceipt({
-      grantId: result.grantId,
+      grantId: firstResult.grantId,
       studentName: cashName.trim() || `Student ${clean.slice(-4)}`,
       studentPhone: clean,
-      courseTitle: itemTitle,
+      courseTitle: allTitles,
       amount: cashAmount,
       paymentMode:
         cashPaymentMode === "cash"
@@ -277,8 +300,8 @@ export default function StudentFinderPage() {
           : cashPaymentMode === "upi"
           ? `Direct UPI (${cashUpiRef.trim()})`
           : "Free Grant / Scholarship",
-      expiresAt: result.expiresAt,
-      whatsappUrl: result.whatsappUrl,
+      expiresAt: firstResult.expiresAt,
+      whatsappUrl: multiRes.whatsappUrl,
     });
 
     reload();
@@ -693,10 +716,26 @@ export default function StudentFinderPage() {
                 <span>Export Excel (.xlsx)</span>
               </button>
 
-              <div className="flex items-center gap-2 bg-[#F5F7FF] border border-[#E4E8F8] px-3.5 py-2 rounded-full text-xs">
-                <span>🔔</span>
-                <span className="font-bold text-[#0E1B3D]">Direct In-App & WhatsApp</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsBulkCustomizerOpen(true)}
+                className="px-4 py-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <span>📋</span>
+                <span>Bulk Customizer</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setBroadcastDefaultTarget(expiring7DaysOnly ? "expiring_7d" : "all");
+                  setIsBroadcastModalOpen(true);
+                }}
+                className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <span>📢</span>
+                <span>Broadcast Alert</span>
+              </button>
             </div>
           </div>
 
@@ -909,7 +948,26 @@ export default function StudentFinderPage() {
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-[#E4E8F8] text-[#8A94A6] uppercase tracking-wider font-semibold">
-                      <th className="pb-3.5 pl-3">Student Name</th>
+                      <th className="pb-3.5 pl-3 w-8">
+                        <input
+                          type="checkbox"
+                          checked={
+                            filteredStudents.length > 0 &&
+                            filteredStudents.every((s) => selectedStudentPhones.has(s.phone))
+                          }
+                          onChange={() => {
+                            if (filteredStudents.every((s) => selectedStudentPhones.has(s.phone))) {
+                              setSelectedStudentPhones(new Set());
+                            } else {
+                              setSelectedStudentPhones(
+                                new Set(filteredStudents.map((s) => s.phone))
+                              );
+                            }
+                          }}
+                          className="rounded cursor-pointer"
+                        />
+                      </th>
+                      <th className="pb-3.5 pl-2">Student Name</th>
                       <th className="pb-3.5">Region & School</th>
                       <th className="pb-3.5">Enrolled Courses</th>
                       {isMainAdmin && <th className="pb-3.5">Watch Telemetrics</th>}
@@ -921,11 +979,34 @@ export default function StudentFinderPage() {
                     {filteredStudents.map((s) => {
                       const totalLessons = s.totalLessonsCount || 20;
                       const progressPct = Math.min(100, Math.round((s.completedLessonsCount / totalLessons) * 100));
+                      const isSelected = selectedStudentPhones.has(s.phone);
 
                       return (
-                        <tr key={s.id} className="hover:bg-[#F9FAFF] transition-colors group">
-                          {/* Student Name */}
+                        <tr
+                          key={s.id}
+                          className={`hover:bg-[#F9FAFF] transition-colors group ${
+                            isSelected ? "bg-blue-50/40" : ""
+                          }`}
+                        >
+                          {/* Selection Checkbox */}
                           <td className="py-4 pl-3">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => {
+                                setSelectedStudentPhones((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(s.phone)) next.delete(s.phone);
+                                  else next.add(s.phone);
+                                  return next;
+                                });
+                              }}
+                              className="rounded cursor-pointer"
+                            />
+                          </td>
+
+                          {/* Student Name */}
+                          <td className="py-4 pl-2">
                             <div className="flex items-center gap-3">
                               <div className="w-9 h-9 rounded-full bg-[#E6F0FF] text-[#0B57D0] font-bold flex items-center justify-center text-xs">
                                 {s.name.slice(0, 2).toUpperCase()}
@@ -1070,6 +1151,32 @@ export default function StudentFinderPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {/* Sticky Floating Bulk Selection Bar */}
+            {selectedStudentPhones.size > 0 && (
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-4 border border-slate-700 animate-slideUp">
+                <span className="text-xs font-extrabold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  {selectedStudentPhones.size} Students Selected
+                </span>
+                <div className="h-4 w-px bg-slate-700" />
+                <button
+                  type="button"
+                  onClick={() => setIsBulkCustomizerOpen(true)}
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-full shadow transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>📋</span>
+                  <span>Bulk Activate Courses</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedStudentPhones(new Set())}
+                  className="text-xs text-slate-400 hover:text-white transition font-bold cursor-pointer"
+                >
+                  Clear
+                </button>
               </div>
             )}
           </div>
@@ -1625,8 +1732,8 @@ export default function StudentFinderPage() {
           {/* OFFLINE CASH ADMISSION / DIRECT COURSE GRANT MODAL */}
           {/* ========================================================= */}
           {isCashModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-              <div className="bg-white rounded-3xl border border-amber-200 max-w-lg w-full p-6 md:p-8 shadow-2xl space-y-4 my-8">
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+              <div className="bg-white rounded-3xl border border-amber-200 max-w-2xl w-full p-5 md:p-7 shadow-2xl space-y-4 my-6">
                 {/* Modal Header */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2.5">
@@ -1635,10 +1742,10 @@ export default function StudentFinderPage() {
                     </div>
                     <div>
                       <h3 className="text-base font-extrabold text-[#0E1B3D] font-heading">
-                        Grant Offline Admission / Course Access
+                        Grant Offline Admission &amp; Multi-Course Access
                       </h3>
                       <p className="text-[11px] text-[#5A6478]">
-                        Provide direct course access via Cash, UPI, or Free Scholarship grant
+                        Assign one or multiple courses, renew existing access, and record Cash or UPI tallies
                       </p>
                     </div>
                   </div>
@@ -1676,7 +1783,7 @@ export default function StudentFinderPage() {
                         <span className="font-mono font-bold text-slate-900">+91 {cashSuccessReceipt.studentPhone}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Course:</span>
+                        <span className="text-slate-500">Course(s) Granted:</span>
                         <span className="font-bold text-blue-700">{cashSuccessReceipt.courseTitle}</span>
                       </div>
                       <div className="flex justify-between">
@@ -1704,7 +1811,7 @@ export default function StudentFinderPage() {
                         href={cashSuccessReceipt.whatsappUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-full shadow flex items-center justify-center gap-2 transition"
+                        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-full shadow flex items-center justify-center gap-2 transition cursor-pointer"
                       >
                         <span>📲 Share Receipt on WhatsApp</span>
                       </a>
@@ -1712,7 +1819,7 @@ export default function StudentFinderPage() {
 
                     <button
                       onClick={() => setIsCashModalOpen(false)}
-                      className="w-full py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-bold text-xs rounded-full shadow transition"
+                      className="w-full py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-bold text-xs rounded-full shadow transition cursor-pointer"
                     >
                       Done
                     </button>
@@ -1742,10 +1849,11 @@ export default function StudentFinderPage() {
                             onChange={(e) => {
                               const val = e.target.value.replace(/\D/g, "");
                               setCashPhone(val);
-                              // Auto lookup student name if matches existing
+                              // Auto lookup student name & active access if matches existing
                               if (val.length === 10) {
                                 const found = students.find((s) => s.phone.replace(/\D/g, "").slice(-10) === val);
                                 if (found) setCashName(found.name);
+                                setExistingStudentAccess(getStudentActiveGrants(val));
                               }
                             }}
                             placeholder="8459344077"
@@ -1768,55 +1876,205 @@ export default function StudentFinderPage() {
                       </div>
                     </div>
 
-                    {/* Course or Book Selection */}
-                    <div>
-                      <label className="block font-bold text-[#0E1B3D] mb-1">
-                        Select Course or Digital Book *
-                      </label>
-                      <select
-                        required
-                        value={cashCourseId}
-                        onChange={(e) => {
-                          const cId = e.target.value;
-                          setCashCourseId(cId);
-                          if (cId === "all") {
-                            setCashAmount(cashPaymentMode === "scholarship" ? 0 : 999);
-                            setCashAccessMonths(12);
-                            return;
-                          }
-                          const sel = courses.find((c) => c.id === cId || c.code === cId);
-                          if (sel) {
-                            setCashAmount(cashPaymentMode === "scholarship" ? 0 : Math.round(sel.pricePaise / 100));
-                            setCashAccessMonths(sel.accessMonths || 6);
-                            return;
-                          }
-                          const staffBooks = getStaffBooks();
-                          const selB = staffBooks.find((b) => b.id === cId || b.code === cId);
-                          if (selB) {
-                            setCashAmount(cashPaymentMode === "scholarship" ? 0 : Math.round((selB.pricePaise || 49900) / 100));
-                            setCashAccessMonths(12);
-                          }
-                        }}
-                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
-                      >
-                        <option value="all">🌟 All Academy Courses (सर्व कोर्सेस - Full Bundle)</option>
-                        <optgroup label="🎓 Academy Courses">
-                          {courses.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.code}: {c.title} (₹{Math.round(c.pricePaise / 100)})
-                            </option>
+                    {/* Already Owned Courses Section */}
+                    {existingStudentAccess.length > 0 && (
+                      <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-2xl space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-extrabold text-emerald-950 text-xs flex items-center gap-1.5">
+                            <span>✅</span> Currently Owned Courses &amp; Books ({existingStudentAccess.length})
+                          </span>
+                          <span className="text-[10px] text-emerald-700 font-bold">Active Subscriptions</span>
+                        </div>
+                        <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1 scrollbar-thin">
+                          {existingStudentAccess.map((item) => (
+                            <div
+                              key={item.id}
+                              className="p-2.5 bg-white rounded-xl border border-emerald-200 flex items-center justify-between gap-2 text-[11px] shadow-2xs"
+                            >
+                              <div className="min-w-0">
+                                <div className="font-bold text-slate-900 truncate">{item.itemTitle}</div>
+                                <div className="text-[10px] text-slate-500">
+                                  Expires: {item.expiresAt.slice(0, 10)} ({item.daysLeft} days left)
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const res = await extendStudentAccess({
+                                    studentPhone: cashPhone,
+                                    studentName: cashName,
+                                    itemType: item.itemType === "book" ? "book" : "course",
+                                    itemId: item.itemId,
+                                    itemTitle: item.itemTitle,
+                                    daysToAdd: 90,
+                                    grantId: item.grantId,
+                                    purchaseId: item.purchaseId,
+                                  });
+                                  if (res.success) {
+                                    showToast(`Extended ${item.itemTitle} access by +3 Months!`);
+                                    setExistingStudentAccess(getStudentActiveGrants(cashPhone));
+                                    reload();
+                                  }
+                                }}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-extrabold text-[10px] shrink-0 shadow-2xs transition cursor-pointer"
+                              >
+                                + Extend (+3 Months)
+                              </button>
+                            </div>
                           ))}
-                        </optgroup>
-                        {getStaffBooks().length > 0 && (
-                          <optgroup label="📚 Digital Books & Worksheets">
-                            {getStaffBooks().map((b) => (
-                              <option key={b.id} value={b.id}>
-                                {b.code || "BOOK"}: {b.title} (₹{Math.round((b.pricePaise || 49900) / 100)})
-                              </option>
-                            ))}
-                          </optgroup>
-                        )}
-                      </select>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Course or Book Multi-Selection Grouped by Category */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="block font-bold text-[#0E1B3D]">
+                          Select Course(s) or Digital Book(s) to Activate *
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (cashSelectedCourseIds.includes("all")) {
+                              setCashSelectedCourseIds([]);
+                              setCashAmount(0);
+                            } else {
+                              setCashSelectedCourseIds(["all"]);
+                              setCashAmount(cashPaymentMode === "scholarship" ? 0 : 999);
+                            }
+                          }}
+                          className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border transition cursor-pointer ${
+                            cashSelectedCourseIds.includes("all")
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "bg-slate-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                          }`}
+                        >
+                          🌟 Select All Academy Courses Bundle
+                        </button>
+                      </div>
+
+                      {/* Category Navigation Tabs */}
+                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                        {ACADEMY_CATEGORIES.map((cat) => {
+                          const isActive = cashModalCategory === cat;
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => setCashModalCategory(cat)}
+                              className={`px-3 py-1 rounded-xl text-[11px] font-bold shrink-0 transition border cursor-pointer ${
+                                isActive
+                                  ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                                  : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                              }`}
+                            >
+                              {cat}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Filtered Courses & Books Checkbox Grid */}
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl max-h-48 overflow-y-auto space-y-2 scrollbar-thin">
+                        {courses
+                          .filter((c) => matchesAcademyCategory(c, cashModalCategory))
+                          .map((c) => {
+                            const isChecked = cashSelectedCourseIds.includes(c.id);
+                            const price = Math.round(c.pricePaise / 100);
+                            return (
+                              <label
+                                key={c.id}
+                                className={`flex items-center justify-between p-2 rounded-xl border transition cursor-pointer ${
+                                  isChecked
+                                    ? "bg-blue-50 border-blue-300"
+                                    : "bg-white border-slate-200 hover:border-slate-300"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => {
+                                      let updated: string[];
+                                      if (isChecked) {
+                                        updated = cashSelectedCourseIds.filter((id) => id !== c.id);
+                                      } else {
+                                        updated = [...cashSelectedCourseIds.filter((id) => id !== "all"), c.id];
+                                      }
+                                      setCashSelectedCourseIds(updated);
+                                      // Auto-suggest fee sum
+                                      if (cashPaymentMode !== "scholarship") {
+                                        const sum = updated.reduce((acc, id) => {
+                                          if (id === "all") return acc + 999;
+                                          const found = courses.find((x) => x.id === id);
+                                          return acc + (found ? Math.round(found.pricePaise / 100) : 199);
+                                        }, 0);
+                                        setCashAmount(sum);
+                                      }
+                                    }}
+                                    className="rounded cursor-pointer"
+                                  />
+                                  <span className="font-bold text-slate-900">
+                                    🎓 {c.title}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 font-mono">
+                                    ({c.code})
+                                  </span>
+                                </div>
+                                <span className="font-extrabold text-blue-700 font-mono">
+                                  ₹{price}
+                                </span>
+                              </label>
+                            );
+                          })}
+
+                        {/* Digital Books in category */}
+                        {getStaffBooks()
+                          .filter((b) => matchesAcademyCategory(b, cashModalCategory))
+                          .map((b) => {
+                            const isChecked = cashSelectedCourseIds.includes(b.id);
+                            const price = Math.round((b.pricePaise || 49900) / 100);
+                            return (
+                              <label
+                                key={b.id}
+                                className={`flex items-center justify-between p-2 rounded-xl border transition cursor-pointer ${
+                                  isChecked
+                                    ? "bg-blue-50 border-blue-300"
+                                    : "bg-white border-slate-200 hover:border-slate-300"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => {
+                                      let updated: string[];
+                                      if (isChecked) {
+                                        updated = cashSelectedCourseIds.filter((id) => id !== b.id);
+                                      } else {
+                                        updated = [...cashSelectedCourseIds.filter((id) => id !== "all"), b.id];
+                                      }
+                                      setCashSelectedCourseIds(updated);
+                                    }}
+                                    className="rounded cursor-pointer"
+                                  />
+                                  <span className="font-bold text-slate-900">
+                                    📚 {b.title}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 font-mono">
+                                    ({b.code || "BOOK"})
+                                  </span>
+                                </div>
+                                <span className="font-extrabold text-emerald-700 font-mono">
+                                  ₹{price}
+                                </span>
+                              </label>
+                            );
+                          })}
+                      </div>
+                      <div className="text-[11px] text-slate-500 font-medium">
+                        Selected: <span className="font-bold text-slate-900">{cashSelectedCourseIds.length} item(s)</span>
+                      </div>
                     </div>
 
                     {/* Validity Duration & Payment Mode */}
@@ -2461,6 +2719,33 @@ export default function StudentFinderPage() {
               </div>
             </div>
           )}
+          {/* Bulk Grant Customizer Modal */}
+          <BulkGrantCustomizerModal
+            isOpen={isBulkCustomizerOpen}
+            onClose={() => setIsBulkCustomizerOpen(false)}
+            courses={courses}
+            books={getStaffBooks()}
+            initialStudents={
+              selectedStudentPhones.size > 0
+                ? students.filter((s) => selectedStudentPhones.has(s.phone))
+                : []
+            }
+            onSuccess={(msg) => {
+              showToast(msg);
+              setSelectedStudentPhones(new Set());
+              reload();
+            }}
+          />
+
+          {/* Broadcast Notification Modal */}
+          <BroadcastNotificationModal
+            isOpen={isBroadcastModalOpen}
+            onClose={() => setIsBroadcastModalOpen(false)}
+            courses={courses}
+            defaultTarget={broadcastDefaultTarget}
+            onSuccess={(msg) => showToast(msg)}
+          />
+
           {actionFeedbackToast && (
             <div
               className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-2.5 animate-fadeIn text-xs font-bold ${
