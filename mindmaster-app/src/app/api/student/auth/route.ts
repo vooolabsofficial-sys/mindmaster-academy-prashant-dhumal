@@ -8,6 +8,7 @@ import {
   completeStudentOnboarding,
   recordActiveStudentSession,
   validateStudentSession,
+  updateStudentProfileFields,
 } from "@/lib/studentAuthService";
 import { normalizePhone } from "@/lib/phoneUtils";
 import { getCookieDomain } from "@/lib/supabase/client";
@@ -465,6 +466,93 @@ async function handlePost(req: NextRequest) {
         maxAge: 0,
       });
       return response;
+    }
+
+    // -----------------------------------------------------------------------
+    // ACTION: UPDATE-PROFILE (Phone-Style Settings /profile)
+    // -----------------------------------------------------------------------
+    if (action === "update-profile") {
+      const {
+        phone,
+        fullName,
+        standard,
+        targetExam,
+        schoolName,
+        village,
+        taluka,
+        district,
+        newPassword,
+        recoveryPin,
+      } = body;
+      const clean = normalizePhone(phone);
+      if (!clean) {
+        return NextResponse.json({ error: "Phone number is required." }, { status: 400 });
+      }
+
+      let passwordHash: string | undefined;
+      if (newPassword && newPassword.trim().length >= 4) {
+        const { hashArgon2 } = await import("@/lib/argon2");
+        passwordHash = await hashArgon2(newPassword.trim());
+      }
+
+      // Update in live Supabase profiles table
+      try {
+        const { createAdminClient } = await import("@/lib/supabase/admin");
+        const supabase = createAdminClient();
+        const updatePayload: Record<string, any> = {
+          updated_at: new Date().toISOString(),
+        };
+        if (fullName) updatePayload.full_name = fullName.trim();
+        if (standard) updatePayload.standard = standard.trim();
+        if (targetExam) updatePayload.target_exam = targetExam.trim();
+        if (schoolName) {
+          updatePayload.school_name = schoolName.trim();
+          updatePayload.school = schoolName.trim();
+        }
+        if (village) updatePayload.village = village.trim();
+        if (taluka) updatePayload.taluka = taluka.trim();
+        if (district) updatePayload.district = district.trim();
+        if (recoveryPin) updatePayload.recovery_pin = recoveryPin.trim();
+        if (passwordHash) updatePayload.password_hash = passwordHash;
+
+        await supabase
+          .from("profiles")
+          .update(updatePayload)
+          .or(`phone.eq.${clean},phone.eq.+91${clean}`);
+      } catch (err) {
+        console.warn("Supabase profile update warning:", err);
+      }
+
+      // Also update in registered accounts memory/local store
+      try {
+        updateStudentProfileFields(clean, {
+          fullName,
+          standard,
+          targetExam,
+          schoolName,
+          village,
+          taluka,
+          district,
+          recoveryPin,
+          passwordHash,
+        });
+      } catch {}
+
+      return NextResponse.json({
+        success: true,
+        message: "Profile updated successfully.",
+        user: {
+          cleanPhone: clean,
+          phone: `+91${clean}`,
+          full_name: fullName,
+          standard,
+          target_exam: targetExam,
+          school_name: schoolName,
+          village,
+          taluka,
+          district,
+        },
+      });
     }
 
     // -----------------------------------------------------------------------

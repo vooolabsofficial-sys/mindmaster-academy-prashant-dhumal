@@ -2,545 +2,966 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  User, 
-  Phone, 
-  MapPin, 
-  School, 
-  CreditCard, 
-  Globe, 
-  MessageCircle, 
-  LogOut, 
-  ChevronRight, 
-  Edit3, 
-  CheckCircle2, 
-  BookOpen, 
-  Award, 
+import {
+  User,
+  Phone,
+  MapPin,
+  School,
+  CreditCard,
+  Globe,
+  LogOut,
+  ChevronRight,
+  Edit3,
+  CheckCircle2,
+  BookOpen,
+  Award,
   Download,
-  Smartphone, 
-  ShieldCheck, 
+  Smartphone,
+  ShieldCheck,
   PhoneCall,
   Target,
-  FileText
+  Lock,
+  KeyRound,
+  Trash2,
+  RefreshCw,
+  Gauge,
+  FileText,
+  AlertCircle,
+  HelpCircle,
+  X,
+  Sparkles,
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
 import { signOutAndClearCookie } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/LanguageContext";
 import LanguageModal from "@/components/common/LanguageModal";
 import { generateFeeReceiptPdf, generateCourseCertificatePdf } from "@/lib/pdfGenerator";
+import { getAllOfflineBooks, clearAllOfflineVault, OfflineBookRecord } from "@/lib/offlineStorage";
 import { toast } from "sonner";
 
 export default function ProfileSettingsPage() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [fullName, setFullName] = useState("Student");
-  const [district, setDistrict] = useState("Pune");
-  const [school, setSchool] = useState("Maharashtra State Board");
-  const [phone, setPhone] = useState("");
+  // Navigation active tab inside settings
+  const [activeTab, setActiveTab] = useState<"profile" | "preferences" | "security" | "storage" | "legal">("profile");
+
+  // Profile data
+  const [fullName, setFullName] = useState("Verified Student");
+  const [phone, setPhone] = useState("+91 84593 44077");
+  const [standard, setStandard] = useState("10th Standard / SSC");
   const [targetExam, setTargetExam] = useState("Maharashtra Police Bharti 2026");
-  const [savedSuccess, setSavedSuccess] = useState(false);
+  const [school, setSchool] = useState("Maharashtra State Board");
+  const [village, setVillage] = useState("Powai Naka");
+  const [taluka, setTaluka] = useState("Satara");
+  const [district, setDistrict] = useState("Satara");
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // App & Video Preferences
+  const [playbackSpeed, setPlaybackSpeed] = useState("1x");
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+
+  // Security & PIN state
+  const [newPassword, setNewPassword] = useState("");
+  const [recoveryPin, setRecoveryPin] = useState("1234");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
+
+  // Offline Vault Storage State
+  const [offlineBooks, setOfflineBooks] = useState<OfflineBookRecord[]>([]);
+  const [isClearingStorage, setIsClearingStorage] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  // Platform dynamic helpdesk info
   const [platformSettings, setPlatformSettings] = useState({
     supportPhone: "+91 84593 44077",
-    centreAddress: "Narhe Campus: Survey No. 49, Zeal Chowk, Narhe, Pune",
+    whatsappNumber: "+91 84593 44077",
+    centreAddress: "Powai Naka, Satara | Zeal Chowk, Narhe, Pune",
   });
 
-  const { languageInfo, t } = useLanguage();
+  const { currentLanguage, setLanguage, languageInfo, t } = useLanguage();
 
+  // Load profile & offline storage on mount
   useEffect(() => {
+    // 1. Fetch system helpdesk settings
     fetch("/api/settings")
       .then((res) => res.json())
       .then((data) => {
         if (data?.settings) {
           setPlatformSettings({
             supportPhone: data.settings.support_phone || "+91 84593 44077",
-            centreAddress: data.settings.centre_address || "Narhe Campus: Survey No. 49, Zeal Chowk, Narhe, Pune",
+            whatsappNumber: data.settings.whatsapp_number || data.settings.support_phone || "+91 84593 44077",
+            centreAddress: `${data.settings.centre_address || "Satara"} | ${data.settings.pune_address || "Narhe, Pune"}`,
           });
         }
       })
       .catch(() => {});
 
+    // 2. Load stored user profile
     try {
       const raw = localStorage.getItem("mindmaster_user_profile");
       if (raw) {
         const p = JSON.parse(raw);
         if (p.full_name) setFullName(p.full_name);
-        if (p.district) setDistrict(p.district);
-        if (p.school_name) setSchool(p.school_name);
         if (p.phone) setPhone(p.phone);
+        if (p.standard) setStandard(p.standard);
         if (p.target_exam) setTargetExam(p.target_exam);
+        if (p.school_name || p.school) setSchool(p.school_name || p.school);
+        if (p.village) setVillage(p.village);
+        if (p.taluka) setTaluka(p.taluka);
+        if (p.district) setDistrict(p.district);
+        if (p.recovery_pin) setRecoveryPin(p.recovery_pin);
       }
       const savedPhone = localStorage.getItem("mindmaster_verified_phone");
       if (savedPhone) setPhone(savedPhone);
+
+      const savedSpeed = localStorage.getItem("mma_default_playback_speed");
+      if (savedSpeed) setPlaybackSpeed(savedSpeed);
     } catch {}
+
+    // 3. Load offline books vault count
+    refreshOfflineVault();
+
+    // 4. Capture PWA beforeinstallprompt
+    const handleBeforeInstall = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setIsInstalled(true);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+    };
   }, []);
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
+  const refreshOfflineVault = async () => {
     try {
-      const current = JSON.parse(localStorage.getItem("mindmaster_user_profile") || "{}");
-      localStorage.setItem("mindmaster_user_profile", JSON.stringify({
-        ...current,
-        full_name: fullName,
-        district,
-        school_name: school,
-        phone,
-        target_exam: targetExam,
-      }));
+      const books = await getAllOfflineBooks();
+      setOfflineBooks(books);
     } catch {}
-    setIsEditing(false);
-    setSavedSuccess(true);
-    toast.success("Profile saved successfully!");
-    setTimeout(() => setSavedSuccess(false), 2000);
+  };
+
+  const handleSaveAcademicProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingProfile(true);
+
+    const payload = {
+      action: "update-profile",
+      phone,
+      fullName: fullName.trim(),
+      standard: standard.trim(),
+      targetExam: targetExam.trim(),
+      schoolName: school.trim(),
+      village: village.trim(),
+      taluka: taluka.trim(),
+      district: district.trim(),
+    };
+
+    try {
+      await fetch("/api/student/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      // Update local storage
+      const current = JSON.parse(localStorage.getItem("mindmaster_user_profile") || "{}");
+      localStorage.setItem(
+        "mindmaster_user_profile",
+        JSON.stringify({
+          ...current,
+          full_name: fullName.trim(),
+          standard: standard.trim(),
+          target_exam: targetExam.trim(),
+          school_name: school.trim(),
+          school: school.trim(),
+          village: village.trim(),
+          taluka: taluka.trim(),
+          district: district.trim(),
+        })
+      );
+
+      toast.success("Academic Profile saved successfully!");
+      setIsEditing(false);
+    } catch (err) {
+      toast.error("Failed to save profile. Please check connection.");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleUpdateSecurity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword && newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters.");
+      return;
+    }
+    if (recoveryPin && recoveryPin.length !== 4) {
+      toast.error("Recovery PIN must be exactly 4 digits.");
+      return;
+    }
+
+    setIsUpdatingSecurity(true);
+    try {
+      const res = await fetch("/api/student/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update-profile",
+          phone,
+          ...(newPassword ? { newPassword } : {}),
+          recoveryPin,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed to update security credentials.");
+
+      const current = JSON.parse(localStorage.getItem("mindmaster_user_profile") || "{}");
+      localStorage.setItem(
+        "mindmaster_user_profile",
+        JSON.stringify({
+          ...current,
+          recovery_pin: recoveryPin,
+        })
+      );
+
+      toast.success("Security credentials updated! Your 4-digit PIN is saved.");
+      setNewPassword("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update security credentials.");
+    } finally {
+      setIsUpdatingSecurity(false);
+    }
+  };
+
+  const handlePlaybackSpeedChange = (speed: string) => {
+    setPlaybackSpeed(speed);
+    try {
+      localStorage.setItem("mma_default_playback_speed", speed);
+      toast.success(`Default video speed set to ${speed}`);
+    } catch {}
+  };
+
+  const handleClearCache = async () => {
+    if (confirm("Are you sure you want to clear all offline cached books and playback progress?")) {
+      setIsClearingStorage(true);
+      try {
+        await clearAllOfflineVault();
+        await refreshOfflineVault();
+        toast.success("Offline storage cleared successfully!");
+      } catch {
+        toast.error("Could not clear offline cache.");
+      } finally {
+        setIsClearingStorage(false);
+      }
+    }
+  };
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choiceResult = await deferredPrompt.userChoice;
+      if (choiceResult.outcome === "accepted") {
+        toast.success("MindMaster Academy installed to device!");
+        setIsInstalled(true);
+      }
+      setDeferredPrompt(null);
+    } else {
+      alert(
+        "To install MindMaster Academy on your phone:\n\n1. In Chrome/Safari, tap the menu (⋮ or Share icon).\n2. Tap 'Add to Home Screen' or 'Install App'.\n3. Launch directly from your home screen for ultra-fast offline access!"
+      );
+    }
   };
 
   const handleSignOut = async () => {
-    if (confirm("Are you sure you want to sign out from all devices?")) {
+    if (confirm("Sign out from your MindMaster student account on this device?")) {
       await signOutAndClearCookie();
       window.location.href = "/login";
     }
   };
 
-  const initials = fullName
-    .split(" ")
-    .filter(Boolean)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "ST";
+  const initials =
+    fullName
+      .split(" ")
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "ST";
+
+  const totalOfflineMb = offlineBooks
+    .reduce((acc, b) => acc + (b.fileSizeMb || 0), 0)
+    .toFixed(1);
 
   return (
     <AppShell>
-      <title>Student Profile & Settings | MindMaster Academy</title>
-      <meta name="description" content="Manage your personal details, registered phone number, center info, and learning statistics." />
-      <div className="flex flex-col gap-6 max-w-4xl mx-auto select-none">
+      <title>Student Settings & Academic Profile | MindMaster Academy</title>
+      <meta
+        name="description"
+        content="Personalize your learning profile, playback preferences, security credentials, and manage offline cached books."
+      />
 
-        {/* 1. HEADER CARD (Exact from 11-profile-settings.png) */}
-        <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#E4E8F8] shadow-[0_12px_32px_rgba(16,20,38,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      <div className="flex flex-col gap-6 max-w-4xl mx-auto font-sans pb-16 select-none">
+        {/* =========================================================================
+            1. PHONE-STYLE STUDENT HERO CARD
+           ========================================================================= */}
+        <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#E4E8F8] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            {/* Avatar Circle with Initials and Green Online Dot */}
             <div className="relative">
-              <div className="w-18 h-18 rounded-full bg-[#E8F1FD] text-[#0B57D0] flex items-center justify-center text-xl font-black shrink-0 ring-4 ring-white shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-[#E8F1FD] text-[#0B57D0] flex items-center justify-center text-xl font-black ring-4 ring-white shadow-xs shrink-0">
                 {initials}
               </div>
-              <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-[#0A8554] border-2 border-white" />
+              <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white" />
             </div>
 
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl md:text-2xl font-extrabold text-[#0E1B3D]">
+                <h1 className="text-xl md:text-2xl font-extrabold text-[#0E1B3D] tracking-tight">
                   {fullName}
                 </h1>
-                <span className="bg-[#F1F3F9] text-[#717D96] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
-                  Verified Student
+                <span className="bg-blue-50 text-[#0B57D0] border border-blue-200 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                  VERIFIED STUDENT
                 </span>
               </div>
               <p className="text-xs text-[#5A6478] font-medium mt-1">
-                {school} • {district}
+                {standard} • {district} ({taluka})
               </p>
-              <div className="flex items-center gap-3 text-xs text-[#94A3B8] font-mono mt-1">
+              <div className="flex items-center gap-2 text-xs text-slate-400 font-mono mt-1">
                 <span>{phone}</span>
                 <span>•</span>
-                <span>ID: MM-8492</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                <span className="bg-[#EEF4FF] text-[#0B57D0] border border-[#D0E2FF] text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
-                  <span>🎯</span>
-                  <span>{targetExam}</span>
-                </span>
-                <span className="bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                  <span>⚡</span>
-                  <span>Active Student</span>
-                </span>
+                <span>{school}</span>
               </div>
             </div>
           </div>
 
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="px-4 py-2 rounded-xl bg-white border border-[#E4E8F8] text-[#0E1B3D] text-xs font-bold hover:border-[#0B57D0] hover:bg-[#F5F7FF] transition inline-flex items-center gap-1.5 shadow-2xs"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-[#0B57D0]" />
+              <span>{isEditing ? "Cancel" : "Edit Profile"}</span>
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Segment Navigation Pills (Phone Settings Style) */}
+        <div className="flex items-center gap-2 p-1.5 bg-[#F5F7FF] rounded-2xl border border-[#E4E8F8] overflow-x-auto text-xs font-bold text-[#5A6478]">
           <button
-            onClick={() => setIsEditing(!isEditing)}
-            className="px-5 py-2 rounded-full bg-white border border-[#E4E8F8] text-[#0E1B3D] text-xs font-bold hover:border-[#0B57D0] hover:bg-[#F5F7FF] transition inline-flex items-center gap-1.5 shadow-2xs self-start sm:self-auto cursor-pointer"
+            onClick={() => setActiveTab("profile")}
+            className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
+              activeTab === "profile" ? "bg-white text-[#0B57D0] shadow-xs font-extrabold" : "hover:text-[#0E1B3D]"
+            }`}
           >
-            <Edit3 className="w-3.5 h-3.5 text-[#0B57D0]" />
-            <span>{isEditing ? "Cancel" : "Edit Profile"}</span>
+            <User className="w-4 h-4" />
+            <span>Academic Profile</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("preferences")}
+            className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
+              activeTab === "preferences" ? "bg-white text-[#0B57D0] shadow-xs font-extrabold" : "hover:text-[#0E1B3D]"
+            }`}
+          >
+            <Globe className="w-4 h-4" />
+            <span>Language & Video</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("security")}
+            className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
+              activeTab === "security" ? "bg-white text-[#0B57D0] shadow-xs font-extrabold" : "hover:text-[#0E1B3D]"
+            }`}
+          >
+            <Lock className="w-4 h-4" />
+            <span>Password & PIN</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("storage")}
+            className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
+              activeTab === "storage" ? "bg-white text-[#0B57D0] shadow-xs font-extrabold" : "hover:text-[#0E1B3D]"
+            }`}
+          >
+            <Smartphone className="w-4 h-4" />
+            <span>Offline Vault</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("legal")}
+            className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
+              activeTab === "legal" ? "bg-white text-[#0B57D0] shadow-xs font-extrabold" : "hover:text-[#0E1B3D]"
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            <span>Receipts & Legal</span>
           </button>
         </div>
 
-        {savedSuccess && (
-          <div className="p-3.5 rounded-2xl bg-[#E8F8F2] border border-[#C6ECD9] text-xs font-bold text-[#0A8554] flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>Profile information updated successfully!</span>
-          </div>
-        )}
-
-        {/* Edit Form */}
-        {isEditing && (
-          <form
-            onSubmit={handleSave}
-            className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm flex flex-col gap-4"
-          >
-            <h3 className="font-extrabold text-sm text-[#0E1B3D]">Edit Student Profile</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <label className="font-bold text-[#0E1B3D] block mb-1">Full Name</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#F5F7FF] border border-[#E4E8F8] text-[#0E1B3D] font-medium"
-                />
-              </div>
-              <div>
-                <label className="font-bold text-[#0E1B3D] block mb-1">Class / School / Board</label>
-                <input
-                  type="text"
-                  value={school}
-                  onChange={(e) => setSchool(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#F5F7FF] border border-[#E4E8F8] text-[#0E1B3D] font-medium"
-                />
-              </div>
-              <div>
-                <label className="font-bold text-[#0E1B3D] block mb-1">District</label>
-                <input
-                  type="text"
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#F5F7FF] border border-[#E4E8F8] text-[#0E1B3D] font-medium"
-                />
-              </div>
-              <div>
-                <label className="font-bold text-[#0E1B3D] block mb-1">Target Exam Goal</label>
-                <select
-                  value={targetExam}
-                  onChange={(e) => setTargetExam(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#F5F7FF] border border-[#E4E8F8] text-[#0E1B3D] font-medium text-xs focus:ring-2 focus:ring-[#0B57D0]"
-                >
-                  <option value="Maharashtra Police Bharti 2026">Maharashtra Police Bharti 2026</option>
-                  <option value="MPSC / Civil Services Foundation">MPSC / Civil Services Foundation</option>
-                  <option value="10th SSC Board Maths Special">10th SSC Board Maths Special</option>
-                  <option value="Vedic Maths & Speed Memory">Vedic Maths & Speed Memory</option>
-                  <option value="Scholarship Exam (5th/8th Std)">Scholarship Exam (5th/8th Std)</option>
-                  <option value="General Skills / Self Improvement">General Skills / Self Improvement</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsEditing(false)}
-                className="px-4 py-2 rounded-full bg-[#F5F7FF] text-xs font-bold text-[#5A6478]"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2 rounded-full bg-[#0B57D0] text-white text-xs font-bold"
-              >
-                Save Changes
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* 2. STAT PILLS (Exact from 11-profile-settings.png) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-3xl border border-[#E4E8F8] shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#E8F1FD] text-[#0B57D0] flex items-center justify-center shrink-0 font-bold">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-[10px] uppercase font-bold text-[#94A3B8] leading-tight">
-                ENROLLED
-              </div>
-              <div className="text-base font-extrabold text-[#0E1B3D] leading-tight mt-0.5">
-                2 Courses
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-3xl border border-[#E4E8F8] shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#E8F8F2] text-[#0A8554] flex items-center justify-center shrink-0 font-bold">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-[10px] uppercase font-bold text-[#94A3B8] leading-tight">
-                ATTENDANCE
-              </div>
-              <div className="text-base font-extrabold text-[#0E1B3D] leading-tight mt-0.5">
-                94.8%
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-3xl border border-[#E4E8F8] shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#F0EEFD] text-[#6352D0] flex items-center justify-center shrink-0 font-bold">
-              <Award className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-[10px] uppercase font-bold text-[#94A3B8] leading-tight">
-                NARHE RANK
-              </div>
-              <div className="text-base font-extrabold text-[#0E1B3D] leading-tight mt-0.5">
-                #04
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 3. ACCOUNT SECTION */}
-        <div className="flex flex-col gap-2">
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#94A3B8] px-2">
-            {t("profile.sectionAccount")}
-          </span>
-
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] shadow-2xs overflow-hidden divide-y divide-[#F1F3F9]">
-            {/* My Purchases */}
-            <Link
-              href="/my-courses"
-              className="p-4 md:p-5 flex items-center justify-between hover:bg-[#F5F7FF] transition"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#E8F1FD] text-[#0B57D0] flex items-center justify-center shrink-0">
-                  <CreditCard className="w-5 h-5" />
+        {/* =========================================================================
+            SECTION 1: EDIT ACADEMIC PROFILE
+           ========================================================================= */}
+        {activeTab === "profile" && (
+          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0B57D0] flex items-center justify-center">
+                  <User className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-sm text-[#0E1B3D]">{t("profile.myPurchases")}</h4>
-                  <p className="text-xs text-[#5A6478]">{t("profile.myPurchasesSub")}</p>
+                  <h2 className="text-base font-extrabold text-[#0E1B3D]">Academic Student Details</h2>
+                  <p className="text-xs text-[#5A6478]">
+                    Your verified credentials registered with MindMaster Academy Satara & Pune centers.
+                  </p>
+                </div>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Enrolled Learner
+              </span>
+            </div>
+
+            <form onSubmit={handleSaveAcademicProfile} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label className="font-bold text-[#0E1B3D] block mb-1.5">Student Full Name</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#0E1B3D] block mb-1.5">Standard / Class / Year</label>
+                  <select
+                    value={standard}
+                    onChange={(e) => setStandard(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                  >
+                    <option value="5th - 8th Standard (Scholarship)">5th - 8th Standard (Scholarship)</option>
+                    <option value="9th - 10th Standard (SSC / CBSE)">9th - 10th Standard (SSC / CBSE)</option>
+                    <option value="11th - 12th Science / Commerce">11th - 12th Science / Commerce</option>
+                    <option value="College Degree / Graduate">College Degree / Graduate</option>
+                    <option value="Competitive Exam Aspirant">Competitive Exam Aspirant</option>
+                    <option value="Working Professional / Teacher">Working Professional / Teacher</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#0E1B3D] block mb-1.5">Target Exam / Goal</label>
+                  <select
+                    value={targetExam}
+                    onChange={(e) => setTargetExam(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                  >
+                    <option value="Maharashtra Police Bharti 2026">Maharashtra Police Bharti 2026</option>
+                    <option value="MPSC / Civil Services Foundation">MPSC / Civil Services Foundation</option>
+                    <option value="10th SSC Board Maths Special">10th SSC Board Maths Special</option>
+                    <option value="Vedic Maths & Speed Memory">Vedic Maths & Speed Memory</option>
+                    <option value="Scholarship Exam (5th / 8th Std)">Scholarship Exam (5th / 8th Std)</option>
+                    <option value="General Speed Calculation & Memory">General Speed Calculation & Memory</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#0E1B3D] block mb-1.5">School / College / Institute Name</label>
+                  <input
+                    type="text"
+                    value={school}
+                    onChange={(e) => setSchool(e.target.value)}
+                    placeholder="e.g. Yashwantrao Chavan College, Satara"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#0E1B3D] block mb-1.5">Village / City</label>
+                  <input
+                    type="text"
+                    value={village}
+                    onChange={(e) => setVillage(e.target.value)}
+                    placeholder="e.g. Narhe / Powai Naka"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#0E1B3D] block mb-1.5">Taluka</label>
+                  <input
+                    type="text"
+                    value={taluka}
+                    onChange={(e) => setTaluka(e.target.value)}
+                    placeholder="e.g. Satara / Haveli"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="font-bold text-[#0E1B3D] block mb-1.5">District (Maharashtra)</label>
+                  <select
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                  >
+                    <option value="Satara">Satara (Head Office)</option>
+                    <option value="Pune">Pune (Campus Center)</option>
+                    <option value="Kolhapur">Kolhapur</option>
+                    <option value="Sangli">Sangli</option>
+                    <option value="Solapur">Solapur</option>
+                    <option value="Ahmednagar">Ahmednagar</option>
+                    <option value="Chhatrapati Sambhajinagar">Chhatrapati Sambhajinagar</option>
+                    <option value="Nashik">Nashik</option>
+                    <option value="Thane">Thane</option>
+                    <option value="Mumbai">Mumbai</option>
+                  </select>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#5A6478]">2 courses</span>
-                <ChevronRight className="w-4 h-4 text-[#94A3B8]" />
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="px-6 py-2.5 rounded-xl bg-[#0B57D0] hover:bg-[#0052FF] text-white text-xs font-bold transition shadow-xs flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                >
+                  {isSavingProfile ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Saving Profile...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Save Academic Profile</span>
+                    </>
+                  )}
+                </button>
               </div>
-            </Link>
+            </form>
+          </div>
+        )}
 
-            {/* Language Selection Row */}
-            <div
-              onClick={() => setIsLangModalOpen(true)}
-              className="p-4 md:p-5 flex items-center justify-between hover:bg-[#F5F7FF] transition cursor-pointer active:scale-[0.99] touch-manipulation"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#F0EEFD] text-[#6352D0] flex items-center justify-center shrink-0">
+        {/* =========================================================================
+            SECTION 2: APP LANGUAGE & VIDEO PLAYBACK PREFERENCES
+           ========================================================================= */}
+        {activeTab === "preferences" && (
+          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
                   <Globe className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-sm text-[#0E1B3D]">{t("profile.language")}</h4>
-                  <p className="text-xs text-[#5A6478]">{t("profile.languageSub")}</p>
+                  <h2 className="text-base font-extrabold text-[#0E1B3D]">Language & Video Preferences</h2>
+                  <p className="text-xs text-[#5A6478]">
+                    Personalize default display language and player playback speed for Vedic lectures.
+                  </p>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full shadow-2xs">
-                  {languageInfo.nativeName} ({languageInfo.englishName})
-                </span>
-                <ChevronRight className="w-4 h-4 text-[#94A3B8]" />
               </div>
             </div>
 
-            {/* Help & Support */}
-            <a
-              href={`tel:${platformSettings.supportPhone.replace(/\s+/g, "")}`}
-              className="p-4 md:p-5 flex items-center justify-between hover:bg-[#F5F7FF] transition"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#E8F8F2] text-[#0A8554] flex items-center justify-center shrink-0">
-                  <PhoneCall className="w-5 h-5" />
-                </div>
+            <div className="space-y-5">
+              {/* Language Selector */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h4 className="font-extrabold text-sm text-[#0E1B3D]">{t("profile.help")}</h4>
-                  <p className="text-xs text-[#5A6478]">{t("profile.helpSub")}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-[#0B57D0] bg-[#EEF4FF] px-2.5 py-1 rounded-full">
-                  ● Campus Desk (Room 302)
-                </span>
-                <ChevronRight className="w-4 h-4 text-[#94A3B8]" />
-              </div>
-            </a>
-
-            {/* Legal & Policies Center */}
-            <Link
-              href="/legal"
-              className="p-4 md:p-5 flex items-center justify-between hover:bg-[#F5F7FF] transition"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#EBF3FE] text-[#0B57D0] flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-sm text-[#0E1B3D]">Legal, Privacy &amp; Terms</h4>
-                  <p className="text-xs text-[#5A6478]">Single-device policy, refund terms &amp; data privacy</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-[#0B57D0] bg-[#EEF4FF] px-2.5 py-1 rounded-full">
-                  Policies
-                </span>
-                <ChevronRight className="w-4 h-4 text-[#94A3B8]" />
-              </div>
-            </Link>
-          </div>
-        </div>
-
-        {/* OFFICIAL DOCUMENTS & CERTIFICATES */}
-        <div className="flex flex-col gap-2">
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#94A3B8] px-2">
-            OFFICIAL CERTIFICATES & FEE RECEIPTS
-          </span>
-
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] shadow-2xs p-5 space-y-4">
-            <p className="text-xs text-[#5A6478]">
-              Download signed admission fee receipts and course certificates for competitive exams and academic verification.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Receipt 1 */}
-              <div className="p-4 rounded-2xl bg-[#F9FAFF] border border-[#E4E8F8] flex flex-col justify-between gap-3 hover:border-[#D0E2FF] transition">
-                <div>
-                  <div className="flex items-center justify-between text-[10px] font-bold text-[#8A94A6]">
-                    <span>FEE RECEIPT</span>
-                    <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">● PAID</span>
-                  </div>
-                  <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-1">
-                    Police Bharti 2026 Special Batch
-                  </h4>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">
-                    Ref: MMA-REC-9482 • ₹2,499.00
+                  <h3 className="text-xs font-extrabold text-[#0E1B3D]">App Display Language</h3>
+                  <p className="text-[11px] text-[#5A6478]">
+                    Select your preferred language for learning navigation, lesson titles, and notes.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    generateFeeReceiptPdf({
-                      receiptNo: "MMA-PB-8492",
-                      date: new Date().toLocaleDateString("en-IN"),
-                      studentName: fullName,
-                      studentPhone: phone,
-                      district,
-                      courseCode: "PB-MATH-2026",
-                      courseTitle: "Police Bharti 2026 - Maths & Reasoning Superfast",
-                      amountPaise: 249900,
-                      paymentId: "pay_rzp_pb_verified",
-                      accessMonths: 12,
-                      expiryDate: "October 2027",
-                    })
-                  }
-                  className="w-full py-2 bg-white hover:bg-[#EEF4FF] border border-[#D0E2FF] text-[#0B57D0] text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download Fee Receipt (PDF)</span>
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguage("en");
+                      toast.success("App language set to English (Default)");
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                      currentLanguage === "en"
+                        ? "bg-[#0B57D0] text-white shadow-xs"
+                        : "bg-white border border-[#E4E8F8] text-[#5A6478] hover:text-[#0E1B3D]"
+                    }`}
+                  >
+                    English (Default)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguage("mr");
+                      toast.success("App language set to Marathi (मराठी)");
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                      currentLanguage === "mr"
+                        ? "bg-[#0B57D0] text-white shadow-xs"
+                        : "bg-white border border-[#E4E8F8] text-[#5A6478] hover:text-[#0E1B3D]"
+                    }`}
+                  >
+                    मराठी (Marathi)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguage("hi");
+                      toast.success("App language set to Hindi (हिंदी)");
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                      currentLanguage === "hi"
+                        ? "bg-[#0B57D0] text-white shadow-xs"
+                        : "bg-white border border-[#E4E8F8] text-[#5A6478] hover:text-[#0E1B3D]"
+                    }`}
+                  >
+                    हिंदी (Hindi)
+                  </button>
+                </div>
               </div>
 
-              {/* Certificate 1 */}
-              <div className="p-4 rounded-2xl bg-[#FFFDF5] border border-[#FDE68A] flex flex-col justify-between gap-3 hover:border-amber-300 transition">
+              {/* Default Playback Speed */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center justify-between text-[10px] font-bold text-amber-800">
-                    <span>COURSE CERTIFICATE</span>
-                    <span className="text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">★ CERTIFIED</span>
-                  </div>
-                  <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-1">
-                    Vedic Maths & Speed Memory Level-1
-                  </h4>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">
-                    Cert ID: MMA-CERT-VM01 • Grade A+
+                  <h3 className="text-xs font-extrabold text-[#0E1B3D] flex items-center gap-1.5">
+                    <Gauge className="w-4 h-4 text-[#0B57D0]" />
+                    <span>Default Video Playback Speed</span>
+                  </h3>
+                  <p className="text-[11px] text-[#5A6478]">
+                    Sets initial playback tempo when watching Prashant Sir&apos;s speed calculation videos.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    generateCourseCertificatePdf({
-                      certificateNo: "MMA-CERT-VM01-8492",
-                      studentName: fullName,
-                      courseTitle: "Vedic Maths & Memory Mastery Special Foundation",
-                      completionDate: new Date().toLocaleDateString("en-IN"),
-                      grade: "A+",
-                    })
-                  }
-                  className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-                >
-                  <Award className="w-3.5 h-3.5" />
-                  <span>Download Certificate (PDF)</span>
-                </button>
+
+                <div className="flex items-center gap-2">
+                  {["1x", "1.25x", "1.5x", "2x"].map((speed) => (
+                    <button
+                      key={speed}
+                      type="button"
+                      onClick={() => handlePlaybackSpeedChange(speed)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                        playbackSpeed === speed
+                          ? "bg-[#0B57D0] text-white shadow-xs"
+                          : "bg-white border border-[#E4E8F8] text-[#5A6478] hover:text-[#0E1B3D]"
+                      }`}
+                    >
+                      {speed}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* 4. APP SECTION */}
-        <div className="flex flex-col gap-2">
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#94A3B8] px-2">
-            {t("profile.sectionApp")}
-          </span>
+        {/* =========================================================================
+            SECTION 3: PASSWORD & 4-DIGIT RECOVERY PIN
+           ========================================================================= */}
+        {activeTab === "security" && (
+          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-[#0E1B3D]">Password & 4-Digit Security PIN</h2>
+                  <p className="text-xs text-[#5A6478]">
+                    Manage your single-device login password and quick 4-digit PIN for instant offline recovery.
+                  </p>
+                </div>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" /> Single-Device Protected
+              </span>
+            </div>
 
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] shadow-2xs overflow-hidden divide-y divide-[#F1F3F9]">
-            {/* App Version */}
-            <div className="p-4 md:p-5 flex items-center justify-between">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#F5F7FF] text-[#5A6478] flex items-center justify-center shrink-0">
+            <form onSubmit={handleUpdateSecurity} className="space-y-4 max-w-xl">
+              <div>
+                <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                  Update Account Password (Optional)
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Leave empty to keep current password..."
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-xs font-medium text-[#0E1B3D] pr-10 focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? <X className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#5A6478] mt-1">Minimum 6 characters required if updating.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                  4-Digit Offline Recovery PIN
+                </label>
+                <input
+                  type="text"
+                  maxLength={4}
+                  value={recoveryPin}
+                  onChange={(e) => setRecoveryPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="1234"
+                  className="w-36 p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-center text-sm font-mono font-bold tracking-widest text-[#0E1B3D] focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                />
+                <p className="text-[11px] text-[#5A6478] mt-1">
+                  Use this 4-digit PIN to reset your password without waiting for SMS or WhatsApp OTP.
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isUpdatingSecurity}
+                className="px-6 py-2.5 rounded-xl bg-[#0B57D0] hover:bg-[#0052FF] text-white text-xs font-bold transition shadow-xs flex items-center gap-2 active:scale-95 disabled:opacity-50"
+              >
+                {isUpdatingSecurity ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Updating Security...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Update Security Credentials</span>
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* =========================================================================
+            SECTION 4: OFFLINE VAULT STORAGE & PWA APP INSTALL
+           ========================================================================= */}
+        {activeTab === "storage" && (
+          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
                   <Smartphone className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-sm text-[#0E1B3D]">{t("profile.appVersion")}</h4>
-                  <p className="text-xs text-[#5A6478]">Narhe PWA Client Runtime</p>
+                  <h2 className="text-base font-extrabold text-[#0E1B3D]">Offline Storage Vault & PWA App</h2>
+                  <p className="text-xs text-[#5A6478]">
+                    In-app encrypted digital books stored in your phone&apos;s browser memory for offline bus and train travel.
+                  </p>
                 </div>
               </div>
-
-              <span className="text-xs font-mono font-bold text-[#5A6478] bg-[#F1F3F9] px-2.5 py-1 rounded-full">
-                v1.0.0 (Latest Release)
+              <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 flex items-center gap-1">
+                <BookOpen className="w-3.5 h-3.5" /> {offlineBooks.length} Books Cached
               </span>
             </div>
 
-            {/* Install App */}
-            <div className="p-4 md:p-5 flex items-center justify-between">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#E8F8F2] text-[#0A8554] flex items-center justify-center shrink-0">
-                  <Download className="w-5 h-5" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] space-y-1">
+                <p className="text-xs font-bold text-[#5A6478]">Saved Offline Books</p>
+                <p className="text-2xl font-black text-[#0E1B3D]">{offlineBooks.length}</p>
+                <p className="text-[11px] text-[#5A6478]">
+                  Total storage used: <span className="font-bold text-[#0B57D0]">{totalOfflineMb} MB</span>
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] flex flex-col justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold text-[#0E1B3D]">Clear Offline Cache</p>
+                  <p className="text-[11px] text-[#5A6478]">
+                    Frees device storage by clearing stored PDF pages and lesson position cache.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearCache}
+                  disabled={isClearingStorage || offlineBooks.length === 0}
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold transition flex items-center justify-center gap-2 active:scale-95 disabled:opacity-40"
+                >
+                  {isClearingStorage ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  <span>Clear In-App Offline Vault</span>
+                </button>
+              </div>
+            </div>
+
+            {/* PWA Home Screen Installation */}
+            <div className="p-5 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h3 className="text-xs font-extrabold text-[#0E1B3D] flex items-center gap-1.5">
+                  <Smartphone className="w-4 h-4 text-[#0B57D0]" />
+                  <span>Install MindMaster App on Device</span>
+                </h3>
+                <p className="text-[11px] text-[#5A6478]">
+                  Install MindMaster directly to your home screen for instant fullscreen launch without URL bars.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleInstallApp}
+                className="px-5 py-2.5 rounded-xl bg-[#0B57D0] hover:bg-[#0052FF] text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-2 shrink-0 active:scale-95"
+              >
+                <Download className="w-4 h-4" />
+                <span>{isInstalled ? "App Installed (Launch)" : "Install App on Device"}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            SECTION 5: OFFICIAL RECEIPTS, CERTIFICATES & LEGAL CENTER
+           ========================================================================= */}
+        {activeTab === "legal" && (
+          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0B57D0] flex items-center justify-center">
+                  <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-sm text-[#0E1B3D]">Install App</h4>
-                  <p className="text-xs text-[#5A6478]">Offline storage & fast lecture caching</p>
+                  <h2 className="text-base font-extrabold text-[#0E1B3D]">Official Receipts & Legal Center</h2>
+                  <p className="text-xs text-[#5A6478]">
+                    Verified institutional documentation signed by Director Prashant Dhumal Sir.
+                  </p>
                 </div>
               </div>
+            </div>
 
-              <span className="text-xs font-bold text-[#0A8554] bg-[#E8F8F2] border border-[#C6ECD9] px-3 py-1 rounded-full flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Installed (PWA Ready)</span>
-              </span>
+            {/* Quick Navigation Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <Link
+                href="/my-courses"
+                className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] hover:border-[#0B57D0] hover:bg-blue-50/30 transition flex flex-col justify-between gap-3"
+              >
+                <div>
+                  <CreditCard className="w-5 h-5 text-[#0B57D0]" />
+                  <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-2">My Enrolled Courses</h4>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">View active admissions & validity</p>
+                </div>
+                <span className="text-[11px] font-bold text-[#0B57D0] flex items-center gap-1">
+                  <span>Go to My Courses</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </Link>
+
+              <Link
+                href="/support"
+                className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] hover:border-emerald-500 hover:bg-emerald-50/30 transition flex flex-col justify-between gap-3"
+              >
+                <div>
+                  <PhoneCall className="w-5 h-5 text-emerald-600" />
+                  <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-2">Helpline & WhatsApp</h4>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">Direct student inquiry desk</p>
+                </div>
+                <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                  <span>Contact Desk</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </Link>
+
+              <Link
+                href="/legal"
+                className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] hover:border-purple-500 hover:bg-purple-50/30 transition flex flex-col justify-between gap-3"
+              >
+                <div>
+                  <ShieldCheck className="w-5 h-5 text-purple-600" />
+                  <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-2">Legal & Policies</h4>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">Terms, privacy & refund policy</p>
+                </div>
+                <span className="text-[11px] font-bold text-purple-700 flex items-center gap-1">
+                  <span>Read Terms</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </Link>
+            </div>
+
+            {/* Instant Document Download Demo */}
+            <div className="border-t border-[#E4E8F8] pt-4 space-y-3">
+              <h3 className="text-xs font-extrabold text-[#0E1B3D]">Instant Sample Document Generation</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="p-4 rounded-2xl bg-[#F9FAFF] border border-[#E4E8F8] flex flex-col justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      ● OFFICIAL RECEIPT
+                    </span>
+                    <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-1.5">Official Fee Pavati (Receipt)</h4>
+                    <p className="text-[11px] text-[#5A6478]">Computer-generated admission payment proof.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      generateFeeReceiptPdf({
+                        receiptNo: "MMA-PAVATI-2026",
+                        date: new Date().toLocaleDateString("en-IN"),
+                        studentName: fullName,
+                        studentPhone: phone,
+                        district,
+                        courseCode: "VM-SPEED-01",
+                        courseTitle: targetExam,
+                        amountPaise: 249900,
+                        paymentId: "pay_rzp_official_gateway",
+                        accessMonths: 12,
+                        expiryDate: "October 2027",
+                      })
+                    }
+                    className="w-full py-2 bg-white hover:bg-[#EEF4FF] border border-[#D0E2FF] text-[#0B57D0] text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-2xs"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download Fee Receipt (PDF)</span>
+                  </button>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#FFFDF5] border border-amber-200 flex flex-col justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
+                      ★ ISO CERTIFIED
+                    </span>
+                    <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-1.5">Course Completion Certificate</h4>
+                    <p className="text-[11px] text-[#5A6478]">Signed credential for academic and competitive verification.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      generateCourseCertificatePdf({
+                        certificateNo: "MMA-CERT-2026-001",
+                        studentName: fullName,
+                        courseTitle: targetExam,
+                        completionDate: new Date().toLocaleDateString("en-IN"),
+                        grade: "A+",
+                      })
+                    }
+                    className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-2xs"
+                  >
+                    <Award className="w-3.5 h-3.5" />
+                    <span>Download Certificate (PDF)</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* 5. LOGOUT ROW */}
-        <div className="p-4 md:p-5 rounded-3xl bg-[#FDE8F1]/60 border border-[#F9CADF] flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-[#FDE8F1] text-[#D02B6D] flex items-center justify-center shrink-0">
-              <LogOut className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-extrabold text-sm text-[#D02B6D]">{t("profile.logout")}</h4>
-              <p className="text-xs text-[#5A6478]">End session across all MindMaster devices</p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleSignOut}
-            className="px-5 py-2 rounded-full bg-white text-[#D02B6D] hover:bg-[#FDE8F1] border border-[#F9CADF] text-xs font-extrabold shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
-          >
-            <span>Sign Out</span>
-            <span className="text-sm">→</span>
-          </button>
-        </div>
-
-        {/* 6. CAMPUS ADDRESS FOOTER */}
-        <div className="p-4 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-xs text-[#5A6478] flex items-center justify-between font-medium">
+        {/* Campus Office Footer */}
+        <div className="p-4 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-xs text-[#5A6478] flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-medium">
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-[#0B57D0]" />
+            <MapPin className="w-4 h-4 text-[#0B57D0] shrink-0" />
             <span>{platformSettings.centreAddress}</span>
           </div>
-          <span className="text-[10px] uppercase font-bold text-[#94A3B8]">DESK #02</span>
+          <div className="flex items-center gap-3">
+            <span>Support: {platformSettings.supportPhone}</span>
+            <span className="text-[10px] uppercase font-bold text-[#0B57D0] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+              OFFICIAL DESK
+            </span>
+          </div>
         </div>
       </div>
 

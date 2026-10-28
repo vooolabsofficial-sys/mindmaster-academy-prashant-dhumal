@@ -85,6 +85,7 @@ export default function AdminSidebar() {
     { label: "Digital Books", href: "/admin/notes", icon: "📖", permission: "notes.books.manage" },
     { label: "Coupons", href: "/admin/coupons", icon: "🏷️", permission: "coupons.manage" },
     { label: "My Activity", href: "/sub/activity", icon: "⏱️" },
+    { label: "Settings", href: "/sub/settings", icon: "⚙️" },
   ];
 
   // Select target navigation array

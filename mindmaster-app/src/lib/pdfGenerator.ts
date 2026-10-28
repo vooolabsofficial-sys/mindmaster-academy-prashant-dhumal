@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getPlatformSettings } from "./staffStore";
 
 export interface FeeReceiptData {
   receiptNo: string;
@@ -309,18 +310,26 @@ export function generateFeeReceiptPdf(data: FeeReceiptData) {
   doc.setFillColor(...primaryColor);
   doc.rect(0, 0, 210, 8, "F");
 
+  const settings = getPlatformSettings();
+  const academyName = (settings.academy_title || "MINDMASTER ACADEMY").toUpperCase();
+  const founderSignatory = settings.founder_name || "Prashant Dhumal Sir";
+  const sataraAddr = settings.centre_address || "Powai Naka, Satara (415001)";
+  const puneAddr = settings.pune_address || "Zeal Chowk, Narhe, Pune";
+  const supportNum = settings.whatsapp_number || settings.support_phone || "+91 84593 44077";
+  const supportMail = settings.support_email || "mindmasterdhumal@gmail.com";
+
   // 2. Academy Branding
   doc.setTextColor(...primaryColor);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
-  doc.text("MINDMASTER ACADEMY", 15, 24);
+  doc.text(academyName, 15, 24);
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...grayTextColor);
-  doc.text("Founder & Master Trainer: Prashant Dhumal Sir", 15, 30);
-  doc.text("Head Office: Powai Naka, Satara (415001) | Pune Campus: Zeal Chowk, Narhe, Pune", 15, 35);
-  doc.text("Helpline / WhatsApp: +91 84593 44077 | Email: mindmasterdhumal@gmail.com", 15, 40);
+  doc.text(`Founder & Master Trainer: ${founderSignatory}`, 15, 30);
+  doc.text(`Head Office: ${sataraAddr} | Pune Campus: ${puneAddr}`, 15, 35);
+  doc.text(`Helpline / WhatsApp: ${supportNum} | Email: ${supportMail}`, 15, 40);
 
   // Top Right Receipt Badge
   doc.setFillColor(232, 241, 253); // Light Blue
@@ -328,7 +337,7 @@ export function generateFeeReceiptPdf(data: FeeReceiptData) {
   doc.setTextColor(...primaryColor);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("FEE RECEIPT / PAVATI", 140, 24);
+  doc.text("OFFICIAL FEE RECEIPT", 138, 24);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
@@ -385,7 +394,7 @@ export function generateFeeReceiptPdf(data: FeeReceiptData) {
     head: [["SR.", "PARTICULARS", "DURATION", "TOTAL AMOUNT (INR)"]],
     body: [
       ["1", `${safeCourseTitle} - Complete Video Course & Syllabus Access`, `${data.accessMonths} Months`, `INR ${feeInRupees}`],
-      ["", "GST / Taxes", "Inclusive", "INR 0.00"],
+      ["", "Taxes & Levies", "Exempt (Non-GST Academy)", "INR 0.00"],
       ["", "Total Fee Received in Full (INR)", "", `INR ${feeInRupees}`],
     ],
     theme: "grid",
@@ -426,12 +435,12 @@ export function generateFeeReceiptPdf(data: FeeReceiptData) {
   doc.setTextColor(...darkTextColor);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text("PRASHANT DHUMAL", 155, stampY + 14);
+  doc.text((founderSignatory.replace(/ Sir$/i, "")).toUpperCase(), 155, stampY + 14);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...grayTextColor);
   doc.text("Director & Founder", 155, stampY + 19);
-  doc.text("MindMaster Academy", 155, stampY + 23);
+  doc.text(settings.academy_title || "MindMaster Academy", 155, stampY + 23);
 
   // 6. Security & Verification Footer
   doc.setDrawColor(228, 232, 248);
@@ -463,6 +472,10 @@ export function generateCourseCertificatePdf(data: CertificateData) {
   const goldColor: [number, number, number] = [202, 138, 4]; // #CA8A04
   const darkTextColor: [number, number, number] = [14, 27, 61];
 
+  const settings = getPlatformSettings();
+  const certAcademy = (settings.academy_title || "MINDMASTER ACADEMY").toUpperCase();
+  const certFounder = (settings.founder_name || "Prashant Dhumal Sir").replace(/ Sir$/i, "").toUpperCase();
+
   // Decorative border
   doc.setDrawColor(...goldColor);
   doc.setLineWidth(2);
@@ -475,7 +488,7 @@ export function generateCourseCertificatePdf(data: CertificateData) {
   doc.setTextColor(...primaryColor);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(28);
-  doc.text("MINDMASTER ACADEMY", 148.5, 34, { align: "center" });
+  doc.text(certAcademy, 148.5, 34, { align: "center" });
 
   doc.setFontSize(10);
   doc.setTextColor(100, 116, 139);
@@ -530,7 +543,7 @@ export function generateCourseCertificatePdf(data: CertificateData) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(...darkTextColor);
-  doc.text("PRASHANT DHUMAL", 67.5, sigY + 6, { align: "center" });
+  doc.text(certFounder, 67.5, sigY + 6, { align: "center" });
   doc.text("EXAMINATIONS HEAD", 227.5, sigY + 6, { align: "center" });
 
   doc.setFont("helvetica", "normal");

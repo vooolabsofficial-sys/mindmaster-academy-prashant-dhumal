@@ -480,6 +480,43 @@ export function completeStudentOnboarding(
   return true;
 }
 
+/**
+ * Update academic profile fields, PIN, or password for a registered student.
+ */
+export function updateStudentProfileFields(
+  phone: string,
+  fields: {
+    fullName?: string;
+    standard?: string;
+    targetExam?: string;
+    schoolName?: string;
+    village?: string;
+    taluka?: string;
+    district?: string;
+    recoveryPin?: string;
+    passwordHash?: string;
+  }
+): boolean {
+  const clean = normalizePhone(phone);
+  if (!clean || clean.length !== 10) return false;
+
+  const accounts = getStudentAccounts();
+  const student = accounts.find((a) => a.cleanPhone === clean || a.phone.endsWith(clean));
+  if (!student) return false;
+
+  if (fields.fullName) student.full_name = fields.fullName.trim();
+  if (fields.district) student.district = fields.district.trim();
+  if (fields.taluka) student.taluka = fields.taluka.trim();
+  if (fields.village) student.village = fields.village.trim();
+  if (fields.schoolName) student.school_name = fields.schoolName.trim();
+  if (fields.recoveryPin) student.recovery_pin = fields.recoveryPin.trim();
+  if (fields.passwordHash) student.password_hash = fields.passwordHash;
+
+  const updated = accounts.map((acc) => (acc.cleanPhone === clean ? student : acc));
+  saveStudentAccounts(updated);
+  return true;
+}
+
 // ---------------------------------------------------------------------------
 // SINGLE-DEVICE LOGIN LOCK (1 Student = 1 Active Device)
 // ---------------------------------------------------------------------------

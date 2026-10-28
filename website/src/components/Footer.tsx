@@ -415,6 +415,16 @@ export const Footer: React.FC = () => {
             <Link to="/contact" className="hover:text-secondary transition-colors">
               Satara Campus
             </Link>
+            <span>•</span>
+            <a
+              href={getAppUrl('/staff/login')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+              title="Restricted Staff & Admin Portal"
+            >
+              Staff Portal
+            </a>
           </div>
         </div>
       </div>

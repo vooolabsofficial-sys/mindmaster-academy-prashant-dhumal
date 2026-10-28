@@ -431,6 +431,7 @@ export interface PlatformSettings {
   renewal_coupon_percent: number;
   reminder_template: string;
   maintenance: boolean;
+  maintenance_message?: string;
   youtube_api_key?: string;
   razorpay_key_id?: string;
   razorpay_key_secret?: string;
@@ -440,8 +441,22 @@ export interface PlatformSettings {
   academy_title?: string;
   founder_name?: string;
   centre_address?: string;
+  pune_address?: string;
+  gstin?: string;
+  gst_enabled?: boolean;
+  gst_percent?: number;
+  upi_support_id?: string;
+  signature_url?: string;
+  stamp_url?: string;
   support_phone?: string;
+  whatsapp_number?: string;
   support_email?: string;
+  social_youtube?: string;
+  social_instagram?: string;
+  social_telegram?: string;
+  single_device_lock?: boolean;
+  watermark_enabled?: boolean;
+  sub_admin_approval_mode?: boolean;
 }
 
 export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
@@ -453,6 +468,7 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   reminder_template:
     "Namaskar {name}, your access to {course} will expire in {days} days. Renew today to get {percent}% off!",
   maintenance: false,
+  maintenance_message: "MindMaster Academy is currently undergoing scheduled platform upgrades. We will be back online shortly.",
   youtube_api_key: "",
   razorpay_key_id: "rzp_live_8F91kM4892482",
   razorpay_key_secret: "sec_live_99d14a2f8b894ce12a",
@@ -460,10 +476,24 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   concurrent_devices: 1,
   auto_send_reminders: true,
   academy_title: "MindMaster Academy",
-  founder_name: "Prashant Dhumal",
-  centre_address: "Narhe Centre Desk, Pune, Maharashtra 411041",
+  founder_name: "Prashant Dhumal Sir",
+  centre_address: "Powai Naka, Satara, Maharashtra 415001",
+  pune_address: "Zeal Chowk, Narhe, Pune, Maharashtra 411041",
+  gstin: "",
+  gst_enabled: false,
+  gst_percent: 0,
+  upi_support_id: "mindmaster@okaxis",
+  signature_url: "/branding/prashant_sir_signature.png",
+  stamp_url: "/branding/mindmaster_seal.png",
   support_phone: "+91 84593 44077",
+  whatsapp_number: "+91 84593 44077",
   support_email: "mindmasterdhumal@gmail.com",
+  social_youtube: "https://www.youtube.com/@prashantdhumalmindmaster",
+  social_instagram: "https://www.instagram.com/mindmaster_academy_official",
+  social_telegram: "https://t.me/mindmasteracademy",
+  single_device_lock: true,
+  watermark_enabled: true,
+  sub_admin_approval_mode: false,
 };
 
 export function getPlatformSettings(): PlatformSettings {
@@ -495,17 +525,32 @@ export function savePlatformSettings(settings: PlatformSettings): void {
         renewal_coupon_percent: settings.renewal_coupon_percent ?? 50,
         reminder_template: settings.reminder_template || DEFAULT_PLATFORM_SETTINGS.reminder_template,
         maintenance: Boolean(settings.maintenance),
+        maintenance_message: settings.maintenance_message || null,
         youtube_api_key: settings.youtube_api_key || null,
-        razorpay_key_id: settings.razorpay_key_id || "rzp_live_8F91kM4892482",
-        razorpay_key_secret: settings.razorpay_key_secret || "sec_live_99d14a2f8b894ce12a",
+        razorpay_key_id: settings.razorpay_key_id || DEFAULT_PLATFORM_SETTINGS.razorpay_key_id,
+        razorpay_key_secret: settings.razorpay_key_secret || DEFAULT_PLATFORM_SETTINGS.razorpay_key_secret,
         razorpay_mode: settings.razorpay_mode || "live",
         concurrent_devices: settings.concurrent_devices ?? 1,
         auto_send_reminders: settings.auto_send_reminders ?? true,
-        academy_title: settings.academy_title || "MindMaster Academy",
-        founder_name: settings.founder_name || "Prashant Dhumal",
-        centre_address: settings.centre_address || "Narhe Centre Desk, Pune, Maharashtra 411041",
-        support_phone: settings.support_phone || "+91 84593 44077",
-        support_email: settings.support_email || "mindmasterdhumal@gmail.com",
+        academy_title: settings.academy_title || DEFAULT_PLATFORM_SETTINGS.academy_title,
+        founder_name: settings.founder_name || DEFAULT_PLATFORM_SETTINGS.founder_name,
+        centre_address: settings.centre_address || DEFAULT_PLATFORM_SETTINGS.centre_address,
+        pune_address: settings.pune_address || DEFAULT_PLATFORM_SETTINGS.pune_address,
+        gstin: settings.gstin || DEFAULT_PLATFORM_SETTINGS.gstin,
+        gst_enabled: Boolean(settings.gst_enabled),
+        gst_percent: settings.gst_percent ?? 18,
+        upi_support_id: settings.upi_support_id || DEFAULT_PLATFORM_SETTINGS.upi_support_id,
+        signature_url: settings.signature_url || DEFAULT_PLATFORM_SETTINGS.signature_url,
+        stamp_url: settings.stamp_url || DEFAULT_PLATFORM_SETTINGS.stamp_url,
+        support_phone: settings.support_phone || DEFAULT_PLATFORM_SETTINGS.support_phone,
+        whatsapp_number: settings.whatsapp_number || DEFAULT_PLATFORM_SETTINGS.whatsapp_number,
+        support_email: settings.support_email || DEFAULT_PLATFORM_SETTINGS.support_email,
+        social_youtube: settings.social_youtube || DEFAULT_PLATFORM_SETTINGS.social_youtube,
+        social_instagram: settings.social_instagram || DEFAULT_PLATFORM_SETTINGS.social_instagram,
+        social_telegram: settings.social_telegram || DEFAULT_PLATFORM_SETTINGS.social_telegram,
+        single_device_lock: settings.single_device_lock !== undefined ? Boolean(settings.single_device_lock) : true,
+        watermark_enabled: settings.watermark_enabled !== undefined ? Boolean(settings.watermark_enabled) : true,
+        sub_admin_approval_mode: Boolean(settings.sub_admin_approval_mode),
         updated_at: new Date().toISOString(),
       }).then(({ error }: any) => {
         if (error) console.warn("Supabase settings upsert error:", error.message);
@@ -1563,13 +1608,14 @@ export async function fetchDbSettings(): Promise<PlatformSettings> {
     const { data, error } = await supabase.from("settings").select("*").eq("id", 1).maybeSingle();
     if (error || !data) return getPlatformSettings();
     const mapped: PlatformSettings = {
-      max_sub_admins: data.max_sub_admins ?? 50,
-      default_access_months: data.default_access_months ?? 3,
-      default_video_live_days: data.default_video_live_days ?? 30,
-      default_coupon_days: data.default_coupon_days ?? 7,
-      renewal_coupon_percent: data.renewal_coupon_percent ?? 50,
+      max_sub_admins: data.max_sub_admins ?? DEFAULT_PLATFORM_SETTINGS.max_sub_admins,
+      default_access_months: data.default_access_months ?? DEFAULT_PLATFORM_SETTINGS.default_access_months,
+      default_video_live_days: data.default_video_live_days ?? DEFAULT_PLATFORM_SETTINGS.default_video_live_days,
+      default_coupon_days: data.default_coupon_days ?? DEFAULT_PLATFORM_SETTINGS.default_coupon_days,
+      renewal_coupon_percent: data.renewal_coupon_percent ?? DEFAULT_PLATFORM_SETTINGS.renewal_coupon_percent,
       reminder_template: data.reminder_template || DEFAULT_PLATFORM_SETTINGS.reminder_template,
       maintenance: Boolean(data.maintenance),
+      maintenance_message: data.maintenance_message || DEFAULT_PLATFORM_SETTINGS.maintenance_message,
       youtube_api_key: data.youtube_api_key || "",
       razorpay_key_id: data.razorpay_key_id || DEFAULT_PLATFORM_SETTINGS.razorpay_key_id,
       razorpay_key_secret: data.razorpay_key_secret || DEFAULT_PLATFORM_SETTINGS.razorpay_key_secret,
@@ -1579,8 +1625,22 @@ export async function fetchDbSettings(): Promise<PlatformSettings> {
       academy_title: data.academy_title || DEFAULT_PLATFORM_SETTINGS.academy_title,
       founder_name: data.founder_name || DEFAULT_PLATFORM_SETTINGS.founder_name,
       centre_address: data.centre_address || DEFAULT_PLATFORM_SETTINGS.centre_address,
+      pune_address: data.pune_address || DEFAULT_PLATFORM_SETTINGS.pune_address,
+      gstin: data.gstin || DEFAULT_PLATFORM_SETTINGS.gstin,
+      gst_enabled: data.gst_enabled !== undefined ? Boolean(data.gst_enabled) : DEFAULT_PLATFORM_SETTINGS.gst_enabled,
+      gst_percent: data.gst_percent ?? DEFAULT_PLATFORM_SETTINGS.gst_percent,
+      upi_support_id: data.upi_support_id || DEFAULT_PLATFORM_SETTINGS.upi_support_id,
+      signature_url: data.signature_url || DEFAULT_PLATFORM_SETTINGS.signature_url,
+      stamp_url: data.stamp_url || DEFAULT_PLATFORM_SETTINGS.stamp_url,
       support_phone: data.support_phone || DEFAULT_PLATFORM_SETTINGS.support_phone,
+      whatsapp_number: data.whatsapp_number || DEFAULT_PLATFORM_SETTINGS.whatsapp_number,
       support_email: data.support_email || DEFAULT_PLATFORM_SETTINGS.support_email,
+      social_youtube: data.social_youtube || DEFAULT_PLATFORM_SETTINGS.social_youtube,
+      social_instagram: data.social_instagram || DEFAULT_PLATFORM_SETTINGS.social_instagram,
+      social_telegram: data.social_telegram || DEFAULT_PLATFORM_SETTINGS.social_telegram,
+      single_device_lock: data.single_device_lock !== undefined ? Boolean(data.single_device_lock) : DEFAULT_PLATFORM_SETTINGS.single_device_lock,
+      watermark_enabled: data.watermark_enabled !== undefined ? Boolean(data.watermark_enabled) : DEFAULT_PLATFORM_SETTINGS.watermark_enabled,
+      sub_admin_approval_mode: data.sub_admin_approval_mode !== undefined ? Boolean(data.sub_admin_approval_mode) : DEFAULT_PLATFORM_SETTINGS.sub_admin_approval_mode,
     };
     safeSetItem("mma_settings", mapped);
     if (typeof window !== "undefined") {

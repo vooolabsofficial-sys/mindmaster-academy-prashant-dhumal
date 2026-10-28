@@ -19,7 +19,6 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { createClient, getCookieDomain } from "@/lib/supabase/client";
-import AuthRoleSwitcher from "@/components/auth/AuthRoleSwitcher";
 
 function LoginContent() {
   const router = useRouter();
@@ -268,10 +267,6 @@ function LoginContent() {
       {/* Main Apple Liquid Glass Auth Card */}
       <main className="flex-1 flex items-center justify-center p-4 z-10 my-4 sm:my-6">
         <div className="w-full max-w-[440px] bg-white/85 backdrop-blur-3xl border border-white/80 rounded-3xl p-6 sm:p-8 shadow-[0_24px_70px_rgba(0,82,255,0.12)] relative overflow-hidden ring-1 ring-slate-900/5">
-          
-          {/* Top Role Switcher */}
-          <AuthRoleSwitcher activeRole="student" />
-
           {/* Subtle liquid reflection gradient overlay */}
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-sky-400/10 rounded-full blur-2xl pointer-events-none" />
@@ -568,33 +563,17 @@ function LoginContent() {
           {/* WhatsApp Assistance */}
           <div className="mt-5 pt-3.5 border-t border-slate-100 text-center">
             <span className="text-[11px] text-slate-500 block mb-1">
-              Need assistance with your account?
+              Need assistance with your student account?
             </span>
             <a
-              href="https://wa.me/918459344077?text=Namaskar%20Prashant%20Sir%2C%20I%20need%20help%20with%20MindMaster%20Academy%20login."
+              href="https://wa.me/918459344077?text=Namaskar%20Prashant%20Sir%2C%20I%20need%20help%20with%20MindMaster%20Academy%20student%20login."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>WhatsApp: +91 84593 44077</span>
+              <span>WhatsApp Student Helpline: +91 84593 44077</span>
             </a>
-          </div>
-
-          {/* Portal Switcher for Admin & Sub-Admin */}
-          <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-col gap-1.5 text-center">
-            <Link
-              href="/admin/login"
-              className="text-xs font-semibold text-[#0052FF] hover:underline"
-            >
-              👑 Main Admin Portal Login (/admin) →
-            </Link>
-            <Link
-              href="/sub/login"
-              className="text-xs font-semibold text-slate-600 hover:text-[#0052FF] hover:underline"
-            >
-              🛡️ Sub-Admin Staff Portal Login (/sub) →
-            </Link>
           </div>
         </div>
       </main>

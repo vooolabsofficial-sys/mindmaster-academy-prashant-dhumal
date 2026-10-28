@@ -402,26 +402,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             <span className="material-symbols-outlined text-[13px]">open_in_new</span>
           </a>
         </div>
-
-        {/* Admin & Sub-Admin Dedicated Links */}
-        <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px] sm:text-[11px]">
-          <a
-            href={`${appBaseUrl}/admin/login`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#0052FF] font-semibold hover:underline"
-          >
-            👑 Main Admin (/admin)
-          </a>
-          <a
-            href={`${appBaseUrl}/sub/login`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-slate-500 dark:text-slate-400 hover:text-[#0052FF] font-medium hover:underline"
-          >
-            🛡️ Sub-Admin (/sub)
-          </a>
-        </div>
       </div>
     </div>
   );

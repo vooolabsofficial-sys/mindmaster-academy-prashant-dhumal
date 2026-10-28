@@ -728,7 +728,7 @@ function CheckoutContent() {
             className="w-full mt-6 py-3 px-6 rounded-2xl bg-[#E8F8F2] hover:bg-[#D5F2E6] text-[#0A8554] border border-[#C6ECD9] text-xs font-black transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-2xs"
           >
             <FileText className="w-4 h-4" />
-            <span>📄 Download Official GST Fee Receipt (PDF)</span>
+            <span>📄 Download Official Fee Receipt (PDF)</span>
           </button>
 
           {/* Action CTAs */}
@@ -1181,7 +1181,7 @@ function CheckoutContent() {
                     Total Payable Amount:
                   </span>
                   <span className="text-[10px] text-[#5A6478]">
-                    (Inclusive of all taxes &amp; GST)
+                    (Non-GST Academy • No Hidden Fees)
                   </span>
                 </div>
                 <div className="text-right">

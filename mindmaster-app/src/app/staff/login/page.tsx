@@ -9,7 +9,7 @@ import AuthRoleSwitcher from "@/components/auth/AuthRoleSwitcher";
 function StaffLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const roleParam = searchParams.get("role") || "sub_admin";
+  const roleParam = searchParams.get("role") || "main_admin";
   const [staffId, setStaffId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -209,12 +209,12 @@ function StaffLoginContent() {
         </form>
 
         <div className="mt-8 text-center">
-          <Link
-            href="/home"
+          <a
+            href={process.env.NEXT_PUBLIC_WEBSITE_URL || "http://localhost:5173"}
             className="text-xs text-[#5A6478] hover:text-[#0B57D0] transition-colors"
           >
-            ← Return to Student App Portal
-          </Link>
+            ← Return to MindMaster Website
+          </a>
         </div>
       </div>
 

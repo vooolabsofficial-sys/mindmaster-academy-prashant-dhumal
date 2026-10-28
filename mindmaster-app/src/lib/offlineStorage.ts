@@ -222,3 +222,19 @@ export async function deleteOfflineBook(bookId: string): Promise<void> {
     console.warn("Failed to delete offline book:", err);
   }
 }
+
+/**
+ * Clears all cached offline books and playback progress from the in-app vault.
+ */
+export async function clearAllOfflineVault(): Promise<void> {
+  try {
+    const db = await getDb();
+    await db.clear("books_vault");
+    await db.clear("playback");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("mma_offline_vault_changed", { detail: { bookId: "all" } }));
+    }
+  } catch (err) {
+    console.warn("Failed to clear offline vault:", err);
+  }
+}

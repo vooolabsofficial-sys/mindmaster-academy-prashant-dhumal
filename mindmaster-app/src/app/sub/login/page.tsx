@@ -159,14 +159,14 @@ function SubAdminLoginContent() {
             href="/admin/login"
             className="text-xs font-semibold text-[#0052FF] hover:underline"
           >
-            👑 Main Admin Login Window Click Here →
+            🛡️ Switch to Main Admin Login (/admin/login) →
           </Link>
-          <Link
-            href="/home"
+          <a
+            href={process.env.NEXT_PUBLIC_WEBSITE_URL || "http://localhost:5173"}
             className="text-xs text-[#5A6478] hover:text-[#0052FF] transition-colors"
           >
-            ← Return to Student App Portal
-          </Link>
+            ← Return to MindMaster Website
+          </a>
         </div>
       </div>
 
