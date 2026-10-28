@@ -12,7 +12,18 @@ import {
 } from "@/lib/studentAuthService";
 import { normalizePhone } from "@/lib/phoneUtils";
 import { getCookieDomain } from "@/lib/supabase/client";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rateLimit";
+import {
+  studentLoginSchema,
+  studentRegisterSchema,
+  studentForgotPasswordSchema,
+  studentOnboardingSchema,
+  studentUpdateProfileSchema,
+  studentValidateSessionSchema,
+  studentAdminResetPasswordSchema,
+  studentAdminResetSessionSchema,
+  formatZodError,
+} from "@/lib/validations";
 
 function getCorsHeaders(req: NextRequest) {
   const origin = req.headers.get("origin") || "*";
@@ -46,14 +57,19 @@ async function handlePost(req: NextRequest) {
     const host = req.headers.get("host") || "";
     const cookieDomain = getCookieDomain(host);
     const isProd = process.env.NODE_ENV === "production";
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const ip = getClientIp(req);
 
-    if (action === "login" || action === "register" || action === "reset_password") {
+    if (
+      action === "login" ||
+      action === "register" ||
+      action === "forgot-password" ||
+      action === "reset_password"
+    ) {
       const rate = checkRateLimit(`student_auth:${ip}`, 5, 60000);
       if (!rate.success) {
-        return NextResponse.json(
-          { success: false, error: `Too many authentication attempts. Please wait ${rate.resetInSec} seconds.` },
-          { status: 429 }
+        return rateLimitResponse(
+          rate.resetInSec,
+          `Too many authentication attempts. Please wait ${rate.resetInSec} seconds.`
         );
       }
     }
@@ -62,7 +78,14 @@ async function handlePost(req: NextRequest) {
     // ACTION: LOGIN
     // -----------------------------------------------------------------------
     if (action === "login") {
-      const { phone, password } = body;
+      const parsed = studentLoginSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { success: false, error: formatZodError(parsed.error) },
+          { status: 400 }
+        );
+      }
+      const { phone, password } = parsed.data;
       const result = await authenticateStudent(phone, password);
 
       if (!result.success || !result.student) {
@@ -166,12 +189,19 @@ async function handlePost(req: NextRequest) {
     // ACTION: REGISTER
     // -----------------------------------------------------------------------
     if (action === "register") {
-      const { phone, password, fullName, email, recoveryPin } = body;
+      const parsed = studentRegisterSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { success: false, error: formatZodError(parsed.error) },
+          { status: 400 }
+        );
+      }
+      const { phone, password, fullName, email, recoveryPin } = parsed.data;
       const result = await registerStudentAccount({
         phone,
         password,
         fullName,
-        email,
+        email: email || undefined,
         recoveryPin,
       });
 
@@ -348,7 +378,14 @@ async function handlePost(req: NextRequest) {
     // ACTION: FORGOT-PASSWORD (PIN RESET)
     // -----------------------------------------------------------------------
     if (action === "forgot-password") {
-      const { phone, recoveryPin, newPassword } = body;
+      const parsed = studentForgotPasswordSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { success: false, error: formatZodError(parsed.error) },
+          { status: 400 }
+        );
+      }
+      const { phone, recoveryPin, newPassword } = parsed.data;
       const result = await resetStudentPasswordWithPin({
         phone,
         recoveryPin,
@@ -388,11 +425,15 @@ async function handlePost(req: NextRequest) {
     // -----------------------------------------------------------------------
     // ACTION: COMPLETE-ONBOARDING
     // -----------------------------------------------------------------------
-    // -----------------------------------------------------------------------
-    // ACTION: COMPLETE-ONBOARDING
-    // -----------------------------------------------------------------------
     if (action === "complete-onboarding") {
-      const { phone, district, taluka, schoolName, village, fullName, standard, targetExam } = body;
+      const parsed = studentOnboardingSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { success: false, error: formatZodError(parsed.error) },
+          { status: 400 }
+        );
+      }
+      const { phone, district, taluka, schoolName, village, fullName, standard, targetExam } = parsed.data;
       const clean = normalizePhone(phone);
       if (clean) {
         completeStudentOnboarding(clean, {
@@ -477,6 +518,13 @@ async function handlePost(req: NextRequest) {
     // ACTION: UPDATE-PROFILE (Phone-Style Settings /profile)
     // -----------------------------------------------------------------------
     if (action === "update-profile") {
+      const parsed = studentUpdateProfileSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: formatZodError(parsed.error) },
+          { status: 400 }
+        );
+      }
       const {
         phone,
         fullName,
@@ -488,7 +536,7 @@ async function handlePost(req: NextRequest) {
         district,
         newPassword,
         recoveryPin,
-      } = body;
+      } = parsed.data;
       const clean = normalizePhone(phone);
       if (!clean) {
         return NextResponse.json({ error: "Phone number is required." }, { status: 400 });
@@ -666,14 +714,15 @@ async function handlePost(req: NextRequest) {
     // ACTION: ADMIN RESET PASSWORD (ARGON2ID HASHED)
     // -----------------------------------------------------------------------
     if (action === "admin-reset-password") {
-      const { phone, newPassword } = body;
-      const clean = normalizePhone(phone);
-      if (!clean || !newPassword || newPassword.length < 6) {
+      const parsed = studentAdminResetPasswordSchema.safeParse(body);
+      if (!parsed.success) {
         return NextResponse.json(
-          { success: false, error: "Valid 10-digit phone and 6+ character password required." },
+          { success: false, error: formatZodError(parsed.error) },
           { status: 400 }
         );
       }
+      const { phone, newPassword } = parsed.data;
+      const clean = normalizePhone(phone);
 
       try {
         const { hashArgon2 } = await import("@/lib/argon2");
@@ -714,7 +763,14 @@ async function handlePost(req: NextRequest) {
     // ACTION: ADMIN RESET SESSION LOCK
     // -----------------------------------------------------------------------
     if (action === "admin-reset-session") {
-      const { phone } = body;
+      const parsed = studentAdminResetSessionSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { success: false, error: formatZodError(parsed.error) },
+          { status: 400 }
+        );
+      }
+      const { phone } = parsed.data;
       const clean = normalizePhone(phone);
       if (clean) {
         const { resetStudentDeviceSessionLock } = await import("@/lib/studentAuthService");

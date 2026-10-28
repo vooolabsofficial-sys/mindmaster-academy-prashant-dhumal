@@ -60,30 +60,6 @@ const ALL_PERMISSIONS: { key: StaffPermission; label: string; desc: string; icon
     desc: "Issue direct offline Cash/UPI course and digital book admissions to students",
     icon: "🎁",
   },
-  {
-    key: "courses.manage",
-    label: "Courses Manager",
-    desc: "Create and edit academy courses, pricing, categories, and validity",
-    icon: "📚",
-  },
-  {
-    key: "videos.manage",
-    label: "YouTube Videos & Playlists",
-    desc: "Add YouTube lessons, configure free previews, and import playlists",
-    icon: "🎬",
-  },
-  {
-    key: "notes.books.manage",
-    label: "Digital Books Manager",
-    desc: "Upload and manage PDF books, pricing, and access permissions",
-    icon: "📖",
-  },
-  {
-    key: "coupons.manage",
-    label: "Discount Coupons",
-    desc: "Create and manage promo discount coupon codes",
-    icon: "🏷️",
-  },
 ];
 
 export default function SubAdminManagerPage() {

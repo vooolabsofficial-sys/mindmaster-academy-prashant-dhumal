@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStaffStudents, getStaffCourses } from "@/lib/staffStore";
+import { grantCountPreviewSchema, formatZodError } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,7 +21,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { scopeType, scopeValue, courseScope, courseId } = body;
+    const parsed = grantCountPreviewSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: formatZodError(parsed.error) },
+        { status: 400 }
+      );
+    }
+    const { scopeType, scopeValue, courseScope, courseId } = parsed.data;
 
     const val = (scopeValue || "").trim().toLowerCase();
 

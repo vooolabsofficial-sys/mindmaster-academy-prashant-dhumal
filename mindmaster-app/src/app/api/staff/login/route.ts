@@ -8,31 +8,31 @@ import {
   signStaffSession,
 } from "@/lib/staffAuthService";
 import { verifyArgon2 } from "@/lib/argon2";
-import { logStaffAction } from "@/lib/staffStore";
 import { normalizePhone } from "@/lib/phoneUtils";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rateLimit";
+import { staffLoginSchema, formatZodError } from "@/lib/validations";
 
 export async function POST(req: Request) {
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const ip = getClientIp(req);
     const rateCheck = checkRateLimit(`staff_login:${ip}`, 5, 60000);
     if (!rateCheck.success) {
-      return NextResponse.json(
-        { error: `Too many login attempts. Please wait ${rateCheck.resetInSec} seconds before trying again.` },
-        { status: 429 }
+      return rateLimitResponse(
+        rateCheck.resetInSec,
+        `Too many login attempts. Please wait ${rateCheck.resetInSec} seconds before trying again.`
       );
     }
 
     const body = await req.json();
-    const { staff_id, password, role: expectedRole } = body;
-
-    if (!staff_id || !password) {
+    const parsed = staffLoginSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Staff ID and password are required." },
+        { error: formatZodError(parsed.error) },
         { status: 400 }
       );
     }
 
+    const { staff_id, password, role: expectedRole } = parsed.data;
     const cleanStaffId = staff_id.trim();
 
     // 1. Lockout Check (Lock out after 5 failures for 15 minutes)

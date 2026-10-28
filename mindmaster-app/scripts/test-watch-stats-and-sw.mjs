@@ -2,6 +2,15 @@ import fs from "fs";
 import path from "path";
 import assert from "assert";
 
+process.on("uncaughtException", (err) => {
+  console.error("❌ Watch stats and SW test failure:", err.message);
+  process.exit(1);
+});
+process.on("unhandledRejection", (err) => {
+  console.error("❌ Watch stats and SW unhandled rejection:", err);
+  process.exit(1);
+});
+
 console.log("================================================================================");
 console.log("🎬 AUDIT VERIFICATION: WATCH PROGRESS, NOTES, LIKES & SERVICE WORKER");
 console.log("================================================================================\n");

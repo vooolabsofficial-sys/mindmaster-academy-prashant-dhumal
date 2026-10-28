@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { issueCertificate } from "@/lib/certificateEngine";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveCourse } from "@/app/actions/checkout";
+import { certificateClaimSchema, formatZodError } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { studentId, studentName, studentPhone, courseId } = body;
-
-    if (!studentId || !studentName || !studentPhone || !courseId) {
+    const parsed = certificateClaimSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: "Missing required certificate claim fields." },
+        { success: false, error: formatZodError(parsed.error) },
         { status: 400 }
       );
     }
+
+    const { studentId, studentName, studentPhone, courseId } = parsed.data;
 
     const course = await resolveCourse(courseId);
     const courseTitle = course?.title || "Master Training Course";

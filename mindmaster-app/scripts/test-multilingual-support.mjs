@@ -9,6 +9,15 @@ import {
   getTranslation,
 } from "../src/lib/i18n.ts";
 
+process.on("uncaughtException", (err) => {
+  console.error("❌ Multilingual test failure:", err.message);
+  process.exit(1);
+});
+process.on("unhandledRejection", (err) => {
+  console.error("❌ Multilingual unhandled rejection:", err);
+  process.exit(1);
+});
+
 console.log("================================================================================");
 console.log("🌐 VERIFYING MULTILINGUAL INDIAN LANGUAGE SUPPORT (8 LANGUAGES, ENGLISH DEFAULT)");
 console.log("================================================================================\n");

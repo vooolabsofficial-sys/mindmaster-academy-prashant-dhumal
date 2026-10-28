@@ -356,48 +356,10 @@ export async function middleware(req: NextRequest | Request) {
     // D. /admin/* route enforcement
     if (isAdminRoute) {
       if (staffSession.role !== "main_admin") {
-        // Master Admin Only locks
-        if (
-          pathname.startsWith("/admin/settings") ||
-          pathname.startsWith("/admin/sub-admins") ||
-          pathname.startsWith("/admin/audit") ||
-          pathname.startsWith("/admin/reports") ||
-          pathname.startsWith("/admin/website-cms")
-        ) {
-          return NextResponse.rewrite(
-            new URL("/forbidden?reason=main_admin_required", req.url),
-            { status: 403 }
-          );
-        }
-
-        // Sub-admin visiting /admin overview redirects to /sub
-        if (pathname === "/admin" || pathname === "/admin/") {
-          return NextResponse.redirect(new URL("/sub", req.url));
-        }
-
-        // Operational permissions verification for sub-admins accessing /admin/* routes
-        const userPerms: string[] = staffSession.permissions || [];
-        if (pathname.startsWith("/admin/courses") && !userPerms.includes("courses.manage")) {
-          return NextResponse.rewrite(new URL("/forbidden?perm=courses.manage", req.url), { status: 403 });
-        }
-        if ((pathname.startsWith("/admin/videos") || pathname.startsWith("/admin/playlist")) && !userPerms.includes("videos.manage")) {
-          return NextResponse.rewrite(new URL("/forbidden?perm=videos.manage", req.url), { status: 403 });
-        }
-        if (pathname.startsWith("/admin/notes") && !userPerms.includes("notes.books.manage")) {
-          return NextResponse.rewrite(new URL("/forbidden?perm=notes.books.manage", req.url), { status: 403 });
-        }
-        if (pathname.startsWith("/admin/coupons") && !userPerms.includes("coupons.manage")) {
-          return NextResponse.rewrite(new URL("/forbidden?perm=coupons.manage", req.url), { status: 403 });
-        }
-        if (pathname.startsWith("/admin/grants") && !userPerms.includes("freegrant.manage")) {
-          return NextResponse.rewrite(new URL("/forbidden?perm=freegrant.manage", req.url), { status: 403 });
-        }
-        if (pathname.startsWith("/admin/students") && !userPerms.includes("students.view")) {
-          return NextResponse.rewrite(new URL("/forbidden?perm=students.view", req.url), { status: 403 });
-        }
-        if (pathname.startsWith("/admin/messages") && !userPerms.includes("messages.manage")) {
-          return NextResponse.rewrite(new URL("/forbidden?perm=messages.manage", req.url), { status: 403 });
-        }
+        return NextResponse.rewrite(
+          new URL("/forbidden?reason=main_admin_required", req.url),
+          { status: 403 }
+        );
       }
       return NextResponse.next();
     }

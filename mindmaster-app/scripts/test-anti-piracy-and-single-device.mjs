@@ -13,6 +13,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const appDir = path.resolve(__dirname, "..");
 
+process.on("uncaughtException", (err) => {
+  console.error("❌ Anti-piracy test failure:", err.message);
+  process.exit(1);
+});
+process.on("unhandledRejection", (err) => {
+  console.error("❌ Anti-piracy unhandled rejection:", err);
+  process.exit(1);
+});
+
 console.log("================================================================================");
 console.log("🛡️ VERIFYING ANTI-PIRACY SHIELD, DYNAMIC WATERMARK & SINGLE-DEVICE LOGIN LOCK");
 console.log("================================================================================\n");

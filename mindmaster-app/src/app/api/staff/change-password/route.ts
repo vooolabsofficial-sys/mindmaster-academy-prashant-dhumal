@@ -2,18 +2,20 @@ import { NextResponse } from "next/server";
 import { findStaffAccount, StaffSessionData, signStaffSession } from "@/lib/staffAuthService";
 import { hashArgon2, verifyArgon2 } from "@/lib/argon2";
 import { logStaffAction, saveStaffUser } from "@/lib/staffStore";
+import { staffChangePasswordSchema, formatZodError } from "@/lib/validations";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { staff_id, temp_password, new_password } = body;
-
-    if (!staff_id || !temp_password || !new_password) {
+    const parsed = staffChangePasswordSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Staff ID, current password, and new password are required." },
+        { error: formatZodError(parsed.error) },
         { status: 400 }
       );
     }
+
+    const { staff_id, temp_password, new_password } = parsed.data;
 
     const staff = findStaffAccount(staff_id);
     if (!staff) {
@@ -65,7 +67,7 @@ export async function POST(req: Request) {
 
     const signedToken = signStaffSession(sessionData);
     res.cookies.set("mma_staff_session", signedToken, {
-      httpOnly: false,
+      httpOnly: false, // accessible to client auth store
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",

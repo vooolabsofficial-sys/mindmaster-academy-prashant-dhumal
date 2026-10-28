@@ -1,18 +1,35 @@
 import { NextResponse } from "next/server";
 import { generateSmsOtp, verifyOtpAndResetPassword } from "@/lib/staffAuthService";
 import { logStaffAction } from "@/lib/staffStore";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rateLimit";
+import {
+  staffForgotOtpRequestSchema,
+  staffForgotVerifySchema,
+  formatZodError,
+} from "@/lib/validations";
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(`staff_forgot:${ip}`, 5, 60000);
+    if (!rateCheck.success) {
+      return rateLimitResponse(
+        rateCheck.resetInSec,
+        `Too many password reset requests. Please wait ${rateCheck.resetInSec} seconds before trying again.`
+      );
+    }
+
     const body = await req.json();
-    const { action, staff_id, otp, new_password } = body;
+    const { action } = body;
 
     // Action 1: Request SMS OTP
     if (action === "request_otp") {
-      if (!staff_id) {
-        return NextResponse.json({ error: "Staff ID or Phone is required." }, { status: 400 });
+      const parsed = staffForgotOtpRequestSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json({ error: formatZodError(parsed.error) }, { status: 400 });
       }
 
+      const { staff_id } = parsed.data;
       const result = generateSmsOtp(staff_id);
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: 404 });
@@ -27,13 +44,12 @@ export async function POST(req: Request) {
 
     // Action 2: Verify OTP and Reset Password with Argon2
     if (action === "verify_reset") {
-      if (!staff_id || !otp || !new_password) {
-        return NextResponse.json(
-          { error: "Staff ID, OTP, and new password are required." },
-          { status: 400 }
-        );
+      const parsed = staffForgotVerifySchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json({ error: formatZodError(parsed.error) }, { status: 400 });
       }
 
+      const { staff_id, otp, new_password } = parsed.data;
       const resetResult = await verifyOtpAndResetPassword(staff_id, otp, new_password);
       if (!resetResult.success) {
         return NextResponse.json({ error: resetResult.error }, { status: 400 });

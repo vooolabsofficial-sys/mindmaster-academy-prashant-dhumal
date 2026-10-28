@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCertificateByNumber } from "@/lib/certificateEngine";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rateLimit";
 import { recordServerAuditLog } from "@/lib/auditLogger";
+import { certificateVerifySchema, formatZodError } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -20,25 +21,28 @@ export async function OPTIONS() {
 
 export async function GET(req: NextRequest) {
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const ip = getClientIp(req);
     const rate = checkRateLimit(`cert_verify:${ip}`, 10, 60000);
     if (!rate.success) {
-      return NextResponse.json(
-        { success: false, error: `Too many verification queries. Please wait ${rate.resetInSec} seconds.` },
-        { status: 429, headers: CORS_HEADERS }
+      return rateLimitResponse(
+        rate.resetInSec,
+        `Too many verification queries. Please wait ${rate.resetInSec} seconds.`,
+        CORS_HEADERS
       );
     }
 
     const { searchParams } = new URL(req.url);
-    const certNo = searchParams.get("cert") || searchParams.get("certificate_no") || searchParams.get("no");
+    const rawCertNo = searchParams.get("cert") || searchParams.get("certificate_no") || searchParams.get("no");
 
-    if (!certNo) {
+    const parsed = certificateVerifySchema.safeParse({ certificateNo: rawCertNo || "" });
+    if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: "Certificate number is required." },
+        { success: false, error: "Certificate number is required and must be valid." },
         { status: 400, headers: CORS_HEADERS }
       );
     }
 
+    const certNo = parsed.data.certificateNo;
     const result = await verifyCertificateByNumber(certNo);
 
     // Audit log lookup
@@ -86,25 +90,28 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const ip = getClientIp(req);
     const rate = checkRateLimit(`cert_verify:${ip}`, 10, 60000);
     if (!rate.success) {
-      return NextResponse.json(
-        { success: false, error: `Too many verification queries. Please wait ${rate.resetInSec} seconds.` },
-        { status: 429, headers: CORS_HEADERS }
+      return rateLimitResponse(
+        rate.resetInSec,
+        `Too many verification queries. Please wait ${rate.resetInSec} seconds.`,
+        CORS_HEADERS
       );
     }
 
     const body = await req.json();
-    const certNo = body.certificateNo || body.certificate_no || body.cert;
+    const rawCertNo = body.certificateNo || body.certificate_no || body.cert;
 
-    if (!certNo) {
+    const parsed = certificateVerifySchema.safeParse({ certificateNo: rawCertNo || "" });
+    if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: "Certificate number is required." },
+        { success: false, error: "Certificate number is required and must be valid." },
         { status: 400, headers: CORS_HEADERS }
       );
     }
 
+    const certNo = parsed.data.certificateNo;
     const result = await verifyCertificateByNumber(certNo);
 
     if (!result.isValid || !result.certificate) {

@@ -4,7 +4,7 @@ import fs from "fs";
 import { validateCoupon, createRazorpayOrder, verifyRazorpayPayment } from "../src/app/actions/checkout.js";
 import { MOCK_COURSES, COURSE_ID_MAP } from "../src/lib/mockData.js";
 import { recordCouponRedemption, clearAllRedemptions } from "../src/lib/couponRedemptionStore.js";
-import { saveStaffCoupon, clearAllStaffCoupons } from "../src/lib/staffStore.js";
+import { saveStaffCoupon, clearAllStaffCoupons, saveStaffCourse } from "../src/lib/staffStore.js";
 
 console.log("================================================================================");
 console.log("💳 VERIFYING CHECKOUT, COUPON VALIDATION & RAZORPAY FLOW");
@@ -14,7 +14,91 @@ async function runTests() {
   let passed = 0;
   let failed = 0;
 
-  // Seed isolated test coupons for checkout validation
+  // Seed isolated test course & coupons for checkout validation
+  saveStaffCourse({
+    id: "c-mm-01",
+    title: "Vedic Maths Mastery",
+    code: "MMA-01",
+    category: "Vedic Maths",
+    pricePaise: 99900,
+    priceRupees: 999,
+    originalPricePaise: 199900,
+    originalPriceRupees: 1999,
+    status: "published",
+    lessonsCount: 20,
+    enrolledCount: 0,
+    rating: 4.9,
+    isFree: false,
+    durationHours: 10,
+    description: "Vedic Maths Mastery",
+    thumbnail: "/assets/images/vedic-maths.jpg",
+    tags: ["maths", "vedic"],
+    updatedAt: new Date().toISOString(),
+  });
+
+  saveStaffCourse({
+    id: "c-mm-02",
+    title: "Vedic Maths Advanced",
+    code: "MMA-02",
+    category: "Vedic Maths",
+    pricePaise: 149900,
+    priceRupees: 1499,
+    originalPricePaise: 249900,
+    originalPriceRupees: 2499,
+    status: "published",
+    lessonsCount: 30,
+    enrolledCount: 0,
+    rating: 4.9,
+    isFree: false,
+    durationHours: 15,
+    description: "Vedic Maths Advanced",
+    thumbnail: "/assets/images/vedic-maths.jpg",
+    tags: ["maths", "vedic"],
+    updatedAt: new Date().toISOString(),
+  });
+
+  saveStaffCourse({
+    id: "c-mm-04",
+    title: "Memory Power",
+    code: "MMA-04",
+    category: "Memory Mastery",
+    pricePaise: 49900,
+    priceRupees: 499,
+    originalPricePaise: 99900,
+    originalPriceRupees: 999,
+    status: "published",
+    lessonsCount: 15,
+    enrolledCount: 0,
+    rating: 4.8,
+    isFree: false,
+    durationHours: 8,
+    description: "Memory Power",
+    thumbnail: "/assets/images/memory.jpg",
+    tags: ["memory"],
+    updatedAt: new Date().toISOString(),
+  });
+
+  saveStaffCourse({
+    id: "c-mm-05",
+    title: "DMIT Brain Mapping",
+    code: "MMA-05",
+    category: "Mind Training",
+    pricePaise: 79900,
+    priceRupees: 799,
+    originalPricePaise: 149900,
+    originalPriceRupees: 1499,
+    status: "published",
+    lessonsCount: 12,
+    enrolledCount: 0,
+    rating: 4.9,
+    isFree: false,
+    durationHours: 6,
+    description: "DMIT Brain Mapping",
+    thumbnail: "/assets/images/dmit.jpg",
+    tags: ["dmit", "brain"],
+    updatedAt: new Date().toISOString(),
+  });
+
   saveStaffCoupon({
     id: "chk-test-welcome",
     code: "CHKWELCOME50",
