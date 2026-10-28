@@ -27,6 +27,7 @@ import { getStaffCourses, StaffCourse, fetchDbCourses } from "@/lib/staffStore";
 import { getStoredVideos } from "@/lib/playlistStore";
 import { normalizePhone } from "@/lib/phoneUtils";
 import { getStudentActiveEnrollments } from "@/app/actions/studentAccess";
+import { formatIST, isExpiredIST, getRemainingTimeIST } from "@/lib/istTime";
 
 export default function MyLearningPage() {
   const [courses, setCourses] = useState<StaffCourse[]>([]);
@@ -322,9 +323,9 @@ export default function MyLearningPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {enrolled.map((course) => {
                   const expiryStr = activePurchases[course.id] || (course.code ? activePurchases[course.code] : "") || "";
-                  const daysLeft = expiryStr
-                    ? Math.max(1, Math.ceil((new Date(expiryStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-                    : (course.accessMonths ? course.accessMonths * 30 : 90);
+                  const isExpired = expiryStr ? isExpiredIST(expiryStr) : false;
+                  const remaining = expiryStr ? getRemainingTimeIST(expiryStr) : { days: (course.accessMonths || 3) * 30, label: `${course.accessMonths || 3} Months`, isExpired: false };
+                  const formattedISTDate = expiryStr ? formatIST(expiryStr) : "";
 
                   return (
                     <div
@@ -338,11 +339,18 @@ export default function MyLearningPage() {
                             {course.code || "MM"}
                           </span>
 
-                          {/* PEACH EXPIRY CHIP */}
-                          <span className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-0.5 rounded-full shadow-2xs flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-amber-600" />
-                            <span>Expires in {daysLeft} days</span>
-                          </span>
+                          {/* IST EXPIRY CHIP */}
+                          {isExpired ? (
+                            <span className="text-[11px] font-bold text-rose-800 bg-rose-50 border border-rose-200 px-3 py-0.5 rounded-full shadow-2xs flex items-center gap-1" title={formattedISTDate}>
+                              <Clock className="w-3 h-3 text-rose-600" />
+                              <span>Expired on {formattedISTDate}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-0.5 rounded-full shadow-2xs flex items-center gap-1" title={formattedISTDate}>
+                              <Clock className="w-3 h-3 text-amber-600" />
+                              <span>{remaining.label} (IST)</span>
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-2.5 text-xs font-bold text-slate-900 mt-1">
@@ -407,7 +415,7 @@ export default function MyLearningPage() {
                                 amountPaise: course.pricePaise || 99900,
                                 paymentId: "pay_rzp_live_grant",
                                 accessMonths: course.accessMonths || 3,
-                                expiryDate: expiryStr ? new Date(expiryStr).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "3 Months",
+                                expiryDate: expiryStr ? formatIST(expiryStr, { dateOnly: true }) : "3 Months",
                               })
                             }
                             className="text-[11px] font-bold text-[#0B57D0] hover:text-[#0842A0] hover:underline flex items-center gap-1 cursor-pointer"
@@ -416,13 +424,23 @@ export default function MyLearningPage() {
                             <span>Download Fee Receipt</span>
                           </button>
 
-                          <Link
-                            href={`/watch/${course.id}`}
-                            className="touch-target-44 min-h-[44px] px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 touch-manipulation"
-                          >
-                            <span>Continue</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </Link>
+                          {isExpired ? (
+                            <Link
+                              href={`/checkout?courseId=${course.id}`}
+                              className="touch-target-44 min-h-[44px] px-6 py-2.5 rounded-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm shadow-amber-500/25 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 touch-manipulation"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>Renew Access</span>
+                            </Link>
+                          ) : (
+                            <Link
+                              href={`/watch/${course.id}`}
+                              className="touch-target-44 min-h-[44px] px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 touch-manipulation"
+                            >
+                              <span>Continue</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </div>

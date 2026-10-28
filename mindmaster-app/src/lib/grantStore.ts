@@ -2,6 +2,14 @@ import { Course, StudentRecord, Book } from "./types";
 import { getStaffStudents, getStaffCourses, getStaffBooks, getCurrentStaff, getStaffUsers, logStaffAction, saveStaffStudent } from "./staffStore";
 import { addStudentNotification } from "./studentNotificationStore";
 import { normalizePhone } from "./phoneUtils";
+import {
+  calculateExpiryIST,
+  extendExpiryIST,
+  formatIST,
+  getNowUTC,
+  isExpiredIST,
+  getRemainingTimeIST,
+} from "./istTime";
 
 function getSupabase() {
   try {
@@ -71,6 +79,12 @@ export interface Grant {
   approvedBy?: string;
   rejection_reason?: string;
   rejectionReason?: string;
+  installment_due?: number;
+  installmentDue?: number;
+  installment_due_date?: string;
+  installmentDueDate?: string;
+  installment_remarks?: string;
+  installmentRemarks?: string;
 }
 
 export interface GrantPurchase {
@@ -323,16 +337,16 @@ export function createGrant(params: {
   let endsAt: string;
   let months = params.months || 3;
   if (params.customExpiryDate) {
-    endsAt = new Date(params.customExpiryDate).toISOString();
-    months = Math.max(1, Math.round((new Date(params.customExpiryDate).getTime() - now.getTime()) / (30 * 86400000)));
+    endsAt = calculateExpiryIST(now, { exactDate: params.customExpiryDate });
+    months = Math.max(1, Math.round((new Date(endsAt).getTime() - now.getTime()) / (30 * 86400000)));
   } else if (params.validityDays) {
-    endsAt = new Date(now.getTime() + params.validityDays * 86400000).toISOString();
+    endsAt = calculateExpiryIST(now, { days: params.validityDays });
     months = Math.max(1, Math.round(params.validityDays / 30));
   } else if ((params.months || 0) >= 36) {
-    endsAt = new Date(now.getTime() + 3650 * 86400000).toISOString();
+    endsAt = calculateExpiryIST(now, { days: 3650 });
     months = 120;
   } else {
-    endsAt = new Date(now.getTime() + months * 30 * 24 * 60 * 60 * 1000).toISOString();
+    endsAt = calculateExpiryIST(now, { months });
   }
 
   const grantId = `grant-${Date.now()}`;
@@ -850,6 +864,9 @@ export interface CashAdmissionParams {
   amountPaid: number;
   remarks?: string;
   allowExtension?: boolean;
+  installmentDue?: number;
+  installmentDueDate?: string;
+  installmentRemarks?: string;
 }
 
 export interface CashAdmissionResult {
@@ -979,26 +996,38 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
   const studentName = params.studentName?.trim() || student?.name || "Student";
   const newStudentId = student?.id || `student-${cleanPhone}`;
 
-  // Calculate Expiry
+  // Calculate Expiry using IST Engine
   const now = new Date();
   let endsAt: string;
   let months = params.accessMonths || 6;
   let validityText = "";
 
+  const existingActiveExpiry = duplicateActiveGrant && params.allowExtension
+    ? duplicateActiveGrant.ends_at || duplicateActiveGrant.endsAt
+    : null;
+
   if (params.customExpiryDate) {
-    endsAt = new Date(params.customExpiryDate).toISOString();
-    months = Math.max(1, Math.round((new Date(params.customExpiryDate).getTime() - now.getTime()) / (30 * 86400000)));
-    validityText = `Until ${new Date(params.customExpiryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`;
+    endsAt = existingActiveExpiry
+      ? extendExpiryIST(existingActiveExpiry, { exactDate: params.customExpiryDate })
+      : calculateExpiryIST(now, { exactDate: params.customExpiryDate });
+    months = Math.max(1, Math.round((new Date(endsAt).getTime() - now.getTime()) / (30 * 86400000)));
+    validityText = `Until ${formatIST(endsAt, { dateOnly: true })}`;
   } else if (params.validityDays) {
-    endsAt = new Date(now.getTime() + params.validityDays * 86400000).toISOString();
+    endsAt = existingActiveExpiry
+      ? extendExpiryIST(existingActiveExpiry, { days: params.validityDays })
+      : calculateExpiryIST(now, { days: params.validityDays });
     months = Math.max(1, Math.round(params.validityDays / 30));
     validityText = `${params.validityDays} Days`;
   } else if ((params.accessMonths || 0) >= 36) {
-    endsAt = new Date(now.getTime() + 3650 * 86400000).toISOString();
+    endsAt = existingActiveExpiry
+      ? extendExpiryIST(existingActiveExpiry, { days: 3650 })
+      : calculateExpiryIST(now, { days: 3650 });
     months = 120;
     validityText = "Lifetime Access";
   } else {
-    endsAt = new Date(now.getTime() + months * 30 * 86400000).toISOString();
+    endsAt = existingActiveExpiry
+      ? extendExpiryIST(existingActiveExpiry, { months })
+      : calculateExpiryIST(now, { months });
     validityText = `${months} Months`;
   }
 
@@ -1094,6 +1123,12 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     studentPhone: cleanPhone,
     student_name: studentName,
     studentName: studentName,
+    installment_due: params.installmentDue || undefined,
+    installmentDue: params.installmentDue || undefined,
+    installment_due_date: params.installmentDueDate || undefined,
+    installmentDueDate: params.installmentDueDate || undefined,
+    installment_remarks: params.installmentRemarks || undefined,
+    installmentRemarks: params.installmentRemarks || undefined,
   };
 
   // 3. Create Grant Purchase Record
@@ -1207,7 +1242,9 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
 
   // 7. Generate Pre-filled WhatsApp Share Message
   const approvalNotice = requiresApproval ? "\n⏳ Status: Verification Pending by HQ (Will activate shortly)" : "";
-  const receiptText = `Hello ${studentName}!\n\nYour admission to "${itemTitle}" at MindMaster Academy is recorded. ✅\n\n💵 Fee Paid: ₹${params.amountPaid} (${modeLabel})${approvalNotice}\n⏱️ Validity: ${validityText}\n📱 Login Mobile: ${cleanPhone}\n\n📲 Access portal in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! 🌟\n— MindMaster Academy`;
+  const installmentNotice = params.installmentDue ? `\n💳 Balance Due: ₹${params.installmentDue}${params.installmentDueDate ? ` (Due by ${params.installmentDueDate})` : ""}` : "";
+  const istExpiryFormatted = formatIST(endsAt, { dateOnly: true });
+  const receiptText = `Hello ${studentName}!\n\nYour admission to "${itemTitle}" at MindMaster Academy is recorded. ✅\n\n💵 Fee Paid: ₹${params.amountPaid} (${modeLabel})${installmentNotice}${approvalNotice}\n⏱️ Validity: ${validityText} (Expires: ${istExpiryFormatted})\n📱 Login Mobile: ${cleanPhone}\n\n📲 Access portal in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! 🌟\n— MindMaster Academy`;
   const whatsappUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(receiptText)}`;
 
   return {
@@ -1431,16 +1468,21 @@ export async function extendStudentAccess(params: {
   const currentStaff = getCurrentStaff();
   const cleanPhone = normalizePhone(params.studentPhone);
 
-  const now = Date.now();
-  let targetEndsAtMs: number;
-
-  if (params.customExpiryIso) {
-    targetEndsAtMs = new Date(params.customExpiryIso).getTime();
-  } else {
-    const days = params.daysToAdd || 30;
-    targetEndsAtMs = now + days * 86400000;
+  const grants = getGrants();
+  let existingExpiry: string | null = null;
+  const matchedGrant = grants.find((g) => {
+    const matchPhone = normalizePhone(g.scope_value || g.scopeValue || g.student_phone || g.studentPhone || "") === cleanPhone;
+    const matchItem = (g.course_id || g.courseId || g.book_id || g.bookId) === params.itemId;
+    const matchId = params.grantId && g.id === params.grantId;
+    return matchId || (matchPhone && matchItem && g.status === "active");
+  });
+  if (matchedGrant) {
+    existingExpiry = matchedGrant.ends_at || matchedGrant.endsAt;
   }
-  const newEndsAtIso = new Date(targetEndsAtMs).toISOString();
+
+  const newEndsAtIso = params.customExpiryIso
+    ? extendExpiryIST(existingExpiry, { exactDate: params.customExpiryIso.slice(0, 10) })
+    : extendExpiryIST(existingExpiry, { days: params.daysToAdd || 30 });
 
   // 1. Update active purchases in client localStorage
   if (typeof window !== "undefined") {
@@ -1455,7 +1497,6 @@ export async function extendStudentAccess(params: {
   }
 
   // 2. Update grant / purchase records in local store
-  const grants = getGrants();
   let grantFound = false;
   const updatedGrants = grants.map((g) => {
     const matchPhone =
@@ -1648,6 +1689,220 @@ export async function revokeStudentAccess(params: {
     cleanPhone,
     params.studentName || cleanPhone,
     `Staff (${currentStaff.role} - ${currentStaff.name}) terminated access to ${params.itemType} "${params.itemTitle || params.itemId}". Mandatory Reason: ${params.reason.trim()}`
+  );
+
+  return { success: true };
+}
+
+export async function swapStudentCourse(params: {
+  studentPhone: string;
+  studentName?: string;
+  currentCourseId: string;
+  newCourseId: string;
+  remarks?: string;
+}): Promise<{ success: boolean; error?: string; updatedTitle?: string }> {
+  const currentStaff = getCurrentStaff();
+  const cleanPhone = normalizePhone(params.studentPhone);
+  const courses = getStaffCourses();
+  const books = getStaffBooks();
+
+  const newCourse = courses.find((c) => c.id === params.newCourseId || c.code === params.newCourseId);
+  const newBook = !newCourse ? books.find((b) => b.id === params.newCourseId || b.code === params.newCourseId) : null;
+  const isNewBook = Boolean(newBook);
+  const newTitle = isNewBook ? newBook!.title : newCourse ? newCourse.title : params.newCourseId;
+  const newCode = isNewBook ? (newBook!.code || "BK") : newCourse ? newCourse.code : "MM";
+
+  if (!newCourse && !newBook && params.newCourseId !== "all") {
+    return { success: false, error: "Target course/book not found." };
+  }
+
+  // 1. Update in grants store
+  const grants = getGrants();
+  let grantUpdated = false;
+  let preservedExpiry = "";
+
+  const updatedGrants = grants.map((g) => {
+    const matchPhone =
+      normalizePhone(g.scope_value || g.scopeValue || g.student_phone || g.studentPhone || "") === cleanPhone;
+    const matchItem = (g.course_id || g.courseId || g.book_id || g.bookId) === params.currentCourseId;
+    if (matchPhone && matchItem && g.status === "active") {
+      grantUpdated = true;
+      preservedExpiry = g.ends_at || g.endsAt;
+      return {
+        ...g,
+        item_type: isNewBook ? ("book" as const) : ("course" as const),
+        itemType: isNewBook ? ("book" as const) : ("course" as const),
+        course_id: isNewBook ? undefined : params.newCourseId,
+        courseId: isNewBook ? undefined : params.newCourseId,
+        book_id: isNewBook ? params.newCourseId : undefined,
+        bookId: isNewBook ? params.newCourseId : undefined,
+        courseTitle: newTitle,
+        reason: `${g.reason || ""} [Swapped to ${newTitle} by ${currentStaff.name}: ${params.remarks || "Course Swap"}]`.trim(),
+      };
+    }
+    return g;
+  });
+
+  if (grantUpdated) {
+    saveGrants(updatedGrants);
+  }
+
+  // 2. Update in grant purchases
+  const purchases = getGrantPurchases();
+  const updatedPurchases = purchases.map((p) => {
+    const matchPhone = normalizePhone(p.studentPhone || (p as any).student_phone || "") === cleanPhone;
+    const matchItem = (p.course_id || p.courseId) === params.currentCourseId;
+    if (matchPhone && matchItem && p.status === "active") {
+      return {
+        ...p,
+        course_id: params.newCourseId,
+        courseId: params.newCourseId,
+        courseCode: newCode,
+        courseTitle: newTitle,
+      };
+    }
+    return p;
+  });
+  saveGrantPurchases(updatedPurchases);
+
+  // 3. Update client active purchases
+  if (typeof window !== "undefined") {
+    try {
+      const activePurchases = JSON.parse(localStorage.getItem("mindmaster_active_purchases") || "{}");
+      const existingExp = activePurchases[params.currentCourseId] || preservedExpiry || calculateExpiryIST(new Date(), { months: 6 });
+      delete activePurchases[params.currentCourseId];
+      activePurchases[params.newCourseId] = existingExp;
+      localStorage.setItem("mindmaster_active_purchases", JSON.stringify(activePurchases));
+      window.dispatchEvent(new Event("storage"));
+    } catch {}
+  }
+
+  // 4. Update Supabase if configured
+  try {
+    const supabase = getSupabase();
+    if (supabase) {
+      await supabase
+        .from("course_grants")
+        .update({
+          course_id: params.newCourseId,
+          course_title: newTitle,
+          item_type: isNewBook ? "book" : "course",
+          remarks: `Swapped from ${params.currentCourseId} to ${newTitle} by ${currentStaff.name}. ${params.remarks || ""}`.trim(),
+        })
+        .match({
+          student_phone: cleanPhone,
+          course_id: params.currentCourseId,
+          status: "active",
+        });
+    }
+  } catch (err) {
+    console.warn("Supabase course swap sync fallback:", err);
+  }
+
+  logStaffAction(
+    "COURSE_SWAP",
+    "grant",
+    cleanPhone,
+    `Swap Course to ${newTitle}`,
+    `Staff ${currentStaff.name} swapped active course from ${params.currentCourseId} to ${newTitle} for student ${cleanPhone}. Reason: ${params.remarks || "No reason specified"}.`
+  );
+
+  return { success: true, updatedTitle: newTitle };
+}
+
+export async function updatePendingGrant(params: {
+  grantId: string;
+  courseId?: string;
+  accessMonths?: number;
+  validityDays?: number;
+  customExpiryDate?: string;
+  amountPaid?: number;
+  remarks?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const currentStaff = getCurrentStaff();
+  const grants = getGrants();
+  const grant = grants.find((g) => g.id === params.grantId);
+  if (!grant) return { success: false, error: "Grant not found." };
+
+  const courses = getStaffCourses();
+  const books = getStaffBooks();
+
+  let newCourseTitle = grant.courseTitle;
+  let newItemType = grant.item_type || grant.itemType || "course";
+  let newCourseId = grant.course_id || grant.courseId;
+  let newBookId = grant.book_id || grant.bookId;
+
+  if (params.courseId) {
+    const c = courses.find((item) => item.id === params.courseId || item.code === params.courseId);
+    const b = !c ? books.find((item) => item.id === params.courseId || item.code === params.courseId) : null;
+    if (c) {
+      newItemType = "course";
+      newCourseId = c.id;
+      newBookId = undefined;
+      newCourseTitle = c.title;
+    } else if (b) {
+      newItemType = "book";
+      newBookId = b.id;
+      newCourseId = b.id;
+      newCourseTitle = b.title;
+    }
+  }
+
+  let newEndsAt = grant.ends_at || grant.endsAt;
+  if (params.customExpiryDate) {
+    newEndsAt = calculateExpiryIST(new Date(), { exactDate: params.customExpiryDate });
+  } else if (params.validityDays) {
+    newEndsAt = calculateExpiryIST(new Date(), { days: params.validityDays });
+  } else if (params.accessMonths) {
+    newEndsAt = calculateExpiryIST(new Date(), { months: params.accessMonths });
+  }
+
+  const updatedGrants = grants.map((g) => {
+    if (g.id === params.grantId) {
+      return {
+        ...g,
+        course_id: newCourseId,
+        courseId: newCourseId,
+        book_id: newBookId,
+        bookId: newBookId,
+        item_type: newItemType,
+        itemType: newItemType,
+        courseTitle: newCourseTitle,
+        ends_at: newEndsAt,
+        endsAt: newEndsAt,
+        amount_paid: params.amountPaid !== undefined ? params.amountPaid : g.amount_paid,
+        amountPaid: params.amountPaid !== undefined ? params.amountPaid : g.amountPaid,
+        reason: params.remarks !== undefined ? params.remarks : g.reason,
+      };
+    }
+    return g;
+  });
+
+  saveGrants(updatedGrants);
+
+  try {
+    const supabase = getSupabase();
+    if (supabase) {
+      await supabase
+        .from("course_grants")
+        .update({
+          course_id: newCourseId,
+          course_title: newCourseTitle,
+          item_type: newItemType,
+          valid_until: newEndsAt,
+          amount_paid: params.amountPaid !== undefined ? params.amountPaid : grant.amount_paid,
+          remarks: params.remarks !== undefined ? params.remarks : grant.reason,
+        })
+        .eq("id", params.grantId);
+    }
+  } catch {}
+
+  logStaffAction(
+    "GRANT_EDIT",
+    "grant",
+    params.grantId,
+    `Edited Pending Grant ${params.grantId}`,
+    `Staff ${currentStaff.name} updated pending grant course to ${newCourseTitle}, expiry ${newEndsAt}.`
   );
 
   return { success: true };
@@ -2087,10 +2342,19 @@ export function getStudentActiveGrants(phone: string): StudentActiveAccessItem[]
   return results;
 }
 
+export interface MultiCourseItemConfig {
+  itemId: string;
+  validityDays?: number;
+  accessMonths?: number;
+  customExpiryDate?: string;
+  amountPaid?: number;
+}
+
 export interface MultiCourseAdmissionParams {
   studentPhone: string;
   studentName?: string;
   itemIds: string[];
+  customItems?: MultiCourseItemConfig[];
   validityDays?: number;
   customExpiryDate?: string;
   accessMonths?: number;
@@ -2098,6 +2362,9 @@ export interface MultiCourseAdmissionParams {
   upiRef?: string;
   totalAmountPaid: number;
   remarks?: string;
+  installmentDue?: number;
+  installmentDueDate?: string;
+  installmentRemarks?: string;
 }
 
 export interface MultiCourseAdmissionResult {
@@ -2165,18 +2432,27 @@ export function grantMultiCourseAdmission(params: MultiCourseAdmissionParams): M
       ? params.totalAmountPaid - perItemAmount * (itemCount - 1)
       : perItemAmount;
 
+    const config = params.customItems?.find((ci) => ci.itemId === itemId);
+    const itemMonths = config?.accessMonths ?? params.accessMonths;
+    const itemDays = config?.validityDays ?? params.validityDays;
+    const itemCustomDate = config?.customExpiryDate ?? params.customExpiryDate;
+    const itemAmount = config?.amountPaid !== undefined ? config.amountPaid : allocatedAmount;
+
     const res = grantCashAdmission({
       studentPhone: cleanPhone,
       studentName: params.studentName,
       courseId: itemId,
-      validityDays: params.validityDays,
-      customExpiryDate: params.customExpiryDate,
-      accessMonths: params.accessMonths,
+      validityDays: itemDays,
+      customExpiryDate: itemCustomDate,
+      accessMonths: itemMonths,
       paymentMode: params.paymentMode,
       upiRef: params.upiRef,
-      amountPaid: allocatedAmount,
+      amountPaid: itemAmount,
       remarks: params.remarks,
       allowExtension: true,
+      installmentDue: isLast ? params.installmentDue : undefined,
+      installmentDueDate: isLast ? params.installmentDueDate : undefined,
+      installmentRemarks: isLast ? params.installmentRemarks : undefined,
     });
 
     if (res.success) {
@@ -2202,7 +2478,7 @@ export function grantMultiCourseAdmission(params: MultiCourseAdmissionParams): M
       ? `Direct UPI (${params.upiRef?.trim() || "Verified"})`
       : "Free Grant / Scholarship";
 
-  const receiptText = `Hello ${studentName}!\n\nYour admission to ${results.length} curriculum program(s) at MindMaster Academy is confirmed. ✅\n\n📚 Enrolled:\n${results.map((r, i) => `${i + 1}. ${r.grant.courseTitle} (Expires: ${r.expiresAt.slice(0, 10)})`).join("\n")}\n\n💵 Total Fee Paid: ₹${params.totalAmountPaid} (${modeLabel})${params.remarks ? `\n📝 Note: ${params.remarks}` : ""}\n📱 Login Mobile: ${cleanPhone}\n\n📲 Start learning in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! 🌟\n— MindMaster Academy`;
+  const receiptText = `Hello ${studentName}!\n\nYour admission to ${results.length} curriculum program(s) at MindMaster Academy is confirmed. ✅\n\n📚 Enrolled:\n${results.map((r, i) => `${i + 1}. ${r.grant.courseTitle} (Expires: ${formatIST(r.expiresAt, { dateOnly: true })})`).join("\n")}\n\n💵 Total Fee Paid: ₹${params.totalAmountPaid} (${modeLabel})${params.installmentDue ? `\n💳 Balance Due: ₹${params.installmentDue}${params.installmentDueDate ? ` (Due by ${params.installmentDueDate})` : ""}` : ""}${params.remarks ? `\n📝 Note: ${params.remarks}` : ""}\n📱 Login Mobile: ${cleanPhone}\n\n📲 Start learning in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! 🌟\n— MindMaster Academy`;
 
   const whatsappUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(receiptText)}`;
 

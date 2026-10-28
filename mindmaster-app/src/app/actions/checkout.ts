@@ -8,6 +8,7 @@ import { COURSE_ID_MAP } from "@/lib/mockData";
 import { getStaffCoupons, getStaffStudents, saveStaffCoupon, getStaffCourses, getStaffBooks } from "@/lib/staffStore";
 import { hasUserRedeemedCoupon, recordCouponRedemption } from "@/lib/couponRedemptionStore";
 import { normalizePhone } from "@/lib/phoneUtils";
+import { calculateExpiryIST, extendExpiryIST, formatIST } from "@/lib/istTime";
 
 export async function resolveCourse(courseId: string) {
   try {
@@ -968,9 +969,7 @@ export async function verifyRazorpayPayment({
     }
   }
 
-  const expiresAt = new Date();
-  expiresAt.setMonth(expiresAt.getMonth() + accessMonths);
-  const expiresAtIso = expiresAt.toISOString();
+  const expiresAtIso = calculateExpiryIST(new Date(), { months: accessMonths, endOfDay: true });
 
   const isSupabaseConfigured =
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -1102,6 +1101,24 @@ export async function verifyRazorpayPayment({
       }
 
       // Upsert into purchases
+      let finalExpiresAtIso = expiresAtIso;
+      try {
+        const query = supabase
+          .from("purchases")
+          .select("id, expires_at, status")
+          .eq("user_id", finalUserId)
+          .in("status", ["success", "active"]);
+        if (actualItemType === "book") {
+          query.eq("book_id", dbItemUuid);
+        } else {
+          query.eq("course_id", dbItemUuid);
+        }
+        const { data: priorPurchase } = await query.maybeSingle();
+        if (priorPurchase?.expires_at) {
+          finalExpiresAtIso = extendExpiryIST(priorPurchase.expires_at, { months: accessMonths });
+        }
+      } catch {}
+
       const purchasePayload: any = {
         user_id: finalUserId,
         item_type: actualItemType,
@@ -1114,7 +1131,7 @@ export async function verifyRazorpayPayment({
         razorpay_signature,
         status: "success",
         purchased_at: new Date().toISOString(),
-        expires_at: expiresAtIso,
+        expires_at: finalExpiresAtIso,
       };
 
       const conflictCol = actualItemType === "book" ? "user_id,book_id" : "user_id,course_id";

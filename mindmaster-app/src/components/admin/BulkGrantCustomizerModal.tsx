@@ -9,6 +9,7 @@ import {
   StudentActiveAccessItem,
 } from "@/lib/grantStore";
 import { StaffCourse, getCurrentStaff, logStaffAction } from "@/lib/staffStore";
+import { formatIST } from "@/lib/istTime";
 
 export interface BulkStudentRow {
   id: string;
@@ -628,10 +629,10 @@ export default function BulkGrantCustomizerModal({
                                     {row.existingCourses.slice(0, 2).map((ec, i) => (
                                       <span
                                         key={i}
-                                        className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold truncate max-w-[110px]"
-                                        title={`${ec.itemTitle} (${ec.daysLeft}d left)`}
+                                        className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold truncate max-w-[120px]"
+                                        title={`${ec.itemTitle} (Expires: ${formatIST(ec.expiresAt, { dateOnly: true })})`}
                                       >
-                                        {ec.itemTitle} ({ec.daysLeft}d)
+                                        {ec.itemTitle} ({ec.daysLeft}d left)
                                       </span>
                                     ))}
                                     {row.existingCourses.length > 2 && (

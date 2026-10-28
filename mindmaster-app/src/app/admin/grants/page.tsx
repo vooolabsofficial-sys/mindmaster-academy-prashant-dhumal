@@ -21,11 +21,13 @@ import {
   getPendingGrantApprovals,
   approveGrant,
   rejectGrant,
+  updatePendingGrant,
   getSubAdminCashSettlements,
   settleSubAdminCash,
   settleSingleGrant,
   SubAdminCashSummary,
 } from "@/lib/grantStore";
+import { formatIST, calculateExpiryIST, isExpiredIST } from "@/lib/istTime";
 
 const POPULAR_DISTRICTS = ["Pune", "Satara", "Kolhapur", "Solapur", "Sangli", "Ahmednagar", "Nashik", "Thane", "Mumbai"];
 
@@ -40,6 +42,15 @@ export default function GrantsManagerPage() {
   const [rejectModalGrant, setRejectModalGrant] = useState<Grant | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+
+  // Edit Pending Grant Modal State
+  const [editPendingGrant, setEditPendingGrant] = useState<Grant | null>(null);
+  const [editCourseId, setEditCourseId] = useState("");
+  const [editValidityMonths, setEditValidityMonths] = useState(6);
+  const [editCustomDate, setEditCustomDate] = useState("");
+  const [editAmountPaid, setEditAmountPaid] = useState(0);
+  const [editRemarks, setEditRemarks] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -122,6 +133,36 @@ export default function GrantsManagerPage() {
       loadData();
     } catch (e: any) {
       alert(e?.message || "Failed to reject grant.");
+    }
+  };
+
+  const handleSavePendingGrantEdit = async () => {
+    if (!editPendingGrant) return;
+    setIsSavingEdit(true);
+    try {
+      const res = await updatePendingGrant({
+        grantId: editPendingGrant.id,
+        courseId: editCourseId,
+        accessMonths: editCustomDate ? undefined : editValidityMonths,
+        customExpiryDate: editCustomDate || undefined,
+        amountPaid: editAmountPaid,
+        remarks: editRemarks,
+      });
+
+      if (!res.success) {
+        alert(res.error || "Failed to update pending grant.");
+        setIsSavingEdit(false);
+        return;
+      }
+
+      setEditPendingGrant(null);
+      setActionFeedback("Pending grant details customized successfully!");
+      setTimeout(() => setActionFeedback(null), 3500);
+      await loadData();
+    } catch (err: any) {
+      alert(err?.message || "Failed to customize pending grant.");
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -438,16 +479,26 @@ export default function GrantsManagerPage() {
                         <td className="px-4 py-3.5">
                           <span className="font-bold text-[#0E1B3D]">{grant.createdByName}</span>
                           <span className="block text-[10px] text-[#8A94A6]">
-                            {new Date(grant.created_at || grant.createdAt).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {formatIST(grant.created_at || grant.createdAt)}
                           </span>
                         </td>
                         <td className="px-4 py-3.5 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditPendingGrant(grant);
+                                setEditCourseId(grant.course_id || grant.courseId || grant.book_id || grant.bookId || "");
+                                setEditValidityMonths(grant.months || 6);
+                                setEditCustomDate("");
+                                setEditAmountPaid(grant.amount_paid || 0);
+                                setEditRemarks(grant.reason || "");
+                              }}
+                              className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1"
+                              title="Customize course or validity before approving"
+                            >
+                              <span>✏️</span> Edit
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleApprove(grant.id)}
@@ -844,7 +895,7 @@ export default function GrantsManagerPage() {
 
                       const endsAtVal = grant.ends_at || grant.endsAt || new Date().toISOString();
                       const createdAtVal = grant.created_at || grant.createdAt || new Date().toISOString();
-                      const isExpired = new Date(endsAtVal).getTime() < Date.now();
+                      const isExpired = isExpiredIST(endsAtVal);
                       const sType = grant.scope_type || grant.scopeType || "district";
                       const sVal = grant.scope_value || grant.scopeValue || "All";
 
@@ -894,11 +945,7 @@ export default function GrantsManagerPage() {
                               {grant.months} Months
                             </div>
                             <div className="text-[10px] text-[#8A94A6]">
-                              Ends {new Date(endsAtVal).toLocaleDateString("en-IN", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              })}
+                              Ends {formatIST(endsAtVal)}
                             </div>
                             {grant.amount_paid !== undefined && grant.amount_paid > 0 && (
                               <div className="mt-1">
@@ -982,10 +1029,7 @@ export default function GrantsManagerPage() {
                               {grant.createdByName}
                             </div>
                             <div className="text-[10px] text-[#8A94A6]">
-                              {new Date(createdAtVal).toLocaleDateString("en-IN", {
-                                day: "numeric",
-                                month: "short",
-                              })}
+                              {formatIST(createdAtVal)}
                             </div>
                           </td>
 
@@ -1576,6 +1620,142 @@ export default function GrantsManagerPage() {
                     className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow transition"
                   >
                     Confirm Rejection
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Edit / Customize Pending Grant Modal */}
+          {editPendingGrant && (
+            <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+              <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-blue-200 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">✏️</span>
+                    <div>
+                      <h3 className="text-base font-bold text-[#0E1B3D] font-heading">
+                        Customize Pending Admission
+                      </h3>
+                      <p className="text-[11px] text-[#5A6478]">
+                        Submitted by: <span className="font-bold">{editPendingGrant.createdByName}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setEditPendingGrant(null)}
+                    className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="p-3 bg-blue-50/70 border border-blue-200/60 rounded-xl text-xs text-blue-900">
+                  Learner: <span className="font-bold">{editPendingGrant.student_name || editPendingGrant.scope_value}</span> (+91 {editPendingGrant.student_phone || editPendingGrant.scope_value})
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="block font-bold text-[#0E1B3D] mb-1">
+                      Assigned Course or Handbook:
+                    </label>
+                    <select
+                      value={editCourseId}
+                      onChange={(e) => setEditCourseId(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#F5F7FF] border border-slate-300 rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none focus:border-blue-600"
+                    >
+                      <optgroup label="🎓 Courses">
+                        {courses.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.code}: {c.title}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="📚 Handbooks">
+                        {books.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.code || "BK"}: {b.title}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block font-bold text-[#0E1B3D] mb-1">
+                        Validity Duration:
+                      </label>
+                      <select
+                        value={editValidityMonths}
+                        onChange={(e) => setEditValidityMonths(Number(e.target.value))}
+                        disabled={Boolean(editCustomDate)}
+                        className="w-full px-3 py-2 bg-[#F5F7FF] border border-slate-300 rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none focus:border-blue-600 disabled:opacity-40"
+                      >
+                        <option value={1}>1 Month (30d)</option>
+                        <option value={3}>3 Months (90d)</option>
+                        <option value={6}>6 Months (180d)</option>
+                        <option value={12}>1 Year (365d)</option>
+                        <option value={120}>Lifetime</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-[#0E1B3D] mb-1">
+                        Or Fixed Expiry Date:
+                      </label>
+                      <input
+                        type="date"
+                        value={editCustomDate}
+                        onChange={(e) => setEditCustomDate(e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-[#F5F7FF] border border-slate-300 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:border-blue-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-[#0E1B3D] mb-1">
+                      Fee Collected (₹):
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={editAmountPaid}
+                      onChange={(e) => setEditAmountPaid(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-[#F5F7FF] border border-slate-300 rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-[#0E1B3D] mb-1">
+                      Notes / Remarks:
+                    </label>
+                    <input
+                      type="text"
+                      value={editRemarks}
+                      onChange={(e) => setEditRemarks(e.target.value)}
+                      placeholder="e.g. Adjusted course to Police Bharti by Prashant Sir"
+                      className="w-full px-3 py-2 bg-[#F5F7FF] border border-slate-300 rounded-xl text-xs text-[#0E1B3D] focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-[#E4E8F8] flex justify-end gap-2 text-xs">
+                  <button
+                    type="button"
+                    disabled={isSavingEdit}
+                    onClick={() => setEditPendingGrant(null)}
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-[#0E1B3D] font-bold rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSavingEdit}
+                    onClick={handleSavePendingGrantEdit}
+                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow transition disabled:opacity-50"
+                  >
+                    {isSavingEdit ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
               </div>

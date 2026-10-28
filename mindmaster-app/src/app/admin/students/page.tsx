@@ -22,9 +22,11 @@ import {
   grantMultiCourseAdmission,
   extendStudentAccess,
   revokeStudentAccess,
+  swapStudentCourse,
   getStudentActiveGrants,
   StudentActiveAccessItem,
 } from "@/lib/grantStore";
+import { formatIST, calculateExpiryIST, extendExpiryIST, getRemainingTimeIST, isExpiredIST } from "@/lib/istTime";
 import { ACADEMY_CATEGORIES, AcademyCategory, matchesAcademyCategory } from "@/lib/academyCategories";
 import BulkGrantCustomizerModal from "@/components/admin/BulkGrantCustomizerModal";
 import BroadcastNotificationModal from "@/components/admin/BroadcastNotificationModal";
@@ -57,9 +59,21 @@ export default function StudentFinderPage() {
     purchaseId?: string;
     grantId?: string;
   } | null>(null);
-  const [extendOption, setExtendOption] = useState<"7" | "15" | "30" | "90" | "custom">("15");
+  const [extendOption, setExtendOption] = useState<"7" | "15" | "30" | "90" | "180" | "365" | "custom">("15");
   const [extendCustomDate, setExtendCustomDate] = useState("");
   const [isExtending, setIsExtending] = useState(false);
+
+  // Power Actions: Course Swap / Change Modal State
+  const [swapModalItem, setSwapModalItem] = useState<{
+    student: StudentRecord;
+    itemType: "course" | "book";
+    itemId: string;
+    itemTitle: string;
+    grantId?: string;
+  } | null>(null);
+  const [swapTargetCourseId, setSwapTargetCourseId] = useState("");
+  const [swapRemarks, setSwapRemarks] = useState("");
+  const [isSwapping, setIsSwapping] = useState(false);
 
   // Power Actions: Revoke Access Modal State
   const [revokeModalItem, setRevokeModalItem] = useState<{
@@ -136,6 +150,10 @@ export default function StudentFinderPage() {
   const [cashUpiRef, setCashUpiRef] = useState("");
   const [cashAmount, setCashAmount] = useState(199);
   const [cashRemarks, setCashRemarks] = useState("");
+  const [cashIsInstallment, setCashIsInstallment] = useState(false);
+  const [cashInstallmentDue, setCashInstallmentDue] = useState(0);
+  const [cashInstallmentDueDate, setCashInstallmentDueDate] = useState("");
+  const [cashInstallmentRemarks, setCashInstallmentRemarks] = useState("");
   const [cashSuccessReceipt, setCashSuccessReceipt] = useState<{
     grantId: string;
     studentName: string;
@@ -149,6 +167,7 @@ export default function StudentFinderPage() {
   const [cashError, setCashError] = useState("");
 
   const courses = getStaffCourses();
+  const books = getStaffBooks();
 
   const reload = async () => {
     setCurrentStaff(getCurrentStaff());
@@ -278,6 +297,9 @@ export default function StudentFinderPage() {
       upiRef: cashUpiRef.trim() || undefined,
       totalAmountPaid: cashAmount,
       remarks: cashRemarks.trim() || undefined,
+      installmentDue: cashIsInstallment ? cashInstallmentDue : undefined,
+      installmentDueDate: cashIsInstallment ? cashInstallmentDueDate : undefined,
+      installmentRemarks: cashIsInstallment ? cashInstallmentRemarks : undefined,
     });
 
     if (!multiRes.success || multiRes.results.length === 0) {
@@ -523,7 +545,7 @@ export default function StudentFinderPage() {
         return;
       }
 
-      showToast(`Extended access for ${extendModalItem.itemTitle} until ${res.newExpiry.slice(0, 10)}!`);
+      showToast(`Extended access for ${extendModalItem.itemTitle} until ${formatIST(res.newExpiry, { dateOnly: true })}!`);
       setExtendModalItem(null);
       await reload();
 
@@ -539,6 +561,48 @@ export default function StudentFinderPage() {
       showToast(err?.message || "Failed to extend access.", "error");
     } finally {
       setIsExtending(false);
+    }
+  };
+
+  // Submit Course Swap
+  const handleConfirmSwap = async () => {
+    if (!swapModalItem || !swapTargetCourseId) {
+      showToast("Please choose a target course or handbook.", "error");
+      return;
+    }
+    setIsSwapping(true);
+    try {
+      const res = await swapStudentCourse({
+        studentPhone: swapModalItem.student.phone,
+        studentName: swapModalItem.student.name,
+        currentCourseId: swapModalItem.itemId,
+        newCourseId: swapTargetCourseId,
+        remarks: swapRemarks,
+      });
+
+      if (!res.success) {
+        showToast(res.error || "Failed to swap course.", "error");
+        setIsSwapping(false);
+        return;
+      }
+
+      showToast(`Swapped to "${res.updatedTitle}" for ${swapModalItem.student.name}!`);
+      setSwapModalItem(null);
+      setSwapTargetCourseId("");
+      setSwapRemarks("");
+      await reload();
+
+      if (drawerStudent) {
+        const dbStudents = await fetchDbStudents();
+        const updatedTarget = dbStudents.find(
+          (s) => s.id === drawerStudent.id || s.phone === drawerStudent.phone
+        );
+        if (updatedTarget) setDrawerStudent(updatedTarget);
+      }
+    } catch (err: any) {
+      showToast(err?.message || "Failed to swap course.", "error");
+    } finally {
+      setIsSwapping(false);
     }
   };
 
@@ -1365,6 +1429,27 @@ export default function StudentFinderPage() {
                                     </button>
                                   )}
 
+                                  {/* Course Swap / Change */}
+                                  {(canManageGrants || isMainAdmin) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSwapModalItem({
+                                          student: drawerStudent,
+                                          itemType: "course",
+                                          itemId: course.courseId,
+                                          itemTitle: course.courseTitle,
+                                        });
+                                        setSwapTargetCourseId("");
+                                        setSwapRemarks("");
+                                      }}
+                                      className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition cursor-pointer"
+                                      title="Swap to Another Course"
+                                    >
+                                      🔄 Swap
+                                    </button>
+                                  )}
+
                                   {/* Extend Validity */}
                                   {(canManageGrants || isMainAdmin) && (
                                     <button
@@ -1490,6 +1575,24 @@ export default function StudentFinderPage() {
 
                                   {(canManageGrants || isMainAdmin) && (
                                     <>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSwapModalItem({
+                                            student: drawerStudent,
+                                            itemType: "book",
+                                            itemId: book.id,
+                                            itemTitle: book.title,
+                                            grantId: book.grantId,
+                                          });
+                                          setSwapTargetCourseId("");
+                                          setSwapRemarks("");
+                                        }}
+                                        className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition cursor-pointer"
+                                        title="Swap Book"
+                                      >
+                                        🔄 Swap
+                                      </button>
                                       <button
                                         type="button"
                                         onClick={() => {
@@ -2271,6 +2374,65 @@ export default function StudentFinderPage() {
                       </div>
                     </div>
 
+                    {/* Partial / Installment Payment Accordion */}
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-[#0E1B3D] flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={cashIsInstallment}
+                            onChange={(e) => setCashIsInstallment(e.target.checked)}
+                            className="rounded"
+                          />
+                          <span>Record Partial / Installment Payment</span>
+                        </label>
+                        <span className="text-[10px] text-slate-500 font-semibold">Optional</span>
+                      </div>
+
+                      {cashIsInstallment && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200 text-xs">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                              Remaining Balance Due (₹)
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={cashInstallmentDue}
+                              onChange={(e) => setCashInstallmentDue(Number(e.target.value))}
+                              placeholder="e.g. 500"
+                              className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-xl font-bold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                              Balance Due Date
+                            </label>
+                            <input
+                              type="date"
+                              value={cashInstallmentDueDate}
+                              onChange={(e) => setCashInstallmentDueDate(e.target.value)}
+                              className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-xl font-bold"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                              Installment Notes / Agreement
+                            </label>
+                            <input
+                              type="text"
+                              value={cashInstallmentRemarks}
+                              onChange={(e) => setCashInstallmentRemarks(e.target.value)}
+                              placeholder="e.g. Parent promised remaining ₹500 on 10th of next month"
+                              className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Remarks */}
                     <div>
                       <label className="block font-bold text-[#0E1B3D] mb-1">
@@ -2340,18 +2502,20 @@ export default function StudentFinderPage() {
                   <label className="block text-xs font-bold text-[#0E1B3D]">
                     Choose Extension Duration:
                   </label>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                     {[
                       { label: "+7 Days", val: "7" },
                       { label: "+15 Days", val: "15" },
-                      { label: "+30 Days", val: "30" },
-                      { label: "+90 Days", val: "90" },
+                      { label: "+1 Month", val: "30" },
+                      { label: "+3 Months", val: "90" },
+                      { label: "+6 Months", val: "180" },
+                      { label: "+1 Year", val: "365" },
                     ].map((opt) => (
                       <button
                         key={opt.val}
                         type="button"
                         onClick={() => setExtendOption(opt.val as any)}
-                        className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition cursor-pointer text-center ${
+                        className={`py-2 px-2 rounded-xl text-xs font-bold border transition cursor-pointer text-center ${
                           extendOption === opt.val
                             ? "bg-[#0B57D0] text-white border-[#0B57D0] shadow-xs"
                             : "bg-[#F5F7FF] text-[#0E1B3D] border-[#E4E8F8] hover:border-[#0B57D0]"
@@ -2406,6 +2570,102 @@ export default function StudentFinderPage() {
                     className="px-5 py-2 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
                   >
                     {isExtending ? "Extending..." : "Confirm Extension →"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* POWER ACTION: COURSE SWAP / CHANGE MODAL */}
+          {/* ========================================================= */}
+          {swapModalItem && (
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl border border-blue-200 max-w-md w-full p-6 shadow-2xl space-y-4 animate-fadeIn">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🔄</span>
+                    <div>
+                      <h3 className="text-base font-bold text-[#0E1B3D]">Swap Student Course</h3>
+                      <p className="text-[11px] text-[#5A6478]">
+                        Current: <span className="font-bold text-[#0E1B3D]">{swapModalItem.itemTitle}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSwapModalItem(null)}
+                    className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="p-3 bg-blue-50/70 border border-blue-200/60 rounded-xl text-xs text-blue-900">
+                  Learner: <span className="font-bold">{swapModalItem.student.name}</span> ({swapModalItem.student.phone})
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                      Select Target Course or Digital Book:
+                    </label>
+                    <select
+                      value={swapTargetCourseId}
+                      onChange={(e) => setSwapTargetCourseId(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#F5F7FF] border border-slate-300 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:border-blue-600"
+                    >
+                      <option value="">-- Choose Program to Swap To --</option>
+                      <optgroup label="🎓 Courses">
+                        {courses.filter((c) => c.id !== swapModalItem.itemId).map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.code}: {c.title}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="📚 Handbooks">
+                        {books.filter((b) => b.id !== swapModalItem.itemId).map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.code || "BK"}: {b.title}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                      Reason / Transfer Remarks:
+                    </label>
+                    <input
+                      type="text"
+                      value={swapRemarks}
+                      onChange={(e) => setSwapRemarks(e.target.value)}
+                      placeholder="e.g. Student requested batch change to Vedic Maths"
+                      className="w-full px-3 py-2 bg-[#F5F7FF] border border-slate-300 rounded-xl text-xs text-[#0E1B3D] focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    ℹ️ Current active validity and expiry date in IST will be preserved and transferred to the new course.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    disabled={isSwapping}
+                    onClick={() => setSwapModalItem(null)}
+                    className="px-4 py-2 rounded-full border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSwapping || !swapTargetCourseId}
+                    onClick={handleConfirmSwap}
+                    className="px-5 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
+                  >
+                    {isSwapping ? "Swapping..." : "Confirm Course Swap →"}
                   </button>
                 </div>
               </div>
