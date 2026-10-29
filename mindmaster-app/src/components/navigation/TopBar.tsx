@@ -94,26 +94,33 @@ export default function TopBar() {
 
         {/* Right: Actions - Larger & Touch-Friendly */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Persistent One-Click Language Switcher (EN | मराठी) + 8-Lang Modal */}
+          {/* Persistent One-Click Language Switcher (EN | मराठी) + Always-Visible English Reset */}
           <div className="inline-flex items-center p-0.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setLanguage("en")}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition cursor-pointer ${
-                currentLanguage === "en"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-              title="English (Primary Default)"
-            >
-              EN
-            </button>
+            {currentLanguage !== "en" ? (
+              <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                className="px-2.5 py-1 rounded-full text-[11px] font-black bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition cursor-pointer flex items-center gap-1"
+                title="Reset language back to English"
+              >
+                <span>Switch to English</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-blue-600 text-white shadow-xs cursor-pointer"
+                title="English (Primary Default)"
+              >
+                EN
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setLanguage("mr")}
               className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition cursor-pointer ${
                 currentLanguage === "mr"
-                  ? "bg-blue-600 text-white shadow-xs"
+                  ? "bg-slate-200 text-slate-800"
                   : "text-slate-600 hover:text-slate-900"
               }`}
               title="मराठी (Marathi)"

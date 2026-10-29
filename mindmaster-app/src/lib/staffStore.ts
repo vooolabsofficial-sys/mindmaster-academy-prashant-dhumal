@@ -457,6 +457,8 @@ export interface PlatformSettings {
   single_device_lock?: boolean;
   watermark_enabled?: boolean;
   sub_admin_approval_mode?: boolean;
+  support_hours?: string;
+  ticket_assignment_notice?: string;
 }
 
 export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
@@ -488,6 +490,8 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   support_phone: "+91 84593 44077",
   whatsapp_number: "+91 84593 44077",
   support_email: "mindmasterdhumal@gmail.com",
+  support_hours: "10:00 AM – 7:00 PM IST (Mon–Sat)",
+  ticket_assignment_notice: "Tickets are routed to active Sub-Admins across Satara and Pune centers for phone and in-app assistance.",
   social_youtube: "https://www.youtube.com/@prashantdhumalmindmaster",
   social_instagram: "https://www.instagram.com/mindmaster_academy_official",
   social_telegram: "https://t.me/mindmasteracademy",

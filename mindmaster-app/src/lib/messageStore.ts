@@ -1,10 +1,45 @@
 // In-App Messaging Store
 // Bidirectional Student ↔ Staff messaging — 100% Live Supabase support_conversations & support_messages
 
+export type TicketCategory =
+  | "Device Reset Request"
+  | "Video / Playback Issue"
+  | "Payment / Course Access"
+  | "Notes / PDF Issue"
+  | "Other";
+
+export type TicketStatus = "Open" | "In Progress" | "Resolved";
+
+function parseCategoryFromMessage(msg?: string): TicketCategory | undefined {
+  if (!msg) return undefined;
+  const match = msg.match(/^\[([^\]]+)\]/);
+  if (match) {
+    const cat = match[1].trim();
+    if (
+      cat === "Device Reset Request" ||
+      cat === "Video / Playback Issue" ||
+      cat === "Payment / Course Access" ||
+      cat === "Notes / PDF Issue" ||
+      cat === "Other"
+    ) {
+      return cat as TicketCategory;
+    }
+  }
+  return undefined;
+}
+
+function parseSubjectFromMessage(msg?: string): string | undefined {
+  if (!msg) return undefined;
+  const match = msg.match(/^\[[^\]]+\]\s*([^:]+):/);
+  if (match) return match[1].trim();
+  return undefined;
+}
+
 export interface Conversation {
   id: string;
   studentId: string;
   studentName: string;
+  studentPhone?: string;
   staffId: string | null;
   staffName: string | null;
   courseId: string | null;
@@ -14,6 +49,10 @@ export interface Conversation {
   unreadStudent: number;
   unreadStaff: number;
   district?: string;
+  category?: TicketCategory | string;
+  subject?: string;
+  status?: TicketStatus;
+  resolutionNote?: string;
 }
 
 export interface Message {
@@ -69,15 +108,20 @@ export async function fetchDbConversations(): Promise<Conversation[]> {
       id: d.id,
       studentId: d.student_id,
       studentName: d.student_name,
-      staffId: null,
-      staffName: null,
+      studentPhone: d.student_phone || undefined,
+      staffId: d.staff_id || null,
+      staffName: d.staff_name || null,
       courseId: d.course_id || null,
-      courseTitle: null,
+      courseTitle: d.course_title || null,
       lastAt: d.updated_at || d.created_at || new Date().toISOString(),
       lastMessage: d.last_message || "",
       unreadStudent: d.unread_student || 0,
       unreadStaff: d.unread_staff ?? d.unread_count ?? 0,
       district: d.district || undefined,
+      category: d.category || parseCategoryFromMessage(d.last_message) || "Other",
+      subject: d.subject || parseSubjectFromMessage(d.last_message) || "Support Inquiry",
+      status: (d.status as any) || "Open",
+      resolutionNote: d.resolution_note || undefined,
     }));
 
     CACHED_CONVERSATIONS = mapped;
@@ -131,7 +175,12 @@ export function getConversations(): Conversation[] {
 }
 
 export function getConversationsForStudent(studentId: string): Conversation[] {
-  return getConversations().filter((c) => c.studentId === studentId);
+  const clean = studentId.replace(/\D/g, "");
+  return getConversations().filter(
+    (c) =>
+      c.studentId === studentId ||
+      (clean && (c.studentId.includes(clean) || (c.studentPhone && c.studentPhone.includes(clean))))
+  );
 }
 
 export function getConversationsForStaff(filters?: {
@@ -322,6 +371,150 @@ export function createConversation(params: {
   }
 
   return newConv;
+}
+
+export function createTicket(params: {
+  studentId: string;
+  studentName: string;
+  studentPhone?: string;
+  courseId?: string;
+  courseTitle?: string;
+  district?: string;
+  category: TicketCategory | string;
+  subject: string;
+  description: string;
+}): Conversation {
+  const formattedFirstMessage = `[${params.category}] ${params.subject}: ${params.description}`;
+  const now = new Date();
+  const convId = `ticket-${Date.now()}`;
+  const newTicket: Conversation = {
+    id: convId,
+    studentId: params.studentId,
+    studentName: params.studentName,
+    studentPhone: params.studentPhone,
+    staffId: null,
+    staffName: null,
+    courseId: params.courseId || null,
+    courseTitle: params.courseTitle || null,
+    lastAt: now.toISOString(),
+    lastMessage: formattedFirstMessage,
+    unreadStudent: 0,
+    unreadStaff: 1,
+    district: params.district,
+    category: params.category,
+    subject: params.subject,
+    status: "Open",
+  };
+
+  CACHED_CONVERSATIONS = [newTicket, ...CACHED_CONVERSATIONS];
+  notifyListeners();
+
+  // Synchronously record the first message
+  sendMessage({
+    conversationId: convId,
+    senderType: "student",
+    senderId: params.studentId,
+    senderName: params.studentName,
+    body: formattedFirstMessage,
+  });
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      supabase
+        .from("support_conversations")
+        .insert({
+          id: convId,
+          student_id: params.studentId,
+          student_name: params.studentName,
+          student_phone: params.studentPhone || null,
+          district: params.district || null,
+          course_id: params.courseId || null,
+          unread_count: 1,
+          unread_staff: 1,
+          unread_student: 0,
+          last_message: formattedFirstMessage,
+          category: params.category,
+          subject: params.subject,
+          status: "Open",
+          created_at: now.toISOString(),
+          updated_at: now.toISOString(),
+        })
+        .then(() => {})
+        .catch(() => {
+          supabase
+            .from("support_conversations")
+            .insert({
+              id: convId,
+              student_id: params.studentId,
+              student_name: params.studentName,
+              student_phone: params.studentPhone || null,
+              district: params.district || null,
+              course_id: params.courseId || null,
+              unread_count: 1,
+              unread_staff: 1,
+              unread_student: 0,
+              last_message: formattedFirstMessage,
+              created_at: now.toISOString(),
+              updated_at: now.toISOString(),
+            })
+            .then(() => {});
+        });
+    } catch {}
+  }
+
+  return newTicket;
+}
+
+export function updateTicketStatus(params: {
+  conversationId: string;
+  status: "Open" | "In Progress" | "Resolved";
+  resolutionNote?: string;
+  staffId?: string;
+  staffName?: string;
+}): void {
+  const now = new Date();
+  CACHED_CONVERSATIONS = CACHED_CONVERSATIONS.map((c) => {
+    if (c.id === params.conversationId) {
+      return {
+        ...c,
+        status: params.status,
+        resolutionNote: params.resolutionNote || c.resolutionNote,
+        staffId: params.staffId || c.staffId,
+        staffName: params.staffName || c.staffName,
+        lastAt: now.toISOString(),
+      };
+    }
+    return c;
+  });
+
+  if (params.resolutionNote) {
+    sendMessage({
+      conversationId: params.conversationId,
+      senderType: "staff",
+      senderId: params.staffId || "staff-01",
+      senderName: params.staffName || "Staff Support Desk",
+      body: `[Ticket Status: ${params.status}] ${params.resolutionNote}`,
+    });
+  }
+
+  notifyListeners();
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      supabase
+        .from("support_conversations")
+        .update({
+          status: params.status,
+          resolution_note: params.resolutionNote || null,
+          updated_at: now.toISOString(),
+        })
+        .eq("id", params.conversationId)
+        .then(() => {})
+        .catch(() => {});
+    } catch {}
+  }
 }
 
 export function markConversationReadByStudent(conversationId: string): void {

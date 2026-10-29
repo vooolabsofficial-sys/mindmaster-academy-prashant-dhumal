@@ -51,6 +51,8 @@ export default function AdminSettingsPage() {
   const [supportPhone, setSupportPhone] = useState(DEFAULT_PLATFORM_SETTINGS.support_phone || "+91 84593 44077");
   const [whatsappNumber, setWhatsappNumber] = useState(DEFAULT_PLATFORM_SETTINGS.whatsapp_number || "+91 84593 44077");
   const [supportEmail, setSupportEmail] = useState(DEFAULT_PLATFORM_SETTINGS.support_email || "mindmasterdhumal@gmail.com");
+  const [supportHours, setSupportHours] = useState(DEFAULT_PLATFORM_SETTINGS.support_hours || "10:00 AM – 7:00 PM IST (Mon–Sat)");
+  const [ticketAssignmentNotice, setTicketAssignmentNotice] = useState(DEFAULT_PLATFORM_SETTINGS.ticket_assignment_notice || "Tickets are routed to active Sub-Admins in Satara and Pune centers.");
   const [socialYoutube, setSocialYoutube] = useState(DEFAULT_PLATFORM_SETTINGS.social_youtube || "https://www.youtube.com/@prashantdhumalmindmaster");
   const [socialInstagram, setSocialInstagram] = useState(DEFAULT_PLATFORM_SETTINGS.social_instagram || "https://www.instagram.com/mindmaster_academy_official");
   const [socialTelegram, setSocialTelegram] = useState(DEFAULT_PLATFORM_SETTINGS.social_telegram || "https://t.me/mindmasteracademy");
@@ -108,6 +110,10 @@ export default function AdminSettingsPage() {
             if (s.support_phone) setSupportPhone(s.support_phone);
             if (s.whatsapp_number) setWhatsappNumber(s.whatsapp_number);
             if (s.support_email) setSupportEmail(s.support_email);
+          if (s.support_hours) setSupportHours(s.support_hours);
+          if (s.ticket_assignment_notice) setTicketAssignmentNotice(s.ticket_assignment_notice);
+            if (s.support_hours) setSupportHours(s.support_hours);
+            if (s.ticket_assignment_notice) setTicketAssignmentNotice(s.ticket_assignment_notice);
             if (s.social_youtube) setSocialYoutube(s.social_youtube);
             if (s.social_instagram) setSocialInstagram(s.social_instagram);
             if (s.social_telegram) setSocialTelegram(s.social_telegram);
@@ -146,6 +152,8 @@ export default function AdminSettingsPage() {
           if (s.support_phone) setSupportPhone(s.support_phone);
           if (s.whatsapp_number) setWhatsappNumber(s.whatsapp_number);
           if (s.support_email) setSupportEmail(s.support_email);
+          if (s.support_hours) setSupportHours(s.support_hours);
+          if (s.ticket_assignment_notice) setTicketAssignmentNotice(s.ticket_assignment_notice);
           if (s.social_youtube) setSocialYoutube(s.social_youtube);
           if (s.social_instagram) setSocialInstagram(s.social_instagram);
           if (s.social_telegram) setSocialTelegram(s.social_telegram);
@@ -188,6 +196,8 @@ export default function AdminSettingsPage() {
       support_phone: supportPhone.trim(),
       whatsapp_number: whatsappNumber.trim(),
       support_email: supportEmail.trim(),
+      support_hours: supportHours.trim(),
+      ticket_assignment_notice: ticketAssignmentNotice.trim(),
       social_youtube: socialYoutube.trim(),
       social_instagram: socialInstagram.trim(),
       social_telegram: socialTelegram.trim(),
@@ -598,6 +608,34 @@ export default function AdminSettingsPage() {
                       className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
                     />
                     <p className="text-[11px] text-[#5A6478] mt-1">Email address for admissions and technical queries.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                      Support Desk Operating Hours Notice
+                    </label>
+                    <input
+                      type="text"
+                      value={supportHours}
+                      onChange={(e) => setSupportHours(e.target.value)}
+                      placeholder="10:00 AM – 7:00 PM IST (Mon–Sat)"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                    />
+                    <p className="text-[11px] text-[#5A6478] mt-1">Displayed to students in the In-App Support Ticket desk.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                      Sub-Admin Ticket Assignment / Routing Policy
+                    </label>
+                    <input
+                      type="text"
+                      value={ticketAssignmentNotice}
+                      onChange={(e) => setTicketAssignmentNotice(e.target.value)}
+                      placeholder="Tickets are routed to active Sub-Admins in Satara and Pune centers."
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                    />
+                    <p className="text-[11px] text-[#5A6478] mt-1">Routing notice displayed on staff ticketing console.</p>
                   </div>
 
                   <div>

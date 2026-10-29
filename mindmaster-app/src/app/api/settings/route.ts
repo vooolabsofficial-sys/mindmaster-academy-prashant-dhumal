@@ -125,6 +125,8 @@ export async function GET(req: NextRequest) {
           support_phone: data.support_phone,
           whatsapp_number: data.whatsapp_number || data.support_phone,
           support_email: data.support_email,
+          support_hours: data.support_hours || "10:00 AM – 7:00 PM IST (Mon–Sat)",
+          ticket_assignment_notice: data.ticket_assignment_notice || "Tickets are routed to active Sub-Admins in Satara and Pune centers.",
           centre_address: data.centre_address,
           pune_address: data.pune_address,
           academy_title: data.academy_title,
