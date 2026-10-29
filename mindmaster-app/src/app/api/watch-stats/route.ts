@@ -153,7 +153,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const { lesson_id, position_sec, completed } = parsed.data;
     const user_id = body.user_id;
 
     // Determine student ID: from cookie, request body, or auth token
@@ -170,11 +169,11 @@ export async function POST(req: NextRequest) {
 
     if (!studentId) {
       try {
-        const supabase = createAdminClient();
+        const supabaseAuth = createAdminClient();
         const authHeader = req.headers.get("authorization");
         if (authHeader) {
           const token = authHeader.replace("Bearer ", "");
-          const { data: { user } } = await supabase.auth.getUser(token);
+          const { data: { user } } = await supabaseAuth.auth.getUser(token);
           if (user) studentId = user.id;
         }
       } catch {}
@@ -188,6 +187,35 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = createAdminClient();
+
+    if ("batch" in parsed.data) {
+      const { batch } = parsed.data;
+      const rows = batch.map((item) => ({
+        user_id: item.user_id || studentId,
+        lesson_id: item.lesson_id,
+        position_sec: Math.max(0, Math.floor(item.position_sec)),
+        completed: Boolean(item.completed),
+        updated_at: new Date().toISOString(),
+      }));
+
+      const { error: batchErr } = await supabase
+        .from("progress")
+        .upsert(rows, { onConflict: "user_id,lesson_id" });
+
+      if (batchErr) {
+        console.warn("Error batch saving watch progress to Supabase:", batchErr);
+        return NextResponse.json({ error: batchErr.message }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        count: rows.length,
+        synced: true,
+      });
+    }
+
+    const { lesson_id, position_sec, completed } = parsed.data;
+
     const { error: upsertErr } = await supabase.from("progress").upsert(
       {
         user_id: studentId,

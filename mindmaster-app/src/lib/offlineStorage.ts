@@ -22,6 +22,9 @@ function getDb(): Promise<IDBPDatabase> {
         if (!db.objectStoreNames.contains("notes")) {
           db.createObjectStore("notes", { keyPath: "id" });
         }
+        if (!db.objectStoreNames.contains("heartbeats_queue")) {
+          db.createObjectStore("heartbeats_queue", { keyPath: "id" });
+        }
       },
     });
   }
@@ -333,10 +336,121 @@ export async function clearAllOfflineVault(): Promise<void> {
     const db = await getDb();
     await db.clear("books_vault");
     await db.clear("playback");
+    await db.clear("heartbeats_queue");
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("mma_offline_vault_changed", { detail: { bookId: "all" } }));
     }
   } catch (err) {
     console.warn("Failed to clear offline vault:", err);
   }
+}
+
+// ============================================================================
+// OFFLINE WATCH HEARTBEATS QUEUE (AUTOMATIC SYNC ON NETWORK RESTORE)
+// ============================================================================
+
+export interface QueuedWatchHeartbeat {
+  id: string;
+  lessonId: string;
+  positionSec: number;
+  completed: boolean;
+  userId?: string;
+  queuedAt: number;
+}
+
+export async function queueWatchHeartbeatOffline(heartbeat: {
+  lessonId: string;
+  positionSec: number;
+  completed?: boolean;
+  userId?: string;
+}): Promise<void> {
+  const record: QueuedWatchHeartbeat = {
+    id: `${heartbeat.lessonId}_${Date.now()}`,
+    lessonId: heartbeat.lessonId,
+    positionSec: Math.max(0, Math.floor(heartbeat.positionSec)),
+    completed: Boolean(heartbeat.completed),
+    userId: heartbeat.userId,
+    queuedAt: Date.now(),
+  };
+
+  try {
+    const db = await getDb();
+    await db.put("heartbeats_queue", record);
+  } catch {
+    try {
+      const stored = localStorage.getItem("mma_queued_heartbeats");
+      const list = stored ? JSON.parse(stored) : [];
+      localStorage.setItem("mma_queued_heartbeats", JSON.stringify([...list, record]));
+    } catch {}
+  }
+}
+
+export async function getQueuedWatchHeartbeats(): Promise<QueuedWatchHeartbeat[]> {
+  try {
+    const db = await getDb();
+    if (db.objectStoreNames.contains("heartbeats_queue")) {
+      return await db.getAll("heartbeats_queue");
+    }
+  } catch {}
+
+  try {
+    const stored = localStorage.getItem("mma_queued_heartbeats");
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function clearQueuedWatchHeartbeats(ids?: string[]): Promise<void> {
+  try {
+    const db = await getDb();
+    if (db.objectStoreNames.contains("heartbeats_queue")) {
+      if (ids && ids.length > 0) {
+        for (const id of ids) {
+          await db.delete("heartbeats_queue", id);
+        }
+      } else {
+        await db.clear("heartbeats_queue");
+      }
+    }
+  } catch {}
+
+  try {
+    if (ids && ids.length > 0) {
+      const stored = localStorage.getItem("mma_queued_heartbeats");
+      if (stored) {
+        const list = JSON.parse(stored);
+        const filtered = list.filter((i: any) => !ids.includes(i.id));
+        localStorage.setItem("mma_queued_heartbeats", JSON.stringify(filtered));
+      }
+    } else {
+      localStorage.removeItem("mma_queued_heartbeats");
+    }
+  } catch {}
+}
+
+export async function syncQueuedWatchHeartbeats(): Promise<number> {
+  const queued = await getQueuedWatchHeartbeats();
+  if (queued.length === 0) return 0;
+
+  try {
+    const res = await fetch("/api/watch-stats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        batch: queued.map((q) => ({
+          lesson_id: q.lessonId,
+          position_sec: q.positionSec,
+          completed: q.completed,
+          user_id: q.userId,
+        })),
+      }),
+    });
+
+    if (res.ok) {
+      await clearQueuedWatchHeartbeats(queued.map((q) => q.id));
+      return queued.length;
+    }
+  } catch {}
+  return 0;
 }

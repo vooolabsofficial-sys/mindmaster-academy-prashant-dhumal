@@ -26,7 +26,7 @@ import AppShell from "@/components/navigation/AppShell";
 import { COURSE_ID_MAP } from "@/lib/mockData";
 import { Lesson } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
-import { savePlaybackOffline } from "@/lib/offlineStorage";
+import { savePlaybackOffline, queueWatchHeartbeatOffline, syncQueuedWatchHeartbeats } from "@/lib/offlineStorage";
 import { getStoredVideos } from "@/lib/playlistStore";
 import { getStaffCourses } from "@/lib/staffStore";
 import { normalizePhone } from "@/lib/phoneUtils";
@@ -517,6 +517,16 @@ function WatchLessonContent({
 
       const studentId = cachedUserRef.current?.id;
       if (studentId) {
+        if (typeof navigator !== "undefined" && !navigator.onLine) {
+          queueWatchHeartbeatOffline({
+            lessonId: lesson.id,
+            positionSec: t,
+            completed: isCompleted,
+            userId: studentId,
+          }).catch(() => {});
+          return;
+        }
+
         try {
           const supabase = createClient();
           await supabase.from("progress").upsert(
@@ -530,9 +540,9 @@ function WatchLessonContent({
             { onConflict: "user_id,lesson_id" }
           );
         } catch {
-          // Fallback to /api/watch-stats POST
+          // Fallback to /api/watch-stats POST, queue in IndexedDB if network fails
           try {
-            fetch("/api/watch-stats", {
+            const res = await fetch("/api/watch-stats", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -541,13 +551,61 @@ function WatchLessonContent({
                 completed: isCompleted,
                 user_id: studentId,
               }),
+            });
+            if (!res.ok) {
+              await queueWatchHeartbeatOffline({
+                lessonId: lesson.id,
+                positionSec: t,
+                completed: isCompleted,
+                userId: studentId,
+              });
+            }
+          } catch {
+            queueWatchHeartbeatOffline({
+              lessonId: lesson.id,
+              positionSec: t,
+              completed: isCompleted,
+              userId: studentId,
             }).catch(() => {});
-          } catch {}
+          }
         }
       }
     },
     [hasAccess, lesson?.id, lesson?.durationSec, duration, course?.id, course?.title, currentTime]
   );
+
+  // Online restoration and SW background sync for queued watch heartbeats
+  useEffect(() => {
+    const handleSync = () => {
+      syncQueuedWatchHeartbeats().catch(() => {});
+    };
+
+    window.addEventListener("online", handleSync);
+
+    const handleSwMessage = (e: MessageEvent) => {
+      if (e.data?.type === "SYNC_WATCH_STATS") {
+        handleSync();
+      }
+    };
+    navigator.serviceWorker?.addEventListener("message", handleSwMessage);
+
+    if (typeof navigator !== "undefined" && navigator.onLine) {
+      handleSync();
+    }
+
+    if (typeof navigator !== "undefined" && "serviceWorker" in navigator && "SyncManager" in window) {
+      navigator.serviceWorker.ready
+        .then((reg: any) => {
+          reg.sync?.register("watch-progress-sync").catch(() => {});
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      window.removeEventListener("online", handleSync);
+      navigator.serviceWorker?.removeEventListener("message", handleSwMessage);
+    };
+  }, []);
 
   // Throttled interval ticker (every 1s, remote network call max once per 15s while playing)
   useEffect(() => {

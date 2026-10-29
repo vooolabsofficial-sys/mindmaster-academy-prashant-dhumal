@@ -303,11 +303,19 @@ export const watchStatsGetQuerySchema = z.object({
   user_id: optionalString,
 });
 
-export const watchStatsPostBodySchema = z.object({
+export const watchStatsItemSchema = z.object({
   lesson_id: z.string().trim().min(1, "Lesson ID is required"),
   position_sec: z.number().nonnegative(),
   completed: z.boolean().optional().default(false),
+  user_id: z.string().optional(),
 });
+
+export const watchStatsPostBodySchema = z.union([
+  watchStatsItemSchema,
+  z.object({
+    batch: z.array(watchStatsItemSchema).min(1),
+  }),
+]);
 
 // ============================================================================
 // WEBSITE CMS SCHEMAS
