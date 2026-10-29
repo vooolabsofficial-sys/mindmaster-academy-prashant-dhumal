@@ -503,6 +503,9 @@ export default function VideoManagerPage() {
                       <th className="py-3.5 px-4">Course</th>
                       <th className="py-3.5 px-4">कालावधी (Duration)</th>
                       <th className="py-3.5 px-4">मोफत प्रिव्ह्यू?</th>
+                      {isMainAdmin && (
+                        <th className="py-3.5 px-4">👑 Watch Stats (Admin)</th>
+                      )}
                       <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -532,6 +535,11 @@ export default function VideoManagerPage() {
                                   <span className="font-bold text-blue-600">#{video.position || 1}</span>
                                   <span>•</span>
                                   <span className="truncate">{detectedId}</span>
+                                  {video.daysLeft !== undefined && (
+                                    <span className="text-amber-600 font-bold ml-1">
+                                      ({video.daysLeft} daysLeft)
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -561,6 +569,13 @@ export default function VideoManagerPage() {
                               </span>
                             )}
                           </td>
+
+                          {isMainAdmin && (
+                            <td className="py-3.5 px-4 font-mono text-xs text-slate-600">
+                              <div>👁️ {video.views || 0} views</div>
+                              <div>⏱️ {video.avgWatchPercent || 0}% avg</div>
+                            </td>
+                          )}
 
                           <td className="py-3.5 px-4 text-right space-x-2">
                             <button
@@ -816,7 +831,7 @@ export default function VideoManagerPage() {
                 </div>
                 <div>
                   <h4 className="font-extrabold text-base text-[#0E1B3D]">
-                    हा व्हिडिओ रीसायकल बिनमध्ये हलवायचा आहे का?
+                    Delete Video (Admin Only) • रीसायकल बिनमध्ये हलवायचा आहे का?
                   </h4>
                   <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                     <strong>{deleteModalVideo.lessonTitle}</strong> हा व्हिडिओ कोर्समधून तात्पुरता काढला जाईल आणि रीसायकल बिनमध्ये हलवला जाईल. तुम्ही तो कधीही <strong>पूर्ववत (Undo / Restore)</strong> करू शकता.

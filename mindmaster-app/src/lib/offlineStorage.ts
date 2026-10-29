@@ -2,7 +2,7 @@ import { openDB, IDBPDatabase } from "idb";
 import { Book } from "./types";
 
 const DB_NAME = "mindmaster_offline_db";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
@@ -19,10 +19,112 @@ function getDb(): Promise<IDBPDatabase> {
         if (!db.objectStoreNames.contains("books_vault")) {
           db.createObjectStore("books_vault", { keyPath: "bookId" });
         }
+        if (!db.objectStoreNames.contains("notes")) {
+          db.createObjectStore("notes", { keyPath: "id" });
+        }
       },
     });
   }
   return dbPromise;
+}
+
+export interface OfflineNoteRecord {
+  id: string;
+  lessonId: string;
+  noteText: string;
+  timestampSec: number;
+  updatedAt: number;
+}
+
+/**
+ * Saves a student's personal study note offline in IndexedDB with localStorage fallback
+ */
+export async function saveNoteOffline(
+  lessonIdOrNote: string | { id?: string; lessonId?: string; noteText?: string; body?: string; timestampSec?: number },
+  noteTextArg?: string,
+  timestampSecArg: number = 0
+): Promise<void> {
+  let noteId: string;
+  let lessonId: string;
+  let noteText: string;
+  let timestampSec: number;
+
+  if (typeof lessonIdOrNote === "object") {
+    lessonId = lessonIdOrNote.lessonId || "general";
+    noteText = lessonIdOrNote.noteText || lessonIdOrNote.body || "";
+    timestampSec = lessonIdOrNote.timestampSec || 0;
+    noteId = lessonIdOrNote.id || `${lessonId}_${Date.now()}`;
+  } else {
+    lessonId = lessonIdOrNote;
+    noteText = noteTextArg || "";
+    timestampSec = timestampSecArg || 0;
+    noteId = `${lessonId}_${Date.now()}`;
+  }
+
+  const record: OfflineNoteRecord = {
+    id: noteId,
+    lessonId,
+    noteText,
+    timestampSec,
+    updatedAt: Date.now(),
+  };
+
+  try {
+    const db = await getDb();
+    await db.put("notes", record);
+  } catch {
+    try {
+      const existing = await getNotesOffline(lessonId);
+      const updated = [...existing, record];
+      localStorage.setItem(`mma_notes_${lessonId}`, JSON.stringify(updated));
+    } catch {}
+  }
+}
+
+/**
+ * Retrieves all offline study notes for a lesson or all notes if omitted
+ */
+export async function getNotesOffline(lessonId?: string): Promise<any[]> {
+  try {
+    const db = await getDb();
+    if (db.objectStoreNames.contains("notes")) {
+      const all: any[] = await db.getAll("notes");
+      return lessonId ? all.filter((n) => n.lessonId === lessonId) : all;
+    }
+  } catch {}
+
+  try {
+    if (lessonId) {
+      const val = localStorage.getItem(`mma_notes_${lessonId}`);
+      return val ? JSON.parse(val) : [];
+    }
+    const allStored = localStorage.getItem("mindmaster_user_notes");
+    return allStored ? JSON.parse(allStored) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Deletes an offline note by id from IndexedDB and localStorage
+ */
+export async function deleteNoteOffline(noteId: string): Promise<void> {
+  try {
+    const db = await getDb();
+    if (db.objectStoreNames.contains("notes")) {
+      await db.delete("notes", noteId);
+    }
+  } catch {}
+  try {
+    const allStored = localStorage.getItem("mindmaster_user_notes");
+    if (allStored) {
+      const parsed = JSON.parse(allStored);
+      if (Array.isArray(parsed)) {
+        const filtered = parsed.filter((n: any) => n.id !== noteId);
+        localStorage.setItem("mindmaster_user_notes", JSON.stringify(filtered));
+      }
+    }
+  } catch {}
 }
 
 /**

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeAnalyticsData, AnalyticsFilter } from "@/lib/analyticsEngine";
 import { authenticateStaffRequest } from "@/lib/serverAuthGuard";
+import { analyticsFilterSchema, formatZodError } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,17 +11,18 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const range = (searchParams.get("range") || "30") as "7" | "30" | "custom";
-    const startDate = searchParams.get("startDate") || undefined;
-    const endDate = searchParams.get("endDate") || undefined;
-    const district = searchParams.get("district") || "all";
+    const parsed = analyticsFilterSchema.safeParse({
+      range: searchParams.get("range") || "30",
+      startDate: searchParams.get("startDate") || undefined,
+      endDate: searchParams.get("endDate") || undefined,
+      district: searchParams.get("district") || "all",
+    });
 
-    const filter: AnalyticsFilter = {
-      range,
-      startDate,
-      endDate,
-      district,
-    };
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: formatZodError(parsed.error) }, { status: 400 });
+    }
+
+    const filter: AnalyticsFilter = parsed.data as AnalyticsFilter;
 
     const data = computeAnalyticsData(filter);
     return NextResponse.json({ success: true, data });
@@ -41,17 +43,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const range = (body.range || "30") as "7" | "30" | "custom";
-    const startDate = body.startDate || undefined;
-    const endDate = body.endDate || undefined;
-    const district = body.district || "all";
+    const parsed = analyticsFilterSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: formatZodError(parsed.error) }, { status: 400 });
+    }
 
-    const filter: AnalyticsFilter = {
-      range,
-      startDate,
-      endDate,
-      district,
-    };
+    const filter: AnalyticsFilter = parsed.data as AnalyticsFilter;
 
     const data = computeAnalyticsData(filter);
     return NextResponse.json({ success: true, data });

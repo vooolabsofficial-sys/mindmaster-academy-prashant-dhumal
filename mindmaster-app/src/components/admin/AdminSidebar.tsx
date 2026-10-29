@@ -30,8 +30,7 @@ function isTabActive(href: string, pathname: string): boolean {
     return (
       pathname.startsWith("/admin/students") ||
       pathname.startsWith("/admin/grants") ||
-      pathname.startsWith("/sub/students") ||
-      pathname.startsWith("/sub/grants")
+      pathname.startsWith("/sub/students")
     );
   }
   return pathname === href || pathname.startsWith(href + "/");
@@ -79,13 +78,9 @@ export default function AdminSidebar() {
   // Dynamic navigation tabs for SUB-ADMIN matching assigned operational permissions
   const subNavItems: NavItem[] = [
     { label: "Dashboard", href: "/sub", icon: "📊" },
-    { label: "Students & Grants", href: "/sub/students", icon: "🎓", permission: "students.view" },
+    { label: "Student Finder", href: "/sub/students", icon: "🎓", permission: "students.view" },
     { label: "Support Messages", href: "/sub/messages", icon: "💬", badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
-    { label: "Courses & Videos", href: "/admin/courses", icon: "📚", permission: "courses.manage" },
-    { label: "Digital Books", href: "/admin/notes", icon: "📖", permission: "notes.books.manage" },
-    { label: "Coupons", href: "/admin/coupons", icon: "🏷️", permission: "coupons.manage" },
     { label: "My Activity", href: "/sub/activity", icon: "⏱️" },
-    { label: "Settings", href: "/sub/settings", icon: "⚙️" },
   ];
 
   // Select target navigation array

@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { DEFAULT_PLATFORM_SETTINGS, fetchDbSettings, savePlatformSettings } from "@/lib/staffStore";
 import { verifyStaffSession } from "@/lib/staffAuthService";
+import { platformSettingsUpdateSchema, formatZodError } from "@/lib/validations";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
@@ -172,8 +173,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    const parsed = platformSettingsUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: formatZodError(parsed.error) }, { status: 400 });
+    }
     const current = (await fetchDbSettings()) || readLocalSettings() || DEFAULT_PLATFORM_SETTINGS;
-    const updated = { ...current, ...body };
+    const updated = { ...current, ...parsed.data };
 
     // Persist to store & Supabase
     savePlatformSettings(updated);

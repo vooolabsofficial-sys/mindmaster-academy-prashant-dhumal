@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { recordServerAuditLog, fetchDbAuditLogs } from "@/lib/auditLogger";
 import { verifyStaffSession } from "@/lib/staffAuthService";
+import { serverAuditLogInputSchema, formatZodError } from "@/lib/validations";
 
 export async function GET(req: Request) {
   // Check staff session from cookies or headers
@@ -41,7 +42,11 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const newLogEntry = recordServerAuditLog(body);
+    const parsed = serverAuditLogInputSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: formatZodError(parsed.error) }, { status: 400 });
+    }
+    const newLogEntry = recordServerAuditLog(parsed.data as any);
     return NextResponse.json({ success: true, log: newLogEntry });
   } catch (err: any) {
     console.error("Audit log API error:", err);

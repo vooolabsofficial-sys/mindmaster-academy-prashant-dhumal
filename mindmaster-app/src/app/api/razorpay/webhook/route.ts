@@ -4,14 +4,43 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { COURSE_ID_MAP } from "@/lib/mockData";
 import { getStaffBooks, getStaffCourses } from "@/lib/staffStore";
 import { normalizePhone } from "@/lib/phoneUtils";
+import { recordServerAuditLog } from "@/lib/auditLogger";
+import { razorpayWebhookSchema, formatZodError } from "@/lib/validations";
+
+// Global cache to track recently processed Razorpay event IDs (capped at 5,000 entries)
+declare global {
+  // eslint-disable-next-line no-var
+  var _mma_processed_webhook_events: Set<string> | undefined;
+}
+
+if (!globalThis._mma_processed_webhook_events) {
+  globalThis._mma_processed_webhook_events = new Set<string>();
+}
+
+const processedEvents = globalThis._mma_processed_webhook_events;
+
+function markEventProcessed(eventId?: string) {
+  if (!eventId) return;
+  if (processedEvents.size >= 5000) {
+    // Clear oldest 1,000 items
+    const iterator = processedEvents.values();
+    for (let i = 0; i < 1000; i++) {
+      const next = iterator.next();
+      if (next.done) break;
+      processedEvents.delete(next.value);
+    }
+  }
+  processedEvents.add(eventId);
+}
 
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get("x-razorpay-signature");
+    const eventIdHeader = req.headers.get("x-razorpay-event-id");
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET;
 
-    // Verify webhook signature if secret is configured
+    // 1. Verify webhook signature cryptographically if secret is configured
     if (webhookSecret && signature && !webhookSecret.includes("yourRazorpayKeySecret")) {
       const expectedSignature = crypto
         .createHmac("sha256", webhookSecret)
@@ -21,6 +50,19 @@ export async function POST(req: NextRequest) {
       const a = Buffer.from(expectedSignature, "utf8");
       const b = Buffer.from(signature, "utf8");
       if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+        recordServerAuditLog({
+          staff_id: "SYSTEM_WEBHOOK",
+          staff_name: "Razorpay Webhook Guard",
+          action: "WEBHOOK_SIGNATURE_MISMATCH",
+          category: "security",
+          severity: "critical",
+          entity_type: "payment",
+          meta: {
+            eventId: eventIdHeader,
+            signatureProvided: signature.slice(0, 8) + "...",
+          },
+        });
+
         return NextResponse.json(
           { error: "Invalid webhook signature" },
           { status: 400 }
@@ -28,9 +70,56 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const event = JSON.parse(rawBody);
+    let rawJson: any;
+    try {
+      rawJson = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    }
 
-    // Process payment.captured or order.paid
+    const parsed = razorpayWebhookSchema.safeParse(rawJson);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Malformed webhook payload", details: formatZodError(parsed.error) },
+        { status: 400 }
+      );
+    }
+
+    const event = parsed.data;
+    const eventId = eventIdHeader || (event as any).id || (event.payload?.payment?.entity?.id ? `evt_${event.payload.payment.entity.id}` : undefined);
+
+    // 2. Strict Event ID Idempotency Check
+    if (eventId && processedEvents.has(eventId)) {
+      return NextResponse.json({ status: "ok", message: "Already processed idempotently" });
+    }
+
+    // 3. Handle payment.failed event for audit tracking
+    if (event.event === "payment.failed") {
+      const failedPayment = event.payload?.payment?.entity;
+      const failedNotes = failedPayment?.notes || {};
+      recordServerAuditLog({
+        staff_id: "SYSTEM_WEBHOOK",
+        staff_name: "Razorpay Payment Observer",
+        action: "PAYMENT_FAILED",
+        category: "settlements",
+        severity: "warning",
+        entity_type: "payment",
+        entity_id: failedPayment?.id,
+        target_student_phone: failedNotes.studentMobile,
+        target_student_name: failedNotes.studentName,
+        meta: {
+          errorCode: failedPayment?.error_code,
+          errorDescription: failedPayment?.error_description,
+          orderId: failedPayment?.order_id,
+          amount: failedPayment?.amount,
+        },
+      });
+
+      markEventProcessed(eventId);
+      return NextResponse.json({ status: "ok", message: "Payment failure recorded" });
+    }
+
+    // 4. Process payment.captured or order.paid
     if (event.event === "payment.captured" || event.event === "order.paid") {
       const payment = event.payload?.payment?.entity;
       const order = event.payload?.order?.entity;
@@ -143,40 +232,28 @@ export async function POST(req: NextRequest) {
             .maybeSingle();
 
           if (existing) {
+            markEventProcessed(eventId);
             return NextResponse.json({ status: "ok", message: "Already processed idempotently" });
           }
         } catch (e) {}
       }
 
-      // Handle coupon used_count increment & record redemption
       let couponId: string | null = null;
       if (couponCode) {
-        const { data: cp } = await supabase
-          .from("coupons")
-          .select("id, used_count")
-          .ilike("code", couponCode.trim())
-          .maybeSingle();
-
-        if (cp) {
-          couponId = cp.id;
-          await supabase
+        try {
+          const { data: cp } = await supabase
             .from("coupons")
-            .update({ used_count: (cp.used_count || 0) + 1 })
-            .eq("id", cp.id);
+            .select("id, used_count")
+            .ilike("code", couponCode.trim())
+            .maybeSingle();
 
-          try {
-            await supabase.from("coupon_redemptions").insert({
-              user_id: finalUserId,
-              coupon_id: cp.id,
-              at: new Date().toISOString(),
-              item_type: isBook ? "book" : "course",
-              book_id: isBook ? dbItemUuid : null,
-            });
-          } catch {}
-        }
+          if (cp) {
+            couponId = cp.id;
+          }
+        } catch {}
       }
 
-      // Upsert purchase record
+      // Upsert purchase record first (Atomic grant)
       const purchasePayload: any = {
         user_id: finalUserId,
         item_type: isBook ? "book" : "course",
@@ -194,10 +271,74 @@ export async function POST(req: NextRequest) {
 
       const conflictCol = isBook ? "user_id,book_id" : "user_id,course_id";
 
-      await supabase.from("purchases").upsert(
+      const { data: purchaseData, error: purchaseError } = await supabase.from("purchases").upsert(
         purchasePayload,
         { onConflict: conflictCol }
-      );
+      )
+        .select("id")
+        .single();
+
+      if (purchaseError) {
+        recordServerAuditLog({
+          staff_id: "SYSTEM_WEBHOOK",
+          staff_name: "Razorpay Webhook Guard",
+          action: "WEBHOOK_PURCHASE_FAILED",
+          category: "settlements",
+          severity: "critical",
+          entity_type: "purchase",
+          entity_id: paymentId || orderId,
+          meta: { error: purchaseError.message, paymentId, orderId },
+        });
+        throw purchaseError;
+      }
+
+      // Increment coupon and record redemption only after purchase is committed
+      if (couponId) {
+        try {
+          const { data: cp } = await supabase
+            .from("coupons")
+            .select("used_count")
+            .eq("id", couponId)
+            .maybeSingle();
+
+          await supabase
+            .from("coupons")
+            .update({ used_count: (cp?.used_count || 0) + 1 })
+            .eq("id", couponId);
+
+          await supabase.from("coupon_redemptions").insert({
+            user_id: finalUserId,
+            coupon_id: couponId,
+            at: new Date().toISOString(),
+            item_type: isBook ? "book" : "course",
+            book_id: isBook ? dbItemUuid : null,
+          });
+        } catch (cpnErr) {
+          console.warn("Webhook coupon redemption warning:", cpnErr);
+        }
+      }
+
+      markEventProcessed(eventId);
+
+      recordServerAuditLog({
+        staff_id: "SYSTEM_WEBHOOK",
+        staff_name: "Razorpay Webhook Guard",
+        action: "WEBHOOK_PURCHASE_FULFILLED",
+        category: "settlements",
+        severity: "info",
+        entity_type: "purchase",
+        entity_id: purchaseData?.id || paymentId || orderId,
+        target_student_phone: notes.studentMobile,
+        target_student_name: notes.studentName,
+        meta: {
+          itemType: isBook ? "book" : "course",
+          itemId,
+          amountPaise: purchasePayload.amount_paise,
+          paymentId,
+          orderId,
+          eventId,
+        },
+      });
     }
 
     return NextResponse.json({ status: "ok" });

@@ -58,7 +58,7 @@ function LoginContent() {
       setErrorMessage(
         msgParam
           ? decodeURIComponent(msgParam)
-          : "Your account was logged in on another device. Only 1 device session is allowed at a time."
+          : "सुरक्षेच्या कारणास्तव एका वेळी एकाच फोनवर अभ्यास करता येतो. तुमचे खाते दुसऱ्या डिव्हाइसवर उघडल्यामुळे हे सत्र बंद झाले आहे. (Only 1 active device session allowed at a time.)"
       );
       return;
     }

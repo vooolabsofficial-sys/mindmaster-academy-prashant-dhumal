@@ -36,6 +36,8 @@ export default function AdminReportsPage() {
   const [customEndDate, setCustomEndDate] = useState("2026-09-11");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [couponPage, setCouponPage] = useState(1);
+  const [watchPage, setWatchPage] = useState(1);
   const [, startTransition] = useTransition();
 
   // Initial synchronous state from analytics engine
@@ -623,7 +625,9 @@ export default function AdminReportsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E4E8F8]">
-                  {data.couponPerformance.map((cp) => (
+                  {data.couponPerformance
+                    .slice((couponPage - 1) * 10, couponPage * 10)
+                    .map((cp) => (
                     <tr key={cp.couponId} className="hover:bg-[#F9FAFF] transition-colors">
                       <td className="py-3.5 pl-2">
                         <span className="font-mono font-black text-xs text-[#0B57D0] bg-[#EEF4FF] px-2.5 py-1 rounded-md border border-[#D0E2FF]">
@@ -654,6 +658,35 @@ export default function AdminReportsPage() {
                 </tbody>
               </table>
             </div>
+
+            {data.couponPerformance.length > 10 && (
+              <div className="flex items-center justify-between pt-3 border-t border-[#E4E8F8] text-xs text-[#5A6478]">
+                <span>
+                  Showing {(couponPage - 1) * 10 + 1}–{Math.min(couponPage * 10, data.couponPerformance.length)} of {data.couponPerformance.length} coupons
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setCouponPage((p) => Math.max(1, p - 1))}
+                    disabled={couponPage === 1}
+                    className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] transition cursor-pointer"
+                  >
+                    Prev
+                  </button>
+                  <span className="font-bold text-[#0E1B3D]">
+                    {couponPage} / {Math.max(1, Math.ceil(data.couponPerformance.length / 10))}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCouponPage((p) => Math.min(Math.ceil(data.couponPerformance.length / 10), p + 1))}
+                    disabled={couponPage >= Math.ceil(data.couponPerformance.length / 10)}
+                    className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] transition cursor-pointer"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ========================================================================= */}
@@ -842,7 +875,9 @@ export default function AdminReportsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E4E8F8]">
-                    {data.watchStatistics.map((ws) => (
+                    {data.watchStatistics
+                      .slice((watchPage - 1) * 10, watchPage * 10)
+                      .map((ws) => (
                       <tr key={ws.lessonId} className="hover:bg-[#F9FAFF] transition-colors">
                         <td className="py-3.5 pl-2">
                           <p className="font-bold text-[#0E1B3D] text-xs">{ws.lessonTitle}</p>
@@ -881,6 +916,35 @@ export default function AdminReportsPage() {
                   </tbody>
                 </table>
               </div>
+
+              {data.watchStatistics.length > 10 && (
+                <div className="flex items-center justify-between pt-3 border-t border-[#E4E8F8] text-xs text-[#5A6478]">
+                  <span>
+                    Showing {(watchPage - 1) * 10 + 1}–{Math.min(watchPage * 10, data.watchStatistics.length)} of {data.watchStatistics.length} lessons
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setWatchPage((p) => Math.max(1, p - 1))}
+                      disabled={watchPage === 1}
+                      className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] transition cursor-pointer"
+                    >
+                      Prev
+                    </button>
+                    <span className="font-bold text-[#0E1B3D]">
+                      {watchPage} / {Math.max(1, Math.ceil(data.watchStatistics.length / 10))}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setWatchPage((p) => Math.min(Math.ceil(data.watchStatistics.length / 10), p + 1))}
+                      disabled={watchPage >= Math.ceil(data.watchStatistics.length / 10)}
+                      className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] transition cursor-pointer"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : null}
         </div>

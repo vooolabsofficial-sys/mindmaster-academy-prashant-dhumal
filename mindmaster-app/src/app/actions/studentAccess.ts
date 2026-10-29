@@ -3,6 +3,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone } from "@/lib/phoneUtils";
 import { COURSE_ID_MAP } from "@/lib/mockData";
+import {
+  verifyStudentCourseAccessSchema,
+  getStudentActiveEnrollmentsSchema,
+  verifyStudentBookAccessSchema,
+} from "@/lib/validations";
 
 export interface StudentAccessCheckResult {
   hasAccess: boolean;
@@ -20,6 +25,11 @@ export async function verifyStudentCourseAccess(params: {
   userPhone?: string;
   userId?: string;
 }): Promise<StudentAccessCheckResult> {
+  const parsed = verifyStudentCourseAccessSchema.safeParse(params);
+  if (!parsed.success) {
+    return { hasAccess: false };
+  }
+
   const { courseId } = params;
   const cleanPhone = normalizePhone(params.userPhone);
   let resolvedUserId = params.userId || "";
@@ -114,6 +124,9 @@ export async function getStudentActiveEnrollments(params: {
   userPhone?: string;
   userId?: string;
 }): Promise<Record<string, string>> {
+  const parsed = getStudentActiveEnrollmentsSchema.safeParse(params);
+  if (!parsed.success) return {};
+
   const cleanPhone = normalizePhone(params.userPhone);
   let resolvedUserId = params.userId || "";
   const enrollments: Record<string, string> = {};
@@ -185,6 +198,11 @@ export async function verifyStudentBookAccess(params: {
   userPhone?: string;
   userId?: string;
 }): Promise<StudentAccessCheckResult> {
+  const parsed = verifyStudentBookAccessSchema.safeParse(params);
+  if (!parsed.success) {
+    return { hasAccess: false };
+  }
+
   const { bookId } = params;
   const cleanPhone = normalizePhone(params.userPhone);
   let resolvedUserId = params.userId || "";

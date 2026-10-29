@@ -3,6 +3,7 @@ import { recordServerAuditLog } from "@/lib/auditLogger";
 import { verifyStaffSession } from "@/lib/staffSession";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ASSIGNABLE_PERMISSIONS } from "@/lib/types";
+import { getClientIp, checkRateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 // Permission mapping for /sub/* routes per specifications:
 // videos -> videos.manage
@@ -45,6 +46,25 @@ export async function middleware(req: NextRequest | Request) {
     const booksUrl = new URL(pathname.replace(/^\/notes/, "/books"), req.url);
     booksUrl.search = search;
     return NextResponse.redirect(booksUrl, 308);
+  }
+
+  // IP-based Rate Limiter Middleware for sensitive auth & verification endpoints
+  const SENSITIVE_API_ROUTES = [
+    "/api/student/auth",
+    "/api/staff/login",
+    "/api/staff/forgot-password",
+    "/api/certificates/verify",
+  ];
+
+  if (SENSITIVE_API_ROUTES.some((route) => pathname.startsWith(route))) {
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`mw_rate_limit:${ip}`, 10, 60000);
+    if (!rl.success) {
+      return rateLimitResponse(
+        rl.resetInSec,
+        `Too many requests to ${pathname}. Please wait ${rl.resetInSec} seconds before retrying.`
+      );
+    }
   }
 
   // =========================================================================

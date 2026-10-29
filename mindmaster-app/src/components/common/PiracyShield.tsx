@@ -55,9 +55,14 @@ export default function PiracyShield({
         const p = JSON.parse(rawProfile);
         const name = p.full_name || p.name || "Student";
         const phone = p.mobile_number || p.phone || "";
+        const id = p.id || p.user_id || p.student_id || "";
         const clean = normalizePhone(phone);
-        if (clean) {
-          setStudentWatermark(`${name} • +91 ${clean.slice(0, 5)} ${clean.slice(5)}`);
+        const maskedPhone = clean ? `+91 ${clean.slice(0, 2)}*** ***${clean.slice(-2)}` : "";
+        const idPart = id ? ` • ID: ${String(id).slice(0, 8)}` : "";
+        if (maskedPhone) {
+          setStudentWatermark(`${name} • ${maskedPhone}${idPart}`);
+        } else if (idPart) {
+          setStudentWatermark(`${name}${idPart} • MindMaster`);
         } else if (name) {
           setStudentWatermark(`${name} • MindMaster Academy`);
         }
@@ -279,7 +284,10 @@ export default function PiracyShield({
           </div>
 
           <h3 className="text-lg font-bold text-slate-100 sm:text-xl">
-            Screen Protected for Security
+            सुरक्षेच्या कारणास्तव स्क्रीन लपवली आहे
+            <span className="block text-sm font-medium text-slate-400 mt-1">
+              Screen Protected for Security
+            </span>
           </h3>
 
           <p className="mt-2 max-w-md text-xs sm:text-sm text-slate-300 leading-relaxed">

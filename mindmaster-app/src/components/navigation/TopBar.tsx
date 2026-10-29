@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Brain, Globe } from "lucide-react";
+import { Search, Brain, Globe, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import StudentNotificationBell from "@/components/notifications/StudentNotificationBell";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -11,8 +11,29 @@ export default function TopBar() {
   const [studentName, setStudentName] = useState("Student");
   const [studentGrade, setStudentGrade] = useState("MindMaster Academy");
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
 
   const { languageInfo, t } = useLanguage();
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") {
+      setIsInstallable(false);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -84,6 +105,20 @@ export default function TopBar() {
             <Globe className="w-3.5 h-3.5 text-blue-600 shrink-0" />
             <span className="font-extrabold text-[11px] sm:text-xs">{languageInfo.nativeName}</span>
           </button>
+
+          {/* Install App PWA CTA */}
+          {isInstallable && (
+            <button
+              type="button"
+              onClick={handleInstallClick}
+              aria-label="Install App"
+              title="Install App"
+              className="touch-target-44 flex items-center gap-1.5 sm:gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-sm shadow-blue-500/25 transition cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Install App</span>
+            </button>
+          )}
 
           {/* In-App Notifications Bell Dropdown */}
           <StudentNotificationBell />

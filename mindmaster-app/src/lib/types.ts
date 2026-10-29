@@ -148,24 +148,14 @@ export interface Purchase {
 
 export type StaffRole = "main_admin" | "sub_admin";
 
-// Sub-Admin Assignable Permissions: Operational modules assignable by Main Admin
+// Sub-Admin Assignable Permissions: Strictly 2 Operational modules assignable by Main Admin
 export type SubAdminPermission =
   | "students.view"
-  | "messages.manage"
-  | "freegrant.manage"
-  | "courses.manage"
-  | "videos.manage"
-  | "notes.books.manage"
-  | "coupons.manage";
+  | "messages.manage";
 
 export const ASSIGNABLE_PERMISSIONS: SubAdminPermission[] = [
   "students.view",
   "messages.manage",
-  "freegrant.manage",
-  "courses.manage",
-  "videos.manage",
-  "notes.books.manage",
-  "coupons.manage",
 ];
 
 // All staff permissions (Admin-only permissions are never assignable to sub-admin)

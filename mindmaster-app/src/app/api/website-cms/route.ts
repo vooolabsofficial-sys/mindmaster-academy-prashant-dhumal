@@ -10,6 +10,7 @@ import {
 } from "@/lib/websiteCmsStore";
 import { authenticateStaffRequest } from "@/lib/serverAuthGuard";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { websiteLeadSubmissionSchema, formatZodError } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -62,20 +63,22 @@ export async function POST(req: NextRequest) {
       }
 
       const leadPayload = body.lead || body;
-      if (!leadPayload.name || !leadPayload.phone) {
+      const parsedLead = websiteLeadSubmissionSchema.safeParse(leadPayload);
+      if (!parsedLead.success) {
         return NextResponse.json(
-          { success: false, error: "Name and phone number are required" },
+          { success: false, error: formatZodError(parsedLead.error) },
           { status: 400, headers: CORS_HEADERS }
         );
       }
 
+      const cleanLead = parsedLead.data;
       const newLead = addLeadSync({
-        name: leadPayload.name,
-        phone: leadPayload.phone,
-        email: leadPayload.email,
-        courseInterest: leadPayload.courseInterest || leadPayload.course,
-        message: leadPayload.message,
-        source: leadPayload.source || "Website Inquiries",
+        name: cleanLead.name,
+        phone: cleanLead.phone,
+        email: cleanLead.email,
+        courseInterest: cleanLead.courseInterest || cleanLead.course,
+        message: cleanLead.message,
+        source: cleanLead.source || "Website Inquiries",
       });
 
       return NextResponse.json(

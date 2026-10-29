@@ -1,4 +1,4 @@
-﻿import { Course } from "./types";
+import { Course } from "./types";
 import { getStaffCourses, saveStaffCourse, logStaffAction, getPlatformSettings } from "./staffStore";
 
 function getSupabase() {
@@ -49,6 +49,7 @@ export interface ExtendedVideoRow {
   views: number;
   avgWatchPercent: number;
   status: "active" | "expiring_soon" | "expired";
+  daysLeft?: number;
   description?: string;
   position?: number;
   partNumber?: number;

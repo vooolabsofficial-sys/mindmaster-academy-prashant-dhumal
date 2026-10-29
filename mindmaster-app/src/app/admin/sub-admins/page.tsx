@@ -45,7 +45,7 @@ const ALL_PERMISSIONS: { key: StaffPermission; label: string; desc: string; icon
   {
     key: "students.view",
     label: "Student Finder & 360° Profile",
-    desc: "Search students, view admission history, and manage offline access (telemetry watch drilldown locked to Main Admin)",
+    desc: "Search students, view admission history, and inspect profiles (telemetry watch drilldown locked to Main Admin)",
     icon: "🎓",
   },
   {
@@ -53,12 +53,6 @@ const ALL_PERMISSIONS: { key: StaffPermission; label: string; desc: string; icon
     label: "Student Support Messages",
     desc: "Reply to student queries and send in-app support messages",
     icon: "💬",
-  },
-  {
-    key: "freegrant.manage",
-    label: "Offline Admissions & Grants",
-    desc: "Issue direct offline Cash/UPI course and digital book admissions to students",
-    icon: "🎁",
   },
 ];
 

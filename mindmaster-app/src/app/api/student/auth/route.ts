@@ -65,12 +65,27 @@ async function handlePost(req: NextRequest) {
       action === "forgot-password" ||
       action === "reset_password"
     ) {
+      // 1. IP-based Rate Limiter (5 attempts / min)
       const rate = checkRateLimit(`student_auth:${ip}`, 5, 60000);
       if (!rate.success) {
         return rateLimitResponse(
           rate.resetInSec,
           `Too many authentication attempts. Please wait ${rate.resetInSec} seconds.`
         );
+      }
+
+      // 2. Phone-based Rate Limiter (5 attempts / min per mobile number)
+      if (body.phone) {
+        const cleanPhone = normalizePhone(body.phone);
+        if (cleanPhone) {
+          const ratePhone = checkRateLimit(`student_auth_phone:${cleanPhone}`, 5, 60000);
+          if (!ratePhone.success) {
+            return rateLimitResponse(
+              ratePhone.resetInSec,
+              `Too many authentication attempts for this mobile number. Please wait ${ratePhone.resetInSec} seconds.`
+            );
+          }
+        }
       }
     }
 

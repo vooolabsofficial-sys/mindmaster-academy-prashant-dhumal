@@ -13,10 +13,24 @@ export default function AuditLogPage() {
   const [logs, setLogs] = useState<ForensicAuditLogEntry[]>([]);
   const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [operatorFilter, setOperatorFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "yesterday" | "7d" | "month">("all");
   const [selectedLog, setSelectedLog] = useState<ForensicAuditLogEntry | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, operatorFilter, categoryFilter, dateFilter, pageSize]);
 
   useEffect(() => {
     fetchDbAuditLogs().then((res) => setLogs(res));
@@ -51,8 +65,8 @@ export default function AuditLogPage() {
     if (dateFilter === "month" && logTime < startOfMonth) return false;
 
     // 4. Search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    if (debouncedSearchQuery.trim()) {
+      const q = debouncedSearchQuery.toLowerCase();
       const matchAction = log.action.toLowerCase().includes(q);
       const matchEntity = (log.entityName || "").toLowerCase().includes(q);
       const matchStaff = (log.staffName || "").toLowerCase().includes(q) || (log.staffId || "").toLowerCase().includes(q);
@@ -66,6 +80,12 @@ export default function AuditLogPage() {
 
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / pageSize));
+  const paginatedLogs = React.useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredLogs.slice(start, start + pageSize);
+  }, [filteredLogs, currentPage, pageSize]);
 
   const handleExportCsv = () => {
     const headers = [
@@ -249,7 +269,7 @@ export default function AuditLogPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredLogs.map((log) => (
+                    paginatedLogs.map((log) => (
                       <tr
                         key={log.id}
                         onClick={() => setSelectedLog(log)}
@@ -325,6 +345,82 @@ export default function AuditLogPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {filteredLogs.length > 0 && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-[#E4E8F8] text-xs text-[#5A6478]">
+                <div className="flex items-center gap-2">
+                  <span>
+                    Showing{" "}
+                    <span className="font-bold text-[#0E1B3D]">
+                      {(currentPage - 1) * pageSize + 1}
+                    </span>{" "}
+                    to{" "}
+                    <span className="font-bold text-[#0E1B3D]">
+                      {Math.min(currentPage * pageSize, filteredLogs.length)}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-bold text-[#0E1B3D]">
+                      {filteredLogs.length}
+                    </span>{" "}
+                    events
+                  </span>
+                  <span className="text-[#A4B0C6]">|</span>
+                  <label className="flex items-center gap-1.5 text-xs text-[#5A6478]">
+                    <span>Page size:</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => setPageSize(Number(e.target.value))}
+                      className="px-2 py-1 bg-[#F5F7FF] border border-[#E4E8F8] rounded-lg font-bold text-[#0E1B3D] cursor-pointer"
+                    >
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="px-2.5 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    title="First page"
+                  >
+                    «
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                  >
+                    Prev
+                  </button>
+                  <span className="px-3 py-1.5 font-bold text-[#0E1B3D]">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                  >
+                    Next
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="px-2.5 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    title="Last page"
+                  >
+                    »
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Slide-over Before / After Forensic Drawer */}

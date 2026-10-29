@@ -3,6 +3,7 @@ import { computeAnalyticsData, AnalyticsFilter } from "@/lib/analyticsEngine";
 import { getStaffStudents } from "@/lib/staffStore";
 import { getGrants } from "@/lib/grantStore";
 import { authenticateStaffRequest } from "@/lib/serverAuthGuard";
+import { reportsExportQuerySchema, formatZodError } from "@/lib/validations";
 
 function escapeCsvCell(val: string | number | undefined | null): string {
   if (val === undefined || val === null) return '""';
@@ -10,10 +11,31 @@ function escapeCsvCell(val: string | number | undefined | null): string {
   return `"${str.replace(/"/g, '""')}"`;
 }
 
-function buildCsv(headers: string[], rows: (string | number)[][]): string {
-  const headerLine = headers.map(escapeCsvCell).join(",");
-  const rowLines = rows.map((r) => r.map(escapeCsvCell).join(","));
-  return [headerLine, ...rowLines].join("\r\n");
+/**
+ * High-performance Web ReadableStream generator for streaming CSV data in chunks.
+ * Avoids buffering entire export in memory, preventing Node/Vercel memory limits.
+ */
+function createCsvReadableStream(
+  headers: string[],
+  rows: (string | number)[][],
+  chunkSize = 100
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    start(controller) {
+      // 1. Emit UTF-8 BOM + Header Row for flawless Excel/Sheets Marathi/Unicode support
+      controller.enqueue(encoder.encode("\uFEFF" + headers.map(escapeCsvCell).join(",") + "\r\n"));
+
+      // 2. Stream rows in bounded chunks
+      for (let i = 0; i < rows.length; i += chunkSize) {
+        const chunk = rows.slice(i, i + chunkSize);
+        const chunkText = chunk.map((r) => r.map(escapeCsvCell).join(",")).join("\r\n") + "\r\n";
+        controller.enqueue(encoder.encode(chunkText));
+      }
+
+      controller.close();
+    },
+  });
 }
 
 export async function GET(req: NextRequest) {
@@ -24,59 +46,66 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const card = searchParams.get("card") || "course-sales";
-    const range = (searchParams.get("range") || "30") as "7" | "30" | "custom";
-    const startDate = searchParams.get("startDate") || undefined;
-    const endDate = searchParams.get("endDate") || undefined;
-    const district = searchParams.get("district") || "all";
+    const parsed = reportsExportQuerySchema.safeParse({
+      card: searchParams.get("card") || "course-sales",
+      range: searchParams.get("range") || "30",
+      startDate: searchParams.get("startDate") || undefined,
+      endDate: searchParams.get("endDate") || undefined,
+      district: searchParams.get("district") || "all",
+    });
+
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: formatZodError(parsed.error) }, { status: 400 });
+    }
+
+    const { card, range, startDate, endDate, district } = parsed.data;
 
     const filter: AnalyticsFilter = {
-      range,
+      range: range as "7" | "30" | "custom",
       startDate,
       endDate,
       district,
     };
 
     const data = computeAnalyticsData(filter);
-    let csvContent = "";
+    let exportHeaders: string[] = [];
+    let exportRows: (string | number)[][] = [];
     let filename = `${card}-${range}.csv`;
 
     switch (card) {
       case "students-by-district": {
         filename = `students-by-district-${range}-${district}.csv`;
-        const headers = ["District", "Student Count", "Percentage Share %"];
-        const rows = data.studentsByDistrict.map((d) => [
+        exportHeaders = ["District", "Student Count", "Percentage Share %"];
+        exportRows = data.studentsByDistrict.map((d) => [
           d.district,
           d.count,
           `${d.percentage}%`,
         ]);
-        csvContent = buildCsv(headers, rows);
         break;
       }
 
       case "course-sales": {
         filename = `course-sales-${range}-${district}.csv`;
-        const headers = [
+        exportHeaders = [
           "Course Code",
           "Course Title",
           "Paid Orders Count",
           "Gross Revenue (INR)",
           "Revenue Share %",
         ];
-        const rows = data.courseSales.map((c) => [
+        exportRows = data.courseSales.map((c) => [
           c.courseCode,
           c.courseTitle,
           c.salesCount,
           c.revenueRupees,
           `${c.percentageShare}%`,
         ]);
-        csvContent = buildCsv(headers, rows);
         break;
       }
 
       case "video-completion": {
         filename = `video-completion-ratios-${range}-${district}.csv`;
-        const headers = [
+        exportHeaders = [
           "Course Code",
           "Course Title",
           "Enrolled Students",
@@ -84,7 +113,7 @@ export async function GET(req: NextRequest) {
           "Total Lessons Enrolled",
           "Completion Rate %",
         ];
-        const rows = data.videoCompletion.map((v) => [
+        exportRows = data.videoCompletion.map((v) => [
           v.courseCode,
           v.courseTitle,
           v.enrolledStudents,
@@ -92,13 +121,12 @@ export async function GET(req: NextRequest) {
           v.totalLessonsEnrolled,
           `${v.completionRatePct}%`,
         ]);
-        csvContent = buildCsv(headers, rows);
         break;
       }
 
       case "coupon-performance": {
         filename = `coupon-performance-${range}-${district}.csv`;
-        const headers = [
+        exportHeaders = [
           "Coupon Code",
           "Discount Type",
           "Discount Value",
@@ -107,7 +135,7 @@ export async function GET(req: NextRequest) {
           "Total Discount Given (INR)",
           "Status",
         ];
-        const rows = data.couponPerformance.map((cp) => [
+        exportRows = data.couponPerformance.map((cp) => [
           cp.couponCode,
           cp.discountType,
           cp.discountType === "percentage" ? `${cp.discountValue}%` : `₹${Math.round(cp.discountValue / 100)}`,
@@ -116,14 +144,13 @@ export async function GET(req: NextRequest) {
           cp.totalDiscountRupees,
           cp.status,
         ]);
-        csvContent = buildCsv(headers, rows);
         break;
       }
 
       case "free-grants-impact": {
         filename = `free-grants-impact-${range}-${district}.csv`;
-        const headers = ["Grant Metric", "Value / Count", "Breakdown Details"];
-        const rows: (string | number)[][] = [
+        exportHeaders = ["Grant Metric", "Value / Count", "Breakdown Details"];
+        exportRows = [
           ["Total Grants Created", data.freeGrantsImpact.totalGrants, "Across all scopes"],
           ["Active Live Grants", data.freeGrantsImpact.activeGrants, "Currently valid"],
           ["Unique Students Covered", data.freeGrantsImpact.studentsCovered, "Unlocked subsidized curriculum"],
@@ -135,33 +162,31 @@ export async function GET(req: NextRequest) {
           ["Scope: School Wide", data.freeGrantsImpact.byScope.school, "School specific grants"],
           ["Scope: All Academy Students", data.freeGrantsImpact.byScope.all_students, "Universal grants"],
         ];
-        csvContent = buildCsv(headers, rows);
         break;
       }
 
       case "growth-line": {
         filename = `student-profile-growth-${range}-${district}.csv`;
-        const headers = [
+        exportHeaders = [
           "Cohort Week",
           "Start Date",
           "End Date",
           "New Profile Signups",
           "Cumulative Profiles",
         ];
-        const rows = data.growthLine.map((g) => [
+        exportRows = data.growthLine.map((g) => [
           g.weekLabel,
           g.startDate,
           g.endDate,
           g.newProfilesCount,
           g.cumulativeProfiles,
         ]);
-        csvContent = buildCsv(headers, rows);
         break;
       }
 
       case "watch-statistics": {
         filename = `watch-statistics-${range}-${district}.csv`;
-        const headers = [
+        exportHeaders = [
           "Lesson ID",
           "Lesson Title",
           "Course Title",
@@ -171,7 +196,7 @@ export async function GET(req: NextRequest) {
           "Completion Rate %",
           "Total Watch Hours",
         ];
-        const rows = data.watchStatistics.map((w) => [
+        exportRows = data.watchStatistics.map((w) => [
           w.lessonId,
           w.lessonTitle,
           w.courseTitle,
@@ -181,14 +206,13 @@ export async function GET(req: NextRequest) {
           `${w.completionRate}%`,
           `${w.totalWatchHours} hrs`,
         ]);
-        csvContent = buildCsv(headers, rows);
         break;
       }
 
       case "fee-collections":
       case "transactions": {
         filename = `fee-collections-${range}-${district}.csv`;
-        const headers = [
+        exportHeaders = [
           "Transaction ID",
           "Customer Name",
           "Verified 10-Digit Mobile",
@@ -244,7 +268,7 @@ export async function GET(req: NextRequest) {
           }
         });
 
-        csvContent = buildCsv(headers, rows);
+        exportRows = rows;
         break;
       }
 
@@ -256,12 +280,15 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return new NextResponse(csvContent, {
+    const stream = createCsvReadableStream(exportHeaders, exportRows);
+
+    return new NextResponse(stream, {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-store, no-cache, must-revalidate",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (err: any) {

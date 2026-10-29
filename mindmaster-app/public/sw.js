@@ -39,6 +39,19 @@ self.addEventListener("message", (event) => {
   }
 });
 
+// Background sync for offline watch progress and heartbeat telemetry
+self.addEventListener("sync", (event) => {
+  if (event.tag === "watch-progress-sync" || event.tag === "sync-watch-stats") {
+    event.waitUntil(
+      self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: "SYNC_WATCH_STATS" });
+        });
+      })
+    );
+  }
+});
+
 self.addEventListener("fetch", (event) => {
   // 1. Only handle GET requests (Cache API throws TypeError on POST/PUT/DELETE)
   if (event.request.method !== "GET") return;

@@ -54,8 +54,22 @@ export default function GrantsManagerPage() {
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [scopeFilter, setScopeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending_approval" | "revoked" | "rejected">("all");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, scopeFilter, statusFilter, pageSize]);
 
   // Cash vs UPI Collection Tally Filter: Today, Last 7 Days, This Month, All Time
   const [tallyTimeframe, setTallyTimeframe] = useState<"today" | "week" | "month" | "all">("today");
@@ -361,7 +375,7 @@ export default function GrantsManagerPage() {
 
   // Filtered grants list (Sub-admins see OWN grants by default or toggle; Main Admin sees all)
   const filteredGrants = grants.filter((g) => {
-    const q = searchQuery.toLowerCase();
+    const q = debouncedSearchQuery.toLowerCase();
     const matchesSearch =
       g.reason.toLowerCase().includes(q) ||
       (g.scope_value || g.scopeValue || "").toLowerCase().includes(q) ||
@@ -377,6 +391,12 @@ export default function GrantsManagerPage() {
 
     return matchesSearch && matchesScope && matchesStatus && matchesOwner;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredGrants.length / pageSize));
+  const paginatedGrants = React.useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredGrants.slice(start, start + pageSize);
+  }, [filteredGrants, currentPage, pageSize]);
 
   return (
     <PermissionGuard permission="freegrant.manage">
@@ -873,7 +893,8 @@ export default function GrantsManagerPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#F5F7FF] text-[#5A6478] border-b border-[#E4E8F8]">
                     <tr>
@@ -888,7 +909,7 @@ export default function GrantsManagerPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E4E8F8]">
-                    {filteredGrants.map((grant) => {
+                    {paginatedGrants.map((grant) => {
                       const canRevoke =
                         grant.status === "active" &&
                         (isMainAdmin || (grant.created_by || grant.createdBy) === staff.id);
@@ -1104,7 +1125,84 @@ export default function GrantsManagerPage() {
                   </tbody>
                 </table>
               </div>
-            )}
+
+              {/* Pagination Controls */}
+              {filteredGrants.length > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-[#E4E8F8] text-xs text-[#5A6478]">
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Showing{" "}
+                      <span className="font-bold text-[#0E1B3D]">
+                        {(currentPage - 1) * pageSize + 1}
+                      </span>{" "}
+                      to{" "}
+                      <span className="font-bold text-[#0E1B3D]">
+                        {Math.min(currentPage * pageSize, filteredGrants.length)}
+                      </span>{" "}
+                      of{" "}
+                      <span className="font-bold text-[#0E1B3D]">
+                        {filteredGrants.length}
+                      </span>{" "}
+                      grants
+                    </span>
+                    <span className="text-[#A4B0C6]">|</span>
+                    <label className="flex items-center gap-1.5 text-xs text-[#5A6478]">
+                      <span>Page size:</span>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => setPageSize(Number(e.target.value))}
+                        className="px-2 py-1 bg-[#F5F7FF] border border-[#E4E8F8] rounded-lg font-bold text-[#0E1B3D] cursor-pointer"
+                      >
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="px-2.5 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                      title="First page"
+                    >
+                      «
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    >
+                      Prev
+                    </button>
+                    <span className="px-3 py-1.5 font-bold text-[#0E1B3D]">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    >
+                      Next
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="px-2.5 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                      title="Last page"
+                    >
+                      »
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
           </div>
 
           {/* Create Grant Drawer */}

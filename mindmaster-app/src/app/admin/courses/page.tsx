@@ -138,6 +138,8 @@ export default function CourseManagerPage() {
   const [fixedExpiryDate, setFixedExpiryDate] = useState("");
 
   const [formStatus, setFormStatus] = useState<"live" | "upcoming" | "draft">("live");
+  const [isLive, setIsLive] = useState(true);
+  const [segmentType, setSegmentType] = useState<"all" | "district" | "standard">("all");
 
   // Dynamic Categories State
   const [categories, setCategories] = useState<CategoryItem[]>([]);

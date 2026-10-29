@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { youtubePlaylistImportSchema, formatZodError } from "@/lib/validations";
 
 // Extract YouTube Video or Playlist info from various URL formats
 function extractYouTubeInfo(urlOrId: string): { type: "playlist" | "video"; id: string } | null {
@@ -70,15 +71,16 @@ function formatDuration(sec: number): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const rawUrl = body.url || body.playlistUrl || body.videoUrl || "";
-    const apiKey = (body.apiKey || process.env.YOUTUBE_API_KEY || "").trim();
-
-    if (!rawUrl || !rawUrl.trim()) {
+    const parsed = youtubePlaylistImportSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "कृपया वैध YouTube Video किंवा Playlist URL प्रविष्ट करा (Please provide a YouTube video or playlist link)." },
+        { error: `कृपया वैध YouTube Video किंवा Playlist URL प्रविष्ट करा (${formatZodError(parsed.error)})` },
         { status: 400 }
       );
     }
+
+    const rawUrl = parsed.data.url || parsed.data.playlistUrl || parsed.data.videoUrl || "";
+    const apiKey = (parsed.data.apiKey || process.env.YOUTUBE_API_KEY || "").trim();
 
     const info = extractYouTubeInfo(rawUrl);
     if (!info) {

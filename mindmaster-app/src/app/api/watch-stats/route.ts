@@ -2,12 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LessonWatchStat } from "@/lib/types";
 import { authenticateStaffRequest } from "@/lib/serverAuthGuard";
+import {
+  watchStatsGetQuerySchema,
+  watchStatsPostBodySchema,
+  formatZodError,
+} from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const lessonId = searchParams.get("lesson_id");
-    const requestedUserId = searchParams.get("user_id");
+    const parsedQuery = watchStatsGetQuerySchema.safeParse({
+      lesson_id: searchParams.get("lesson_id") || undefined,
+      user_id: searchParams.get("user_id") || undefined,
+    });
+    if (!parsedQuery.success) {
+      return NextResponse.json({ error: formatZodError(parsedQuery.error) }, { status: 400 });
+    }
+    const lessonId = parsedQuery.data.lesson_id;
+    const requestedUserId = parsedQuery.data.user_id;
 
     // Case 1: Student querying their own progress for a lesson (auto-resume sync)
     if (lessonId) {
@@ -134,14 +146,15 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { lesson_id, position_sec, completed, user_id } = body;
-
-    if (!lesson_id || typeof position_sec !== "number") {
+    const parsed = watchStatsPostBodySchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid payload: lesson_id and position_sec are required" },
+        { error: `Invalid payload: ${formatZodError(parsed.error)}` },
         { status: 400 }
       );
     }
+    const { lesson_id, position_sec, completed } = parsed.data;
+    const user_id = body.user_id;
 
     // Determine student ID: from cookie, request body, or auth token
     let studentId = user_id;

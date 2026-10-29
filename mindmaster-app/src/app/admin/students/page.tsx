@@ -38,6 +38,9 @@ export default function StudentFinderPage() {
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [districtFilter, setDistrictFilter] = useState("all");
   const [talukaFilter, setTalukaFilter] = useState("all");
   const [schoolFilter, setSchoolFilter] = useState("all");
@@ -45,6 +48,29 @@ export default function StudentFinderPage() {
   const [progressFilter, setProgressFilter] = useState<"all" | "0-25" | "26-75" | "76-99" | "100">("all");
   const [expiring7DaysOnly, setExpiring7DaysOnly] = useState(false);
   const [recentSignupsOnly, setRecentSignupsOnly] = useState(false);
+
+  // Debounce search query to optimize CPU & prevent UI lag
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Reset to first page whenever search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    debouncedSearchQuery,
+    districtFilter,
+    talukaFilter,
+    schoolFilter,
+    courseFilter,
+    progressFilter,
+    expiring7DaysOnly,
+    recentSignupsOnly,
+    pageSize,
+  ]);
 
   // 360 Drawer State
   const [drawerStudent, setDrawerStudent] = useState<StudentRecord | null>(null);
@@ -656,7 +682,7 @@ export default function StudentFinderPage() {
 
   // Filter students with Typo-Tolerant Fuzzy Search (Fuse.js)
   const searchMatchedStudents = React.useMemo(() => {
-    const q = searchQuery.trim();
+    const q = debouncedSearchQuery.trim();
     if (!q) return students;
     const fuse = createStudentFuzzySearch(students);
     const results = fuse.search(q);
@@ -670,7 +696,7 @@ export default function StudentFinderPage() {
         s.email.toLowerCase().includes(q.toLowerCase()) ||
         (s.school && s.school.toLowerCase().includes(q.toLowerCase()))
     );
-  }, [students, searchQuery]);
+  }, [students, debouncedSearchQuery]);
 
   const expiring7DaysCount = React.useMemo(() => {
     return students.filter((s) => {
@@ -739,6 +765,12 @@ export default function StudentFinderPage() {
       ).getTime();
       return timeB - timeA;
     });
+
+  const totalPages = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+  const paginatedStudents = React.useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredStudents.slice(start, start + pageSize);
+  }, [filteredStudents, currentPage, pageSize]);
 
   return (
     <PermissionGuard permission="students.view">
@@ -1008,7 +1040,8 @@ export default function StudentFinderPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-[#E4E8F8] text-[#8A94A6] uppercase tracking-wider font-semibold">
@@ -1040,7 +1073,7 @@ export default function StudentFinderPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E4E8F8]">
-                    {filteredStudents.map((s) => {
+                    {paginatedStudents.map((s) => {
                       const totalLessons = s.totalLessonsCount || 20;
                       const progressPct = Math.min(100, Math.round((s.completedLessonsCount / totalLessons) * 100));
                       const isSelected = selectedStudentPhones.has(s.phone);
@@ -1216,7 +1249,84 @@ export default function StudentFinderPage() {
                   </tbody>
                 </table>
               </div>
-            )}
+
+              {/* Pagination Toolbar */}
+              {filteredStudents.length > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-[#E4E8F8] text-xs text-[#5A6478]">
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Showing{" "}
+                      <span className="font-bold text-[#0E1B3D]">
+                        {(currentPage - 1) * pageSize + 1}
+                      </span>{" "}
+                      to{" "}
+                      <span className="font-bold text-[#0E1B3D]">
+                        {Math.min(currentPage * pageSize, filteredStudents.length)}
+                      </span>{" "}
+                      of{" "}
+                      <span className="font-bold text-[#0E1B3D]">
+                        {filteredStudents.length}
+                      </span>{" "}
+                      students
+                    </span>
+                    <span className="text-[#A4B0C6]">|</span>
+                    <label className="flex items-center gap-1.5 text-xs text-[#5A6478]">
+                      <span>Page size:</span>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => setPageSize(Number(e.target.value))}
+                        className="px-2 py-1 bg-[#F5F7FF] border border-[#E4E8F8] rounded-lg font-bold text-[#0E1B3D] cursor-pointer"
+                      >
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="px-2.5 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                      title="First page"
+                    >
+                      «
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    >
+                      Prev
+                    </button>
+                    <span className="px-3 py-1.5 font-bold text-[#0E1B3D]">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    >
+                      Next
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="px-2.5 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                      title="Last page"
+                    >
+                      »
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
             {/* Sticky Floating Bulk Selection Bar */}
             {selectedStudentPhones.size > 0 && (
