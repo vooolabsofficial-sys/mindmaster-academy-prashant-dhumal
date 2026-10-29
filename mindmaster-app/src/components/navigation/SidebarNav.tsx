@@ -153,6 +153,15 @@ export default function SidebarNav() {
             Verified Portal
           </span>
         </div>
+
+        {/* Legal Policies Deep Links */}
+        <div className="px-3 pt-0.5 flex items-center justify-between text-[11px] font-semibold text-slate-400">
+          <Link href="/privacy-policy" className="hover:text-blue-600 transition">Privacy</Link>
+          <span>•</span>
+          <Link href="/terms" className="hover:text-blue-600 transition">Terms (DRM)</Link>
+          <span>•</span>
+          <Link href="/refund-policy" className="hover:text-blue-600 transition">Refunds</Link>
+        </div>
       </div>
     </aside>
   );

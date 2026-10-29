@@ -36,6 +36,7 @@ import {
   Send,
   Plus,
   Clock,
+  RotateCcw,
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
 import { signOutAndClearCookie } from "@/lib/supabase/client";
@@ -1456,14 +1457,65 @@ export default function ProfileSettingsPage() {
               >
                 <div>
                   <ShieldCheck className="w-5 h-5 text-purple-600" />
-                  <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-2">Legal & Policies</h4>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">Terms, privacy & refund policy</p>
+                  <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-2">Legal &amp; Policies Hub</h4>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">Terms, privacy &amp; refund policy</p>
                 </div>
                 <span className="text-[11px] font-bold text-purple-700 flex items-center gap-1">
-                  <span>Read Terms</span>
+                  <span>Open Legal Hub</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </span>
               </Link>
+            </div>
+
+            {/* Dedicated Legal & Compliance Cards */}
+            <div className="border-t border-[#E4E8F8] pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-extrabold text-[#0E1B3D]">Official Policies &amp; Legal Compliance</h3>
+                <span className="text-[10px] font-bold text-slate-400">Bilingual • 2026 Edition</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Link
+                  href="/privacy-policy"
+                  className="p-3.5 rounded-2xl bg-slate-50 border border-[#E4E8F8] hover:border-blue-500 hover:bg-blue-50/40 transition flex flex-col justify-between gap-2.5 group"
+                >
+                  <div className="flex items-center justify-between">
+                    <ShieldCheck className="w-4 h-4 text-blue-600" />
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 group-hover:text-blue-600 transition" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-[#0E1B3D] group-hover:text-blue-600 transition-colors">Privacy Policy</h4>
+                    <p className="text-[11px] text-[#5A6478] mt-0.5">Data encryption &amp; RLS</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/terms"
+                  className="p-3.5 rounded-2xl bg-slate-50 border border-[#E4E8F8] hover:border-amber-500 hover:bg-amber-50/40 transition flex flex-col justify-between gap-2.5 group"
+                >
+                  <div className="flex items-center justify-between">
+                    <FileText className="w-4 h-4 text-amber-600" />
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 group-hover:text-amber-600 transition" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-[#0E1B3D] group-hover:text-amber-600 transition-colors">Terms &amp; Anti-Piracy</h4>
+                    <p className="text-[11px] text-[#5A6478] mt-0.5">Single-Device DRM lock</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/refund-policy"
+                  className="p-3.5 rounded-2xl bg-slate-50 border border-[#E4E8F8] hover:border-emerald-500 hover:bg-emerald-50/40 transition flex flex-col justify-between gap-2.5 group"
+                >
+                  <div className="flex items-center justify-between">
+                    <RotateCcw className="w-4 h-4 text-emerald-600" />
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 group-hover:text-emerald-600 transition" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-[#0E1B3D] group-hover:text-emerald-600 transition-colors">Refund Policy</h4>
+                    <p className="text-[11px] text-[#5A6478] mt-0.5">100% duplicate charge refunds</p>
+                  </div>
+                </Link>
+              </div>
             </div>
 
             {/* Instant Document Download Demo */}

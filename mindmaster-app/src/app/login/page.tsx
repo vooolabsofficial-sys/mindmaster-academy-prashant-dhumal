@@ -642,8 +642,15 @@ function LoginContent() {
       </main>
 
       {/* Clean Footer */}
-      <footer className="py-3.5 text-center text-slate-400 text-xs z-10 border-t border-slate-200/60 bg-white/40">
-        © 2026 MindMaster Academy • Prashant Dhumal Sir • All rights reserved
+      <footer className="py-4 text-center text-slate-500 text-xs z-10 border-t border-slate-200/60 bg-white/40 space-y-1.5">
+        <div>© 2026 MindMaster Academy • Prashant Dhumal Sir • All rights reserved</div>
+        <div className="flex items-center justify-center gap-2.5 text-[11px] text-slate-500 font-semibold">
+          <Link href="/privacy-policy" className="hover:text-blue-600 transition">Privacy Policy</Link>
+          <span>•</span>
+          <Link href="/terms" className="hover:text-blue-600 transition">Terms of Service</Link>
+          <span>•</span>
+          <Link href="/refund-policy" className="hover:text-blue-600 transition">Refund Policy</Link>
+        </div>
       </footer>
     </div>
   );

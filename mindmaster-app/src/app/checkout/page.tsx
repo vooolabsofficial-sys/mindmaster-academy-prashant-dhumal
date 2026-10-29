@@ -1280,9 +1280,9 @@ function CheckoutContent() {
 
             <div className="text-center text-[10px] text-[#5A6478] leading-relaxed pt-2">
               By proceeding, you agree to MindMaster Academy&apos;s{" "}
-              <Link href="/legal?tab=terms" target="_blank" className="text-[#0B57D0] underline hover:text-[#0842A0] font-bold">Terms of Service</Link>,{" "}
-              <Link href="/legal?tab=privacy" target="_blank" className="text-[#0B57D0] underline hover:text-[#0842A0] font-bold">Privacy Policy</Link>, and{" "}
-              <Link href="/legal?tab=refund" target="_blank" className="text-[#0B57D0] underline hover:text-[#0842A0] font-bold">Cancellation &amp; Refund Policy</Link>.
+              <Link href="/terms" target="_blank" className="text-[#0B57D0] underline hover:text-[#0842A0] font-bold">Terms of Service</Link>,{" "}
+              <Link href="/privacy-policy" target="_blank" className="text-[#0B57D0] underline hover:text-[#0842A0] font-bold">Privacy Policy</Link>, and{" "}
+              <Link href="/refund-policy" target="_blank" className="text-[#0B57D0] underline hover:text-[#0842A0] font-bold">Cancellation &amp; Refund Policy</Link>.
             </div>
           </div>
         </div>
