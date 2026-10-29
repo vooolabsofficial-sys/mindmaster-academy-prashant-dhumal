@@ -37,6 +37,7 @@ import {
   Plus,
   Clock,
   RotateCcw,
+  ChevronDown,
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
 import { signOutAndClearCookie } from "@/lib/supabase/client";
@@ -122,7 +123,7 @@ export default function ProfileSettingsPage() {
     ticketNotice: "Tickets are directly routed to our academic administration team.",
   });
 
-  const { currentLanguage, setLanguage, languageInfo, t } = useLanguage();
+  const { currentLanguage, setLanguage, languageInfo, t, supportedLanguages } = useLanguage();
 
   const refreshTickets = async () => {
     try {
@@ -909,26 +910,12 @@ export default function ProfileSettingsPage() {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setLanguage("mr");
-                      toast.success("App language set to Marathi (मराठी)");
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                      currentLanguage === "mr"
-                        ? "bg-[#0B57D0] text-white shadow-xs"
-                        : "bg-white border border-[#E4E8F8] text-[#5A6478] hover:text-[#0E1B3D]"
-                    }`}
-                  >
-                    मराठी (Marathi)
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => setIsLangModalOpen(true)}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-[#E4E8F8] text-[#0B57D0] hover:bg-blue-50 transition cursor-pointer flex items-center gap-1.5"
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-blue-50 border border-blue-200 text-[#0B57D0] hover:bg-blue-100 transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
                   >
                     <Globe className="w-3.5 h-3.5" />
-                    <span>All 8 Languages</span>
+                    <span>Select Language / सर्व भाषा ({supportedLanguages.length})</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-blue-400" />
                   </button>
                 </div>
               </div>

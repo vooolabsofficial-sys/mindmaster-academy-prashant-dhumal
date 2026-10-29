@@ -25,7 +25,8 @@ import {
   Building2,
   Lock,
   Search,
-  BookOpen
+  BookOpen,
+  ChevronDown
 } from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
 import { getCurrentStaff } from "@/lib/staffStore";
@@ -462,43 +463,29 @@ export default function AdminGuidePage() {
               </span>
             </div>
 
-            <div className="flex items-center bg-white p-1 rounded-2xl border border-slate-200 shadow-2xs">
+            {/* Language Selector: English First, Toggles or Resets */}
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setIsMarathi(false)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
-                  !isMarathi
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                }`}
+                onClick={() => setIsMarathi(!isMarathi)}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 shadow-2xs active:scale-95"
+                title="Change Language / भाषा बदला"
               >
-                <Globe className="w-3.5 h-3.5" />
-                <span>English (Primary)</span>
+                <Globe className="w-3.5 h-3.5 text-blue-600" />
+                <span>{isMarathi ? "मराठी (Marathi)" : "English (Primary)"}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
-              <button
-                type="button"
-                onClick={() => setIsMarathi(true)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
-                  isMarathi
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                }`}
-              >
-                <span>मराठी</span>
-              </button>
+              {isMarathi && (
+                <button
+                  type="button"
+                  onClick={() => setIsMarathi(false)}
+                  className="text-[11px] font-extrabold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1 rounded-xl transition cursor-pointer animate-pulse"
+                >
+                  <span>← Switch to English</span>
+                </button>
+              )}
             </div>
-
-            {/* Always-visible reset button when Marathi is active */}
-            {isMarathi && (
-              <button
-                type="button"
-                onClick={() => setIsMarathi(false)}
-                className="text-[11px] font-extrabold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1 rounded-xl transition cursor-pointer mt-0.5 animate-pulse"
-              >
-                <span>← Switch to English</span>
-              </button>
-            )}
           </div>
         </div>
 

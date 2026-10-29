@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
 import { useLanguage } from "@/lib/LanguageContext";
+import LanguageModal from "@/components/common/LanguageModal";
 
 interface StepGuide {
   id: string;
@@ -386,8 +387,9 @@ const FAQ_ITEMS: FaqItem[] = [
 ];
 
 export default function HelpPage() {
-  const { currentLanguage, setLanguage } = useLanguage();
+  const { currentLanguage, setLanguage, languageInfo } = useLanguage();
   const isMarathi = currentLanguage === "mr";
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
 
   const [activeTab, setActiveTab] = useState<"steps" | "faq" | "troubleshoot">("steps");
   const [faqSearch, setFaqSearch] = useState("");
@@ -470,56 +472,42 @@ export default function HelpPage() {
               </p>
             </div>
 
-            {/* Language Switcher with Always-Visible English Reset */}
+            {/* Language Switcher Bar with All App Languages */}
             <div className="flex flex-col items-start md:items-end gap-2 shrink-0">
               <div className="text-[11px] font-extrabold text-slate-600 flex items-center gap-1.5">
                 <Languages className="w-4 h-4 text-blue-600" />
                 <span>
                   Language / भाषा:{" "}
                   <strong className="text-blue-600">
-                    {isMarathi ? "मराठी (Marathi)" : "English (Primary)"}
+                    {currentLanguage === "en" ? "English" : languageInfo.nativeName}
                   </strong>
                 </span>
               </div>
 
-              {/* Language Switcher Buttons */}
-              <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-2xs">
+              {/* Language Selector: English First, Opens Full Modal with All Languages on Click */}
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setLanguage("en")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
-                    !isMarathi
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                  }`}
+                  onClick={() => setIsLangModalOpen(true)}
+                  aria-label="Select Language / सर्व भाषा पहा"
+                  title="Click to view all languages in MindMaster App"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 shadow-2xs active:scale-95"
                 >
-                  <Globe className="w-3.5 h-3.5" />
-                  <span>English (Primary)</span>
+                  <Globe className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{currentLanguage === "en" ? "English (Primary)" : languageInfo.nativeName}</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setLanguage("mr")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
-                    isMarathi
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                  }`}
-                >
-                  <span>मराठी</span>
-                </button>
+                {currentLanguage !== "en" && (
+                  <button
+                    type="button"
+                    onClick={() => setLanguage("en")}
+                    className="text-[11px] font-extrabold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1 rounded-xl transition flex items-center gap-1.5 cursor-pointer animate-pulse"
+                  >
+                    <span>← Switch to English</span>
+                  </button>
+                )}
               </div>
-
-              {/* Always keep "Switch to English" visible when Marathi is active */}
-              {isMarathi && (
-                <button
-                  type="button"
-                  onClick={() => setLanguage("en")}
-                  className="text-[11px] font-extrabold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1 rounded-xl transition flex items-center gap-1.5 cursor-pointer mt-0.5 animate-pulse"
-                >
-                  <span>← Switch to English</span>
-                </button>
-              )}
             </div>
           </div>
 
@@ -957,6 +945,12 @@ export default function HelpPage() {
           </div>
         </div>
       </div>
+
+      {/* Full 8 Indian Languages Modal */}
+      <LanguageModal
+        isOpen={isLangModalOpen}
+        onClose={() => setIsLangModalOpen(false)}
+      />
     </AppShell>
   );
 }

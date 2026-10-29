@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Brain, Globe, Download, HelpCircle } from "lucide-react";
+import { Search, Brain, Globe, Download, HelpCircle, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import StudentNotificationBell from "@/components/notifications/StudentNotificationBell";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -94,9 +94,21 @@ export default function TopBar() {
 
         {/* Right: Actions - Larger & Touch-Friendly */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Persistent One-Click Language Switcher (EN | मराठी) + Always-Visible English Reset */}
-          <div className="inline-flex items-center p-0.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold shadow-2xs">
-            {currentLanguage !== "en" ? (
+          {/* Language Selector: English First, Opens Full Modal with All Languages on Click */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setIsLangModalOpen(true)}
+              aria-label="Select Language / भाषा निवडा"
+              title="Click to view all languages in MindMaster App"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-extrabold text-slate-800 transition cursor-pointer shadow-2xs active:scale-95"
+            >
+              <Globe className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <span>{currentLanguage === "en" ? "English" : languageInfo.nativeName}</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+
+            {currentLanguage !== "en" && (
               <button
                 type="button"
                 onClick={() => setLanguage("en")}
@@ -105,37 +117,7 @@ export default function TopBar() {
               >
                 <span>Switch to English</span>
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setLanguage("en")}
-                className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-blue-600 text-white shadow-xs cursor-pointer"
-                title="English (Primary Default)"
-              >
-                EN
-              </button>
             )}
-            <button
-              type="button"
-              onClick={() => setLanguage("mr")}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition cursor-pointer ${
-                currentLanguage === "mr"
-                  ? "bg-slate-200 text-slate-800"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-              title="मराठी (Marathi)"
-            >
-              मराठी
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsLangModalOpen(true)}
-              className="p-1 text-slate-500 hover:text-blue-600 rounded-full transition cursor-pointer ml-0.5"
-              title="All 8 Indian Languages"
-              aria-label="Language options"
-            >
-              <Globe className="w-3.5 h-3.5" />
-            </button>
           </div>
 
           {/* Install App PWA CTA */}
