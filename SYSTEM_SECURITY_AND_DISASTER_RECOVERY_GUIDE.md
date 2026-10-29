@@ -11,9 +11,9 @@
 | Key | Description | Status |
 | :--- | :--- | :--- |
 | **NEXT_PUBLIC_SUPABASE_URL** | `https://xyycqnpqnrtumoemlels.supabase.co` | Live & Connected |
-| **DATABASE_URL** | `postgres://postgres:Vrushabhshinde09@db.xyycqnpqnrtumoemlels.supabase.co:5432/postgres` | PostgreSQL 15+ |
+| **DATABASE_URL** | `postgres://postgres:[DB_PASSWORD]@db.xyycqnpqnrtumoemlels.supabase.co:5432/postgres` (Stored in `.env.local`) | PostgreSQL 15+ |
 | **OWNER_PHONE** | `+918459344077` | Prashant Dhumal Sir (Owner Account MMA-000) |
-| **OWNER_TEMP_PASSWORD** | `Owner@2026` | Master Initial Admin Access |
+| **OWNER_TEMP_PASSWORD** | Stored in `.env.local` / Secure Vault | Master Initial Admin Access |
 | **SUPPORT_PHONE** | `+918459344077` | Public Support & WhatsApp Helpline |
 | **SUPPORT_EMAIL** | `mindmasterdhumal@gmail.com` | Official Academy Email |
 

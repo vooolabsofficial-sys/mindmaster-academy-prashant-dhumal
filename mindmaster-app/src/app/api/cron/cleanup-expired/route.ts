@@ -186,11 +186,20 @@ async function handleCleanup(req: Request) {
       // Prune read notifications older than 30 days
       const thirtyDaysAgoIso = new Date(nowMs - 30 * 24 * 60 * 60 * 1000).toISOString();
       const { data: deletedNotifs } = await supabase
-        .from("notifications")
+        .from("in_app_notifications")
         .delete()
-        .eq("is_read", true)
+        .or("is_read.eq.true,read.eq.true")
         .lt("created_at", thirtyDaysAgoIso)
         .select("id");
+
+      try {
+        await supabase
+          .from("notifications")
+          .delete()
+          .or("is_read.eq.true,read.eq.true")
+          .lt("created_at", thirtyDaysAgoIso)
+          .select("id");
+      } catch {}
 
       if (deletedNotifs) {
         prunedNotificationsCount = deletedNotifs.length;

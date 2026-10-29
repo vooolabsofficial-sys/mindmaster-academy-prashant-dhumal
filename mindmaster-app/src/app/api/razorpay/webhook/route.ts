@@ -19,7 +19,7 @@ if (!globalThis._mma_processed_webhook_events) {
 
 const processedEvents = globalThis._mma_processed_webhook_events;
 
-function markEventProcessed(eventId?: string) {
+function markEventProcessed(eventId?: string, eventType?: string) {
   if (!eventId) return;
   if (processedEvents.size >= 5000) {
     // Clear oldest 1,000 items
@@ -31,6 +31,14 @@ function markEventProcessed(eventId?: string) {
     }
   }
   processedEvents.add(eventId);
+
+  // Persist to processed_webhook_events table in Supabase
+  try {
+    const admin = createAdminClient();
+    Promise.resolve(
+      admin.from("processed_webhook_events").insert({ event_id: eventId, event_type: eventType || "payment" })
+    ).catch(() => {});
+  } catch {}
 }
 
 export async function POST(req: NextRequest) {
@@ -87,10 +95,24 @@ export async function POST(req: NextRequest) {
 
     const event = parsed.data;
     const eventId = eventIdHeader || (event as any).id || (event.payload?.payment?.entity?.id ? `evt_${event.payload.payment.entity.id}` : undefined);
+    const supabase = createAdminClient();
 
     // 2. Strict Event ID Idempotency Check
-    if (eventId && processedEvents.has(eventId)) {
-      return NextResponse.json({ status: "ok", message: "Already processed idempotently" });
+    if (eventId) {
+      if (processedEvents.has(eventId)) {
+        return NextResponse.json({ status: "ok", message: "Already processed idempotently" });
+      }
+      try {
+        const { data: alreadyProcessed } = await supabase
+          .from("processed_webhook_events")
+          .select("event_id")
+          .eq("event_id", eventId)
+          .maybeSingle();
+        if (alreadyProcessed) {
+          processedEvents.add(eventId);
+          return NextResponse.json({ status: "ok", message: "Already processed idempotently" });
+        }
+      } catch {}
     }
 
     // 3. Handle payment.failed event for audit tracking
@@ -129,8 +151,6 @@ export async function POST(req: NextRequest) {
       const itemId = (isBook ? notes.bookId : notes.courseId) || (isBook ? "b-wb-01" : "c-mm-01");
       const couponCode = notes.couponCode;
       let finalUserId = notes.userId;
-
-      const supabase = createAdminClient();
 
       // Resolve student profile UUID by normalized 10-digit phone if provided in notes
       const cleanMobile = normalizePhone(notes.studentMobile);

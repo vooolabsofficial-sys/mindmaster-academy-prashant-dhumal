@@ -512,29 +512,29 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public can read video likes' AND tablename = 'video_likes') THEN
     CREATE POLICY "Public can read video likes" ON video_likes FOR SELECT USING (true);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can read settings' AND tablename = 'settings') THEN
-    CREATE POLICY "Anyone can read settings" ON settings FOR SELECT USING (true);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can update settings' AND tablename = 'settings') THEN
-    CREATE POLICY "Anyone can update settings" ON settings FOR ALL USING (true);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public can view settings' AND tablename = 'settings') THEN
+    CREATE POLICY "Public can view settings" ON settings FOR SELECT USING (true);
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Students can manage likes' AND tablename = 'video_likes') THEN
     CREATE POLICY "Students can manage likes" ON video_likes FOR ALL USING (true);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Students can read notifications' AND tablename = 'in_app_notifications') THEN
-    CREATE POLICY "Students can read notifications" ON in_app_notifications FOR SELECT USING (true);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Students can read in_app_notifications' AND tablename = 'in_app_notifications') THEN
+    CREATE POLICY "Students can read in_app_notifications" ON in_app_notifications FOR SELECT USING (true);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'System manage notifications' AND tablename = 'in_app_notifications') THEN
-    CREATE POLICY "System manage notifications" ON in_app_notifications FOR ALL USING (true);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Support conversations read' AND tablename = 'support_conversations') THEN
+    CREATE POLICY "Support conversations read" ON support_conversations FOR SELECT USING (true);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can manage support_conversations' AND tablename = 'support_conversations') THEN
-    CREATE POLICY "Anyone can manage support_conversations" ON support_conversations FOR ALL USING (true);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Support conversations insert' AND tablename = 'support_conversations') THEN
+    CREATE POLICY "Support conversations insert" ON support_conversations FOR INSERT WITH CHECK (true);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can manage support_messages' AND tablename = 'support_messages') THEN
-    CREATE POLICY "Anyone can manage support_messages" ON support_messages FOR ALL USING (true);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Support conversations update' AND tablename = 'support_conversations') THEN
+    CREATE POLICY "Support conversations update" ON support_conversations FOR UPDATE USING (true) WITH CHECK (true);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can manage audit_log' AND tablename = 'audit_log') THEN
-    CREATE POLICY "Anyone can manage audit_log" ON audit_log FOR ALL USING (true);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Support messages read' AND tablename = 'support_messages') THEN
+    CREATE POLICY "Support messages read" ON support_messages FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Support messages insert' AND tablename = 'support_messages') THEN
+    CREATE POLICY "Support messages insert" ON support_messages FOR INSERT WITH CHECK (true);
   END IF;
 END $$;
 
