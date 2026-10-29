@@ -20,6 +20,10 @@ import {
   exportCouponsMasterToExcel,
 } from "@/lib/excelExporter";
 import { toast } from "sonner";
+import { CheckCircle2, AlertCircle } from "lucide-react";
+import StatusBadge from "@/components/ui/StatusBadge";
+import SubmitButton from "@/components/ui/SubmitButton";
+import Spinner from "@/components/ui/Spinner";
 
 export default function CouponManagerPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -53,6 +57,7 @@ export default function CouponManagerPage() {
   const [formUsageLimit, setFormUsageLimit] = useState(100);
   const [formIsActive, setFormIsActive] = useState(true);
   const [staffList, setStaffList] = useState<StaffUser[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Redemptions Modal State
   const [viewingRedemptionsCoupon, setViewingRedemptionsCoupon] = useState<Coupon | null>(null);
@@ -331,7 +336,7 @@ export default function CouponManagerPage() {
     return `${start} → ${end}`;
   };
 
-  // Helper for status badge
+  // Helper for status badge using unified SVG StatusBadge
   const getStatusBadge = (cpn: Coupon) => {
     const totalUses = cpn.totalUsed || cpn.used_count || 0;
     const maxUses = cpn.maxTotalUses || cpn.usage_limit || 100;
@@ -339,37 +344,23 @@ export default function CouponManagerPage() {
 
     if (isQuotaFull) {
       return (
-        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
-          🔴 Quota Full ({maxUses}/{maxUses})
-        </span>
+        <StatusBadge
+          status="expired"
+          label={`Quota Full (${maxUses}/${maxUses})`}
+          size="sm"
+        />
       );
     }
     if (cpn.status === "paused" || cpn.is_active === false || cpn.status === "disabled") {
-      return (
-        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
-          ⏸️ Paused
-        </span>
-      );
+      return <StatusBadge status="paused" label="Paused" size="sm" />;
     }
     if (cpn.status === "scheduled") {
-      return (
-        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200">
-          ⏳ Scheduled (Upcoming)
-        </span>
-      );
+      return <StatusBadge status="upcoming" label="Scheduled" size="sm" />;
     }
     if (cpn.status === "expired") {
-      return (
-        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-600 border border-slate-200">
-          ⌛ Expired
-        </span>
-      );
+      return <StatusBadge status="expired" label="Expired" size="sm" />;
     }
-    return (
-      <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-        🟢 Active
-      </span>
-    );
+    return <StatusBadge status="active" label="Active" size="sm" />;
   };
 
   // Export Master Coupons List
@@ -933,17 +924,31 @@ export default function CouponManagerPage() {
                     {/* 1. Code & Active Toggle */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                       <div className="sm:col-span-2">
-                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
-                          Coupon Code *
+                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1 flex items-center justify-between">
+                          <span>Coupon Code *</span>
+                          {formCode.trim().length >= 3 && (
+                            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Valid Code
+                            </span>
+                          )}
                         </label>
-                        <input
-                          type="text"
-                          required
-                          value={formCode}
-                          onChange={(e) => setFormCode(e.target.value.toUpperCase())}
-                          placeholder="e.g. DIWALI50, POLICE100"
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-mono font-black text-[#0B57D0] uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                        />
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            value={formCode}
+                            onChange={(e) => setFormCode(e.target.value.toUpperCase())}
+                            placeholder="e.g. DIWALI50, POLICE100"
+                            className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-mono font-black text-[#0B57D0] uppercase tracking-wider focus:outline-none transition-all ${
+                              formCode.trim().length >= 3
+                                ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                                : "bg-[#F5F7FF] border border-[#E4E8F8] focus:ring-2 focus:ring-[#0B57D0]"
+                            }`}
+                          />
+                          {formCode.trim().length >= 3 && (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                          )}
+                        </div>
                       </div>
 
                       {/* Active Toggle Switch */}
@@ -1415,12 +1420,15 @@ export default function CouponManagerPage() {
                       >
                         Cancel
                       </button>
-                      <button
+                      <SubmitButton
                         type="submit"
-                        className="px-6 py-2.5 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer"
+                        loading={isSaving}
+                        loadingText="Saving Coupon..."
+                        disabled={!formCode.trim()}
+                        className="px-6 py-2.5 rounded-full text-xs"
                       >
-                        {editingCoupon ? "Save Changes" : "Activate Coupon →"}
-                      </button>
+                        <span>{editingCoupon ? "Save Changes" : "Activate Coupon →"}</span>
+                      </SubmitButton>
                     </div>
                   </form>
                 </div>

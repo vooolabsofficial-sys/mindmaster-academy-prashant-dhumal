@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   User,
   Phone,
@@ -36,10 +37,13 @@ import { signOutAndClearCookie } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/LanguageContext";
 import LanguageModal from "@/components/common/LanguageModal";
 import { generateFeeReceiptPdf, generateCourseCertificatePdf } from "@/lib/pdfGenerator";
-import { getAllOfflineBooks, clearAllOfflineVault, OfflineBookRecord } from "@/lib/offlineStorage";
+import { getAllOfflineBooks, clearAllOfflineVault, syncQueuedWatchHeartbeats, OfflineBookRecord } from "@/lib/offlineStorage";
+import SubmitButton from "@/components/ui/SubmitButton";
 import { toast } from "sonner";
 
 export default function ProfileSettingsPage() {
+  const router = useRouter();
+
   // Navigation active tab inside settings
   const [activeTab, setActiveTab] = useState<"profile" | "preferences" | "security" | "storage" | "legal">("profile");
 
@@ -65,12 +69,18 @@ export default function ProfileSettingsPage() {
   const [recoveryPin, setRecoveryPin] = useState("1234");
   const [showPassword, setShowPassword] = useState(false);
   const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
+  const [isResettingDevice, setIsResettingDevice] = useState(false);
 
   // Offline Vault Storage State
   const [offlineBooks, setOfflineBooks] = useState<OfflineBookRecord[]>([]);
   const [isClearingStorage, setIsClearingStorage] = useState(false);
+  const [isClearingCacheAndSyncing, setIsClearingCacheAndSyncing] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+
+  // Logout state
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Platform dynamic helpdesk info
   const [platformSettings, setPlatformSettings] = useState({
@@ -278,11 +288,98 @@ export default function ProfileSettingsPage() {
     }
   };
 
-  const handleSignOut = async () => {
-    if (confirm("Sign out from your MindMaster student account on this device?")) {
-      await signOutAndClearCookie();
-      window.location.href = "/login";
+  const handleClearCacheAndSync = async () => {
+    setIsClearingCacheAndSyncing(true);
+    try {
+      // 1. Sync pending watch heartbeats to server first
+      const syncedCount = await syncQueuedWatchHeartbeats();
+
+      // 2. Clear Service Worker cache API
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+
+      // 3. Inform service worker to clear its caches
+      if (navigator.serviceWorker?.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: "CLEAR_ALL_CACHES" });
+      }
+
+      // 4. Clear in-app offline books & playback vault
+      await clearAllOfflineVault();
+      await refreshOfflineVault();
+
+      toast.success(
+        syncedCount > 0
+          ? `Synced ${syncedCount} lesson heartbeats & purged all offline app cache!`
+          : "Offline cache and Service Worker storage purged successfully!"
+      );
+    } catch {
+      toast.error("Could not complete offline cache sync.");
+    } finally {
+      setIsClearingCacheAndSyncing(false);
     }
+  };
+
+  const handleDeviceSessionReset = async () => {
+    if (!phone) {
+      toast.error("No verified mobile number found to reset session.");
+      return;
+    }
+    setIsResettingDevice(true);
+    try {
+      const res = await fetch("/api/student/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reset-device", phone }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to reset device session.");
+      }
+      toast.success("Active device session lock reset! You can now log in on a new device.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reset device session lock.");
+    } finally {
+      setIsResettingDevice(false);
+    }
+  };
+
+  const handleSignOut = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const executeSignOut = async () => {
+    setIsLoggingOut(true);
+    try {
+      await fetch("/api/student/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "logout", phone }),
+      });
+    } catch {}
+
+    try {
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+    } catch {}
+
+    try {
+      localStorage.removeItem("mindmaster_user_profile");
+      localStorage.removeItem("mindmaster_verified_phone");
+      localStorage.removeItem("mindmaster_active_purchases");
+      localStorage.removeItem("mindmaster_session_token");
+      localStorage.removeItem("mma_student_session");
+      sessionStorage.clear();
+    } catch {}
+
+    await signOutAndClearCookie();
+    setShowLogoutConfirm(false);
+    setIsLoggingOut(false);
+    router.replace("/login");
+    router.refresh();
   };
 
   const initials =
@@ -339,7 +436,17 @@ export default function ProfileSettingsPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <a
+              href={`https://wa.me/${(platformSettings.whatsappNumber || "918459344077").replace(/\D/g, "")}?text=${encodeURIComponent(`Hello Prashant Sir, I am MindMaster student (${fullName}, ${phone}) and need assistance.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition inline-flex items-center gap-1.5 shadow-2xs"
+              title="Direct WhatsApp Student Helpdesk"
+            >
+              <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden sm:inline">WhatsApp Desk</span>
+            </a>
             <button
               onClick={() => setIsEditing(!isEditing)}
               className="px-4 py-2 rounded-xl bg-white border border-[#E4E8F8] text-[#0E1B3D] text-xs font-bold hover:border-[#0B57D0] hover:bg-[#F5F7FF] transition inline-flex items-center gap-1.5 shadow-2xs"
@@ -349,7 +456,7 @@ export default function ProfileSettingsPage() {
             </button>
             <button
               onClick={handleSignOut}
-              className="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition"
+              className="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
@@ -575,18 +682,18 @@ export default function ProfileSettingsPage() {
                 <div>
                   <h3 className="text-xs font-extrabold text-[#0E1B3D]">App Display Language</h3>
                   <p className="text-[11px] text-[#5A6478]">
-                    Select your preferred language for learning navigation, lesson titles, and notes.
+                    Active: <strong className="text-[#0B57D0]">{languageInfo.nativeName} ({languageInfo.englishName})</strong> • Preferred display language across the app.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <button
                     type="button"
                     onClick={() => {
                       setLanguage("en");
                       toast.success("App language set to English (Default)");
                     }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                       currentLanguage === "en"
                         ? "bg-[#0B57D0] text-white shadow-xs"
                         : "bg-white border border-[#E4E8F8] text-[#5A6478] hover:text-[#0E1B3D]"
@@ -601,7 +708,7 @@ export default function ProfileSettingsPage() {
                       setLanguage("mr");
                       toast.success("App language set to Marathi (मराठी)");
                     }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                       currentLanguage === "mr"
                         ? "bg-[#0B57D0] text-white shadow-xs"
                         : "bg-white border border-[#E4E8F8] text-[#5A6478] hover:text-[#0E1B3D]"
@@ -612,17 +719,11 @@ export default function ProfileSettingsPage() {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setLanguage("hi");
-                      toast.success("App language set to Hindi (हिंदी)");
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                      currentLanguage === "hi"
-                        ? "bg-[#0B57D0] text-white shadow-xs"
-                        : "bg-white border border-[#E4E8F8] text-[#5A6478] hover:text-[#0E1B3D]"
-                    }`}
+                    onClick={() => setIsLangModalOpen(true)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-[#E4E8F8] text-[#0B57D0] hover:bg-blue-50 transition cursor-pointer flex items-center gap-1.5"
                   >
-                    हिंदी (Hindi)
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>All 8 Languages</span>
                   </button>
                 </div>
               </div>
@@ -723,24 +824,62 @@ export default function ProfileSettingsPage() {
                 </p>
               </div>
 
-              <button
+              <SubmitButton
                 type="submit"
-                disabled={isUpdatingSecurity}
-                className="px-6 py-2.5 rounded-xl bg-[#0B57D0] hover:bg-[#0052FF] text-white text-xs font-bold transition shadow-xs flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                loading={isUpdatingSecurity}
+                loadingText="Updating Security..."
+                className="px-6 py-2.5 rounded-xl bg-[#0B57D0] hover:bg-[#0052FF] text-white text-xs font-bold transition shadow-xs flex items-center gap-2"
               >
-                {isUpdatingSecurity ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Updating Security...</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Update Security Credentials</span>
-                  </>
-                )}
-              </button>
+                <ShieldCheck className="w-4 h-4" />
+                <span>Update Security Credentials</span>
+              </SubmitButton>
             </form>
+
+            {/* Active Device Session Management & Reset */}
+            <div className="border-t border-[#E4E8F8] pt-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0B57D0] flex items-center justify-center shrink-0">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#0E1B3D]">
+                    Active Device Session & Single-Device Protection
+                  </h3>
+                  <p className="text-xs text-[#5A6478]">
+                    MindMaster Academy enforces single-device DRM to protect course videos. Only 1 device can stream at any time.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-bold text-[#0E1B3D]">Current Device Active</span>
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      1 Device Locked
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#5A6478]">
+                    Bound to Mobile Number: <strong className="text-[#0E1B3D] font-mono">{phone}</strong>
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    If you changed your mobile phone or get a &quot;Session already active on another device&quot; prompt, release your session lock below.
+                  </p>
+                </div>
+
+                <SubmitButton
+                  type="button"
+                  onClick={handleDeviceSessionReset}
+                  loading={isResettingDevice}
+                  loadingText="Resetting Device..."
+                  className="px-4 py-2 text-xs font-bold rounded-xl bg-white hover:bg-blue-50 border border-blue-200 text-[#0B57D0] shrink-0"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                  <span>Request Device Reset</span>
+                </SubmitButton>
+              </div>
+            </div>
           </div>
         )}
 
@@ -766,7 +905,7 @@ export default function ProfileSettingsPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] space-y-1">
                 <p className="text-xs font-bold text-[#5A6478]">Saved Offline Books</p>
                 <p className="text-2xl font-black text-[#0E1B3D]">{offlineBooks.length}</p>
@@ -777,9 +916,9 @@ export default function ProfileSettingsPage() {
 
               <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] flex flex-col justify-between gap-3">
                 <div>
-                  <p className="text-xs font-bold text-[#0E1B3D]">Clear Offline Cache</p>
+                  <p className="text-xs font-bold text-[#0E1B3D]">Clear In-App Books</p>
                   <p className="text-[11px] text-[#5A6478]">
-                    Frees device storage by clearing stored PDF pages and lesson position cache.
+                    Frees storage by removing encrypted PDF notes from device memory.
                   </p>
                 </div>
                 <button
@@ -789,8 +928,27 @@ export default function ProfileSettingsPage() {
                   className="px-4 py-2 rounded-xl bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold transition flex items-center justify-center gap-2 active:scale-95 disabled:opacity-40"
                 >
                   {isClearingStorage ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                  <span>Clear In-App Offline Vault</span>
+                  <span>Clear Vault Books</span>
                 </button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-200/80 flex flex-col justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold text-[#0E1B3D]">Clear Cache & Sync</p>
+                  <p className="text-[11px] text-[#5A6478]">
+                    Flushes Service Worker caches & syncs queued watch telemetry to server.
+                  </p>
+                </div>
+                <SubmitButton
+                  type="button"
+                  onClick={handleClearCacheAndSync}
+                  loading={isClearingCacheAndSyncing}
+                  loadingText="Syncing..."
+                  className="w-full py-2 text-xs font-bold rounded-xl bg-white hover:bg-blue-100 border border-blue-300 text-[#0B57D0]"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                  <span>Sync & Clear Cache</span>
+                </SubmitButton>
               </div>
             </div>
 
@@ -997,6 +1155,44 @@ export default function ProfileSettingsPage() {
 
       {/* Language Selection Modal */}
       <LanguageModal isOpen={isLangModalOpen} onClose={() => setIsLangModalOpen(false)} />
+
+      {/* Student Sign Out Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900">Sign Out of MindMaster?</h3>
+                <p className="text-xs text-slate-500">
+                  Your active device session lock will be freed, allowing you to safely sign in from any other phone or PC.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                disabled={isLoggingOut}
+                className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={executeSignOut}
+                disabled={isLoggingOut}
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-red-600 hover:bg-red-700 text-white flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>{isLoggingOut ? "Signing out..." : "Confirm Sign Out"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

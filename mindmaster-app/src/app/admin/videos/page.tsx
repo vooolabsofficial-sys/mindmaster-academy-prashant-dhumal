@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
+import SubmitButton from "@/components/ui/SubmitButton";
 import { StaffUser, Course } from "@/lib/types";
 import {
   getCurrentStaff,
@@ -798,23 +799,17 @@ export default function VideoManagerPage() {
                         रद्द करा (Cancel)
                       </button>
 
-                      <button
+                      <SubmitButton
                         type="submit"
-                        disabled={isSaving}
-                        className="px-6 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-2"
+                        loading={isSaving}
+                        loadingText="सेव्ह करत आहे... (Saving Video)"
+                        className="px-6 py-2.5 rounded-xl text-xs"
                       >
-                        {isSaving ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>सेव्ह करत आहे...</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="w-4 h-4" />
-                            <span>व्हिडिओ सेव्ह करा (Save Video)</span>
-                          </>
-                        )}
-                      </button>
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>व्हिडिओ सेव्ह करा (Save Video)</span>
+                        </span>
+                      </SubmitButton>
                     </div>
                   </form>
                 </div>

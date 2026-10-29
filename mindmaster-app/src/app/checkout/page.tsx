@@ -26,6 +26,8 @@ import {
   FileText
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
+import SubmitButton from "@/components/ui/SubmitButton";
+import Spinner from "@/components/ui/Spinner";
 import { COURSE_ID_MAP } from "@/lib/mockData";
 import { 
   validateCoupon, 
@@ -921,21 +923,40 @@ function CheckoutContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <label className="font-bold text-[#0E1B3D] block mb-1.5">
-                  Student Full Name (for certificate/receipt)
+                <label className="font-bold text-[#0E1B3D] block mb-1.5 flex items-center justify-between">
+                  <span>Student Full Name (for certificate/receipt)</span>
+                  {studentName.trim().length >= 2 && (
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Valid
+                    </span>
+                  )}
                 </label>
-                <input
-                  type="text"
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="e.g. Vishal Patil"
-                  className="w-full p-3 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-[#0E1B3D] font-semibold focus:outline-none focus:border-[#0B57D0]"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={studentName}
+                    onChange={(e) => setStudentName(e.target.value)}
+                    placeholder="e.g. Vishal Patil"
+                    className={`w-full p-3 rounded-2xl text-[#0E1B3D] font-semibold focus:outline-none transition-all ${
+                      studentName.trim().length >= 2
+                        ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                        : "bg-[#F5F7FF] border border-[#E4E8F8] focus:border-[#0B57D0]"
+                    }`}
+                  />
+                  {studentName.trim().length >= 2 && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  )}
+                </div>
               </div>
 
               <div>
-                <label className="font-bold text-[#0E1B3D] block mb-1.5">
-                  Registered Mobile Number (SMS Enabled)
+                <label className="font-bold text-[#0E1B3D] block mb-1.5 flex items-center justify-between">
+                  <span>Registered Mobile Number (SMS Enabled)</span>
+                  {studentMobile.length === 10 && (
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" /> 10 Digits
+                    </span>
+                  )}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5A6478] font-bold">
@@ -946,8 +967,15 @@ function CheckoutContent() {
                     value={studentMobile}
                     onChange={(e) => setStudentMobile(e.target.value.replace(/\D/g, ""))}
                     maxLength={10}
-                    className="w-full pl-12 pr-3 py-3 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-[#0E1B3D] font-mono font-semibold focus:outline-none focus:border-[#0B57D0]"
+                    className={`w-full pl-12 pr-10 py-3 rounded-2xl text-[#0E1B3D] font-mono font-semibold focus:outline-none transition-all ${
+                      studentMobile.length === 10
+                        ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                        : "bg-[#F5F7FF] border border-[#E4E8F8] focus:border-[#0B57D0]"
+                    }`}
                   />
+                  {studentMobile.length === 10 && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  )}
                 </div>
               </div>
 
@@ -1066,25 +1094,35 @@ function CheckoutContent() {
 
               {!appliedCoupon ? (
                 <form onSubmit={(e) => handleApplyCoupon(e)} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponInput}
-                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                    placeholder="e.g. PRASHANT50"
-                    disabled={isValidatingCoupon}
-                    className="flex-1 p-2.5 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-xs font-bold text-[#0E1B3D] uppercase placeholder-[#94A3B8] focus:outline-none focus:border-[#0B57D0]"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isValidatingCoupon || !couponInput.trim()}
-                    className="px-4 py-2.5 rounded-2xl bg-[#0B57D0] hover:bg-[#0842A0] disabled:bg-[#94A3B8] text-white text-xs font-extrabold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
-                  >
-                    {isValidatingCoupon ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <span>Apply</span>
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => {
+                        setCouponInput(e.target.value.toUpperCase());
+                        if (couponFeedback) setCouponFeedback(null);
+                      }}
+                      placeholder="e.g. PRASHANT50"
+                      disabled={isValidatingCoupon}
+                      className={`w-full p-2.5 rounded-2xl text-xs font-bold text-[#0E1B3D] uppercase placeholder-[#94A3B8] focus:outline-none transition-all ${
+                        couponFeedback && couponFeedback.type === "error"
+                          ? "border border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-500/20 animate-shake"
+                          : "bg-[#F5F7FF] border border-[#E4E8F8] focus:border-[#0B57D0]"
+                      }`}
+                    />
+                    {couponFeedback && couponFeedback.type === "error" && (
+                      <AlertCircle className="w-4 h-4 text-red-500 absolute right-3 top-1/2 -translate-y-1/2" />
                     )}
-                  </button>
+                  </div>
+                  <SubmitButton
+                    type="submit"
+                    loading={isValidatingCoupon}
+                    loadingText="Applying..."
+                    disabled={!couponInput.trim()}
+                    className="px-4 py-2.5 rounded-2xl text-xs font-extrabold"
+                  >
+                    <span>Apply</span>
+                  </SubmitButton>
                 </form>
               ) : null}
 
@@ -1215,37 +1253,30 @@ function CheckoutContent() {
             )}
 
             {/* Primary Pay Button */}
-            <button
+            <SubmitButton
               onClick={handleInitiatePayment}
-              disabled={isProcessingPayment || alreadyOwned}
-              className="w-full py-4 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] disabled:bg-[#94A3B8] text-white text-sm font-black shadow-lg shadow-[#0B57D0]/30 transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              loading={isProcessingPayment}
+              loadingText="Processing Secure Payment..."
+              disabled={alreadyOwned}
+              className="w-full py-4 rounded-full text-white text-sm font-black shadow-lg shadow-[#0B57D0]/30 transition"
             >
               {alreadyOwned ? (
-                <>
+                <span className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>Already Unlocked</span>
-                </>
-              ) : isProcessingPayment ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Processing Secure Payment...</span>
-                </>
+                </span>
+              ) : finalPriceRupees === 0 ? (
+                <span className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+                  <span>Complete 100% Free Enrollment (₹0)</span>
+                </span>
               ) : (
-                <>
-                  {finalPriceRupees === 0 ? (
-                    <>
-                      <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-                      <span>Complete 100% Free Enrollment (₹0)</span>
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-4 h-4" />
-                      <span>Pay Securely Now (₹{finalPriceRupees})</span>
-                    </>
-                  )}
-                </>
+                <span className="flex items-center gap-2">
+                  <Lock className="w-4 h-4" />
+                  <span>Pay Securely Now (₹{finalPriceRupees})</span>
+                </span>
               )}
-            </button>
+            </SubmitButton>
 
             <div className="text-center text-[10px] text-[#5A6478] leading-relaxed pt-2">
               By proceeding, you agree to MindMaster Academy&apos;s{" "}

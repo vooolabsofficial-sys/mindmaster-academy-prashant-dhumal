@@ -3,8 +3,10 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { setCurrentStaff } from "@/lib/staffStore";
 import AuthRoleSwitcher from "@/components/auth/AuthRoleSwitcher";
+import SubmitButton from "@/components/ui/SubmitButton";
 
 function StaffLoginContent() {
   const router = useRouter();
@@ -153,18 +155,39 @@ function StaffLoginContent() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#0E1B3D] mb-1.5">
-              Staff ID (or Registered Phone)
+            <label className="block text-xs font-semibold text-[#0E1B3D] mb-1.5 flex items-center justify-between">
+              <span>Staff ID (or Registered Phone)</span>
+              {staffId.trim().length >= 3 && !error && (
+                <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Entered
+                </span>
+              )}
             </label>
-            <input
-              type="text"
-              required
-              disabled={!!lockoutSec}
-              value={staffId}
-              onChange={(e) => setStaffId(e.target.value)}
-              placeholder="e.g. MMA-000 or MMA-001"
-              className="w-full px-4 py-3 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-sm font-mono text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0] disabled:opacity-50"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                required
+                disabled={!!lockoutSec}
+                value={staffId}
+                onChange={(e) => {
+                  setStaffId(e.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="e.g. MMA-000 or MMA-001"
+                className={`w-full px-4 py-3 rounded-xl text-sm font-mono text-[#0E1B3D] focus:outline-none transition-all disabled:opacity-50 ${
+                  error
+                    ? "border border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-500/20 animate-shake"
+                    : staffId.trim().length >= 3
+                    ? "border border-emerald-400 bg-emerald-50/15 focus:ring-2 focus:ring-emerald-500/20"
+                    : "border border-[#E4E8F8] bg-[#F5F7FF] focus:ring-2 focus:ring-[#0B57D0]"
+                }`}
+              />
+              {error ? (
+                <AlertCircle className="w-4 h-4 text-red-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+              ) : staffId.trim().length >= 3 ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+              ) : null}
+            </div>
           </div>
 
           <div>
@@ -179,33 +202,42 @@ function StaffLoginContent() {
                 Forgot via SMS OTP?
               </Link>
             </div>
-            <input
-              type="password"
-              required
-              disabled={!!lockoutSec}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••••••"
-              className="w-full px-4 py-3 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0B57D0] text-[#0E1B3D] disabled:opacity-50"
-            />
+            <div className="relative">
+              <input
+                type="password"
+                required
+                disabled={!!lockoutSec}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="••••••••••••"
+                className={`w-full px-4 py-3 rounded-xl text-sm text-[#0E1B3D] focus:outline-none transition-all disabled:opacity-50 ${
+                  error
+                    ? "border border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-500/20 animate-shake"
+                    : password.length >= 6
+                    ? "border border-emerald-400 bg-emerald-50/15 focus:ring-2 focus:ring-emerald-500/20"
+                    : "border border-[#E4E8F8] bg-[#F5F7FF] focus:ring-2 focus:ring-[#0B57D0]"
+                }`}
+              />
+              {error ? (
+                <AlertCircle className="w-4 h-4 text-red-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+              ) : password.length >= 6 ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+              ) : null}
+            </div>
           </div>
 
-          <button
+          <SubmitButton
             type="submit"
-            disabled={loading || !!lockoutSec || !!successMsg}
-            className="w-full py-3.5 px-6 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-semibold rounded-full shadow-sm transition-all transform active:scale-[0.99] text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            loading={loading}
+            loadingText="Verifying credentials..."
+            disabled={!!lockoutSec || !!successMsg || !staffId.trim() || !password}
+            className="w-full py-3.5 px-6 rounded-full text-sm mt-2"
           >
-            {loading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Verifying credentials...</span>
-              </>
-            ) : successMsg ? (
-              <span>Redirecting...</span>
-            ) : (
-              <span>Verify & Sign In →</span>
-            )}
-          </button>
+            <span>Verify &amp; Sign In →</span>
+          </SubmitButton>
         </form>
 
         <div className="mt-8 text-center">

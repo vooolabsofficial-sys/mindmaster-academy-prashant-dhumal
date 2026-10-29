@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut, AlertCircle } from "lucide-react";
 import { StaffUser, hasStaffPermission, StaffPermission } from "@/lib/types";
 import {
   getCurrentStaff,
@@ -30,6 +30,8 @@ export default function AdminTopbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [msgUnread, setMsgUnread] = useState(0);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     setStaff(getCurrentStaff());
@@ -65,11 +67,19 @@ export default function AdminTopbar() {
   };
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
       await fetch("/api/staff/logout", { method: "POST" });
     } catch {}
+    try {
+      document.cookie = "mma_staff_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      sessionStorage.clear();
+    } catch {}
     logoutStaff();
-    router.push("/staff/login");
+    setShowLogoutConfirm(false);
+    setIsLoggingOut(false);
+    router.replace("/staff/login");
+    router.refresh();
   };
 
   const isSubRoute = pathname?.startsWith("/sub");
@@ -234,11 +244,12 @@ export default function AdminTopbar() {
 
             <button
               type="button"
-              onClick={handleLogout}
+              onClick={() => setShowLogoutConfirm(true)}
               className="p-1.5 sm:p-2 text-xs text-[#8A94A6] hover:text-red-600 rounded-xl hover:bg-red-50 transition-colors cursor-pointer"
               title="Sign Out"
+              aria-label="Sign Out"
             >
-              🚪
+              <LogOut className="w-4 h-4 text-slate-500 hover:text-red-600" />
             </button>
           </div>
         </div>
@@ -330,11 +341,50 @@ export default function AdminTopbar() {
               </div>
               <button
                 type="button"
-                onClick={handleLogout}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setShowLogoutConfirm(true);
+                }}
                 className="w-full py-2 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer"
               >
-                <span>🚪</span>
+                <LogOut className="w-4 h-4" />
                 <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Staff Sign Out Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900">Sign Out of Staff Console?</h3>
+                <p className="text-xs text-slate-500">Your session token on this device will be revoked.</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                disabled={isLoggingOut}
+                className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-red-600 hover:bg-red-700 text-white flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>{isLoggingOut ? "Signing out..." : "Confirm Sign Out"}</span>
               </button>
             </div>
           </div>

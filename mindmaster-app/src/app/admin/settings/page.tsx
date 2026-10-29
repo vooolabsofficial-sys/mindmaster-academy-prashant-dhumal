@@ -24,7 +24,10 @@ import {
   CheckCircle2,
   KeyRound,
   FileCheck,
+  AlertCircle,
 } from "lucide-react";
+import SubmitButton from "@/components/ui/SubmitButton";
+import Spinner from "@/components/ui/Spinner";
 import {
   PlatformSettings,
   DEFAULT_PLATFORM_SETTINGS,
@@ -67,9 +70,15 @@ export default function AdminSettingsPage() {
   const [subAdminApprovalMode, setSubAdminApprovalMode] = useState(Boolean(DEFAULT_PLATFORM_SETTINGS.sub_admin_approval_mode));
   const [maxSubAdmins, setMaxSubAdmins] = useState(DEFAULT_PLATFORM_SETTINGS.max_sub_admins ?? 50);
   const [defaultAccessMonths, setDefaultAccessMonths] = useState(DEFAULT_PLATFORM_SETTINGS.default_access_months ?? 3);
+  const [defaultVideoLiveDays, setDefaultVideoLiveDays] = useState(DEFAULT_PLATFORM_SETTINGS.default_video_live_days ?? 30);
   const [defaultCouponDays, setDefaultCouponDays] = useState(DEFAULT_PLATFORM_SETTINGS.default_coupon_days ?? 7);
   const [renewalCouponPercent, setRenewalCouponPercent] = useState(DEFAULT_PLATFORM_SETTINGS.renewal_coupon_percent ?? 50);
   const [reminderTemplate, setReminderTemplate] = useState(DEFAULT_PLATFORM_SETTINGS.reminder_template);
+
+  // Staff Password Change State
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   // Section 5: Maintenance Mode & Backup
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(Boolean(DEFAULT_PLATFORM_SETTINGS.maintenance));
@@ -112,6 +121,7 @@ export default function AdminSettingsPage() {
             if (s.sub_admin_approval_mode !== undefined) setSubAdminApprovalMode(Boolean(s.sub_admin_approval_mode));
             if (s.max_sub_admins !== undefined) setMaxSubAdmins(s.max_sub_admins);
             if (s.default_access_months !== undefined) setDefaultAccessMonths(s.default_access_months);
+            if (s.default_video_live_days !== undefined) setDefaultVideoLiveDays(s.default_video_live_days);
             if (s.default_coupon_days !== undefined) setDefaultCouponDays(s.default_coupon_days);
             if (s.renewal_coupon_percent !== undefined) setRenewalCouponPercent(s.renewal_coupon_percent);
             if (s.reminder_template) setReminderTemplate(s.reminder_template);
@@ -149,6 +159,7 @@ export default function AdminSettingsPage() {
           if (s.sub_admin_approval_mode !== undefined) setSubAdminApprovalMode(Boolean(s.sub_admin_approval_mode));
           if (s.max_sub_admins !== undefined) setMaxSubAdmins(s.max_sub_admins);
           if (s.default_access_months !== undefined) setDefaultAccessMonths(s.default_access_months);
+          if (s.default_video_live_days !== undefined) setDefaultVideoLiveDays(s.default_video_live_days);
           if (s.default_coupon_days !== undefined) setDefaultCouponDays(s.default_coupon_days);
           if (s.renewal_coupon_percent !== undefined) setRenewalCouponPercent(s.renewal_coupon_percent);
           if (s.reminder_template) setReminderTemplate(s.reminder_template);
@@ -193,7 +204,7 @@ export default function AdminSettingsPage() {
       sub_admin_approval_mode: subAdminApprovalMode,
       max_sub_admins: Number(maxSubAdmins),
       default_access_months: Number(defaultAccessMonths),
-      default_video_live_days: 30,
+      default_video_live_days: Number(defaultVideoLiveDays),
       default_coupon_days: Number(defaultCouponDays),
       renewal_coupon_percent: Number(renewalCouponPercent),
       reminder_template: reminderTemplate,
@@ -225,6 +236,39 @@ export default function AdminSettingsPage() {
     setIsSaving(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
+  };
+
+  const handleStaffPasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword) {
+      alert("Please enter current password.");
+      return;
+    }
+    if (!newAdminPassword || newAdminPassword.length < 6) {
+      alert("New password must be at least 6 characters.");
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const res = await fetch("/api/staff/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          staff_id: "admin",
+          temp_password: currentPassword,
+          new_password: newAdminPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update staff password.");
+      alert("Admin password updated successfully with Argon2id encryption!");
+      setCurrentPassword("");
+      setNewAdminPassword("");
+    } catch (err: any) {
+      alert(err.message || "Failed to update password");
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const handleDownloadBackup = async () => {
@@ -389,30 +433,58 @@ export default function AdminSettingsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
-                      Academy Title (Legal Name)
+                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5 flex items-center justify-between">
+                      <span>Academy Title (Legal Name)</span>
+                      {academyTitle.trim().length >= 3 && (
+                        <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Valid
+                        </span>
+                      )}
                     </label>
-                    <input
-                      type="text"
-                      value={academyTitle}
-                      onChange={(e) => setAcademyTitle(e.target.value)}
-                      placeholder="MindMaster Academy"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={academyTitle}
+                        onChange={(e) => setAcademyTitle(e.target.value)}
+                        placeholder="MindMaster Academy"
+                        className={`w-full px-3.5 py-2.5 text-xs rounded-xl text-[#0E1B3D] focus:outline-hidden font-medium transition-all ${
+                          academyTitle.trim().length >= 3
+                            ? "border border-emerald-400 bg-emerald-50/15 focus:ring-2 focus:ring-emerald-500/20"
+                            : "border border-[#E4E8F8] bg-slate-50/50 focus:border-[#0B57D0] focus:bg-white"
+                        }`}
+                      />
+                      {academyTitle.trim().length >= 3 && (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
+                      )}
+                    </div>
                     <p className="text-[11px] text-[#5A6478] mt-1">Appears at the top of receipts and certificates.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
-                      Authorized Signatory & Founder Name
+                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5 flex items-center justify-between">
+                      <span>Authorized Signatory & Founder Name</span>
+                      {founderName.trim().length >= 3 && (
+                        <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Valid
+                        </span>
+                      )}
                     </label>
-                    <input
-                      type="text"
-                      value={founderName}
-                      onChange={(e) => setFounderName(e.target.value)}
-                      placeholder="Prashant Dhumal Sir"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={founderName}
+                        onChange={(e) => setFounderName(e.target.value)}
+                        placeholder="Prashant Dhumal Sir"
+                        className={`w-full px-3.5 py-2.5 text-xs rounded-xl text-[#0E1B3D] focus:outline-hidden font-medium transition-all ${
+                          founderName.trim().length >= 3
+                            ? "border border-emerald-400 bg-emerald-50/15 focus:ring-2 focus:ring-emerald-500/20"
+                            : "border border-[#E4E8F8] bg-slate-50/50 focus:border-[#0B57D0] focus:bg-white"
+                        }`}
+                      />
+                      {founderName.trim().length >= 3 && (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
+                      )}
+                    </div>
                     <p className="text-[11px] text-[#5A6478] mt-1">Printed in the signature block on certificates and fee receipts.</p>
                   </div>
 
@@ -813,7 +885,7 @@ export default function AdminSettingsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-5 pt-2">
                   <div>
                     <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
                       Maximum Allowed Sub-Admins
@@ -846,6 +918,21 @@ export default function AdminSettingsPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                      Default Grant Expiry (Days)
+                    </label>
+                    <input
+                      type="number"
+                      min="7"
+                      max="365"
+                      value={defaultVideoLiveDays}
+                      onChange={(e) => setDefaultVideoLiveDays(Number(e.target.value))}
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                    />
+                    <p className="text-[11px] text-[#5A6478] mt-1">Default access duration when manually granting courses.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
                       Default Coupon Validity (Days)
                     </label>
                     <input
@@ -857,6 +944,64 @@ export default function AdminSettingsPage() {
                       className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
                     />
                     <p className="text-[11px] text-[#5A6478] mt-1">Expiry window for generated discount promo codes.</p>
+                  </div>
+                </div>
+
+                {/* Staff Console Password Change (Argon2id) */}
+                <div className="border-t border-[#E4E8F8] pt-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+                      <KeyRound className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-extrabold text-[#0E1B3D]">
+                        Admin Staff Console Password Update
+                      </h3>
+                      <p className="text-[11px] text-[#5A6478]">
+                        Hash and update your staff console login credentials using secure Argon2id.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Enter current password"
+                        className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                        New Password (Min 6 chars)
+                      </label>
+                      <input
+                        type="password"
+                        value={newAdminPassword}
+                        onChange={(e) => setNewAdminPassword(e.target.value)}
+                        placeholder="Enter new strong password"
+                        className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col justify-end">
+                      <SubmitButton
+                        type="button"
+                        onClick={handleStaffPasswordChange}
+                        loading={isChangingPassword}
+                        loadingText="Updating Password..."
+                        className="w-full py-2.5 text-xs rounded-xl"
+                      >
+                        <KeyRound className="w-3.5 h-3.5 mr-1" />
+                        <span>Update Password</span>
+                      </SubmitButton>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -976,28 +1121,24 @@ export default function AdminSettingsPage() {
                 Changes are written to live database and backed up to disk storage.
               </span>
 
-              <button
+              <SubmitButton
                 type="submit"
-                disabled={isSaving}
-                className="px-6 py-2.5 text-xs font-bold rounded-xl bg-[#0B57D0] hover:bg-[#0052FF] text-white flex items-center gap-2 shadow-sm transition active:scale-95 disabled:opacity-50"
+                loading={isSaving}
+                loadingText="Saving Settings..."
+                className="px-6 py-2.5 text-xs rounded-xl"
               >
                 {saveSuccess ? (
-                  <>
+                  <span className="flex items-center gap-1.5">
                     <Check className="w-4 h-4 text-emerald-300" />
                     <span>Saved Successfully</span>
-                  </>
-                ) : isSaving ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Saving...</span>
-                  </>
+                  </span>
                 ) : (
-                  <>
+                  <span className="flex items-center gap-1.5">
                     <Save className="w-4 h-4" />
                     <span>Save All Changes</span>
-                  </>
+                  </span>
                 )}
-              </button>
+              </SubmitButton>
             </div>
           </form>
         </div>

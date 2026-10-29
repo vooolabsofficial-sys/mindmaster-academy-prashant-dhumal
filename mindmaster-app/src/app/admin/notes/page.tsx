@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
+import SubmitButton from "@/components/ui/SubmitButton";
 import { Book, StaffUser, Course } from "@/lib/types";
 import {
   getCurrentStaff,
@@ -1147,23 +1148,18 @@ export default function DigitalBooksManagerPage() {
                     >
                       रद्द करा (Cancel)
                     </button>
-                    <button
+                    <SubmitButton
                       type="submit"
-                      disabled={isSaving || isUploadingPdf || isUploadingCover}
-                      className="px-6 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-2"
+                      loading={isSaving}
+                      loadingText="सेव्ह करत आहे... (Saving Book)"
+                      disabled={isUploadingPdf || isUploadingCover}
+                      className="px-6 py-2.5 rounded-xl text-xs"
                     >
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>सेव्ह करत आहे...</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>{editingBook ? "बदल सेव्ह करा" : "पुस्तक प्रकाशित करा"}</span>
-                        </>
-                      )}
-                    </button>
+                      <span className="flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>{editingBook ? "बदल सेव्ह करा" : "पुस्तक प्रकाशित करा"}</span>
+                      </span>
+                    </SubmitButton>
                   </div>
                 </form>
               </div>

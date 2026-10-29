@@ -14,7 +14,7 @@ export default function TopBar() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
 
-  const { languageInfo, t } = useLanguage();
+  const { currentLanguage, setLanguage, languageInfo, t } = useLanguage();
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
@@ -94,17 +94,42 @@ export default function TopBar() {
 
         {/* Right: Actions - Larger & Touch-Friendly */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Quick Language Picker Pill */}
-          <button
-            type="button"
-            onClick={() => setIsLangModalOpen(true)}
-            className="touch-target-44 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition flex items-center gap-1 sm:gap-1.5 active:scale-95 cursor-pointer border border-slate-200 shadow-2xs"
-            title={languageInfo.englishName}
-            aria-label={`Language: ${languageInfo.englishName}. Click to change language.`}
-          >
-            <Globe className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-            <span className="font-extrabold text-[11px] sm:text-xs">{languageInfo.nativeName}</span>
-          </button>
+          {/* Persistent One-Click Language Switcher (EN | मराठी) + 8-Lang Modal */}
+          <div className="inline-flex items-center p-0.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setLanguage("en")}
+              className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition cursor-pointer ${
+                currentLanguage === "en"
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+              title="English (Primary Default)"
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage("mr")}
+              className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition cursor-pointer ${
+                currentLanguage === "mr"
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+              title="मराठी (Marathi)"
+            >
+              मराठी
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsLangModalOpen(true)}
+              className="p-1 text-slate-500 hover:text-blue-600 rounded-full transition cursor-pointer ml-0.5"
+              title="All 8 Indian Languages"
+              aria-label="Language options"
+            >
+              <Globe className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
           {/* Install App PWA CTA */}
           {isInstallable && (

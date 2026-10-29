@@ -19,6 +19,8 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { createClient, getCookieDomain } from "@/lib/supabase/client";
+import SubmitButton from "@/components/ui/SubmitButton";
+import Spinner from "@/components/ui/Spinner";
 
 function LoginContent() {
   const router = useRouter();
@@ -377,8 +379,13 @@ function LoginContent() {
           {activeTab === "signin" ? (
             <form onSubmit={handleSignIn} className="space-y-3.5">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Mobile Number
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Mobile Number</span>
+                  {phone.length === 10 && !errorMessage && (
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Verified 10-Digit
+                    </span>
+                  )}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
@@ -390,10 +397,25 @@ function LoginContent() {
                     maxLength={10}
                     placeholder="98XXXXXXXX"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                    className="w-full pl-12 pr-10 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF] font-mono"
+                    onChange={(e) => {
+                      setPhone(e.target.value.replace(/\D/g, ""));
+                      if (errorMessage) setErrorMessage("");
+                    }}
+                    className={`w-full pl-12 pr-10 py-2.5 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none font-mono transition-all ${
+                      errorMessage && phone.length !== 10
+                        ? "border border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-500/20 animate-shake"
+                        : phone.length === 10
+                        ? "border border-emerald-400 bg-emerald-50/15 focus:ring-2 focus:ring-emerald-500/20"
+                        : "border border-slate-200 bg-slate-50/80 focus:bg-white focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
+                    }`}
                   />
-                  <Phone className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  {errorMessage && phone.length !== 10 ? (
+                    <AlertCircle className="w-4 h-4 text-red-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  ) : phone.length === 10 ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  ) : (
+                    <Phone className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  )}
                 </div>
               </div>
 
@@ -418,42 +440,49 @@ function LoginContent() {
                     required
                     placeholder="••••••••"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errorMessage) setErrorMessage("");
+                    }}
+                    className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all ${
+                      errorMessage
+                        ? "border border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-500/20 animate-shake"
+                        : password.length >= 6
+                        ? "border border-emerald-400 bg-emerald-50/15 focus:ring-2 focus:ring-emerald-500/20"
+                        : "border border-slate-200 bg-slate-50/80 focus:bg-white focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
+                    }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              <button
+              <SubmitButton
                 type="submit"
-                disabled={loading || phone.length !== 10 || !password}
-                className="w-full mt-2 py-3 bg-[#0052FF] hover:bg-[#0047E0] text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 transition-all text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                loading={loading}
+                loadingText="Signing In..."
+                disabled={phone.length !== 10 || !password}
+                className="w-full mt-2 py-3 bg-[#0052FF] hover:bg-[#0047E0] text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 transition-all text-xs sm:text-sm"
               >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Signing In...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign In & Start Learning</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+                <span>Sign In & Start Learning</span>
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </SubmitButton>
             </form>
           ) : (
             <form onSubmit={handleSignUp} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Student Full Name
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Student Full Name</span>
+                  {fullName.trim().length >= 3 && (
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Valid
+                    </span>
+                  )}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -465,14 +494,26 @@ function LoginContent() {
                     placeholder="e.g. John Doe / Rahul Patil"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
+                    className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all ${
+                      fullName.trim().length >= 3
+                        ? "border border-emerald-400 bg-emerald-50/15 focus:ring-2 focus:ring-emerald-500/20"
+                        : "border border-slate-200 bg-slate-50/80 focus:bg-white focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
+                    }`}
                   />
+                  {fullName.trim().length >= 3 && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Mobile Number
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Mobile Number</span>
+                  {phone.length === 10 && (
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" /> 10 Digits
+                    </span>
+                  )}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
@@ -485,15 +526,28 @@ function LoginContent() {
                     placeholder="98XXXXXXXX"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                    className="w-full pl-12 pr-10 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF] font-mono"
+                    className={`w-full pl-12 pr-10 py-2.5 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none font-mono transition-all ${
+                      phone.length === 10
+                        ? "border border-emerald-400 bg-emerald-50/15 focus:ring-2 focus:ring-emerald-500/20"
+                        : "border border-slate-200 bg-slate-50/80 focus:bg-white focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
+                    }`}
                   />
-                  <Phone className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  {phone.length === 10 ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  ) : (
+                    <Phone className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Set Password
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Set Password</span>
+                  {password.length >= 6 && (
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Secure (6+ chars)
+                    </span>
+                  )}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -506,12 +560,16 @@ function LoginContent() {
                     placeholder="At least 6 characters"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
+                    className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all ${
+                      password.length >= 6
+                        ? "border border-emerald-400 bg-emerald-50/15 focus:ring-2 focus:ring-emerald-500/20"
+                        : "border border-slate-200 bg-slate-50/80 focus:bg-white focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
+                    }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -519,8 +577,13 @@ function LoginContent() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  4-Digit Security PIN (Password Recovery)
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>4-Digit Security PIN (Password Recovery)</span>
+                  {recoveryPin.length === 4 && (
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" /> 4-Digit Set
+                    </span>
+                  )}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -532,31 +595,31 @@ function LoginContent() {
                     placeholder="1234"
                     value={recoveryPin}
                     onChange={(e) => setRecoveryPin(e.target.value.replace(/\D/g, ""))}
-                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF] font-mono tracking-widest"
+                    className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none font-mono tracking-widest transition-all ${
+                      recoveryPin.length === 4
+                        ? "border border-emerald-400 bg-emerald-50/15 focus:ring-2 focus:ring-emerald-500/20"
+                        : "border border-slate-200 bg-slate-50/80 focus:bg-white focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF]"
+                    }`}
                   />
+                  {recoveryPin.length === 4 && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  )}
                 </div>
                 <p className="text-[10px] text-slate-500 mt-0.5">
                   Used to quickly reset your password if forgotten.
                 </p>
               </div>
 
-              <button
+              <SubmitButton
                 type="submit"
-                disabled={loading || phone.length !== 10 || password.length < 6 || !fullName.trim()}
-                className="w-full mt-2 py-3 bg-[#0052FF] hover:bg-[#0047E0] text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 transition-all text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                loading={loading}
+                loadingText="Creating Account..."
+                disabled={phone.length !== 10 || password.length < 6 || !fullName.trim()}
+                className="w-full mt-2 py-3 bg-[#0052FF] hover:bg-[#0047E0] text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 transition-all text-xs sm:text-sm"
               >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Creating Account...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Create Account & Continue</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+                <span>Create Account & Start Learning</span>
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </SubmitButton>
             </form>
           )}
 

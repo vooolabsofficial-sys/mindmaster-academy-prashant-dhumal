@@ -43,15 +43,35 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    const handleLocalSync = () => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
+        if (stored && SUPPORTED_LANGUAGES.some((l) => l.code === stored)) {
+          setCurrentLanguageState(stored);
+        }
+      } catch {}
+    };
+
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    window.addEventListener("mindmaster_language_changed", handleLocalSync);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("mindmaster_language_changed", handleLocalSync);
+    };
   }, []);
 
   const setLanguage = (code: LanguageCode) => {
-    setCurrentLanguageState(code);
+    const targetCode: LanguageCode = SUPPORTED_LANGUAGES.some((l) => l.code === code)
+      ? code
+      : DEFAULT_LANGUAGE;
+
+    setCurrentLanguageState(targetCode);
     try {
-      localStorage.setItem(STORAGE_KEY, code);
-      // Dispatch custom event for same-window instant sync
+      localStorage.setItem(STORAGE_KEY, targetCode);
+      if (typeof document !== "undefined") {
+        document.cookie = `mma_app_lang=${targetCode}; path=/; max-age=31536000; SameSite=Lax`;
+      }
+      // Dispatch custom event for same-window instant sync across tabs & navigation
       window.dispatchEvent(new Event("mindmaster_language_changed"));
     } catch (e) {
       console.warn("Failed to persist language in localStorage:", e);

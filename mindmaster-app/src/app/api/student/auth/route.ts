@@ -715,7 +715,33 @@ async function handlePost(req: NextRequest) {
     // ACTION: LOGOUT
     // -----------------------------------------------------------------------
     if (action === "logout") {
-      const response = NextResponse.json({ success: true });
+      // Release active session in database and in-memory single-device lock if phone provided
+      const rawPhone = body.phone || body.cleanPhone;
+      if (rawPhone) {
+        const clean = normalizePhone(rawPhone);
+        if (clean) {
+          try {
+            const { resetStudentDeviceSessionLock } = await import("@/lib/studentAuthService");
+            resetStudentDeviceSessionLock(clean);
+            const { createAdminClient } = await import("@/lib/supabase/admin");
+            const supabase = createAdminClient();
+            await supabase
+              .from("profiles")
+              .update({
+                active_session_token: null,
+                session_token: null,
+                updated_at: new Date().toISOString(),
+              })
+              .or(`phone.eq.${clean},phone.eq.+91${clean}`);
+          } catch {}
+        }
+      }
+
+      const response = NextResponse.json({ success: true, message: "Logged out successfully." });
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+      response.headers.set("Pragma", "no-cache");
+      response.headers.set("Expires", "0");
+
       response.cookies.set("sb-mindmaster-auth-token", "", { path: "/", domain: cookieDomain, maxAge: 0 });
       response.cookies.set("sb-mindmaster-auth-token", "", { path: "/", maxAge: 0 });
       response.cookies.set("mindmaster_session", "", { path: "/", domain: cookieDomain, maxAge: 0 });
@@ -723,6 +749,40 @@ async function handlePost(req: NextRequest) {
       response.cookies.set("mindmaster_onboarding_pending", "", { path: "/", domain: cookieDomain, maxAge: 0 });
       response.cookies.set("mindmaster_onboarding_pending", "", { path: "/", maxAge: 0 });
       return response;
+    }
+
+    // -----------------------------------------------------------------------
+    // ACTION: RESET DEVICE SESSION (STUDENT SELF-SERVICE)
+    // -----------------------------------------------------------------------
+    if (action === "reset-device" || action === "reset-my-session") {
+      const rawPhone = body.phone || body.cleanPhone;
+      if (!rawPhone) {
+        return NextResponse.json(
+          { success: false, error: "Mobile number is required to reset device session." },
+          { status: 400 }
+        );
+      }
+      const clean = normalizePhone(rawPhone);
+      if (clean) {
+        const { resetStudentDeviceSessionLock } = await import("@/lib/studentAuthService");
+        resetStudentDeviceSessionLock(clean);
+        try {
+          const { createAdminClient } = await import("@/lib/supabase/admin");
+          const supabase = createAdminClient();
+          await supabase
+            .from("profiles")
+            .update({
+              active_session_token: null,
+              session_token: null,
+              updated_at: new Date().toISOString(),
+            })
+            .or(`phone.eq.${clean},phone.eq.+91${clean}`);
+        } catch {}
+      }
+      return NextResponse.json({
+        success: true,
+        message: "Active device session reset successfully. You can now sign in on your new device.",
+      });
     }
 
     // -----------------------------------------------------------------------

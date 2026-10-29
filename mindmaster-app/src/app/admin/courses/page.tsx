@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
+import StatusBadge from "@/components/ui/StatusBadge";
+import SubmitButton from "@/components/ui/SubmitButton";
+import Spinner from "@/components/ui/Spinner";
 import { Course, StaffUser } from "@/lib/types";
 import {
   getCurrentStaff,
@@ -758,17 +761,7 @@ export default function CourseManagerPage() {
                           <span className="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white font-mono text-[11px] font-extrabold border border-white/20">
                             {course.code}
                           </span>
-                          <span
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase backdrop-blur-md ${
-                              course.status === "live"
-                                ? "bg-emerald-500/90 text-white"
-                                : course.status === "upcoming"
-                                ? "bg-blue-500/90 text-white"
-                                : "bg-amber-500/90 text-white"
-                            }`}
-                          >
-                            ● {course.status}
-                          </span>
+                          <StatusBadge status={course.status} size="sm" className="backdrop-blur-md" />
                         </div>
 
                         {/* Bottom Thumbnail Overlay: Price & Duration */}
@@ -1044,31 +1037,59 @@ export default function CourseManagerPage() {
                     {/* ---------------------------------------------------------------- */}
                     <div className="space-y-3">
                       <div>
-                        <label className="block font-bold text-[#0E1B3D] mb-1">
-                          कोर्सचे नाव (Course Title in Marathi / Regional) *
+                        <label className="block font-bold text-[#0E1B3D] mb-1 flex items-center justify-between">
+                          <span>कोर्सचे नाव (Course Title in Marathi / Regional) *</span>
+                          {formTitleMr.trim().length >= 3 && (
+                            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-500" /> मान्य
+                            </span>
+                          )}
                         </label>
-                        <input
-                          type="text"
-                          required
-                          value={formTitleMr}
-                          onChange={(e) => setFormTitleMr(e.target.value)}
-                          placeholder="उदा. महाराष्ट्र पोलीस भरती १००% परिपूर्ण तयारी किंवा ५०० वर्षांचे कॅलेंडर"
-                          className="w-full px-3 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
-                        />
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            value={formTitleMr}
+                            onChange={(e) => setFormTitleMr(e.target.value)}
+                            placeholder="उदा. महाराष्ट्र पोलीस भरती १००% परिपूर्ण तयारी किंवा ५०० वर्षांचे कॅलेंडर"
+                            className={`w-full px-3 py-2.5 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none transition-all ${
+                              formTitleMr.trim().length >= 3
+                                ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                                : "bg-[#F5F7FF] border border-[#E4E8F8] focus:border-[#0B57D0]"
+                            }`}
+                          />
+                          {formTitleMr.trim().length >= 3 && (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
+                          )}
+                        </div>
                       </div>
 
                       <div>
-                        <label className="block font-bold text-[#0E1B3D] mb-1">
-                          Course Title (English) *
+                        <label className="block font-bold text-[#0E1B3D] mb-1 flex items-center justify-between">
+                          <span>Course Title (English) *</span>
+                          {formTitle.trim().length >= 3 && (
+                            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Valid
+                            </span>
+                          )}
                         </label>
-                        <input
-                          type="text"
-                          required
-                          value={formTitle}
-                          onChange={(e) => setFormTitle(e.target.value)}
-                          placeholder="e.g. Police Bharti 100% Prep: Maths & Reasoning"
-                          className="w-full px-3 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
-                        />
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            value={formTitle}
+                            onChange={(e) => setFormTitle(e.target.value)}
+                            placeholder="e.g. Police Bharti 100% Prep: Maths & Reasoning"
+                            className={`w-full px-3 py-2.5 rounded-xl text-xs text-[#0E1B3D] focus:outline-none transition-all ${
+                              formTitle.trim().length >= 3
+                                ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                                : "bg-[#F5F7FF] border border-[#E4E8F8] focus:border-[#0B57D0]"
+                            }`}
+                          />
+                          {formTitle.trim().length >= 3 && (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -1302,23 +1323,17 @@ export default function CourseManagerPage() {
                         रद्द करा (Cancel)
                       </button>
 
-                      <button
+                      <SubmitButton
                         type="submit"
-                        disabled={isSaving}
-                        className="px-6 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-2"
+                        loading={isSaving}
+                        loadingText="सेव्ह करत आहे... (Saving to Supabase)"
+                        className="px-6 py-2.5 rounded-xl text-xs"
                       >
-                        {isSaving ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>सेव्ह करत आहे...</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="w-4 h-4" />
-                            <span>कोर्स सेव्ह करा (Save to Supabase)</span>
-                          </>
-                        )}
-                      </button>
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>कोर्स सेव्ह करा (Save to Supabase)</span>
+                        </span>
+                      </SubmitButton>
                     </div>
                   </form>
                 </div>

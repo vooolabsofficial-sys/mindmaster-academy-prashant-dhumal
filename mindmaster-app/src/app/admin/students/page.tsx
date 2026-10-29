@@ -32,6 +32,8 @@ import BulkGrantCustomizerModal from "@/components/admin/BulkGrantCustomizerModa
 import BroadcastNotificationModal from "@/components/admin/BroadcastNotificationModal";
 import { resetStudentDeviceSessionLock, adminResetStudentPassword } from "@/lib/studentAuthService";
 import { hasStaffPermission } from "@/lib/types";
+import StatusBadge from "@/components/ui/StatusBadge";
+import SubmitButton from "@/components/ui/SubmitButton";
 
 export default function StudentFinderPage() {
   const [currentStaff, setCurrentStaff] = useState<StaffUser>(getCurrentStaff());
@@ -1166,9 +1168,7 @@ export default function StudentFinderPage() {
 
                           {/* Status */}
                           <td className="py-4">
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              ● Active
-                            </span>
+                            <StatusBadge status="active" size="sm" />
                           </td>
 
                           {/* Actions: 360 Profile + Send Alert */}
@@ -1379,9 +1379,7 @@ export default function StudentFinderPage() {
                           <h2 className="text-lg font-bold text-[#0E1B3D] font-heading">
                             {drawerStudent.name}
                           </h2>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            ● Active
-                          </span>
+                          <StatusBadge status="active" size="sm" />
                         </div>
                         <p className="text-xs text-[#5A6478] mt-0.5">
                           Enrolled on {drawerStudent.joinedAt} • Active {drawerStudent.lastActiveAt}
@@ -3076,13 +3074,14 @@ export default function StudentFinderPage() {
                       >
                         Cancel
                       </button>
-                      <button
+                      <SubmitButton
                         type="submit"
-                        disabled={isResettingPassword}
-                        className="px-5 py-2 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold shadow-xs transition cursor-pointer disabled:opacity-50"
+                        loading={isResettingPassword}
+                        loadingText="Updating Hash..."
+                        className="px-5 py-2 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold shadow-xs"
                       >
-                        {isResettingPassword ? "Updating Hash..." : "Set New Password 🔑"}
-                      </button>
+                        <span>Set New Password 🔑</span>
+                      </SubmitButton>
                     </div>
                   </form>
                 )}

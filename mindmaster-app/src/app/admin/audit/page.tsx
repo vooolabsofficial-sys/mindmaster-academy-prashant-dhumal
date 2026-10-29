@@ -8,6 +8,7 @@ import { ForensicAuditLogEntry, AuditCategory } from "@/lib/auditLogger";
 import { fetchDbAuditLogs } from "@/lib/auditLogger";
 import { fetchDbStaff } from "@/lib/staffStore";
 import { formatIST } from "@/lib/istTime";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 export default function AuditLogPage() {
   const [logs, setLogs] = useState<ForensicAuditLogEntry[]>([]);
@@ -280,30 +281,27 @@ export default function AuditLogPage() {
                         </td>
 
                         <td className="py-3.5 whitespace-nowrap">
-                          <span className="font-bold text-[#0E1B3D]">{log.staffName}</span>
-                          <span
-                            className={`ml-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                              log.staffRole === "main_admin"
-                                ? "bg-[#0E1B3D] text-white"
-                                : "bg-[#DDEBFF] text-[#095ABA]"
-                            }`}
-                          >
-                            {log.staffRole === "main_admin" ? "Admin" : "Sub-Admin"}
-                          </span>
+                          <span className="font-bold text-[#0E1B3D] mr-1.5">{log.staffName}</span>
+                          <StatusBadge
+                            status={log.staffRole === "main_admin" ? "admin" : "verified"}
+                            label={log.staffRole === "main_admin" ? "Admin" : "Sub-Admin"}
+                            size="sm"
+                          />
                         </td>
 
                         <td className="py-3.5 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase mr-1.5 ${
+                          <StatusBadge
+                            status={
                               log.severity === "critical"
-                                ? "bg-rose-100 text-rose-800"
+                                ? "failed"
                                 : log.severity === "warning"
-                                ? "bg-amber-100 text-amber-800"
-                                : "bg-emerald-100 text-emerald-800"
-                            }`}
-                          >
-                            {log.severity}
-                          </span>
+                                ? "draft"
+                                : "active"
+                            }
+                            label={log.severity}
+                            size="sm"
+                            className="mr-1.5 uppercase font-bold"
+                          />
                           <span className="text-[10px] text-[#5A6478] font-medium">
                             {log.category}
                           </span>

@@ -17,6 +17,7 @@ import {
   PlatformSettings,
 } from "@/lib/staffStore";
 import { getSubAdminCashSettlements, settleSubAdminCash, SubAdminCashSummary } from "@/lib/grantStore";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 const MAHARASHTRA_DISTRICTS = [
   "Pune",
@@ -682,13 +683,9 @@ export default function SubAdminManagerPage() {
                         {/* 6. Status Badge */}
                         <td className="py-4 whitespace-nowrap">
                           {isSuspended ? (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
-                              ● Suspended
-                            </span>
+                            <StatusBadge status="suspended" size="sm" />
                           ) : (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              ● Active
-                            </span>
+                            <StatusBadge status="active" size="sm" />
                           )}
                         </td>
 

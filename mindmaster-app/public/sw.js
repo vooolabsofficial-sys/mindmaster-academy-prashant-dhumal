@@ -32,10 +32,15 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Support instant update activation from clients
+// Support instant update activation and cache purge from clients
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
+  }
+  if (event.data && event.data.type === "CLEAR_ALL_CACHES") {
+    event.waitUntil(
+      caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+    );
   }
 });
 
