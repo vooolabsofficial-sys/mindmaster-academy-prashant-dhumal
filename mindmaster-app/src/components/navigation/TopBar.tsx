@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Brain, Globe, Download } from "lucide-react";
+import { Search, Brain, Globe, Download, HelpCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import StudentNotificationBell from "@/components/notifications/StudentNotificationBell";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -154,6 +154,16 @@ export default function TopBar() {
 
           {/* In-App Notifications Bell Dropdown */}
           <StudentNotificationBell />
+
+          {/* Student Help Center & How-To Guide */}
+          <Link
+            href="/help"
+            aria-label="How to Use App Guide"
+            title="How to Use MindMaster App / ॲप कसे वापरावे"
+            className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 active:scale-95 rounded-full transition cursor-pointer flex items-center justify-center shrink-0 min-h-[40px] min-w-[40px]"
+          >
+            <HelpCircle className="w-5 h-5 stroke-[2]" />
+          </Link>
 
           {/* Student Profile Pill - Enriched & Bigger */}
           <Link

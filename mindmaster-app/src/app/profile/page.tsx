@@ -1419,7 +1419,7 @@ export default function ProfileSettingsPage() {
             </div>
 
             {/* Quick Navigation Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               <Link
                 href="/my-courses"
                 className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] hover:border-[#0B57D0] hover:bg-blue-50/30 transition flex flex-col justify-between gap-3"
@@ -1427,7 +1427,7 @@ export default function ProfileSettingsPage() {
                 <div>
                   <CreditCard className="w-5 h-5 text-[#0B57D0]" />
                   <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-2">My Enrolled Courses</h4>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">View active admissions & validity</p>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">View active admissions &amp; validity</p>
                 </div>
                 <span className="text-[11px] font-bold text-[#0B57D0] flex items-center gap-1">
                   <span>Go to My Courses</span>
@@ -1443,13 +1443,32 @@ export default function ProfileSettingsPage() {
                 <div>
                   <LifeBuoy className="w-5 h-5 text-emerald-600" />
                   <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-2">In-App Support Desk</h4>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">Raise & track support queries directly</p>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">Raise &amp; track support queries directly</p>
                 </div>
                 <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
                   <span>Open Ticket Desk</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </span>
               </button>
+
+              <Link
+                href="/help"
+                className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] hover:border-blue-500 hover:bg-blue-50/30 transition flex flex-col justify-between gap-3 group"
+              >
+                <div>
+                  <BookOpen className="w-5 h-5 text-blue-600" />
+                  <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-2 group-hover:text-blue-600 transition-colors">
+                    How to Use App Guide
+                  </h4>
+                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                    ६ सोप्या पायऱ्या, DRM नियम व FAQs
+                  </p>
+                </div>
+                <span className="text-[11px] font-bold text-blue-700 flex items-center gap-1">
+                  <span>Open Help Guide</span>
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </span>
+              </Link>
 
               <Link
                 href="/legal"

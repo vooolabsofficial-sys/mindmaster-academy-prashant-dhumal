@@ -12,7 +12,8 @@ import {
   Brain, 
   Sparkles,
   ArrowUpRight,
-  ShieldCheck
+  ShieldCheck,
+  HelpCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getUnreadCountForStudent } from "@/lib/messageStore";
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/courses", label: "Courses", badge: "5 Live", icon: BookOpen },
   { href: "/my-courses", label: "My Learning", icon: GraduationCap },
   { href: "/books", label: "Books", icon: FileText },
+  { href: "/help", label: "How to Use", badge: "Guide", icon: HelpCircle },
   { href: "/support", label: "Support", icon: MessageCircle, hasMsgBadge: true },
   { href: "/profile", label: "Profile", icon: User },
 ];
@@ -154,11 +156,13 @@ export default function SidebarNav() {
           </span>
         </div>
 
-        {/* Legal Policies Deep Links */}
+        {/* Help & Legal Policies Deep Links */}
         <div className="px-3 pt-0.5 flex items-center justify-between text-[11px] font-semibold text-slate-400">
+          <Link href="/help" className="hover:text-blue-600 font-bold text-blue-600 transition">Guide</Link>
+          <span>•</span>
           <Link href="/privacy-policy" className="hover:text-blue-600 transition">Privacy</Link>
           <span>•</span>
-          <Link href="/terms" className="hover:text-blue-600 transition">Terms (DRM)</Link>
+          <Link href="/terms" className="hover:text-blue-600 transition">Terms</Link>
           <span>•</span>
           <Link href="/refund-policy" className="hover:text-blue-600 transition">Refunds</Link>
         </div>

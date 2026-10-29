@@ -644,7 +644,9 @@ function LoginContent() {
       {/* Clean Footer */}
       <footer className="py-4 text-center text-slate-500 text-xs z-10 border-t border-slate-200/60 bg-white/40 space-y-1.5">
         <div>© 2026 MindMaster Academy • Prashant Dhumal Sir • All rights reserved</div>
-        <div className="flex items-center justify-center gap-2.5 text-[11px] text-slate-500 font-semibold">
+        <div className="flex items-center justify-center gap-2.5 text-[11px] text-slate-500 font-semibold flex-wrap">
+          <Link href="/help" className="hover:text-blue-600 font-bold text-blue-600 transition">How to Use App</Link>
+          <span>•</span>
           <Link href="/privacy-policy" className="hover:text-blue-600 transition">Privacy Policy</Link>
           <span>•</span>
           <Link href="/terms" className="hover:text-blue-600 transition">Terms of Service</Link>

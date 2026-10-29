@@ -24,6 +24,7 @@ import {
   GraduationCap,
   Sparkles,
   Zap,
+  HelpCircle,
 } from "lucide-react";
 import { StaffUser, hasStaffPermission, StaffPermission } from "@/lib/types";
 import { getCurrentStaff } from "@/lib/staffStore";
@@ -132,6 +133,7 @@ export default function AdminSidebar() {
         },
         { label: "Audit Logs", href: "/admin/audit", icon: <History className="w-4 h-4" />, adminOnly: true },
         { label: "My Activity", href: "/admin/my-activity", icon: <Activity className="w-4 h-4" /> },
+        { label: "Help & SOP Guide", href: "/admin/guide", icon: <HelpCircle className="w-4 h-4" />, badge: "SOP" },
         { label: "Settings", href: "/admin/settings", icon: <Settings className="w-4 h-4" />, badge: "Config", adminOnly: true },
       ],
     },
@@ -149,6 +151,7 @@ export default function AdminSidebar() {
       permission: "messages.manage",
     },
     { label: "My Activity", href: "/sub/activity", icon: <Activity className="w-4 h-4" /> },
+    { label: "Help & SOP Guide", href: "/admin/guide", icon: <HelpCircle className="w-4 h-4" />, badge: "SOP" },
   ];
 
   // Filter Sub-Admin items
@@ -252,8 +255,8 @@ export default function AdminSidebar() {
         </div>
 
         {/* Regional Node Card */}
-        <div className="p-3 bg-[#F5F7FF] rounded-2xl border border-[#E4E8F8] text-[11px] text-[#5A6478] mt-4">
-          <div className="flex items-center space-x-1.5 font-bold text-[#0E1B3D] mb-1">
+        <div className="p-3 bg-[#F5F7FF] rounded-2xl border border-[#E4E8F8] text-[11px] text-[#5A6478] mt-4 space-y-2">
+          <div className="flex items-center space-x-1.5 font-bold text-[#0E1B3D]">
             <span className="w-2 h-2 rounded-full bg-[#137333] animate-pulse" />
             <span>Narhe Hub Node</span>
             <span className="text-[9px] px-1.5 py-0.5 bg-[#DFF7EA] text-[#137333] rounded font-bold">
@@ -263,6 +266,13 @@ export default function AdminSidebar() {
           <p className="text-[10px] leading-tight text-[#5A6478]">
             Scoped to Narhe study centre operations. Actions logged under {staff.staffId || staff.id}.
           </p>
+          <Link
+            href="/admin/guide"
+            className="flex items-center justify-between text-[10px] font-bold text-[#5E35B1] hover:text-[#4527A0] pt-1.5 border-t border-[#E4E8F8]"
+          >
+            <span>Read Staff SOPs</span>
+            <span>→</span>
+          </Link>
         </div>
       </aside>
     );
@@ -396,7 +406,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* Footer Info Box for Main Admin */}
-      <div className="pt-3 mt-4 border-t border-[#1C294F]">
+      <div className="pt-3 mt-4 border-t border-[#1C294F] space-y-2">
         <div className="p-2.5 bg-[#101C42] border border-[#1E2D5A] rounded-xl text-[11px] text-[#A7F3D0]">
           <p className="font-bold flex items-center gap-1.5 text-[#34D399]">
             <Zap className="w-3.5 h-3.5" />
@@ -405,6 +415,13 @@ export default function AdminSidebar() {
           <p className="text-[10px] text-[#94A3B8] mt-0.5 leading-tight">
             Razorpay, Sub-Admins, Delete actions &amp; Audit Trail active.
           </p>
+          <Link
+            href="/admin/guide"
+            className="flex items-center justify-between text-[10px] font-bold text-[#93C5FD] hover:text-white pt-1.5 mt-1 border-t border-[#1E2D5A]"
+          >
+            <span>Staff SOP Manual</span>
+            <span>→</span>
+          </Link>
         </div>
       </div>
     </aside>
