@@ -132,11 +132,11 @@ export interface WebsiteCmsData {
 
 export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
   announcement: {
-    enabled: true,
-    message: "New Cognitive & Police Bharti Batches Starting This Monday at Satara & Pune Centres!",
-    couponBadge: "PRASHANT20",
-    ctaText: "Enroll with 20% Off",
-    ctaUrl: "/courses",
+    enabled: false,
+    message: "",
+    couponBadge: "",
+    ctaText: "",
+    ctaUrl: "",
   },
   hero: {
     headline: "Train Your Mind. Master Your Memory. Succeed Anywhere.",
@@ -154,12 +154,12 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
     ],
   },
   promoPopup: {
-    enabled: true,
-    title: "Satara & Pune Offline Admissions Open",
-    subtitle: "Reserve your seat for the upcoming interactive cognitive batch with Prashant Sir. Limited to 30 seats per batch.",
-    imageUrl: "/assets/images/police_bharti_prep_3d.png",
-    ctaText: "Reserve Seat on WhatsApp",
-    ctaUrl: "https://wa.me/918459344077?text=Hi%20Prashant%20Sir%2C%20I%20want%20to%20reserve%20a%20seat%20for%20the%20upcoming%20batch.",
+    enabled: false,
+    title: "",
+    subtitle: "",
+    imageUrl: "",
+    ctaText: "",
+    ctaUrl: "",
   },
   leads: [
     {
@@ -316,7 +316,7 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
     },
   ],
   sectionVisibility: {
-    announcement: true,
+    announcement: false,
     heroStats: true,
     featuredCourses: true,
     resultsShowcase: true,
@@ -324,7 +324,7 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
     testimonials: true,
     faqSection: true,
     floatingWhatsapp: true,
-    promoPopup: true,
+    promoPopup: false,
   },
   seoAndSocial: {
     metaTitle: "MindMaster Academy | Cognitive Memory Training & Competitive Exam Coaching",

@@ -55,9 +55,11 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      {hasAnnouncement && (
+      {hasAnnouncement && cms.announcement?.message && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-[#0E1B3D] text-white py-1.5 px-3 text-xs border-b border-white/10 flex items-center justify-center gap-2 pointer-events-auto">
-          <span className="bg-[#FF453A] text-white text-[9px] uppercase font-black px-1.5 py-0.2 rounded-full">Offer</span>
+          {cms.announcement.couponBadge && (
+            <span className="bg-[#FF453A] text-white text-[9px] uppercase font-black px-1.5 py-0.2 rounded-full">Offer</span>
+          )}
           <span className="truncate max-w-xl font-medium">{cms.announcement.message}</span>
           {cms.announcement.couponBadge && (
             <span className="bg-yellow-400 text-black px-1.5 py-0.2 rounded font-mono font-black text-[10px]">
@@ -126,17 +128,17 @@ export const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Right CTA Actions: Only Student Login */}
+          {/* Right CTA Actions: Direct Student Login into App Portal */}
           <div className="flex items-center gap-2">
-            {/* Student Login Button -> Opens Apple Liquid Glass Modal */}
-            <button
-              onClick={() => setIsLoginModalOpen(true)}
+            {/* Student Login Button -> Directly navigates to MindMaster App Login */}
+            <a
+              href={getAppUrl('/login')}
               className="inline-flex items-center justify-center bg-white text-[#0052FF] hover:bg-sky-50 font-title-md text-xs sm:text-sm font-extrabold px-4 sm:px-5 py-2 rounded-full shadow-md hover:scale-105 active:scale-95 transition-all ring-2 ring-white/40 shrink-0 gap-1.5 cursor-pointer"
               title="Student Login / Web Portal"
             >
               <span className="material-symbols-outlined text-[18px]">account_circle</span>
               <span className="whitespace-nowrap">Student Login</span>
-            </button>
+            </a>
 
             <a
               href="tel:+918459344077"
@@ -187,18 +189,16 @@ export const Navbar: React.FC = () => {
               </Link>
             ))}
 
-            {/* Mobile Action: Student Login only */}
+            {/* Mobile Action: Direct Student Login into App Portal */}
             <div className="pt-2.5 border-t border-white/20">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setIsLoginModalOpen(true);
-                }}
+              <a
+                href={getAppUrl('/login')}
+                onClick={() => setMobileMenuOpen(false)}
                 className="w-full inline-flex items-center justify-center gap-2 bg-white text-[#0052FF] font-title-md text-sm py-2.5 rounded-full shadow-md font-extrabold hover:bg-sky-50 transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]">account_circle</span>
                 <span>Student Login</span>
-              </button>
+              </a>
             </div>
           </div>
         )}
