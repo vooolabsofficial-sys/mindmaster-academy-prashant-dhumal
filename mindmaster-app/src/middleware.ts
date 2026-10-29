@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { recordServerAuditLog } from "@/lib/auditLogger";
 import { verifyStaffSession } from "@/lib/staffSession";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ASSIGNABLE_PERMISSIONS } from "@/lib/types";
@@ -169,23 +168,35 @@ export async function middleware(req: NextRequest | Request) {
     const entityType = extractEntityFromPath(pathname);
     const actionKey = `${method}_${pathname.slice(1).replace(/[^a-zA-Z0-9]/g, "_").toUpperCase()}`;
 
-    // Direct synchronous recording in server audit log store
-    recordServerAuditLog({
-      staff_id: staffSession.staff_id || staffSession.id,
-      staff_name: staffSession.name,
-      staff_role: staffSession.role,
-      action: actionKey,
-      entity_type: entityType,
-      entity_id: nextUrl.searchParams.get("id") || "mutation",
-      entity_name: pathname,
-      meta: {
-        method,
-        path: pathname,
-        ip: req.headers.get("x-forwarded-for") || "127.0.0.1",
-        userAgent: req.headers.get("user-agent") || "MindMaster Staff Agent",
+    // Direct synchronous recording in global server audit log store if initialized
+    if ((globalThis as any)._mma_server_audit_logs) {
+      (globalThis as any)._mma_server_audit_logs.unshift({
+        id: `audit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        staff_id: staffSession.staff_id || staffSession.id,
+        staffId: staffSession.staff_id || staffSession.id,
+        staff_name: staffSession.name,
+        staffName: staffSession.name,
+        staff_role: staffSession.role,
+        staffRole: staffSession.role,
+        action: actionKey,
+        entity_type: entityType,
+        entityType: entityType,
+        entity_id: nextUrl.searchParams.get("id") || "mutation",
+        entityId: nextUrl.searchParams.get("id") || "mutation",
+        entity_name: pathname,
+        entityName: pathname,
+        details: `${staffSession.name || "Staff"} executed ${actionKey} on ${pathname}`,
+        meta: {
+          method,
+          path: pathname,
+          ip: req.headers.get("x-forwarded-for") || "127.0.0.1",
+          userAgent: req.headers.get("user-agent") || "MindMaster Staff Agent",
+          timestamp: new Date().toISOString(),
+        },
         timestamp: new Date().toISOString(),
-      },
-    });
+        created_at: new Date().toISOString(),
+      });
+    }
 
     // Also dispatch to persistent audit log API if server is running
     fetch(new URL("/api/staff/audit", req.url), {

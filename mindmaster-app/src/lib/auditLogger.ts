@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import { formatIST } from "./istTime";
 
 declare global {
@@ -11,8 +9,28 @@ if (!globalThis._mma_server_audit_logs) {
   globalThis._mma_server_audit_logs = [];
 }
 
-const DATA_DIR = path.join(process.cwd(), ".data");
-const AUDIT_FILE = path.join(DATA_DIR, "audit_logs.json");
+function getNodeFs() {
+  if (typeof process !== "undefined" && process.env?.NEXT_RUNTIME === "edge") return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("fs");
+  } catch {
+    return null;
+  }
+}
+
+function getNodePaths() {
+  if (typeof process !== "undefined" && process.env?.NEXT_RUNTIME === "edge") return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const p = require("path");
+    const dataDir = p.join(process.cwd(), ".data");
+    const auditFile = p.join(dataDir, "audit_logs.json");
+    return { dataDir, auditFile };
+  } catch {
+    return null;
+  }
+}
 
 export type AuditCategory =
   | "admissions"
@@ -72,8 +90,10 @@ export interface ForensicAuditLogEntry {
 
 function loadLocalLogs(): ForensicAuditLogEntry[] {
   try {
-    if (fs.existsSync(AUDIT_FILE)) {
-      const raw = fs.readFileSync(AUDIT_FILE, "utf-8");
+    const fs = getNodeFs();
+    const paths = getNodePaths();
+    if (fs && paths && fs.existsSync(paths.auditFile)) {
+      const raw = fs.readFileSync(paths.auditFile, "utf-8");
       return JSON.parse(raw);
     }
   } catch {}
@@ -82,12 +102,16 @@ function loadLocalLogs(): ForensicAuditLogEntry[] {
 
 function saveLocalLogs(logs: ForensicAuditLogEntry[]) {
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+    const fs = getNodeFs();
+    const paths = getNodePaths();
+    if (fs && paths) {
+      if (!fs.existsSync(paths.dataDir)) {
+        fs.mkdirSync(paths.dataDir, { recursive: true });
+      }
+      // Cap to 3,000 entries
+      const capped = logs.slice(0, 3000);
+      fs.writeFileSync(paths.auditFile, JSON.stringify(capped, null, 2), "utf-8");
     }
-    // Cap to 3,000 entries
-    const capped = logs.slice(0, 3000);
-    fs.writeFileSync(AUDIT_FILE, JSON.stringify(capped, null, 2), "utf-8");
   } catch (err) {
     console.warn("Failed to write .data/audit_logs.json:", err);
   }
