@@ -65,6 +65,74 @@ function LoginContent() {
       return;
     }
 
+    // SSO / Website Authenticated Token Handoff
+    const authTokenParam =
+      searchParams.get("auth_token") ||
+      searchParams.get("token") ||
+      searchParams.get("session_token");
+    const phoneParam = searchParams.get("phone");
+
+    if (authTokenParam) {
+      setIsCheckingSession(true);
+      fetch("/api/student/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "me",
+          token: authTokenParam,
+          phone: phoneParam || undefined,
+        }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success && (res.student || res.user)) {
+            const student = res.student || res.user;
+            const profileData = {
+              id: student.id,
+              phone: student.phone,
+              cleanPhone: student.cleanPhone,
+              full_name: student.full_name,
+              district: student.district || "",
+              taluka: student.taluka || "",
+              village: student.village || "",
+              school: student.school || student.school_name || "",
+              role: "student",
+              onboardingCompleted: Boolean(student.onboarding_completed ?? student.onboardingCompleted),
+            };
+            localStorage.setItem("mindmaster_session_token", authTokenParam);
+            localStorage.setItem("mindmaster_verified_phone", student.phone);
+            localStorage.setItem("mindmaster_user_profile", JSON.stringify(profileData));
+            if (student.onboarding_completed || student.onboardingCompleted) {
+              localStorage.setItem("mindmaster_onboarding_completed", "true");
+            }
+
+            document.cookie = `mindmaster_session=${authTokenParam}; path=/; max-age=2592000; SameSite=Lax`;
+            document.cookie = `sb-mindmaster-auth-token=${authTokenParam}; path=/; max-age=2592000; SameSite=Lax`;
+
+            const canonicalNext =
+              !nextParam || nextParam === "/" || nextParam.startsWith("/login")
+                ? "/home"
+                : nextParam;
+            const targetUrl = !(student.onboarding_completed ?? student.onboardingCompleted)
+              ? `/onboarding?next=${encodeURIComponent(canonicalNext)}&phone=${encodeURIComponent(student.phone)}`
+              : canonicalNext;
+            window.location.href = targetUrl;
+          } else {
+            setIsCheckingSession(false);
+          }
+        })
+        .catch(() => {
+          setIsCheckingSession(false);
+        });
+      return;
+    }
+
+    // Auto-trigger Google OAuth if requested from website
+    if (searchParams.get("google") === "1") {
+      handleGoogleLogin();
+      return;
+    }
+
     try {
       const localSession = localStorage.getItem("mindmaster_session_token");
       const localProfile = localStorage.getItem("mindmaster_user_profile");
@@ -74,7 +142,7 @@ function LoginContent() {
         window.location.href = targetUrl;
       }
     } catch {}
-  }, [nextParam, router]);
+  }, [nextParam, router, searchParams]);
 
 
   // Google OAuth 1-Click Login

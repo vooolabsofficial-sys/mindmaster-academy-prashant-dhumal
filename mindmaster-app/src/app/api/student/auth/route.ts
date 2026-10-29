@@ -367,9 +367,24 @@ async function handlePost(req: NextRequest) {
         );
       }
 
-      return NextResponse.json({
+      const sessionTok = student.active_session_token || token || `tok-${student.id}`;
+      const response = NextResponse.json({
         success: true,
-        sessionToken: student.active_session_token || token || `tok-${student.id}`,
+        sessionToken: sessionTok,
+        student: {
+          id: student.id,
+          phone: student.phone,
+          cleanPhone: student.cleanPhone,
+          full_name: student.full_name,
+          email: student.email,
+          district: student.district || "",
+          taluka: student.taluka || "",
+          village: student.village || "",
+          school: student.school_name || "",
+          school_name: student.school_name || "",
+          onboardingCompleted: Boolean(student.onboarding_completed),
+          onboarding_completed: Boolean(student.onboarding_completed),
+        },
         user: {
           id: student.id,
           phone: student.phone,
@@ -386,7 +401,26 @@ async function handlePost(req: NextRequest) {
         },
         onboardingCompleted: Boolean(student.onboarding_completed),
         onboarding_completed: Boolean(student.onboarding_completed),
+        redirect: student.onboarding_completed ? "/home" : "/onboarding",
       });
+
+      response.cookies.set("sb-mindmaster-auth-token", sessionTok, {
+        path: "/",
+        domain: cookieDomain,
+        sameSite: "lax",
+        secure: isProd,
+        maxAge: 60 * 60 * 24 * 30,
+      });
+
+      response.cookies.set("mindmaster_session", "true", {
+        path: "/",
+        domain: cookieDomain,
+        sameSite: "lax",
+        secure: isProd,
+        maxAge: 60 * 60 * 24 * 30,
+      });
+
+      return response;
     }
 
     // -----------------------------------------------------------------------

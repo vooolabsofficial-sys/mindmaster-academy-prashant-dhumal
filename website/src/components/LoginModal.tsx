@@ -22,7 +22,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const appBaseUrl = getAppUrl('');
 
   const handleGoogleLogin = () => {
-    window.location.href = `${appBaseUrl}/login?google=1`;
+    window.location.href = `${appBaseUrl}/login?google=1&next=/home`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,26 +68,21 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         throw new Error(data.error || 'Authentication failed. Please check credentials.');
       }
 
-      // Persist profile to localStorage
-      const profile = data.user || {
-        phone: cleanPhone,
-        full_name: fullName || 'Student',
-        role: 'student',
-        onboardingCompleted: data.onboardingCompleted ?? false,
-      };
+      // Secure handoff to the production Student Web Portal
+      setSuccessMessage(
+        tab === 'signin'
+          ? 'Sign in successful! Opening portal...'
+          : 'Account created successfully! Starting portal...'
+      );
 
-      try {
-        localStorage.setItem('mindmaster_session_token', data.sessionToken || `tok-${cleanPhone}`);
-        localStorage.setItem('mindmaster_verified_phone', cleanPhone);
-        localStorage.setItem('mindmaster_user_profile', JSON.stringify(profile));
-      } catch {}
+      const dest = data.redirect || (data.onboardingCompleted ? '/home' : '/onboarding');
+      const token = data.sessionToken || '';
 
-      setSuccessMessage(tab === 'signin' ? 'Sign in successful! Opening portal...' : 'Account created successfully! Starting portal...');
-
+      // Redirect with authenticated token handoff so the app domain immediately writes its own session cookies
       setTimeout(() => {
-        const dest = data.redirect || (data.onboardingCompleted ? '/home' : '/onboarding');
-        window.location.href = `${appBaseUrl}${dest}`;
-      }, 400);
+        const handoffUrl = `${appBaseUrl}/login?auth_token=${encodeURIComponent(token)}&phone=${encodeURIComponent(cleanPhone)}&next=${encodeURIComponent(dest)}`;
+        window.location.href = handoffUrl;
+      }, 300);
     } catch (err: any) {
       setErrorMessage(err.message || 'Connection error. Please open the Student Portal directly.');
       setLoading(false);
