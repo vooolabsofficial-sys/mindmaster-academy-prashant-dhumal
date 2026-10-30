@@ -45,7 +45,7 @@ export const PrivacyPolicy: React.FC = () => {
               When you enroll in our courses, register for free demo sessions, or contact us via WhatsApp/phone, we collect only necessary personal data:
             </p>
             <ul className="list-disc pl-6 space-y-1.5 text-slate-600 text-sm">
-              <li><strong>Student & Parent Information:</strong> Full name, WhatsApp mobile number, email address, city/district, and standard/competitive exam stream (e.g. Police Bharti, MPSC, 5th/8th Scholarship, Vedic Maths).</li>
+              <li><strong>Student & Parent Information:</strong> Full name, WhatsApp mobile number, email address, city/district, and standard/academic stream (e.g. Memory Science, MPSC, 5th/8th Scholarship, Vedic Maths).</li>
               <li><strong>Academic Progress & Test Scores:</strong> Written exam mock scores, recall speed timings, and syllabus completion records necessary for personalized coaching.</li>
               <li><strong>Communication Records:</strong> Queries submitted through inquiry forms, callback requests, and counselling interactions.</li>
             </ul>
@@ -82,7 +82,7 @@ export const PrivacyPolicy: React.FC = () => {
               <span>Student Success Stories & Media Consent</span>
             </h2>
             <p className="text-slate-600">
-              We proudly celebrate the achievements of our rank holders in Maharashtra Police Bharti, MPSC examinations, and State Scholarship merit lists.
+              We proudly celebrate the achievements of our rank holders in State Memory Championships, MPSC examinations, and State Scholarship merit lists.
             </p>
             <p className="text-slate-600 text-sm">
               Photographs, marksheet extracts, and video testimonials are published on our official website and social platforms (YouTube, Instagram, Facebook) only with the explicit consent of the candidate or their parents/guardians. If you wish to update or remove your testimonial, you may notify us anytime at our Satara office.

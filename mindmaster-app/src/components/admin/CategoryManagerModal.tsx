@@ -84,7 +84,7 @@ export default function CategoryManagerModal({
       badge: newBadge.trim() || newLabel.trim(),
       description: newDesc.trim(),
       audienceType: newAudience,
-      category: newAudience === "competitive" ? "police" : "memory",
+      category: "memory",
     });
 
     setNewLabel("");

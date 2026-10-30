@@ -283,12 +283,12 @@ export const Contact: React.FC = () => {
                             value={courseSelect}
                             onChange={(e) => setCourseSelect(e.target.value)}
                           >
-                            <option value="">Select a course (or choose Guidance)</option>
-                            <option value="mm-01">MM-01: Memory Technique Seminar (Grade 4–10)</option>
-                            <option value="mm-02">MM-02: Train the Trainer Certification (Educators)</option>
-                            <option value="mm-03">MM-03: Police Bharti 100% Prep (Aspirants)</option>
-                            <option value="mm-04">MM-04: Superfast Calendar Technique</option>
-                            <option value="mm-05">MM-05: Vedic Maths Foundation (Speed Arithmetic)</option>
+                            <option value="">Select an area of interest (or choose Guidance)</option>
+                            <option value="memory-science">Memory Science & Speed Study (Grade 4–10)</option>
+                            <option value="vedic-maths">Vedic Maths & Speed Arithmetic</option>
+                            <option value="calendar-technique">500-Year Calendar Technique</option>
+                            <option value="teacher-training">Train the Trainer & Teacher Certification</option>
+                            <option value="school-workshop">School / Institutional Workshop</option>
                             <option value="advisory">Need Academic Evaluation & Guidance</option>
                           </select>
                           <span className="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]">
@@ -304,7 +304,7 @@ export const Contact: React.FC = () => {
                         <textarea
                           className="w-full p-4 rounded-xl bg-surface-container-lowest text-on-surface border border-surface-variant focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all font-body-md text-sm placeholder:text-on-surface-variant/50 resize-none"
                           id="message"
-                          placeholder="Tell us about your target exam (e.g. Police Bharti, Scholarship, Board exam) or memory difficulties..."
+                          placeholder="Tell us about your grade, exam goals (e.g. 10th SSC, Scholarship, MPSC) or memory difficulties..."
                           rows={4}
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}

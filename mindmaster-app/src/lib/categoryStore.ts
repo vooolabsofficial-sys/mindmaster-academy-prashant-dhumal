@@ -8,7 +8,7 @@ export interface CategoryItem {
   key: string;
   label: string;
   badge: string;
-  category: "all" | "memory" | "vedic" | "police" | "free";
+  category: "all" | "memory" | "vedic" | "trainer" | "calendar" | "free" | "police";
   standards?: number[];
   audienceType: "all" | "competitive" | "school";
   description: string;

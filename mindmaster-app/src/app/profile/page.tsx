@@ -69,7 +69,7 @@ export default function ProfileSettingsPage() {
   const [fullName, setFullName] = useState("Verified Student");
   const [phone, setPhone] = useState("+91 84593 44077");
   const [standard, setStandard] = useState("10th Standard / SSC");
-  const [targetExam, setTargetExam] = useState("Maharashtra Police Bharti 2026");
+  const [targetExam, setTargetExam] = useState("Vedic Maths & Speed Memory");
   const [school, setSchool] = useState("Maharashtra State Board");
   const [village, setVillage] = useState("Powai Naka");
   const [taluka, setTaluka] = useState("Satara");
@@ -761,11 +761,10 @@ export default function ProfileSettingsPage() {
                     onChange={(e) => setTargetExam(e.target.value)}
                     className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
                   >
-                    <option value="Maharashtra Police Bharti 2026">Maharashtra Police Bharti 2026</option>
-                    <option value="MPSC / Civil Services Foundation">MPSC / Civil Services Foundation</option>
-                    <option value="10th SSC Board Maths Special">10th SSC Board Maths Special</option>
                     <option value="Vedic Maths & Speed Memory">Vedic Maths & Speed Memory</option>
+                    <option value="10th SSC Board Maths Special">10th SSC Board Maths Special</option>
                     <option value="Scholarship Exam (5th / 8th Std)">Scholarship Exam (5th / 8th Std)</option>
+                    <option value="MPSC / Civil Services Foundation">MPSC / Civil Services Foundation</option>
                     <option value="General Speed Calculation & Memory">General Speed Calculation & Memory</option>
                   </select>
                 </div>

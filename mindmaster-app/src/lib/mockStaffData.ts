@@ -116,7 +116,7 @@ export const INITIAL_STUDENTS: StudentRecord[] = [
     district: "Satara",
     taluka: "Karad",
     school: "Karad High School",
-    standard: "Police Bharti",
+    standard: "10th Standard / SSC",
     enrolledCourseCodes: ["MM-01"],
     enrolledCourseTitles: ["Memory Techniques"],
     totalWatchSec: 3600,

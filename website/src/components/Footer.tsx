@@ -57,7 +57,7 @@ export const Footer: React.FC = () => {
           </div>
           <div className="hidden md:flex items-center gap-2">
             <span className="material-symbols-outlined text-secondary text-[18px]">military_tech</span>
-            <span>100% Written-Exam Record • Police Bharti</span>
+            <span>100% Concept Recall &amp; Speed Mastery</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-secondary text-[18px]">location_on</span>
@@ -139,7 +139,7 @@ export const Footer: React.FC = () => {
             </div>
 
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Maharashtra’s premier institute for scientific memory systems, Maharashtra Police Bharti 100% written test preparation, and Vedic mathematics. Founded and mentored by <strong>Prashant Dhumal</strong> in Satara.
+              Maharashtra’s premier institute for scientific memory systems, speed arithmetic, and Vedic mathematics. Founded and mentored by <strong>Prashant Dhumal</strong> in Satara.
             </p>
 
             {/* Official Social Media Buttons */}
@@ -224,12 +224,6 @@ export const Footer: React.FC = () => {
                 <Link className="hover:text-secondary transition-colors flex items-center gap-1.5 group" to="/courses?category=trainer">
                   <span className="text-secondary text-xs group-hover:translate-x-0.5 transition-transform">▸</span>
                   <span>Train Trainer (TTT)</span>
-                </Link>
-              </li>
-              <li>
-                <Link className="hover:text-secondary transition-colors flex items-center gap-1.5 group" to="/courses?category=police">
-                  <span className="text-secondary text-xs group-hover:translate-x-0.5 transition-transform">▸</span>
-                  <span>Police Bharti 100%</span>
                 </Link>
               </li>
               <li>
@@ -322,9 +316,9 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link className="hover:text-secondary transition-colors flex items-center gap-1.5 group text-slate-600" to="/results?category=police">
+                <Link className="hover:text-secondary transition-colors flex items-center gap-1.5 group text-slate-600" to="/results?category=memory">
                   <span className="text-secondary text-[10px] group-hover:translate-x-0.5 transition-transform">▸</span>
-                  <span>Police Bharti Merit</span>
+                  <span>Memory Champions</span>
                 </Link>
               </li>
               <li>

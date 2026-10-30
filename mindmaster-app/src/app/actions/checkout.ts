@@ -57,63 +57,6 @@ export async function resolveCourse(courseId: string) {
     };
   }
 
-  // Resilient fallback for default academy courses when database is unreachable in test mode
-  if (courseId === "c-mm-01" || courseId.toLowerCase() === "mm-01" || courseId === "11111111-1111-1111-1111-111111111101") {
-    return {
-      id: "c-mm-01",
-      code: "MM-01",
-      title: "Complete Brain Mastery (Marathi)",
-      pricePaise: 99900,
-      originalPricePaise: 299900,
-      accessMonths: 3,
-      dbUuid: "11111111-1111-1111-1111-111111111101",
-    };
-  }
-  if (courseId === "c-mm-02" || courseId.toLowerCase() === "mm-02" || courseId === "11111111-1111-1111-1111-111111111102") {
-    return {
-      id: "c-mm-02",
-      code: "MM-02",
-      title: "Vedic Maths Speed System",
-      pricePaise: 99900,
-      originalPricePaise: 299900,
-      accessMonths: 3,
-      dbUuid: "11111111-1111-1111-1111-111111111102",
-    };
-  }
-  if (courseId === "c-mm-03" || courseId.toLowerCase() === "mm-03" || courseId === "11111111-1111-1111-1111-111111111103") {
-    return {
-      id: "c-mm-03",
-      code: "MM-03",
-      title: "School Student Memory Foundation",
-      pricePaise: 99900,
-      originalPricePaise: 299900,
-      accessMonths: 3,
-      dbUuid: "11111111-1111-1111-1111-111111111103",
-    };
-  }
-  if (courseId === "c-mm-04" || courseId.toLowerCase() === "mm-04" || courseId === "11111111-1111-1111-1111-111111111104") {
-    return {
-      id: "c-mm-04",
-      code: "MM-04",
-      title: "Police Bharti Speed & GK Memory",
-      pricePaise: 99900,
-      originalPricePaise: 299900,
-      accessMonths: 3,
-      dbUuid: "11111111-1111-1111-1111-111111111104",
-    };
-  }
-  if (courseId === "c-mm-05" || courseId.toLowerCase() === "mm-05" || courseId === "11111111-1111-1111-1111-111111111105") {
-    return {
-      id: "c-mm-05",
-      code: "MM-05",
-      title: "500-Year Calendar Memory System",
-      pricePaise: 99900,
-      originalPricePaise: 299900,
-      accessMonths: 3,
-      dbUuid: "11111111-1111-1111-1111-111111111105",
-    };
-  }
-
   return null;
 }
 

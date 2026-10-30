@@ -10,7 +10,7 @@ import {
 interface TestimonialItem {
   id: string;
   name: string;
-  category: 'scholarship' | 'police' | 'mpsc' | 'vedic' | 'trainer';
+  category: 'scholarship' | 'memory' | 'mpsc' | 'vedic' | 'trainer';
   badge: string;
   quote: string;
   batch: string;
@@ -40,16 +40,16 @@ const TESTIMONIALS: TestimonialItem[] = [
   {
     id: 'akash-more',
     name: 'Akash More',
-    category: 'police',
-    badge: 'SELECTED • POLICE BHARTI 2025',
-    quote: 'The physical training calmness under Prashant Sir and rapid GK anchoring gave me 100% written test marks in Maharashtra Police Bharti.',
+    category: 'memory',
+    badge: 'STATE MEMORY CHAMPION',
+    quote: 'The memory anchoring and speed calculations under Prashant Sir gave me total recall in exams and state level competitions.',
     batch: 'Batch of 2025',
-    location: 'Nashik Centre',
-    image: '/assets/images/akash_police_testimonial.png',
-    scoreHighlight: '100% Written Test Marks • 1st In District',
-    fullStory: 'Secured top rank in Nashik police recruitment. The mental conditioning kept heart rate steady during high-pressure physical endurance rounds.',
+    location: 'Satara Centre',
+    image: '/assets/images/classroom_memory_drills.png',
+    scoreHighlight: 'Top State Rank • 100% GK & Formula Recall',
+    fullStory: 'Demonstrated rapid recall of 100 digits and 500-year calendar calculations in front of hundreds at the state convention.',
     videoDuration: '2:14',
-    keyTechnique: 'Pegging System for Maharashtra IPC Codes & Current Affairs'
+    keyTechnique: 'Pegging System & Mnemonics for Fast Formulas'
   },
   {
     id: 'snehal-kulkarni',
@@ -82,16 +82,16 @@ const TESTIMONIALS: TestimonialItem[] = [
   {
     id: 'swapnali-patil',
     name: 'Swapnali Patil',
-    category: 'police',
-    badge: 'POLICE BHARTI MERIT 2024',
-    quote: 'As a female aspirant from rural Maharashtra, mental calmness was key. Prashant Sir\'s memory anchoring made GK formulas stick effortlessly.',
+    category: 'memory',
+    badge: 'GRADE 10 TOPPER • 97.2%',
+    quote: 'As a student from rural Maharashtra, overcoming exam fear was key. Prashant Sir\'s memory anchoring made science formulas stick effortlessly.',
     batch: 'Batch of 2024',
     location: 'Kolhapur Centre',
-    image: '/assets/images/police_bharti_celebration.jpg',
-    scoreHighlight: 'Selected in 1st Attempt • 94/100 Marks',
-    fullStory: 'Joined the 12-week Police Bharti preparation track. Cleared written and physical test with outstanding scores.',
+    image: '/assets/images/student_result_certificate.png',
+    scoreHighlight: 'Selected in 1st Attempt • 97.2% SSC Board',
+    fullStory: 'Joined the 12-week memory and Vedic maths track. Cleared SSC board exam with record-breaking score.',
     videoDuration: '2:22',
-    keyTechnique: 'Sensory Anchoring for High Endurance & Quick MCQ Recall'
+    keyTechnique: 'Sensory Anchoring & Visual Mind Maps for High School Science'
   },
   {
     id: 'rohan-jadhav',
@@ -101,7 +101,7 @@ const TESTIMONIALS: TestimonialItem[] = [
     quote: 'The 1-7-30 spaced repetition framework eliminated exam blankouts completely. I could reproduce exact historical dates and acts in Mains answer papers.',
     batch: 'Batch of 2024',
     location: 'Nashik Centre',
-    image: '/assets/images/police_bharti_aspirant.png',
+    image: '/assets/images/classroom_students_group.png',
     scoreHighlight: 'Top 5% State Merit • Mains Qualifier',
     fullStory: 'Overcame multiple exam blankouts in previous attempts. After MindMaster training, scored record marks in General Studies Papers 1 & 2.',
     videoDuration: '1:55',
@@ -174,12 +174,14 @@ export const Results: React.FC = () => {
 
   const liveToppersAsTestimonials: TestimonialItem[] = (cms.toppers || []).map((t) => {
     const cat = (t.examCategory || '').toLowerCase();
-    const resolvedCat: TestimonialItem['category'] = cat.includes('police')
-      ? 'police'
+    const resolvedCat: TestimonialItem['category'] = cat.includes('memory')
+      ? 'memory'
       : cat.includes('mpsc')
       ? 'mpsc'
       : cat.includes('vedic') || cat.includes('math')
       ? 'vedic'
+      : cat.includes('trainer')
+      ? 'trainer'
       : 'scholarship';
     return {
       id: t.id,
@@ -189,7 +191,7 @@ export const Results: React.FC = () => {
       quote: t.quote || "MindMaster's cognitive methods made studying effortless and enjoyable.",
       batch: `Batch of ${t.batchYear || '2024'}`,
       location: 'Satara & Pune Flagship',
-      image: t.photoUrl || '/assets/images/akash_police_testimonial.png',
+      image: t.photoUrl || '/assets/images/classroom_memory_drills.png',
       scoreHighlight: t.scoreOrRank,
       fullStory: `${t.name} secured ${t.scoreOrRank} in ${t.examCategory}. Mastered photographic memory retention with Prashant Sir.`,
       videoDuration: t.testimonialVideoUrl ? '2:15' : undefined,
@@ -268,7 +270,7 @@ export const Results: React.FC = () => {
                 </span>
               </h1>
               <p className="mt-space-md font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
-                Real marks, verified state certificates, and authentic breakthroughs from memory, police-bharti, and Vedic-maths batches across Maharashtra.
+                Real marks, verified state certificates, and authentic breakthroughs from memory, scholarship, and Vedic-maths batches across Maharashtra.
               </p>
             </div>
           </div>
@@ -311,16 +313,16 @@ export const Results: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => handleFilterClick('police')}
+                onClick={() => handleFilterClick('memory')}
                 className={`filter-btn whitespace-nowrap px-space-lg py-2.5 rounded-full font-title-md text-xs sm:text-body-sm shadow-xs transition-all duration-200 flex items-center gap-2 cursor-pointer ${
-                  activeFilter === 'police'
+                  activeFilter === 'memory'
                     ? 'bg-secondary text-on-secondary shadow-md scale-105 font-bold'
                     : 'bg-surface-container-lowest text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
                 }`}
               >
-                <span>Police Bharti</span>
-                <span className={`text-[11px] px-2 py-0.2 rounded-full ${activeFilter === 'police' ? 'bg-white/20 text-white' : 'bg-surface-container text-on-surface-variant'}`}>
-                  {getCategoryCount('police')}
+                <span>Memory Science</span>
+                <span className={`text-[11px] px-2 py-0.2 rounded-full ${activeFilter === 'memory' ? 'bg-white/20 text-white' : 'bg-surface-container text-on-surface-variant'}`}>
+                  {getCategoryCount('memory')}
                 </span>
               </button>
 
@@ -476,7 +478,7 @@ export const Results: React.FC = () => {
                 <h2 className="font-headline-lg text-headline-lg font-headline-lg text-primary-container tracking-tight mt-1">
                   {activeFilter === 'all' && 'Proven results across disciplines.'}
                   {activeFilter === 'scholarship' && 'Scholarship & Foundation Merit Holders.'}
-                  {activeFilter === 'police' && 'Police Bharti 100% Written Selections.'}
+                  {activeFilter === 'memory' && 'State Level Memory Champions & Speed Recallers.'}
                   {activeFilter === 'mpsc' && 'MPSC & UPSC Memory Palace Masters.'}
                   {activeFilter === 'vedic' && 'Vedic Maths & Lightning Arithmetic Champs.'}
                   {activeFilter === 'trainer' && 'Certified Memory Educators & Coaches.'}
@@ -557,7 +559,7 @@ export const Results: React.FC = () => {
               <div className="flex flex-col items-center p-space-lg bg-surface-container-lowest rounded-2xl shadow-xs border border-surface-variant/40">
                 <span className="font-headline-lg text-headline-lg font-headline-lg text-secondary font-bold">100%</span>
                 <span className="mt-2 font-label-caps text-label-caps text-on-surface-variant tracking-wider uppercase max-w-[160px]">
-                  Written-Exam Clearance, Police Bharti
+                  Concept Recall &amp; Speed Mastery
                 </span>
               </div>
               <div className="flex flex-col items-center p-space-lg bg-surface-container-lowest rounded-2xl shadow-xs border border-surface-variant/40">
@@ -630,12 +632,12 @@ export const Results: React.FC = () => {
 
               <div className="group relative overflow-hidden rounded-2xl bg-surface-container aspect-[4/3] shadow-xs">
                 <img
-                  alt="Police Bharti endurance test preparation"
+                  alt="State Level Memory Championship cohort"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  src="/assets/images/police_bharti_celebration.jpg"
+                  src="/assets/images/classroom_memory_drills.png"
                 />
                 <div className="absolute bottom-4 left-4 bg-surface-container-lowest/90 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-xs">
-                  <span className="font-title-md text-xs text-primary-container font-semibold">Police Bharti celebration cohort</span>
+                  <span className="font-title-md text-xs text-primary-container font-semibold">State Memory Championship cohort</span>
                 </div>
               </div>
 

@@ -201,11 +201,11 @@ export const Home: React.FC = () => {
                 <span className="material-symbols-outlined text-[14px] text-slate-400 group-hover:text-secondary group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
               </Link>
               <Link
-                to="/results?category=police"
+                to="/results?category=memory"
                 className="px-4 py-2 rounded-full bg-white border border-slate-200 text-slate-800 font-title-md text-xs sm:text-sm hover:border-secondary hover:text-secondary hover:shadow-sm transition-all shadow-2xs flex items-center gap-2 group"
               >
                 <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span>Police Bharti</span>
+                <span>Memory Science</span>
                 <span className="material-symbols-outlined text-[14px] text-slate-400 group-hover:text-secondary group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
               </Link>
               <Link
@@ -285,176 +285,83 @@ export const Home: React.FC = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              {[
-                {
-                  code: 'MM-01',
-                  title: 'Memory Technique Seminar',
-                  subtitle: 'Cognitive Memory Techniques',
-                  category: 'Memory Mastery',
-                  duration: '4 Weeks • Online + Live',
-                  target: 'Grade 4 to College Students',
-                  desc: 'Peg systems, Story method & Roman Room (Memory Palace) for rapid formula, history, and syllabus memorization.',
-                  imgPath: '/assets/images/memory_seminar_brain_3d.png',
-                  icon: 'psychology',
-                  topics: ['Loci Palace Method', 'Formula to Story Coding', 'Spaced Recall 1-7-30'],
-                },
-                {
-                  code: 'MM-05',
-                  title: 'Vedic Lightning Maths',
-                  subtitle: 'Mental Speed Arithmetic',
-                  category: 'Vedic Maths',
-                  duration: '6 Weeks • Online + Live',
-                  target: 'Grade 5 to UPSC CSAT Aspirants',
-                  desc: '16 Vedic Sutras for fast mental multiplication, square roots, and calculation without scratch paper or calculators.',
-                  imgPath: '/assets/images/vedic_maths_abacus_3d.png',
-                  icon: 'calculate',
-                  topics: ['Base Multiplication', 'Square Roots in 1 Sec', 'Mental Ratio & Percent'],
-                },
-                {
-                  code: 'MM-03',
-                  title: 'Police Bharti Fast Track',
-                  subtitle: '100% Written Success Batch',
-                  category: 'Competitive Exams',
-                  duration: '12 Weeks • Comprehensive',
-                  target: 'Maharashtra Police Aspirants (18-28)',
-                  desc: 'Targeted Maharashtra GK memory pegs, IPC & CrPC important sections, and exam hall psychological composure.',
-                  imgPath: '/assets/images/police_bharti_prep_3d.png',
-                  icon: 'verified_user',
-                  topics: ['Maharashtra Geography Pegs', 'IPC Section Matrices', 'Timed Mock Drills'],
-                },
-                {
-                  code: 'MM-04',
-                  title: '500-Year Calendar Technique',
-                  subtitle: 'Mental Calendar Prodigy',
-                  category: 'Speed Arithmetic',
-                  duration: '2 Weeks • Prodigy',
-                  target: 'All Ages (10 to 80 Years)',
-                  desc: 'Determine the exact day of the week for any date from 1600 to 2100 in under 2 seconds mentally.',
-                  imgPath: '/assets/images/superfast_calendar_3d.png',
-                  icon: 'calendar_month',
-                  topics: ['Century Modulo Codes', 'Leap Year Shortcut', 'Mental Day Extraction'],
-                },
-                {
-                  code: 'MM-06',
-                  title: 'School Foundation & Scholarship',
-                  subtitle: 'Scholarship & NMMS Foundation',
-                  category: 'School Foundation',
-                  duration: '8 Weeks • Foundation',
-                  target: '5th & 8th Scholarship, NMMS',
-                  desc: 'Intelligence test pattern solving, Marathi/English vocabulary memory tools, and OMR speed time-budgeting.',
-                  imgPath: '/assets/images/classroom_students_group.png',
-                  icon: 'stars',
-                  topics: ['Scholarship Buddhimatta', 'Language Peg Systems', 'OMR Speed Training'],
-                },
-              ].map((item) => {
-                const liveMatch = liveDbCourses.find(
-                  (c) => c.code.toUpperCase() === item.code.toUpperCase()
-                );
-                const isLive = Boolean(liveMatch);
-
-                return (
+            {liveDbCourses.length === 0 ? (
+              <div className="bg-gradient-to-br from-blue-50/90 via-white to-indigo-50/90 rounded-3xl p-8 md:p-12 border border-blue-200/80 shadow-sm text-center flex flex-col items-center justify-center max-w-2xl mx-auto my-4 animate-fadeIn">
+                <div className="w-16 h-16 rounded-3xl bg-blue-100/80 text-secondary flex items-center justify-center mb-4 shadow-inner">
+                  <span className="material-symbols-outlined text-3xl">school</span>
+                </div>
+                <span className="px-3.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-wider mb-2">
+                  🚀 Batches Launching Soon
+                </span>
+                <h3 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight">
+                  New Certified Courses Launching Soon!
+                </h3>
+                <p className="text-xs md:text-sm text-slate-600 max-w-lg mt-2 mb-6 leading-relaxed">
+                  Prashant Sir's official training curriculum, video masterclasses, and certified study modules are being uploaded. Contact us to pre-book and receive admission details.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <a
+                    href="https://wa.me/918459344077?text=Namaskar%20Prashant%20Sir%2C%20please%20notify%20me%20when%20the%20new%20MindMaster%20batches%20open."
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-6 py-3 bg-[#0052FF] hover:bg-blue-700 text-white font-extrabold text-xs rounded-full shadow-md shadow-blue-500/20 inline-flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <span>💬</span>
+                    <span>Pre-Book on WhatsApp</span>
+                  </a>
+                  <a
+                    href="tel:+918459344077"
+                    className="px-5 py-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs rounded-full shadow-2xs inline-flex items-center gap-1.5 transition"
+                  >
+                    <span>📞 +91 84593 44077</span>
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                {liveDbCourses.map((c) => (
                   <div
-                    key={item.code}
+                    key={c.id || c.code}
                     className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between overflow-hidden group"
                   >
-                    <div className="relative h-44 w-full overflow-hidden bg-slate-900">
-                      <img
-                        src={item.imgPath}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20" />
-                      <div className="absolute top-3 left-3 w-9 h-9 rounded-full bg-white/95 text-secondary flex items-center justify-center shadow-md backdrop-blur-md">
-                        <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                      </div>
-
-                      <div className="absolute top-3 right-3 flex items-center gap-1.5">
-                        {isLive ? (
-                          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold shadow-sm flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                            <span>LIVE</span>
-                          </span>
-                        ) : (
-                          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-extrabold shadow-sm">
-                            🚀 Coming Soon
-                          </span>
-                        )}
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/90 text-slate-800 font-bold">
-                          {item.code}
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-label-caps text-[11px] px-2.5 py-0.5 bg-blue-50 text-secondary border border-blue-100 rounded-full font-bold">
+                          {c.code}
+                        </span>
+                        <span className="text-sm font-extrabold text-slate-900">
+                          {c.isFree ? "FREE" : `₹${Math.round((c.pricePaise || 0) / 100)}`}
                         </span>
                       </div>
-
-                      <div className="absolute bottom-2.5 left-3 right-3 flex justify-between items-end">
-                        <span className="text-[11px] font-semibold text-sky-200 drop-shadow-sm">
-                          {item.target}
-                        </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/20 text-white backdrop-blur-md border border-white/30">
-                          {item.duration}
-                        </span>
-                      </div>
+                      <h3 className="font-heading-bold text-lg font-bold text-slate-900 mb-1 group-hover:text-secondary transition-colors">
+                        {c.title}
+                      </h3>
+                      {c.subtitle && (
+                        <p className="text-xs text-secondary font-semibold mb-2">{c.subtitle}</p>
+                      )}
+                      <p className="text-slate-600 text-xs leading-relaxed line-clamp-3 mb-4">
+                        {c.description || "MindMaster certified training curriculum."}
+                      </p>
                     </div>
-
-                    <div className="p-5 flex-1 flex flex-col justify-between gap-4">
-                      <div>
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold mb-1">
-                          <span className="text-secondary font-bold uppercase tracking-wider">{item.category}</span>
-                          <span>{item.subtitle}</span>
-                        </div>
-                        <h3 className="text-base font-extrabold text-slate-900 group-hover:text-secondary transition-colors">
-                          {item.title}
-                        </h3>
-                        <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                          {item.desc}
-                        </p>
-
-                        <div className="flex flex-wrap gap-1.5 mt-3">
-                          {item.topics.map((t, idx) => (
-                            <span
-                              key={idx}
-                              className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                        <Link
-                          to="/courses"
-                          className="text-xs text-slate-600 hover:text-secondary font-bold flex items-center gap-1"
-                        >
-                          <span>Syllabus</span>
-                          <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-                        </Link>
-
-                        {isLive ? (
-                          <a
-                            href={getAppCourseCheckoutUrl(item.code)}
-                            className="px-4 py-2 rounded-full bg-secondary hover:bg-secondary-container text-white text-xs font-bold transition shadow-xs flex items-center gap-1"
-                          >
-                            <span>Enroll Now (₹{Math.round((liveMatch?.pricePaise || 99900) / 100)})</span>
-                            <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                          </a>
-                        ) : (
-                          <a
-                            href={getWhatsAppPreBookUrl(item.title)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1 cursor-pointer active:scale-95"
-                            title={`Pre-Book / Notify Me on WhatsApp for ${item.title}`}
-                          >
-                            <span className="material-symbols-outlined text-[14px]">notifications_active</span>
-                            <span>🔔 Notify Me When Batch Starts</span>
-                          </a>
-                        )}
-                      </div>
+                    <div className="p-5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                      <a
+                        href={getAppUrl(`/course/${c.id}`)}
+                        className="text-xs font-bold text-secondary hover:underline flex items-center gap-1"
+                      >
+                        <span>View Course</span>
+                        <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                      </a>
+                      <a
+                        href={getAppCourseCheckoutUrl(c.code)}
+                        className="px-4 py-2 bg-secondary text-white text-xs font-bold rounded-full shadow-xs hover:bg-blue-700 transition"
+                      >
+                        Enroll Now
+                      </a>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
 
             <div className="text-center">
               <Link
@@ -524,7 +431,7 @@ export const Home: React.FC = () => {
                   </div>
                   <div className="text-center p-2.5 bg-slate-50 rounded-2xl border border-slate-200/60">
                     <div className="font-['Poppins'] text-2xl font-extrabold text-emerald-600">100%</div>
-                    <div className="text-[11px] text-slate-600 font-semibold mt-0.5">Police Bharti Written</div>
+                    <div className="text-[11px] text-slate-600 font-semibold mt-0.5">Recall &amp; Speed Mastery</div>
                   </div>
                 </div>
 
@@ -564,7 +471,7 @@ export const Home: React.FC = () => {
               </span>
               <h2 className="font-heading-bold text-3xl md:text-4xl text-slate-900 tracking-tight font-black">
                 Proven Success in{' '}
-                <span className="text-secondary">Police Bharti, MPSC &amp; Scholarships</span>
+                <span className="text-secondary">Memory Science, MPSC &amp; Scholarships</span>
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto mt-2">
                 Live batch celebrations and merit ranks from our Satara Flagship HQ and Pune Hubs.
@@ -573,17 +480,17 @@ export const Home: React.FC = () => {
 
             {/* Results Photo Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-              {/* Photo 1: Police Bharti */}
+              {/* Photo 1: Memory Science & State Honors */}
               <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group">
                 <div className="relative h-64 sm:h-72 w-full overflow-hidden">
                   <img
-                    src="/assets/images/police_bharti_celebration.jpg"
-                    alt="Maharashtra Police Bharti written clearance celebration at MindMaster Academy"
+                    src="/assets/images/classroom_memory_drills.png"
+                    alt="State Level Memory & Speed Calculation Masterclass celebration at MindMaster Academy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
                   <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-emerald-600 text-white font-extrabold text-[11px] shadow-md uppercase tracking-wider">
-                    100% Written Clearance
+                    State Honors &amp; Medals
                   </span>
                   {/* Interactive Play Button */}
                   <button
@@ -591,24 +498,24 @@ export const Home: React.FC = () => {
                     onClick={() =>
                       setModalData({
                         isOpen: true,
-                        title: 'Police Bharti Selection Celebration Interview',
-                        studentName: 'Akash More & Cadets',
-                        rankBadge: 'SELECTED • 100% WRITTEN SCORE',
-                        category: 'Police Bharti',
-                        location: 'Satara / Nashik Centre',
+                        title: 'State Level Memory Championship Interview',
+                        studentName: 'Akash More & Memory Champions',
+                        rankBadge: 'STATE MEMORY CHAMPIONS',
+                        category: 'Memory Science',
+                        location: 'Satara / Pune Centre',
                         batchYear: 'Batch of 2025',
                         quote:
-                          'The physical training calmness under Prashant Sir and rapid GK anchoring gave me 100% written test marks in Maharashtra Police Bharti.',
-                        posterImg: '/assets/images/police_bharti_celebration.jpg',
+                          'The memory anchoring and speed calculations under Prashant Sir gave me total recall in exams and state level competitions.',
+                        posterImg: '/assets/images/classroom_memory_drills.png',
                         videoDuration: '2:14',
-                        marksheetScore: '100% Written Test Marks • 1st In District',
-                        keyTakeaway: 'Pegging System for Maharashtra IPC Codes & Current Affairs',
+                        marksheetScore: '100% GK & Formula Recall • Top In State',
+                        keyTakeaway: 'Pegging System & Mnemonics for Fast Formulas',
                         onClose: () => setModalData(null),
                       })
                     }
                     className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-white/90 hover:bg-white text-secondary flex items-center justify-center shadow-xl backdrop-blur-md hover:scale-110 active:scale-95 transition-all cursor-pointer z-10"
-                    title="Watch Police Bharti Celebration Video"
-                    aria-label="Play Police Bharti Celebration Video"
+                    title="Watch Memory Champion Celebration Video"
+                    aria-label="Play Memory Champion Celebration Video"
                   >
                     <span className="material-symbols-outlined text-3xl ml-1 text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>
                       play_arrow
@@ -617,17 +524,17 @@ export const Home: React.FC = () => {
                 </div>
                 <div className="p-6">
                   <h3 className="text-lg font-bold text-slate-900 mb-1.5 group-hover:text-secondary transition-colors">
-                    Maharashtra Police Bharti Selection Celebration
+                    State Level Memory Championship &amp; Speed Calculation
                   </h3>
                   <p className="text-xs text-slate-600 leading-relaxed mb-4">
-                    MindMaster cadets securing postings across Pune, Satara, Mumbai, and Kolhapur Police after mastering high-speed General Knowledge recall and IPC section matrices.
+                    School and competitive students mastering rapid formula recall, 500-year calendar calculations under 3 seconds, and Vedic mental arithmetic.
                   </p>
                   <div className="flex items-center justify-between">
                     <Link
-                      to="/results?category=police"
+                      to="/results?category=memory"
                       className="text-xs font-bold text-secondary flex items-center gap-1 hover:underline"
                     >
-                      <span>View all Police Bharti rankers &amp; marks</span>
+                      <span>View all Memory Champions &amp; marks</span>
                       <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                     </Link>
                     <button
@@ -635,18 +542,18 @@ export const Home: React.FC = () => {
                       onClick={() =>
                         setModalData({
                           isOpen: true,
-                          title: 'Police Bharti Selection Celebration Interview',
-                          studentName: 'Akash More & Cadets',
-                          rankBadge: 'SELECTED • 100% WRITTEN SCORE',
-                          category: 'Police Bharti',
-                          location: 'Satara / Nashik Centre',
+                          title: 'State Level Memory Championship Interview',
+                          studentName: 'Akash More & Memory Champions',
+                          rankBadge: 'STATE MEMORY CHAMPIONS',
+                          category: 'Memory Science',
+                          location: 'Satara / Pune Centre',
                           batchYear: 'Batch of 2025',
                           quote:
-                            'The physical training calmness under Prashant Sir and rapid GK anchoring gave me 100% written test marks in Maharashtra Police Bharti.',
-                          posterImg: '/assets/images/police_bharti_celebration.jpg',
+                            'The memory anchoring and speed calculations under Prashant Sir gave me total recall in exams and state level competitions.',
+                          posterImg: '/assets/images/classroom_memory_drills.png',
                           videoDuration: '2:14',
-                          marksheetScore: '100% Written Test Marks • 1st In District',
-                          keyTakeaway: 'Pegging System for Maharashtra IPC Codes & Current Affairs',
+                          marksheetScore: '100% GK & Formula Recall • Top In State',
+                          keyTakeaway: 'Pegging System & Mnemonics for Fast Formulas',
                           onClose: () => setModalData(null),
                         })
                       }
@@ -801,7 +708,7 @@ export const Home: React.FC = () => {
                       Narayan Peth / FC Road Area, Pune, Maharashtra 411030.
                     </p>
                     <p className="text-[11px] text-slate-500 mt-1">
-                      Special Police Bharti &amp; Competitive Exam sprint batches.
+                      Special Vedic Maths &amp; Memory Science sprint batches.
                     </p>
                   </div>
                   <a
@@ -1161,7 +1068,7 @@ export const Home: React.FC = () => {
                   alt={cms.promoPopup.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/assets/images/police_bharti_prep_3d.png';
+                    (e.target as HTMLImageElement).src = '/assets/images/classroom_memory_drills.png';
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />

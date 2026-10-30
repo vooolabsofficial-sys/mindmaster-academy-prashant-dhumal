@@ -938,7 +938,7 @@ export default function CouponManagerPage() {
                             required
                             value={formCode}
                             onChange={(e) => setFormCode(e.target.value.toUpperCase())}
-                            placeholder="e.g. DIWALI50, POLICE100"
+                            placeholder="e.g. DIWALI50, MINDMASTER100"
                             className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-mono font-black text-[#0B57D0] uppercase tracking-wider focus:outline-none transition-all ${
                               formCode.trim().length >= 3
                                 ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"

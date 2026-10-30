@@ -239,7 +239,7 @@ export default function CoursesCatalogPage() {
   return (
     <AppShell>
       <title>Certified Courses Catalog | MindMaster Academy</title>
-      <meta name="description" content="Explore Prashant Dhumal's certified courses in Memory Techniques, Vedic Maths, Calendar Mastery, and Police Bharti prep." />
+      <meta name="description" content="Explore Prashant Dhumal's certified courses in Memory Techniques, Vedic Maths, and Calendar Mastery." />
       <div className="flex flex-col gap-6 select-none touch-manipulation">
 
         {/* Header with Spring 2025 Enrollment Chip */}

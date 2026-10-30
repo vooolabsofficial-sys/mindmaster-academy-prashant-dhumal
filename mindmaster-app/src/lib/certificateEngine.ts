@@ -89,7 +89,7 @@ export function getCourseToken(courseIdOrCode: string): string {
   const clean = courseIdOrCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (clean.includes("VEDIC") || clean.includes("VM") || clean.includes("MATH")) return "VM26";
   if (clean.includes("MEMORY") || clean.includes("MIND") || clean.includes("MM")) return "MM26";
-  if (clean.includes("POLICE") || clean.includes("BHARTI") || clean.includes("PB")) return "PB26";
+  if (clean.includes("CALENDAR") || clean.includes("CAL") || clean.includes("CL")) return "CL26";
   if (clean.includes("SCHOLAR") || clean.includes("SCH")) return "SC26";
   if (clean.includes("COLLEGE") || clean.includes("11") || clean.includes("12")) return "JC26";
   return clean.slice(0, 4) || "MC26";

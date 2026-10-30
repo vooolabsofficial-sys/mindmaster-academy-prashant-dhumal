@@ -9,319 +9,16 @@ import {
   getWhatsAppPreBookUrl,
 } from '../config/appConfig';
 
-const COURSES_DATA: CourseSyllabusData[] = [
-  {
-    id: 'mm-01',
-    code: 'MM-01',
-    title: 'Memory Technique Seminar',
-    badge: 'FLAGSHIP SEMINAR',
-    duration: '4 Weeks • Online + Classroom',
-    audience: 'Students Grade 4–10',
-    description: 'Master mnemonics, speed recall & associative pegging techniques for rapid syllabus mastery and complete exam confidence.',
-    examFocus: 'School Exams, 5th & 8th Scholarship, NMMS, NTSE',
-    pdfDownloadName: 'MindMaster_MM01_Memory_Technique_Syllabus',
-    includedKits: [
-      'MindMaster 100-Word Associative Peg Chart',
-      'Visual Journey Method Flashcards (Set of 50)',
-      '1-7-30 Spaced Repetition Study Planner Diary',
-      'Audio Recall Drill Pack (Marathi + English)'
-    ],
-    curriculum: [
-      {
-        week: 'Week 1',
-        title: 'Foundations of Visual Indexing',
-        topics: [
-          'Right-brain visual associations vs rote memorization',
-          'The 20-Number Rhyme System for sequential recall',
-          'Eliminating exam anxiety through rhythmic anchoring'
-        ]
-      },
-      {
-        week: 'Week 2',
-        title: 'The Roman Room (Memory Palace) Architecture',
-        topics: [
-          'Constructing your first 25-point personal memory palace',
-          'Storing history dates, geographical maps, and science diagrams',
-          'Speed recall tests: Reproducing 30 items backwards and forwards'
-        ]
-      },
-      {
-        week: 'Week 3',
-        title: 'Formula & Nomenclature Mastery',
-        topics: [
-          'Converting abstract algebraic formulas into vivid stories',
-          'Chemistry periodic table and biology classifications',
-          'Mind mapping chapter summaries on one single page'
-        ]
-      },
-      {
-        week: 'Week 4',
-        title: 'Exam Hall Temperament & Timed Recall',
-        topics: [
-          '1-7-30 Spaced revision protocol for lifelong retention',
-          'Simulated 60-minute mock examination under pressure',
-          'Graduation ceremony and personal student cognitive profile report'
-        ]
-      }
-    ]
-  },
-  {
-    id: 'mm-02',
-    code: 'MM-02',
-    title: 'Train the Trainer',
-    badge: 'EDUCATOR DIPLOMA',
-    duration: '8 Weeks • Online + Classroom',
-    audience: 'Educators, Coaches & Aspirant Trainers',
-    description: 'Comprehensive pedagogical certification to teach cognitive acceleration, memory systems, and mental math workshops professionally.',
-    examFocus: 'Educators, Academy Founders, School Teachers',
-    pdfDownloadName: 'MindMaster_MM02_Train_The_Trainer_Syllabus',
-    includedKits: [
-      'Complete 40-Hour Classroom Teaching Slide Decks',
-      'Student Assessment & Diagnostic Score Software License',
-      'Authorized MindMaster Academy Trainer Certificate',
-      'Marketing & School Seminar Outreach Blueprint'
-    ],
-    curriculum: [
-      {
-        week: 'Weeks 1–2',
-        title: 'Advanced Cognitive Psychology & Neuroplasticity',
-        topics: [
-          'Understanding learning modalities in children and adult aspirants',
-          'Mastering complex peg systems up to 1,000 items',
-          'Diagnostic evaluation of student memory bottlenecks'
-        ]
-      },
-      {
-        week: 'Weeks 3–4',
-        title: 'Classroom Delivery & Demonstration Excellence',
-        topics: [
-          'Executing the signature 40-item live recall challenge onstage',
-          'Interactive student engagement and gamified memory drills',
-          'Handling parent consultations and academic queries'
-        ]
-      },
-      {
-        week: 'Weeks 5–6',
-        title: 'Curriculum Management & Teaching Kits',
-        topics: [
-          'Structuring 4-week, 8-week, and weekend intensive batches',
-          'Evaluating student progress sheets and error logs',
-          'Conducting teacher-parent review conferences'
-        ]
-      },
-      {
-        week: 'Weeks 7–8',
-        title: 'Business Execution & Academy Setup',
-        topics: [
-          'Hosting high-converting school demo workshops',
-          'Practical teaching practicum supervised by Prashant Dhumal Sir',
-          'Final written viva, live demo exam, and convocation ceremony'
-        ]
-      }
-    ]
-  },
-  {
-    id: 'mm-03',
-    code: 'MM-03',
-    title: 'Police Bharti 100% Prep',
-    badge: '100% WRITTEN SUCCESS',
-    duration: '12 Weeks • Online + Classroom',
-    audience: 'Aspirants Age 18–28',
-    description: 'Specialized memory routines for high-speed syllabus recall, Maharashtra GK memorization, IPC codes, and physical exam calmness.',
-    examFocus: 'Maharashtra Police Constable, SRPF, Driver & Jail Sipahi',
-    pdfDownloadName: 'MindMaster_MM03_Police_Bharti_Prep_Syllabus',
-    includedKits: [
-      'Complete Maharashtra GK & History Memory Codes Book',
-      '500 IPC & CrPC Important Sections Pegging Matrix',
-      'Mental Composure Audio Drills for Physical Ground Rounds',
-      '15 Full-Length Timed Mock Question Paper Sets'
-    ],
-    curriculum: [
-      {
-        week: 'Weeks 1–3',
-        title: 'Maharashtra GK & Administrative Geography',
-        topics: [
-          'District-wise rivers, dams, sanctuaries and historical forts',
-          'Maharashtra administrative divisions & cabinet portfolios',
-          'Speed MCQ anchoring: answering 100 questions in 50 minutes'
-        ]
-      },
-      {
-        week: 'Weeks 4–6',
-        title: 'Police Administration & Law Sections',
-        topics: [
-          'Essential Indian Penal Code & Police Act memorization',
-          'Constitution of India basic rights and state executive powers',
-          'Current affairs calendar: 12 months in 12 mental rooms'
-        ]
-      },
-      {
-        week: 'Weeks 7–9',
-        title: 'Mathematical Reasoning & Marathi Grammar Shortcuts',
-        topics: [
-          'Vedic arithmetic shortcuts for quick ratio, percentage & time-distance',
-          'Marathi Vyakaran rules, Samas, and Sandhi memory pegs',
-          'Error analysis and negative marking reduction strategies'
-        ]
-      },
-      {
-        week: 'Weeks 10–12',
-        title: 'Ground Composure & Final Exam Simulation',
-        topics: [
-          'Synchronizing physical stamina with psychological calm',
-          '5 full-length real-time simulated exams under strict exam timers',
-          'One-on-one personal interview and physical exam briefing with Prashant Sir'
-        ]
-      }
-    ]
-  },
-  {
-    id: 'mm-04',
-    code: 'MM-04',
-    title: 'Superfast Calendar Technique',
-    badge: 'MENTAL CALENDAR PRODIGY',
-    duration: '2 Weeks • Online + Classroom',
-    audience: 'All Ages 10–80',
-    description: 'Calculate the day of the week for any date in past or future history between 1900 and 2100 in under 3 seconds mentally.',
-    examFocus: 'Mental Arithmetic, CSAT, Banking Aptitude, Olympiads',
-    pdfDownloadName: 'MindMaster_MM04_Superfast_Calendar_Syllabus',
-    includedKits: [
-      'Century Code & Month Index Pocket Reference Card',
-      'Leap Year Fast-Calculation Dial',
-      'Mental Speed Drills Audio Workbook'
-    ],
-    curriculum: [
-      {
-        week: 'Week 1',
-        title: 'Century & Month Numerical Anchoring',
-        topics: [
-          'The 7-Day modular arithmetic system explained simply',
-          'Remembering century codes (1900s, 2000s, 2100s) with story pegs',
-          'Leap year exceptions: February 29 calculation shortcuts'
-        ]
-      },
-      {
-        week: 'Week 2',
-        title: 'The 3-Second Mental Calculation Protocol',
-        topics: [
-          'Combining date, month code, and year remainder in 2 seconds',
-          'Live speed-drill challenge: answering 20 random dates in 60 seconds',
-          'Applications in competitive exam reasoning sections'
-        ]
-      }
-    ]
-  },
-  {
-    id: 'mm-05',
-    code: 'MM-05',
-    title: 'Vedic Maths',
-    badge: 'SPEED ARITHMETIC',
-    duration: '6 Weeks • Online + Classroom',
-    audience: 'Grade 5 to UPSC Aspirants',
-    description: 'Lightning-fast mental arithmetic shortcuts without scratch paper for school syllabus calculations and competitive exams.',
-    examFocus: 'Scholarship, NTSE, MHT-CET, MPSC, UPSC CSAT, Banking',
-    pdfDownloadName: 'MindMaster_MM05_Vedic_Maths_Syllabus',
-    includedKits: [
-      '16 Vedic Sutras & 13 Sub-Sutras Illustrated Handbook',
-      'Mental Multiplication & Square Root Fast Tables',
-      '500 Practical Practice Worksheets with Answer Key'
-    ],
-    curriculum: [
-      {
-        week: 'Weeks 1–2',
-        title: 'Base Multiplication & Complement Sutras',
-        topics: [
-          'Nikhilam Navatashcaramam Dashatah (All from 9, last from 10)',
-          'Multiplying numbers close to base 10, 100, 1000 in 2 seconds',
-          'Instant subtraction from 10,000 without borrowing steps'
-        ]
-      },
-      {
-        week: 'Weeks 3–4',
-        title: 'Universal Multiplication & Squaring',
-        topics: [
-          'Urdhva Tiryagbhyam (Vertically & Crosswise) for any 2x2 and 3x3 numbers',
-          'Finding squares of numbers ending in 5 in 1 second',
-          'Fast mental cubing and percentage calculations'
-        ]
-      },
-      {
-        week: 'Weeks 5–6',
-        title: 'Roots & Mental Algebra Mastery',
-        topics: [
-          'Instant mental extraction of perfect cube roots in 1 second',
-          'Square roots of non-perfect squares to two decimal places',
-          'Solving linear equations mentally and competitive time-saving strategies'
-        ]
-      }
-    ]
-  },
-  {
-    id: 'mm-06',
-    code: 'MM-06',
-    title: 'School Foundation & Scholarship (5th & 8th)',
-    badge: 'FOUNDATION & SCHOLARSHIP',
-    duration: '8 Weeks • Online + Classroom',
-    audience: 'Students Grade 4–8',
-    description: 'Comprehensive cognitive foundation, intelligence test shortcuts, scholarship paper solving, and speed reading for school toppers.',
-    examFocus: '5th & 8th Scholarship, NMMS, Navodaya, Olympiads',
-    pdfDownloadName: 'MindMaster_MM06_Scholarship_Foundation_Syllabus',
-    includedKits: [
-      'Scholarship Intelligence Test Visual Peg Cards',
-      'Mental Aptitude & Pattern Recognition Matrix',
-      'Previous 5 Years Solved Scholarship Model Papers',
-      'Daily 15-Minute Brain Gymnastics Drill Chart'
-    ],
-    curriculum: [
-      {
-        week: 'Weeks 1–2',
-        title: 'Intelligence & Pattern Recognition Tricks',
-        topics: [
-          'Odd-man-out, series completion, and analogy fast recognition',
-          'Direction sense and clock-calendar shortcuts for kids',
-          'Eliminating confusion in visual figure puzzles'
-        ]
-      },
-      {
-        week: 'Weeks 3–4',
-        title: 'Marathi & English Language Memory Tools',
-        topics: [
-          'Marathi grammar rules, Synonyms, and Antonyms story pegs',
-          'Vocabulary expansion through sensory mental images',
-          'Speed reading comprehension without regression'
-        ]
-      },
-      {
-        week: 'Weeks 5–6',
-        title: 'Maths Quick Calculation & Problem Solving',
-        topics: [
-          'Vedic tables up to 100 and mental percentage shortcuts',
-          'Fractions, decimals and LCM/HCF mental methods',
-          'Avoiding calculation traps and silly mistakes under pressure'
-        ]
-      },
-      {
-        week: 'Weeks 7–8',
-        title: 'Mock Paper Simulation & Exam Temperament',
-        topics: [
-          'OMR sheet time-budgeting and bubble-filling speed training',
-          'Full-length simulated scholarship exam under timed conditions',
-          'Individual student weak-point analysis and revision blueprint'
-        ]
-      }
-    ]
-  }
-];
-
+const COURSES_DATA: CourseSyllabusData[] = [];
 export const Courses: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawCat = searchParams.get('category') || searchParams.get('filter') || 'all';
-  const initialCategory = ['all', 'school', 'police', 'maths', 'trainer'].includes(rawCat)
-    ? (rawCat as 'all' | 'school' | 'police' | 'maths' | 'trainer')
+  const initialCategory = ['all', 'school', 'maths', 'trainer'].includes(rawCat)
+    ? (rawCat as 'all' | 'school' | 'maths' | 'trainer')
     : 'all';
 
   const [selectedCourseForSyllabus, setSelectedCourseForSyllabus] = useState<CourseSyllabusData | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'school' | 'police' | 'maths' | 'trainer'>(initialCategory);
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'school' | 'maths' | 'trainer'>(initialCategory);
   const [downloadToast, setDownloadToast] = useState<string | null>(null);
   const [liveDbCourses, setLiveDbCourses] = useState<LiveDbCourse[]>([]);
 
@@ -337,7 +34,7 @@ export const Courses: React.FC = () => {
 
   useEffect(() => {
     const cat = searchParams.get('category') || searchParams.get('filter');
-    if (cat && ['all', 'school', 'police', 'maths', 'trainer'].includes(cat)) {
+    if (cat && ['all', 'school', 'maths', 'trainer'].includes(cat)) {
       setCategoryFilter(cat as any);
     }
   }, [searchParams]);
@@ -348,12 +45,41 @@ export const Courses: React.FC = () => {
   const [wizardGrade, setWizardGrade] = useState<string>('school-kid');
   const [wizardFormat, setWizardFormat] = useState<string>('hybrid');
 
-  const filteredCourses = COURSES_DATA.filter((course) => {
+  const coursesToDisplay: CourseSyllabusData[] = liveDbCourses.map((lc) => ({
+    id: lc.id || lc.code.toLowerCase(),
+    code: lc.code,
+    title: lc.title,
+    badge: 'CERTIFIED PROGRAM',
+    duration: `${lc.accessMonths || 6} Months Access • Online`,
+    audience: 'Students & Aspirants',
+    description: lc.description || 'MindMaster Academy certified video curriculum by Prashant Dhumal Sir.',
+    examFocus: 'Cognitive Skills & Academic Excellence',
+    pdfDownloadName: `MindMaster_${lc.code}_Syllabus`,
+    includedKits: [
+      'Comprehensive HD Video Lectures',
+      'Downloadable Study Notes & Practice Material',
+      'Dedicated Doubt Resolution Support'
+    ],
+    curriculum: [
+      {
+        week: 'Module 1',
+        title: 'Core Foundations & Mental Frameworks',
+        topics: ['Scientific principles & conceptual grounding', 'Memory anchoring techniques']
+      },
+      {
+        week: 'Module 2',
+        title: 'Advanced Applications & Speed Mastery',
+        topics: ['Timed recall exercises', 'Exam-hall temperament conditioning']
+      }
+    ]
+  }));
+
+  const filteredCourses = coursesToDisplay.filter((course) => {
     if (categoryFilter === 'all') return true;
-    if (categoryFilter === 'school') return course.id === 'mm-01' || course.id === 'mm-05' || course.id === 'mm-06';
-    if (categoryFilter === 'police') return course.id === 'mm-03';
-    if (categoryFilter === 'maths') return course.id === 'mm-04' || course.id === 'mm-05';
-    if (categoryFilter === 'trainer') return course.id === 'mm-02';
+    const txt = `${course.title} ${course.description} ${course.code}`.toLowerCase();
+    if (categoryFilter === 'school') return /school|grade|विद्यार्थी|शालेय/i.test(txt);
+    if (categoryFilter === 'maths') return /math|calculation|गणित/i.test(txt);
+    if (categoryFilter === 'trainer') return /trainer|teacher|सर्टिफिकेशन/i.test(txt);
     return true;
   });
 
@@ -383,13 +109,13 @@ export const Courses: React.FC = () => {
         courseId: 'mm-02'
       };
     }
-    if (wizardGoal === 'police') {
+    if (wizardGoal === 'calendar') {
       return {
-        title: 'Police Bharti 100% Prep',
-        code: 'MM-03',
-        duration: '12 Weeks',
-        reason: 'Specialized for high-yield GK retention, law sections, and physical endurance mental composure.',
-        courseId: 'mm-03'
+        title: '500-Year Calendar Technique',
+        code: 'MM-04',
+        duration: '4 Weeks',
+        reason: 'Master instant calendar day calculations for any date across 500 years in under 3 seconds.',
+        courseId: 'mm-04'
       };
     }
     if (wizardGoal === 'maths') {
@@ -457,7 +183,7 @@ export const Courses: React.FC = () => {
                     : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container'
                 }`}
               >
-                All 5 Programmes
+                All Programs
               </button>
               <button
                 type="button"
@@ -469,17 +195,6 @@ export const Courses: React.FC = () => {
                 }`}
               >
                 School Students (Grade 4–10)
-              </button>
-              <button
-                type="button"
-                onClick={() => setCategoryFilter('police')}
-                className={`px-4 py-2 rounded-full text-xs font-title-md transition-all cursor-pointer ${
-                  categoryFilter === 'police'
-                    ? 'bg-secondary text-on-secondary shadow-md font-bold'
-                    : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container'
-                }`}
-              >
-                Police Bharti & Competitive
               </button>
               <button
                 type="button"
@@ -510,6 +225,39 @@ export const Courses: React.FC = () => {
         {/* Course Cards Grid */}
         <section className="w-full bg-surface-container-low py-space-3xl">
           <div className="max-w-container-max mx-auto px-gutter-desktop">
+            {filteredCourses.length === 0 ? (
+              <div className="bg-surface-container-lowest rounded-3xl p-8 md:p-12 border border-surface-variant/80 shadow-sm text-center flex flex-col items-center justify-center max-w-2xl mx-auto my-4 animate-fadeIn">
+                <div className="w-16 h-16 rounded-3xl bg-blue-100/80 text-secondary flex items-center justify-center mb-4 shadow-inner">
+                  <span className="material-symbols-outlined text-3xl">school</span>
+                </div>
+                <span className="px-3.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-wider mb-2">
+                  🚀 Batches Launching Soon
+                </span>
+                <h3 className="text-xl md:text-2xl font-extrabold text-primary-container tracking-tight">
+                  New Certified Courses Launching Soon!
+                </h3>
+                <p className="text-xs md:text-sm text-on-surface-variant max-w-lg mt-2 mb-6 leading-relaxed">
+                  Prashant Sir's official training curriculum, video masterclasses, and certified study modules are being uploaded. Contact us to pre-book and receive admission details.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <a
+                    href="https://wa.me/918459344077?text=Namaskar%20Prashant%20Sir%2C%20please%20notify%20me%20when%20the%20new%20MindMaster%20batches%20open."
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-6 py-3 bg-secondary hover:bg-blue-700 text-white font-extrabold text-xs rounded-full shadow-md shadow-blue-500/20 inline-flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <span>💬</span>
+                    <span>Pre-Book on WhatsApp</span>
+                  </a>
+                  <a
+                    href="tel:+918459344077"
+                    className="px-5 py-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs rounded-full shadow-2xs inline-flex items-center gap-1.5 transition"
+                  >
+                    <span>📞 +91 84593 44077</span>
+                  </a>
+                </div>
+              </div>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-xl mb-space-xl">
               {filteredCourses.map((course) => {
                 const liveMatch = liveDbCourses.find(
@@ -522,9 +270,6 @@ export const Courses: React.FC = () => {
                 if (course.id === 'mm-02') {
                   imgPath = '/assets/images/train_the_trainer_3d.png';
                   icon = 'school';
-                } else if (course.id === 'mm-03') {
-                  imgPath = '/assets/images/police_bharti_prep_3d.png';
-                  icon = 'verified_user';
                 } else if (course.id === 'mm-04') {
                   imgPath = '/assets/images/superfast_calendar_3d.png';
                   icon = 'calendar_month';
@@ -643,6 +388,7 @@ export const Courses: React.FC = () => {
                 );
               })}
             </div>
+            )}
           </div>
         </section>
 
@@ -710,7 +456,7 @@ export const Courses: React.FC = () => {
 
                         <button
                           type="button"
-                          onClick={() => { setWizardGrade('aspirant'); setWizardGoal('police'); }}
+                          onClick={() => { setWizardGrade('aspirant'); setWizardGoal('calendar'); }}
                           className={`p-4 rounded-xl text-left border transition-all cursor-pointer ${
                             wizardGrade === 'aspirant'
                               ? 'border-2 border-secondary bg-secondary/5 shadow-xs'
@@ -718,10 +464,10 @@ export const Courses: React.FC = () => {
                           }`}
                         >
                           <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-secondary mb-2 shadow-xs">
-                            <span className="material-symbols-outlined">local_police</span>
+                            <span className="material-symbols-outlined">school</span>
                           </div>
-                          <span className="font-title-md text-sm font-bold text-primary-container block">Competitive Aspirant (18–28)</span>
-                          <span className="text-xs text-on-surface-variant mt-1 block">Police Bharti, MPSC, Banking GK</span>
+                          <span className="font-title-md text-sm font-bold text-primary-container block">College &amp; Degree Student</span>
+                          <span className="text-xs text-on-surface-variant mt-1 block">College, MPSC Foundation &amp; Fast Revision</span>
                         </button>
 
                         <button
@@ -784,18 +530,18 @@ export const Courses: React.FC = () => {
 
                         <button
                           type="button"
-                          onClick={() => setWizardGoal('police')}
+                          onClick={() => setWizardGoal('calendar')}
                           className={`p-4 rounded-xl text-left border transition-all cursor-pointer ${
-                            wizardGoal === 'police'
+                            wizardGoal === 'calendar'
                               ? 'border-2 border-secondary bg-secondary/5 shadow-xs'
                               : 'border-surface-variant bg-surface-container-low hover:bg-surface-container'
                           }`}
                         >
                           <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-secondary mb-2 shadow-xs">
-                            <span className="material-symbols-outlined">military_tech</span>
+                            <span className="material-symbols-outlined">calendar_month</span>
                           </div>
-                          <span className="font-title-md text-sm font-bold text-primary-container block">Crack Competitive Recruitment</span>
-                          <span className="text-xs text-on-surface-variant mt-1 block">100% written clearance in Police / MPSC</span>
+                          <span className="font-title-md text-sm font-bold text-primary-container block">500-Year Superfast Calendar</span>
+                          <span className="text-xs text-on-surface-variant mt-1 block">Calculate any day in under 3 seconds</span>
                         </button>
 
                         <button

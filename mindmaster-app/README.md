@@ -1,7 +1,7 @@
 # MindMaster Academy — Production PWA LMS
 
 > **माइंडमास्टर अकॅडमी (Prashant Dhumal Academy)**  
-> Maharashtra's Premier Memory Training, Vedic Maths & Police Bharti Coaching PWA LMS.  
+> Maharashtra's Premier Memory Training, Vedic Maths & Speed Calculation PWA LMS.  
 > Founder & Master Trainer: **Prashant Dhumal Sir** (International Memory Coach).
 
 ---

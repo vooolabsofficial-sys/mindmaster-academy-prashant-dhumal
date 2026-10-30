@@ -312,7 +312,7 @@ export default function AdminOverviewPage() {
               <span className="text-sm font-normal text-[#5A6478]">Lectures</span>
             </p>
             <p className="text-xs text-[#5A6478] mt-2">
-              School, Police, Maths & General segments
+              School, College, Vedic Maths &amp; Teacher segments
             </p>
           </div>
 

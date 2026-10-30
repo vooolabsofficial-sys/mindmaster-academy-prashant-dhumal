@@ -394,7 +394,7 @@ export default function WebsiteCmsPage() {
                     announcement: { ...cmsData.announcement, message: e.target.value },
                   })
                 }
-                placeholder="e.g. New Cognitive & Police Bharti Batches Starting This Monday at Satara & Pune Centres!"
+                placeholder="e.g. New Cognitive Memory &amp; Vedic Maths Batches Starting This Monday at Satara &amp; Pune Centres!"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-sm text-[#0E1B3D]"
               />
             </div>
@@ -661,7 +661,7 @@ export default function WebsiteCmsPage() {
                 <span className="text-xs text-[#5A6478] font-semibold">Quick Presets:</span>
                 {[
                   { label: "Classroom Group", path: "/assets/images/classroom_students_group.png" },
-                  { label: "Police Bharti 3D", path: "/assets/images/police_bharti_prep_3d.png" },
+                  { label: "Calendar 3D", path: "/assets/images/superfast_calendar_3d.png" },
                   { label: "Brain Seminar 3D", path: "/assets/images/memory_seminar_brain_3d.png" },
                   { label: "Memory Drills", path: "/assets/images/classroom_memory_drills.png" },
                 ].map((p) => (
@@ -754,7 +754,7 @@ export default function WebsiteCmsPage() {
                       promoPopup: { ...cmsData.promoPopup, imageUrl: e.target.value },
                     })
                   }
-                  placeholder="/assets/images/police_bharti_prep_3d.png"
+                  placeholder="/assets/images/superfast_calendar_3d.png"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-sm text-[#0E1B3D]"
                 />
               </div>
@@ -986,7 +986,7 @@ export default function WebsiteCmsPage() {
                 Hall of Fame &amp; Toppers Showcase
               </h2>
               <p className="text-xs text-[#5A6478] mt-0.5">
-                Manage student selection stories, Police Bharti ranks, and MPSC merit testimonials shown across the website.
+                Manage student selection stories, Memory state honors, and MPSC merit testimonials shown across the website.
               </p>
             </div>
             <button
@@ -995,10 +995,10 @@ export default function WebsiteCmsPage() {
                 setEditingTopper({
                   id: `top-${Date.now()}`,
                   name: "",
-                  examCategory: "Police Bharti",
+                  examCategory: "Memory Science",
                   scoreOrRank: "",
-                  batchYear: "2024",
-                  photoUrl: "/assets/images/akash_police_testimonial.png",
+                  batchYear: "2025",
+                  photoUrl: "/assets/images/classroom_memory_drills.png",
                   quote: "",
                   order: cmsData.toppers.length + 1,
                 });
@@ -1020,7 +1020,7 @@ export default function WebsiteCmsPage() {
                 <div className="flex items-start gap-3">
                   <div className="w-14 h-14 rounded-xl overflow-hidden bg-white border border-[#D5D9EB] shrink-0 relative">
                     <Image
-                      src={topper.photoUrl || "/assets/images/akash_police_testimonial.png"}
+                      src={topper.photoUrl || "/assets/images/classroom_memory_drills.png"}
                       alt={topper.name}
                       width={56}
                       height={56}
@@ -1685,7 +1685,7 @@ export default function WebsiteCmsPage() {
                     type="text"
                     value={editingTopper.examCategory}
                     onChange={(e) => setEditingTopper({ ...editingTopper, examCategory: e.target.value })}
-                    placeholder="Police Bharti / MPSC / Scholarship"
+                    placeholder="Memory Science / MPSC / Scholarship"
                     className="w-full px-3 py-2 rounded-xl border border-[#D5D9EB]"
                   />
                 </div>
@@ -1718,14 +1718,14 @@ export default function WebsiteCmsPage() {
                   type="text"
                   value={editingTopper.photoUrl}
                   onChange={(e) => setEditingTopper({ ...editingTopper, photoUrl: e.target.value })}
-                  placeholder="/assets/images/akash_police_testimonial.png"
+                  placeholder="/assets/images/classroom_memory_drills.png"
                   className="w-full px-3 py-2 rounded-xl border border-[#D5D9EB]"
                 />
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {[
-                    { label: "Akash Testimonial", path: "/assets/images/akash_police_testimonial.png" },
+                    { label: "Memory Drills", path: "/assets/images/classroom_memory_drills.png" },
                     { label: "MPSC Merit Topper", path: "/assets/images/mpsc_merit_topper.jpg" },
-                    { label: "Bharti Celebration", path: "/assets/images/police_bharti_celebration.jpg" },
+                    { label: "Students Group", path: "/assets/images/classroom_students_group.png" },
                     { label: "Result Certificate", path: "/assets/images/student_result_certificate.png" },
                   ].map((p) => (
                     <button

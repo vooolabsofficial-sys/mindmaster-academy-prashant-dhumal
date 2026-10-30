@@ -42,7 +42,7 @@ export const Terms: React.FC = () => {
               <span>Course Enrollment & Academic Admission</span>
             </h2>
             <p className="text-slate-600">
-              Admission into MindMaster Academy’s flagship courses (including MM-01 Memory Technique, MM-02 Train the Trainer, MM-03 Police Bharti 100% Prep, and MM-05 Vedic Mathematics) is confirmed upon submission of complete student credentials and payment of requisite course fee.
+              Admission into MindMaster Academy’s flagship courses is confirmed upon submission of complete student credentials and payment of requisite course fee.
             </p>
             <ul className="list-disc pl-6 space-y-1.5 text-slate-600 text-sm">
               <li>Students must ensure that all contact numbers provided (especially WhatsApp) are active for timely dissemination of class links and study schedules.</li>

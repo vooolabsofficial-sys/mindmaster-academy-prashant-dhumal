@@ -26,7 +26,8 @@ import {
 import AppShell from "@/components/navigation/AppShell";
 import PiracyShield from "@/components/common/PiracyShield";
 import { MOCK_COURSES, MOCK_LESSONS, MOCK_BOOKS } from "@/lib/mockData";
-import { Note, Book, calculateAllowedWords } from "@/lib/types";
+import { Note, Book, Course, calculateAllowedWords } from "@/lib/types";
+import { fetchDbCourses } from "@/lib/staffStore";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { saveNoteOffline, getNotesOffline, deleteNoteOffline } from "@/lib/offlineStorage";
@@ -39,12 +40,13 @@ export default function NotesWorkspacePage() {
   const [pdfZoom, setPdfZoom] = useState<number>(100);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCourseFilter, setSelectedCourseFilter] = useState("all");
+  const [coursesList, setCoursesList] = useState<Course[]>([]);
 
   // Editor State
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteTitle, setNoteTitle] = useState<string>("");
   const [noteBody, setNoteBody] = useState<string>("");
-  const [selectedCourseCode, setSelectedCourseCode] = useState<string>("MM-01");
+  const [selectedCourseCode, setSelectedCourseCode] = useState<string>("GENERAL");
   const [selectedLessonId, setSelectedLessonId] = useState<string>("les-101");
   const [timestampSec, setTimestampSec] = useState<number>(0);
 
@@ -56,10 +58,28 @@ export default function NotesWorkspacePage() {
   const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialMount = useRef(true);
 
+  // Load live DB courses
+  useEffect(() => {
+    async function loadCourses() {
+      try {
+        const live = await fetchDbCourses();
+        setCoursesList(live || []);
+        if (live && live.length > 0) {
+          setSelectedCourseCode(live[0].code || "GENERAL");
+        } else {
+          setSelectedCourseCode("GENERAL");
+        }
+      } catch {
+        setCoursesList([]);
+      }
+    }
+    loadCourses();
+  }, []);
+
   // Available lessons based on selected course
   const currentLessons = MOCK_LESSONS.filter(
     (l) => {
-      const course = MOCK_COURSES.find((c) => c.code === selectedCourseCode);
+      const course = coursesList.find((c) => c.code === selectedCourseCode);
       return course ? l.courseId === course.id : true;
     }
   );
@@ -151,7 +171,7 @@ export default function NotesWorkspacePage() {
               id: n.id,
               userId: n.user_id,
               courseId: n.course_id,
-              courseCode: n.course_code || "MM-01",
+              courseCode: n.course_code || "GENERAL",
               courseTitle: n.course_title || "Memory Science",
               lessonId: n.lesson_id || "les-101",
               lessonTitle: n.lesson_title || "Lecture Lesson",
@@ -210,14 +230,14 @@ export default function NotesWorkspacePage() {
       const safeBody = words.slice(0, maxWordsAllowed).join(" ");
       const wordsCount = words.length;
 
-      const courseObj = MOCK_COURSES.find((c) => c.code === selectedCourseCode);
+      const courseObj = coursesList.find((c) => c.code === selectedCourseCode);
       const lessonObj = MOCK_LESSONS.find((l) => l.id === selectedLessonId);
 
       const updatedNoteItem: Note = {
         id: targetId,
         userId: "user-current",
         courseCode: selectedCourseCode,
-        courseTitle: courseObj?.title || "Memory Science",
+        courseTitle: courseObj?.title || (selectedCourseCode === "GENERAL" ? "General Notes" : selectedCourseCode),
         lessonId: selectedLessonId,
         lessonTitle: lessonObj?.title || "Lecture Lesson",
         timestampSec: timestampSec,
@@ -373,8 +393,7 @@ export default function NotesWorkspacePage() {
   const filteredNotes = notesList.filter((note) => {
     const matchesCourse = 
       selectedCourseFilter === "all" || 
-      note.courseCode === selectedCourseFilter ||
-      (selectedCourseFilter === "MM-01" && !note.courseCode);
+      note.courseCode === selectedCourseFilter;
 
     const matchesSearch = 
       !searchQuery.trim() ||
@@ -459,11 +478,10 @@ export default function NotesWorkspacePage() {
           <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             {[
               { id: "all", label: "All Notes" },
-              { id: "MM-01", label: "Memory Science (MM-01)" },
-              { id: "MM-02", label: "Train Trainer (MM-02)" },
-              { id: "MM-03", label: "Police Bharti (MM-03)" },
-              { id: "MM-04", label: "500-Yr Calendar (MM-04)" },
-              { id: "MM-05", label: "Vedic Maths (MM-05)" },
+              ...coursesList.map((c) => ({
+                id: c.code || c.id,
+                label: `${c.title} (${c.code || "COURSE"})`,
+              })),
             ].map((chip) => (
               <button
                 key={chip.id}
@@ -550,17 +568,21 @@ export default function NotesWorkspacePage() {
                     value={selectedCourseCode}
                     onChange={(e) => {
                       setSelectedCourseCode(e.target.value);
-                      const course = MOCK_COURSES.find((c) => c.code === e.target.value);
+                      const course = coursesList.find((c) => c.code === e.target.value);
                       const firstLes = MOCK_LESSONS.find((l) => course && l.courseId === course.id);
                       if (firstLes) setSelectedLessonId(firstLes.id);
                     }}
                     className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-500"
                   >
-                    <option value="MM-01">MM-01 Memory Science</option>
-                    <option value="MM-02">MM-02 Train the Trainer</option>
-                    <option value="MM-03">MM-03 Police Bharti</option>
-                    <option value="MM-04">MM-04 500-Yr Calendar</option>
-                    <option value="MM-05">MM-05 Vedic Maths</option>
+                    {coursesList.length > 0 ? (
+                      coursesList.map((c) => (
+                        <option key={c.id} value={c.code || c.id}>
+                          {c.code} {c.title}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="GENERAL">General Notes / Self Study</option>
+                    )}
                   </select>
                 </div>
 

@@ -112,8 +112,8 @@ import { Link } from 'react-router-dom'; export const About: React.FC = () => {
 <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "\'FILL\' 1" }}>military_tech</span>
 </div>
 </div>
-<h3 className="font-title-lg text-title-lg text-primary-container mb-space-xs">Police Bharti Triumph</h3>
-<p className="font-body-sm text-body-sm text-on-surface-variant"> Complete cohort achieved 100% written test qualification across Maharashtra police recruitment. </p>
+<h3 className="font-title-lg text-title-lg text-primary-container mb-space-xs">State Memory Championship</h3>
+<p className="font-body-sm text-body-sm text-on-surface-variant"> MindMaster students achieved gold medals and state records in rapid recall and speed calculations. </p>
 </div> <div className="bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col group">
 <div className="flex items-center justify-between mb-space-md">
 <span className="inline-block px-3 py-1 rounded-full bg-secondary-fixed text-secondary font-label-caps text-label-caps tracking-wider"> 2022 </span>

@@ -68,4 +68,4 @@ export default function FilterChips({
 }
 
 // Backwards-compatible export
-export type FilterCategory = "all" | "free" | "memory" | "vedic" | "police" | "calendar";
+export type FilterCategory = "all" | "free" | "memory" | "vedic" | "calendar" | "trainer" | "police";

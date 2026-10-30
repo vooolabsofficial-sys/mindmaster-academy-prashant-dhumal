@@ -311,7 +311,7 @@ function OnboardingForm() {
                 <School className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="e.g. Vidya Pratishthan College / Police Academy"
+                  placeholder="e.g. Vidya Pratishthan High School / Ferguson College"
                   value={schoolName}
                   onChange={(e) => setSchoolName(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-xs font-semibold text-[#0E1B3D] placeholder-[#94A3B8] focus:outline-none focus:border-[#0B57D0]"

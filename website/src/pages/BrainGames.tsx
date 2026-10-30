@@ -487,10 +487,10 @@ const MEMORY_ITEMS_POOL: MemoryCard[] = [
   {
     id: 3,
     icon: 'military_tech',
-    titleEn: 'Police Sub-Inspector',
-    titleMr: 'पोलीस उपनिरीक्षक (PSI)',
-    factEn: 'Two Stars on Shoulder',
-    factMr: 'खांद्यावर दोन स्टार'
+    titleEn: 'State Gold Medalist',
+    titleMr: 'सुवर्ण पदक विजेता',
+    factEn: 'State Memory Championship Winner',
+    factMr: 'राज्य मेमरी चॅम्पियन'
   },
   {
     id: 4,
@@ -596,7 +596,7 @@ const LANG = {
     courseCalTitle: 'Calendar Day Calculation vs Supercomputer',
     courseVedicBadge: 'Course: MM-05 Vedic Mathematics Foundation',
     courseVedicTitle: 'Vedic Lightning Math vs Calculator',
-    courseMemBadge: 'Course: MM-01 Memory & MM-03 Police Bharti Written Prep',
+    courseMemBadge: 'Course: Memory Science & Visual Memory Flash',
     courseMemTitle: 'Visual Memory Flash & Recall Assessment',
     courseStroopBadge: 'Neuro Reflex & Cognitive Conflict',
     courseStroopTitle: 'Stroop Effect Reflex Speed',
@@ -2021,7 +2021,7 @@ export const BrainGames: React.FC = () => {
                   </span>
                   <span className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center gap-1.5" style={textFont}>
                     <span className="material-symbols-outlined text-[16px] text-indigo-600">military_tech</span>
-                    <span>{lang === 'mr' ? 'पोलीस भरती मेमरी सूत्रे' : 'Police Bharti Memory Pegs'}</span>
+                    <span>{lang === 'mr' ? 'मेमरी सूत्रे आणि पेग पद्धती' : 'Memory Pegs & Formulas'}</span>
                   </span>
                 </div>
 
@@ -2200,15 +2200,15 @@ export const BrainGames: React.FC = () => {
                                 {t.wantToLearn}
                               </span>
                               <h4 className="text-base sm:text-lg font-bold mt-0.5" style={textFont}>
-                                {lang === 'mr' ? 'MM-03: पोलीस भरती १००% लेखी परीक्षा तयारी' : 'MM-03: Police Bharti 100% Written Test Preparation'}
+                                {lang === 'mr' ? 'मेमरी सायन्स आणि स्पीड स्टडी' : 'Memory Science & Visual Flash Mastery'}
                               </h4>
                               <p className="text-xs text-sky-100 mt-1" style={textFont}>
-                                {lang === 'mr' ? 'प्रशांत सरांच्या मार्गदर्शनाखाली आकाश मोरे सरांसारखे १००/१०० गुण मिळवा.' : "Score 100/100 in Police Bharti Written Test under Prashant Sir's guidance."}
+                                {lang === 'mr' ? 'प्रशांत सरांच्या मार्गदर्शनाखाली परीक्षेमध्ये १००% अचूक स्मरणशक्ती मिळवा.' : "Achieve 100% accurate recall in exams under Prashant Sir's guidance."}
                               </p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <a
-                                href="https://wa.me/918459344077?text=Hello%20Prashant%20Sir%2C%20I%20want%20information%20about%20Police%20Bharti%20Memory%20Course."
+                                href="https://wa.me/918459344077?text=Hello%20Prashant%20Sir%2C%20I%20want%20information%20about%20Memory%20Science%20Course."
                                 target="_blank"
                                 rel="noreferrer"
                                 className="px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"

@@ -269,8 +269,8 @@ export function transliterateDevanagariToLatin(text: string): string {
 function toSafePdfText(str?: string): string {
   if (!str) return "";
   if (/[\u0900-\u097F]/.test(str)) {
-    if (str.includes("पोलीस भरती") || str.toLowerCase().includes("police")) {
-      return "Maharashtra Police Bharti 2026 - Maths & Reasoning Superfast";
+    if (str.includes("स्मरण") || str.includes("मेमरी") || str.toLowerCase().includes("memory")) {
+      return "Memory Science & Speed Study Mastery";
     }
     if (str.includes("वैदिक") || str.toLowerCase().includes("vedic")) {
       return "Vedic Maths & Speed Memory Mastery";

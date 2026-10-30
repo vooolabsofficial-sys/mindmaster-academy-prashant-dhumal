@@ -53,6 +53,7 @@ export interface LiveDbCourse {
   isFree?: boolean;
   status: "live" | "draft" | "upcoming";
   category?: string;
+  accessMonths?: number;
 }
 
 // Fetch live courses from student app API / Supabase sync
@@ -241,7 +242,7 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
     introVideoUrl: "https://www.youtube.com/watch?v=0k5G6M5wM7Y",
     bannerImages: [
       "/assets/images/classroom_students_group.png",
-      "/assets/images/police_bharti_prep_3d.png",
+      "/assets/images/classroom_memory_drills.png",
       "/assets/images/memory_seminar_brain_3d.png",
     ],
   },
@@ -257,12 +258,12 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
     {
       id: "top-1",
       name: "Akash Shinde",
-      examCategory: "Police Bharti",
-      scoreOrRank: "Rank 1 - Satara District",
+      examCategory: "Memory Science",
+      scoreOrRank: "State Gold Medalist",
       batchYear: "2024",
-      photoUrl: "/assets/images/akash_police_testimonial.png",
+      photoUrl: "/assets/images/classroom_memory_drills.png",
       testimonialVideoUrl: "https://www.youtube.com/watch?v=0k5G6M5wM7Y",
-      quote: "MindMaster's photographic memory drills helped me score 96/100 in written GK and mental ability.",
+      quote: "MindMaster's photographic memory drills helped me score 100% in recall and mental ability.",
       order: 1,
     },
     {
@@ -278,10 +279,10 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
     {
       id: "top-3",
       name: "Rohan Deshmukh",
-      examCategory: "Police Bharti",
-      scoreOrRank: "48/50 Written Marks",
+      examCategory: "Vedic Maths & Speed Recall",
+      scoreOrRank: "100% Arithmetic Score",
       batchYear: "2023",
-      photoUrl: "/assets/images/police_bharti_celebration.jpg",
+      photoUrl: "/assets/images/student_calendar_maths.png",
       quote: "Vedic maths calculations saved 25 precious minutes in the exam hall. Cleared on my first attempt!",
       order: 3,
     },
@@ -308,7 +309,7 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
       name: "Prashant Dhumal Sir",
       role: "Founder & Lead Cognitive Master",
       qualification: "B.Sc., World Memory Record Holder",
-      bio: "Pioneer in mnemonic science with over 12 years of coaching experience. Has trained more than 5,000 students and police aspirants across Maharashtra.",
+      bio: "Pioneer in mnemonic science with over 12 years of coaching experience. Has trained more than 5,000 students and educators across Maharashtra.",
       photoUrl: "/assets/images/prashant_dhumal_studio_portrait.png",
       order: 1,
     },
@@ -350,7 +351,7 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
     {
       id: "faq-1",
       question: "Who can join MindMaster Academy programs?",
-      answer: "Our courses are specifically designed for school students (Grade 4 onwards), college students, and competitive exam aspirants (Police Bharti, MPSC, UPSC, Banking), as well as teachers and professionals.",
+      answer: "Our courses are specifically designed for school students (Grade 4 onwards), college students, and competitive exam aspirants (MPSC, UPSC, Banking), as well as teachers and professionals.",
       category: "Admissions",
       order: 1,
     },
@@ -363,8 +364,8 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
     },
     {
       id: "faq-3",
-      question: "How does memory training help in competitive exams like Police Bharti & MPSC?",
-      answer: "Instead of rote memorization, students learn visual linking, numerical peg systems, and memory palace techniques to retain hundreds of general knowledge facts, IPC sections, dates, and historical events effortlessly.",
+      question: "How does memory training help in competitive and board exams?",
+      answer: "Instead of rote memorization, students learn visual linking, numerical peg systems, and memory palace techniques to retain hundreds of formulas, scientific dates, and historical events effortlessly.",
       category: "Methodology",
       order: 3,
     },
@@ -396,8 +397,8 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
   },
   seoAndSocial: {
     metaTitle: "MindMaster Academy | Cognitive Memory Training & Competitive Exam Coaching",
-    metaDescription: "Train your mind and master your memory with Prashant Dhumal Sir. Specialised coaching for Police Bharti, MPSC, Vedic Maths & School Cognitive Skills in Satara & Pune.",
-    keywords: "MindMaster Academy, Prashant Dhumal, Memory Training, Vedic Maths, Police Bharti Satara, MPSC Coaching Satara, Brain Gym Maharashtra",
+    metaDescription: "Train your mind and master your memory with Prashant Dhumal Sir. Specialised coaching for Memory Science, Vedic Maths, 500-Year Calendar & School Cognitive Skills in Satara & Pune.",
+    keywords: "MindMaster Academy, Prashant Dhumal, Memory Training, Vedic Maths, Calendar Technique Satara, MPSC Coaching Satara, Brain Gym Maharashtra",
     youtubeUrl: "https://www.youtube.com/@mindmasteracademy",
     instagramUrl: "https://www.instagram.com/mindmaster_academy",
     telegramUrl: "https://t.me/mindmasteracademy",

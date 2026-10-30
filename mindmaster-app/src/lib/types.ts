@@ -1,6 +1,6 @@
 export type HeaderTint = "mint" | "sky" | "peach" | "lavender" | "pink" | "locked";
 
-export type TargetSegment = "school" | "police" | "maths" | "general";
+export type TargetSegment = "school" | "college" | "maths" | "trainer" | "general" | "police";
 
 export interface Lesson {
   id: string;

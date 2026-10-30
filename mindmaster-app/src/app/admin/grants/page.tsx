@@ -1832,7 +1832,7 @@ export default function GrantsManagerPage() {
                       type="text"
                       value={editRemarks}
                       onChange={(e) => setEditRemarks(e.target.value)}
-                      placeholder="e.g. Adjusted course to Police Bharti by Prashant Sir"
+                      placeholder="e.g. Adjusted course to Memory Science by Prashant Sir"
                       className="w-full px-3 py-2 bg-[#F5F7FF] border border-slate-300 rounded-xl text-xs text-[#0E1B3D] focus:outline-none focus:border-blue-600"
                     />
                   </div>

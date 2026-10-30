@@ -15,7 +15,7 @@ export const DemoHub: React.FC = () => {
   });
 
   // Weekend Demo Booking Form State
-  const [attendee, setAttendee] = useState<'grade-3-7' | 'grade-8-12' | 'police' | 'teacher'>('grade-8-12');
+  const [attendee, setAttendee] = useState<'grade-3-7' | 'grade-8-12' | 'college-mpsc' | 'teacher'>('grade-8-12');
   const [demoDate, setDemoDate] = useState<'sat' | 'sun' | 'next-sun'>('sun');
   const [timeSlot, setTimeSlot] = useState<'morning' | 'evening'>('morning');
   const [demoName, setDemoName] = useState('');
@@ -61,7 +61,7 @@ export const DemoHub: React.FC = () => {
   const faqs = [
     {
       q: "Which course suits my child's grade or competitive goal?",
-      a: "• Grades 4 to 8: Start with Memory Technique Seminar (MM-01) and Vedic Maths Foundation (MM-05) for rapid retention and speed arithmetic.\n• Grades 9 to 12 & Board Exams: The Memory Palace framework (MM-01) and Superfast Calendar (MM-04) eliminate syllabus cramming.\n• Police Bharti & MPSC: Enroll into MM-03 for 100% written GK retention, law articles, and physical composure."
+      a: "• Grades 4 to 8: Start with Memory Technique and Vedic Maths Foundation for rapid retention and speed arithmetic.\n• Grades 9 to 12 & Board Exams: The Memory Palace framework and Superfast Calendar eliminate syllabus cramming.\n• Educators & Coaches: Join Train the Trainer to run licensed workshops."
     },
     {
       q: "What happens in the 90-minute Free Demo Session?",
@@ -361,11 +361,10 @@ export const DemoHub: React.FC = () => {
                           value={formData.program}
                           onChange={(e) => setFormData({ ...formData, program: e.target.value })}
                         >
-                          <option value="mm-01">MM-01: Rapid Memory Technique & Board Exam Mastery</option>
-                          <option value="mm-03">MM-03: Maharashtra Police Bharti 100% Prep Track</option>
-                          <option value="mm-05">MM-05: Vedic Mathematics Foundation (Calculations 10x Faster)</option>
-                          <option value="mm-04">MM-04: Superfast Calendar & Chronology Technique</option>
-                          <option value="mm-02">MM-02: Train The Trainer (TTT) Certified Coach License</option>
+                          <option value="memory">Rapid Memory Technique &amp; Board Exam Mastery</option>
+                          <option value="vedic">Vedic Mathematics Foundation (Calculations 10x Faster)</option>
+                          <option value="calendar">Superfast 500-Year Calendar Technique</option>
+                          <option value="trainer">Train The Trainer (TTT) Certified Coach License</option>
                         </select>
                         <span className="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]">expand_more</span>
                       </div>
@@ -378,7 +377,7 @@ export const DemoHub: React.FC = () => {
                       <textarea
                         className="w-full p-3.5 rounded-xl bg-surface-container-low/40 border border-surface-variant focus:border-secondary focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary/20 text-on-surface font-body-md text-[14px] placeholder:text-on-surface-variant/50 resize-none transition-all"
                         id="userNotes"
-                        placeholder="Tell us about the student's grade, upcoming exam dates (e.g. Police Bharti 2026, 10th SSC), or specific memory blockers..."
+                        placeholder="Tell us about the student's grade, upcoming exam dates (e.g. 10th SSC, Scholarship), or specific memory blockers..."
                         rows={3}
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -514,14 +513,14 @@ export const DemoHub: React.FC = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setAttendee('police')}
+                        onClick={() => setAttendee('college-mpsc')}
                         className={`py-2 px-3 rounded-xl text-xs font-title-md text-center transition-all cursor-pointer ${
-                          attendee === 'police'
+                          attendee === 'college-mpsc'
                             ? 'border-2 border-secondary bg-secondary text-white shadow-xs font-bold'
                             : 'border border-surface-variant bg-surface-container-lowest text-on-surface-variant hover:border-secondary'
                         }`}
                       >
-                        Police / MPSC
+                        College / MPSC
                       </button>
                       <button
                         type="button"

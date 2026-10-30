@@ -740,7 +740,7 @@ export default function PlaylistImportPage() {
                       >
                         <option value="memory">Memory</option>
                         <option value="vedic">Vedic Maths</option>
-                        <option value="police">Police Bharti</option>
+                        <option value="trainer">Teacher &amp; Trainer</option>
                         <option value="calendar">Calendar</option>
                         <option value="free">Free</option>
                       </select>

@@ -267,7 +267,7 @@ export default function CourseManagerPage() {
     const currentCats = categories.length > 0 ? categories : TARGET_CATEGORY_OPTIONS;
     const matchedCategory = currentCats.find((t) => {
       if (t.key === c.category) return true;
-      if (c.category === "police") return t.key === "police_bharti" || t.key === "mpsc_upsc";
+      if (c.category === "trainer") return t.key === "teacher_training" || t.key === "educators";
       if (c.category === "memory") return t.key === "vedic_memory";
       if (c.standards && c.standards.includes(11)) return t.key === "junior_college_11_12";
       if (c.standards && c.standards.includes(5) && c.standards.length === 2) return t.key === "scholarship_nmms";
@@ -1079,7 +1079,7 @@ export default function CourseManagerPage() {
                             required
                             value={formTitle}
                             onChange={(e) => setFormTitle(e.target.value)}
-                            placeholder="e.g. Police Bharti 100% Prep: Maths & Reasoning"
+                            placeholder="e.g. Memory Science &amp; Vedic Maths Mastery"
                             className={`w-full px-3 py-2.5 rounded-xl text-xs text-[#0E1B3D] focus:outline-none transition-all ${
                               formTitle.trim().length >= 3
                                 ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"

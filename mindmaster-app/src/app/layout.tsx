@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     default: "MindMaster Academy | Prashant Dhumal - Memory & Vedic Maths Training",
     template: "%s | MindMaster Academy",
   },
-  description: "MindMaster Academy - Prashant Dhumal's premier training portal for Memory Techniques, Vedic Maths, Superfast Calendar and Police Bharti prep, Pune.",
+  description: "MindMaster Academy - Prashant Dhumal's premier training portal for Memory Techniques, Vedic Maths, and Superfast Calendar Mastery, Pune.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
