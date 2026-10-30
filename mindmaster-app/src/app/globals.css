@@ -30,6 +30,15 @@
     --muted-color: #64748B;   /* Slate 500 */
     --border-subtle: #E2E8F0; /* Slate 200 */
     --border-focus: #3B82F6;
+
+    /* OTT Cinema Dark Tokens (Disney+ Hotstar / Netflix Studio Grade) */
+    --ott-bg: #0A0D14;
+    --ott-surface: #121722;
+    --ott-surface-hover: #1A2130;
+    --ott-border: rgba(255, 255, 255, 0.08);
+    --ott-accent: #0052FF;
+    --ott-text-primary: #F8FAFC;
+    --ott-text-muted: #94A3B8;
   }
 
   body {
@@ -187,5 +196,50 @@
   body {
     display: none !important;
   }
+}
+
+/* OTT Cinema Shimmer & Glass Input Styles (Netflix / Disney+ Hotstar) */
+.ott-card {
+  background-color: #121722;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ott-card:hover {
+  background-color: #1A2130;
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+}
+
+.ott-input {
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #F8FAFC;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.ott-input:focus {
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.07);
+  border-color: #0052FF;
+  box-shadow: 0 0 0 2px rgba(0, 82, 255, 0.25);
+}
+
+.ott-input-error {
+  border-color: rgba(239, 68, 68, 0.8) !important;
+  color: #F87171 !important;
+}
+
+.ott-shimmer {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.03) 75%);
+  background-size: 200% 100%;
+  animation: ottShimmer 1.5s infinite;
+}
+
+@keyframes ottShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 

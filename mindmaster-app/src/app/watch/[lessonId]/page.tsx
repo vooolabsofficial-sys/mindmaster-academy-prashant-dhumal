@@ -15,12 +15,17 @@ import {
   Lock, 
   CheckCircle2, 
   ChevronRight, 
+  ChevronLeft,
   Clock, 
   Unlock, 
   ExternalLink,
   ThumbsUp,
   Headphones,
-  FileText
+  FileText,
+  Award,
+  Sparkles,
+  Share2,
+  Check
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
 import { COURSE_ID_MAP } from "@/lib/mockData";
@@ -92,6 +97,10 @@ function WatchLessonContent({
           videoType: v.videoType,
           videoId: v.videoId,
           position: v.position || 1,
+          description: v.description,
+          partNumber: v.partNumber,
+          totalParts: v.totalParts,
+          seriesTitle: v.seriesTitle,
         }))
     : [];
 
@@ -119,6 +128,8 @@ function WatchLessonContent({
   const lastTapRef = useRef<{ time: number; x: number }>({ time: 0, x: 0 });
   const singleTapTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Watched state tracking for episodes list
+  const [watchedLessonIds, setWatchedLessonIds] = useState<Set<string>>(new Set());
 
   // Cached Auth & Throttling Refs
   const cachedUserRef = useRef<{ id: string; phone: string } | null>(null);
@@ -129,6 +140,21 @@ function WatchLessonContent({
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
+
+  // Load watched status from localStorage / IndexedDB
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const watched = new Set<string>();
+    allCourseLessons.forEach((l) => {
+      if (
+        localStorage.getItem(`mma_completed_${l.id}`) === "true" ||
+        localStorage.getItem(`mindmaster_completed_${l.id}`) === "true"
+      ) {
+        watched.add(l.id);
+      }
+    });
+    setWatchedLessonIds(watched);
+  }, [allCourseLessons.length]);
 
   // Anti-piracy blackout & media pause listener
   useEffect(() => {
@@ -289,7 +315,7 @@ function WatchLessonContent({
     } catch {}
   };
 
-  // Format seconds to mm:ss safely (prevents NaN:NaN)
+  // Format seconds to mm:ss safely
   const formatTime = (secs?: number | null) => {
     if (!secs || isNaN(secs) || secs < 0) return "0:00";
     const m = Math.floor(secs / 60);
@@ -297,57 +323,45 @@ function WatchLessonContent({
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
-  // 1. GATE ACCESS CHECK: allow if lesson.is_free OR active purchase/grant exists
+  // Check access for locked vs free lesson
   useEffect(() => {
-    if (!lesson || !course) {
+    if (!lesson) {
+      setIsCheckingAccess(false);
+      return;
+    }
+
+    if (lesson.isFree) {
+      setHasAccess(true);
       setIsCheckingAccess(false);
       return;
     }
 
     async function checkAccess() {
-      if (!lesson || !course) return;
-      if (lesson.isFree) {
-        setHasAccess(true);
-        setIsCheckingAccess(false);
-        return;
-      }
-
       try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const targetCourseIds = [course?.id, course?.code, lesson?.courseId].filter(
+          Boolean
+        ) as string[];
 
-        let userId = user?.id || "";
-        let userPhone = user?.phone || (user?.user_metadata?.phone as string) || "";
-
-        try {
+        let phone = cachedUserRef.current?.phone;
+        if (!phone) {
           const rawProfile = localStorage.getItem("mindmaster_user_profile");
           if (rawProfile) {
             const p = JSON.parse(rawProfile);
-            if (!userId && p.id) userId = p.id;
-            if (!userPhone && (p.mobile_number || p.phone)) {
-              userPhone = p.mobile_number || p.phone;
-            }
+            phone = p.mobile_number || p.phone;
           }
-        } catch {}
-
-        const cleanPhone = normalizePhone(userPhone);
-        const dbCourseUuid = COURSE_ID_MAP[course.id] || course.id;
-        const targetCourseIds = Array.from(new Set([course.id, course.code, dbCourseUuid].filter(Boolean)));
-
-        // 1. Verify access via server action using Service Role (admin.ts)
-        const serverAccess = await verifyStudentCourseAccess({
-          courseId: course.id,
-          userPhone: cleanPhone,
-          userId,
-        });
-
-        if (serverAccess.hasAccess) {
-          setHasAccess(true);
-          setIsCheckingAccess(false);
-          return;
         }
 
-        // 2. Fallback check local active purchases cache
+        if (phone) {
+          for (const cId of targetCourseIds) {
+            const accessResult = await verifyStudentCourseAccess({ courseId: cId, userPhone: phone });
+            if (accessResult.hasAccess) {
+              setHasAccess(true);
+              setIsCheckingAccess(false);
+              return;
+            }
+          }
+        }
+
         const localPurchases = localStorage.getItem("mindmaster_active_purchases");
         if (localPurchases) {
           const parsed = JSON.parse(localPurchases);
@@ -373,7 +387,61 @@ function WatchLessonContent({
     checkAccess();
   }, [lesson?.id, course?.id, course?.code, lesson?.isFree]);
 
-  // 2. YOUTUBE PLAYER INITIALIZATION & RESUME PLAYBACK
+  // Flushes progress to server
+  const flushProgress = useCallback(
+    async (currentTimeSec: number, completed = false) => {
+      if (!lesson) return;
+      const studentId = cachedUserRef.current?.id;
+      if (!studentId) return;
+
+      lastRemoteSaveSecRef.current = currentTimeSec;
+      lastRemoteSaveTimeRef.current = Date.now();
+
+      const payload = {
+        lesson_id: lesson.id,
+        position_sec: currentTimeSec,
+        completed,
+        user_id: studentId,
+      };
+
+      const offlinePayload = {
+        lessonId: lesson.id,
+        positionSec: currentTimeSec,
+        completed,
+        userId: studentId,
+      };
+
+      try {
+        if (!navigator.onLine) {
+          await queueWatchHeartbeatOffline(offlinePayload);
+          return;
+        }
+
+        const res = await fetch("/api/watch-stats", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          await queueWatchHeartbeatOffline(offlinePayload);
+        }
+      } catch {
+        await queueWatchHeartbeatOffline(offlinePayload);
+      }
+    },
+    [lesson?.id]
+  );
+
+  // Ordered playlists: determine previous and next lessons
+  const currentIndex = allCourseLessons.findIndex((l) => l.id === lesson?.id);
+  const prevLesson = currentIndex > 0 ? allCourseLessons[currentIndex - 1] : null;
+  const nextLesson =
+    currentIndex >= 0 && currentIndex < allCourseLessons.length - 1
+      ? allCourseLessons[currentIndex + 1]
+      : null;
+
+  // YouTube player init
   useEffect(() => {
     if (!hasAccess || !lesson) return;
 
@@ -392,7 +460,6 @@ function WatchLessonContent({
         const local = localStorage.getItem(`mindmaster_progress_${lesson.id}`);
         if (local) initialSeek = parseInt(local, 10) || 0;
 
-        // Auto-resume from remote cloud progress if available
         try {
           const studentId = cachedUserRef.current?.id;
           if (studentId) {
@@ -439,10 +506,20 @@ function WatchLessonContent({
               setIsPlaying(playing);
               const ended = event.data === 0;
 
-              // Flush progress immediately when video pauses or ends with completed = true
               if (ended) {
                 const dur = duration || lesson.durationSec || 1;
                 flushProgress(dur, true);
+                // Mark watched
+                const nextWatched = new Set(watchedLessonIds);
+                nextWatched.add(lesson.id);
+                setWatchedLessonIds(nextWatched);
+                localStorage.setItem(`mma_completed_${lesson.id}`, "true");
+                localStorage.setItem(`mindmaster_completed_${lesson.id}`, "true");
+                
+                // Auto-advance to next episode
+                if (nextLesson) {
+                  router.push(`/watch/${nextLesson.id}`);
+                }
               } else if (!playing && playerRef.current?.getCurrentTime) {
                 const t = Math.floor(playerRef.current.getCurrentTime());
                 flushProgress(t);
@@ -450,164 +527,23 @@ function WatchLessonContent({
             },
           },
         });
+      } else {
+        window.onYouTubeIframeAPIReady = () => initPlayer();
       }
     };
 
-    if (window.YT && window.YT.Player) {
-      initPlayer();
-    } else {
-      window.onYouTubeIframeAPIReady = initPlayer;
-    }
+    initPlayer();
 
     return () => {
       if (playerRef.current && playerRef.current.destroy) {
         try {
           playerRef.current.destroy();
-        } catch (e) {}
+        } catch {}
       }
     };
-  }, [lesson?.id, hasAccess, queryTimeParam, lesson?.durationSec, lesson?.videoId]);
+  }, [hasAccess, lesson?.videoId, lesson?.id, queryTimeParam, flushProgress, nextLesson, router]);
 
-  // 3. FLUSH & THROTTLED PROGRESS SAVING (0 network spam when paused)
-  const flushProgress = useCallback(
-    async (timeToSave?: number, isCompletedOverride?: boolean) => {
-      if (!hasAccess || !lesson || !course) return;
-      const t =
-        typeof timeToSave === "number"
-          ? timeToSave
-          : playerRef.current?.getCurrentTime
-          ? Math.floor(playerRef.current.getCurrentTime())
-          : currentTime;
-      if (t < 0) return;
-
-      const totalDur = duration || lesson.durationSec || 1;
-      const isCompleted =
-        isCompletedOverride !== undefined ? isCompletedOverride : t >= totalDur - 15;
-
-      // 1. Instant local and offline IndexedDB persistence
-      try {
-        localStorage.setItem(`mindmaster_progress_${lesson.id}`, t.toString());
-        savePlaybackOffline(lesson.id, t, isCompleted).catch(() => {});
-
-        const histRaw = localStorage.getItem("mindmaster_watch_history");
-        const histArr = histRaw ? JSON.parse(histRaw) : [];
-        const histItem = {
-          lessonId: lesson.id,
-          lessonTitle: lesson.title,
-          courseId: course.id,
-          courseTitle: course.title,
-          positionSec: t,
-          durationSec: totalDur,
-          completed: isCompleted,
-          updatedAt: new Date().toISOString(),
-        };
-        const filtered = Array.isArray(histArr)
-          ? histArr.filter((h: any) => h.lessonId !== lesson.id)
-          : [];
-        localStorage.setItem(
-          "mindmaster_watch_history",
-          JSON.stringify([histItem, ...filtered].slice(0, 30))
-        );
-      } catch {}
-
-      // 2. Remote database save (throttled)
-      const now = Date.now();
-      lastRemoteSaveSecRef.current = t;
-      lastRemoteSaveTimeRef.current = now;
-
-      const studentId = cachedUserRef.current?.id;
-      if (studentId) {
-        if (typeof navigator !== "undefined" && !navigator.onLine) {
-          queueWatchHeartbeatOffline({
-            lessonId: lesson.id,
-            positionSec: t,
-            completed: isCompleted,
-            userId: studentId,
-          }).catch(() => {});
-          return;
-        }
-
-        try {
-          const supabase = createClient();
-          await supabase.from("progress").upsert(
-            {
-              user_id: studentId,
-              lesson_id: lesson.id,
-              position_sec: t,
-              completed: isCompleted,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "user_id,lesson_id" }
-          );
-        } catch {
-          // Fallback to /api/watch-stats POST, queue in IndexedDB if network fails
-          try {
-            const res = await fetch("/api/watch-stats", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                lesson_id: lesson.id,
-                position_sec: t,
-                completed: isCompleted,
-                user_id: studentId,
-              }),
-            });
-            if (!res.ok) {
-              await queueWatchHeartbeatOffline({
-                lessonId: lesson.id,
-                positionSec: t,
-                completed: isCompleted,
-                userId: studentId,
-              });
-            }
-          } catch {
-            queueWatchHeartbeatOffline({
-              lessonId: lesson.id,
-              positionSec: t,
-              completed: isCompleted,
-              userId: studentId,
-            }).catch(() => {});
-          }
-        }
-      }
-    },
-    [hasAccess, lesson?.id, lesson?.durationSec, duration, course?.id, course?.title, currentTime]
-  );
-
-  // Online restoration and SW background sync for queued watch heartbeats
-  useEffect(() => {
-    const handleSync = () => {
-      syncQueuedWatchHeartbeats().catch(() => {});
-    };
-
-    window.addEventListener("online", handleSync);
-
-    const handleSwMessage = (e: MessageEvent) => {
-      if (e.data?.type === "SYNC_WATCH_STATS") {
-        handleSync();
-      }
-    };
-    navigator.serviceWorker?.addEventListener("message", handleSwMessage);
-
-    if (typeof navigator !== "undefined" && navigator.onLine) {
-      handleSync();
-    }
-
-    if (typeof navigator !== "undefined" && "serviceWorker" in navigator && "SyncManager" in window) {
-      navigator.serviceWorker.ready
-        .then((reg: any) => {
-          reg.sync?.register("watch-progress-sync").catch(() => {});
-        })
-        .catch(() => {});
-    }
-
-    return () => {
-      window.removeEventListener("online", handleSync);
-      navigator.serviceWorker?.removeEventListener("message", handleSwMessage);
-    };
-  }, []);
-
-  // Throttled interval ticker (every 1s, remote network call max once per 15s while playing)
+  // Throttled interval ticker (every 1s)
   useEffect(() => {
     if (!hasAccess || !lesson) return;
 
@@ -617,9 +553,6 @@ function WatchLessonContent({
           const t = Math.floor(playerRef.current.getCurrentTime());
           setCurrentTime(t);
 
-          // ONLY trigger remote save if video is actively playing!
-          // Debounce/throttle remote network calls to at most once every 15 seconds,
-          // or immediately if lesson completion threshold reached.
           if (isPlayingRef.current && t > 0) {
             const now = Date.now();
             const timeSinceLastRemote = now - lastRemoteSaveTimeRef.current;
@@ -627,13 +560,11 @@ function WatchLessonContent({
             const totalDur = duration || lesson.durationSec || 1;
             const isCompleted = t >= totalDur - 15;
 
-            // Local cache update every 5 seconds
             if (diffSec >= 5) {
               localStorage.setItem(`mindmaster_progress_${lesson.id}`, t.toString());
               savePlaybackOffline(lesson.id, t, isCompleted).catch(() => {});
             }
 
-            // Remote save throttled to 3 minutes (180,000ms) or upon reaching completion / pause / exit
             if (timeSinceLastRemote >= 180000 || (isCompleted && !lastRemoteSaveSecRef.current)) {
               flushProgress(t, isCompleted);
             }
@@ -645,7 +576,7 @@ function WatchLessonContent({
     return () => clearInterval(interval);
   }, [hasAccess, lesson?.id, duration, lesson?.durationSec, flushProgress]);
 
-  // Flush playback on page exit / unmount so no progress is lost
+  // Flush playback on unload
   useEffect(() => {
     if (!lesson) return;
 
@@ -684,7 +615,7 @@ function WatchLessonContent({
     };
   }, [lesson?.id, duration, lesson?.durationSec]);
 
-  // Dynamic Floating Watermark & Double Tap logic
+  // Dynamic Floating Watermark
   useEffect(() => {
     try {
       const phone = localStorage.getItem("mindmaster_verified_phone") || "+91 98221 00001";
@@ -713,23 +644,21 @@ function WatchLessonContent({
     const isLeft = relativeX < rect.width / 2;
 
     if (now - lastTapRef.current.time < 350) {
-      // Double tap detected! Cancel pending single-tap play/pause toggle
       if (singleTapTimerRef.current) {
         clearTimeout(singleTapTimerRef.current);
         singleTapTimerRef.current = null;
       }
       if (isLeft) {
         seekBy(-10);
-        setDoubleTapRipple({ side: "left", text: "⏪ -10s" });
+        setDoubleTapRipple({ side: "left", text: "-10s" });
       } else {
         seekBy(10);
-        setDoubleTapRipple({ side: "right", text: "⏩ +10s" });
+        setDoubleTapRipple({ side: "right", text: "+10s" });
       }
       setTimeout(() => setDoubleTapRipple(null), 850);
       lastTapRef.current = { time: 0, x: 0 };
     } else {
       lastTapRef.current = { time: now, x: e.clientX };
-      // Debounce single tap so double-tap doesn't cause video to pause/unpause first
       if (singleTapTimerRef.current) clearTimeout(singleTapTimerRef.current);
       singleTapTimerRef.current = setTimeout(() => {
         togglePlay();
@@ -745,7 +674,6 @@ function WatchLessonContent({
     }
   };
 
-  // Player controls
   const togglePlay = () => {
     if (!playerRef.current) return;
     if (isPlaying) {
@@ -789,16 +717,6 @@ function WatchLessonContent({
     }
   };
 
-  const changeSpeed = () => {
-    const speeds = [1, 1.25, 1.5, 2];
-    const nextIdx = (speeds.indexOf(playbackRate) + 1) % speeds.length;
-    const nextSpeed = speeds[nextIdx];
-    setPlaybackRate(nextSpeed);
-    if (playerRef.current && playerRef.current.setPlaybackRate) {
-      playerRef.current.setPlaybackRate(nextSpeed);
-    }
-  };
-
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
@@ -808,7 +726,6 @@ function WatchLessonContent({
     }
   };
 
-  // Low-Data Audio-Only Mode Toggle ("🎧 फक्त ऑडिओ मोड - डेटा वाचवा")
   const toggleAudioOnlyMode = () => {
     const nextState = !isAudioOnlyMode;
     setIsAudioOnlyMode(nextState);
@@ -817,9 +734,6 @@ function WatchLessonContent({
         if (nextState) {
           if (typeof playerRef.current.setPlaybackQuality === "function") {
             playerRef.current.setPlaybackQuality("small");
-          }
-          if (typeof playerRef.current.setPlaybackQualityRange === "function") {
-            playerRef.current.setPlaybackQualityRange("small", "small");
           }
         } else {
           if (typeof playerRef.current.setPlaybackQuality === "function") {
@@ -830,33 +744,50 @@ function WatchLessonContent({
     }
   };
 
-
-
-  // Jump player directly to timestamp
+  // Toggle Mark Watched for current lesson
+  const isCurrentWatched = watchedLessonIds.has(lesson?.id || "");
+  const toggleMarkWatched = async () => {
+    if (!lesson) return;
+    const nextSet = new Set(watchedLessonIds);
+    const willBeWatched = !nextSet.has(lesson.id);
+    if (willBeWatched) {
+      nextSet.add(lesson.id);
+      localStorage.setItem(`mma_completed_${lesson.id}`, "true");
+      localStorage.setItem(`mindmaster_completed_${lesson.id}`, "true");
+      await savePlaybackOffline(lesson.id, duration || lesson.durationSec || 600, true);
+      flushProgress(duration || lesson.durationSec || 600, true);
+    } else {
+      nextSet.delete(lesson.id);
+      localStorage.removeItem(`mma_completed_${lesson.id}`);
+      localStorage.removeItem(`mindmaster_completed_${lesson.id}`);
+      await savePlaybackOffline(lesson.id, currentTime, false);
+    }
+    setWatchedLessonIds(nextSet);
+  };
 
   if (!lesson || !course) {
     return (
       <AppShell>
-        <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-4 text-amber-400 shadow-inner">
+        <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center text-[#F8FAFC]">
+          <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-4 text-[#0052FF]">
             <FileText className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">लेक्चर लवकरच उपलब्ध होत आहे</h2>
-          <p className="text-slate-400 text-sm max-w-md mb-6 leading-relaxed">
-            हे लेक्चर किंवा व्हिडिओ सध्या सिस्टीममध्ये अपडेट केले जात आहे. कृपया इतर उपलब्ध कोर्सेस तपासा किंवा होमपेजवर परत जा.
+          <h2 className="text-xl font-bold text-[#F8FAFC] mb-2">Episode Coming Soon</h2>
+          <p className="text-[#94A3B8] text-sm max-w-md mb-6 leading-relaxed">
+            This episode is being prepared for high-definition streaming. Check other available masterclasses or return home.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/courses"
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/20"
+              className="px-6 py-2.5 rounded-xl bg-[#0052FF] hover:bg-[#0956FF] text-white font-bold text-sm transition shadow-lg shadow-blue-900/30"
             >
-              अभ्यासक्रम पहा (Explore Courses)
+              Explore Masterclasses
             </Link>
             <Link
               href="/home"
-              className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium text-sm transition"
+              className="px-6 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-[#F8FAFC] font-medium text-sm transition"
             >
-              होमपेज (Home)
+              Home
             </Link>
           </div>
         </div>
@@ -866,487 +797,521 @@ function WatchLessonContent({
 
   const progressPercent = Math.min(100, Math.round((currentTime / (duration || 1)) * 100));
 
-  // Determine Next Lesson in Multi-Part Series or Course
-  const currentPartNumber = lesson.partNumber || 1;
-  const currentSeriesTitle = lesson.seriesTitle;
-  const nextLesson = allCourseLessons.find((l) => {
-    if (l.id === lesson.id) return false;
-    if (currentSeriesTitle && l.seriesTitle && l.seriesTitle.toLowerCase() === currentSeriesTitle.toLowerCase()) {
-      return (l.partNumber || 1) === currentPartNumber + 1;
-    }
-    return (l.position || 1) === (lesson.position || 1) + 1;
-  });
-
   return (
-    <div className="flex flex-col gap-6 max-w-6xl mx-auto px-3 sm:px-4 md:px-6 pt-2 pb-24 select-none">
-      <title>{`${lesson.title} | MindMaster Academy`}</title>
+    <div className="min-h-screen bg-[#06080D] text-[#F8FAFC] pb-24 selection:bg-blue-600/30">
+      <title>{`${lesson.title} | MindMaster Theater`}</title>
       <meta
         name="description"
         content={`Watch ${lesson.title} - ${course.title} with international trainer Prashant Dhumal Sir.`}
       />
 
-      {/* Navigation Breadcrumb */}
-      <div className="flex items-center justify-between">
-        <Link
-          href={`/course/${course.id}`}
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-blue-600 transition"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to {course.title}</span>
-        </Link>
-
-        <div className="flex items-center gap-2">
-          {lesson.isFree ? (
-            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full shadow-2xs">
-              ✓ Free Preview
-            </span>
-          ) : hasAccess ? (
-            <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full shadow-2xs">
-              ✓ Full Access Active
-            </span>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Video Player Box OR Locked State Gating */}
-      {!hasAccess ? (
-        /* ================= LOCKED STATE SCREEN ================= */
-        <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200 shadow-xs flex flex-col items-center text-center max-w-2xl mx-auto my-6">
-          <div className="w-20 h-20 rounded-3xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center mb-5 shadow-2xs">
-            <Lock className="w-10 h-10" />
-          </div>
-
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-50 border border-amber-200 px-3.5 py-1 rounded-full mb-3">
-            Lesson Locked
-          </span>
-
-          <h2 className="text-xl md:text-2xl font-extrabold text-slate-900">
-            {lesson.title}
-          </h2>
-          <p className="text-xs md:text-sm text-slate-600 mt-2 max-w-md leading-relaxed">
-            To watch this premium video and unlock the full syllabus, practice worksheets, and official e-certificate, please enroll in this course.
-          </p>
-
-          <div className="mt-6 p-4 rounded-2xl bg-slate-50 border border-slate-200 w-full flex items-center justify-between">
-            <div className="text-left">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">
-                {course.code} • {course.accessMonths} Months Access
-              </span>
-              <span className="text-base font-extrabold text-slate-900">
-                {course.title}
-              </span>
-            </div>
-            <div className="text-right">
-              <span className="text-xl font-black text-blue-600">
-                ₹{Math.round(course.pricePaise / 100)}
-              </span>
-            </div>
-          </div>
-
-          {/* Direct Unlock Button to Checkout */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 pt-3 flex flex-col gap-5">
+        {/* Navigation Breadcrumb Bar */}
+        <div className="flex items-center justify-between text-xs">
           <Link
-            href={`/checkout?courseId=${course.id}`}
-            className="mt-6 px-8 py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm font-extrabold shadow-lg shadow-blue-500/25 transition inline-flex items-center gap-2 cursor-pointer active:scale-95"
+            href={`/course/${course.id}`}
+            className="inline-flex items-center gap-2 text-[#94A3B8] hover:text-[#F8FAFC] transition font-medium"
           >
-            <Unlock className="w-4 h-4" />
-            <span>Unlock Course Now</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span className="truncate max-w-[200px] sm:max-w-md">Back to {course.title}</span>
           </Link>
-        </div>
-      ) : (
-        <>
-          {/* ================= CUSTOM YOUTUBE PLAYER WITH PIRACY SHIELD ================= */}
-          <PiracyShield contentType="video" className="w-full rounded-3xl overflow-hidden shadow-2xl">
-            <div
-              ref={containerRef}
-            className="relative bg-black rounded-3xl overflow-hidden aspect-video w-full flex flex-col justify-end group border border-slate-200"
-          >
-          {/* Resume Notification Popup */}
-          {resumeNotification && (
-            <div className="absolute top-4 left-4 z-30 bg-blue-600/90 text-white text-xs font-bold px-3.5 py-1.5 rounded-full shadow-lg backdrop-blur-md animate-fade-in flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              <span>{resumeNotification}</span>
-            </div>
-          )}
 
-          {/* Anti-piracy Dynamic Floating Watermark (Moves periodically) */}
-          <div 
-            style={{ top: watermarkPos.top, left: watermarkPos.left }}
-            className="absolute z-20 pointer-events-none transition-all duration-1000 ease-in-out opacity-40 select-none text-[10px] font-mono text-white/95 bg-black/50 backdrop-blur-xs px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm"
-          >
-            {studentWatermark}
-          </div>
-
-          {/* Double Tap Ripple Feedback Overlay */}
-          {doubleTapRipple && (
-            <div
-              className={`absolute top-1/2 -translate-y-1/2 z-30 pointer-events-none text-white text-sm font-black px-4 py-2 rounded-2xl bg-black/80 backdrop-blur-sm shadow-xl animate-pulse flex items-center gap-1.5 ${
-                doubleTapRipple.side === "left" ? "left-8" : "right-8"
-              }`}
-            >
-              <span>{doubleTapRipple.text}</span>
-            </div>
-          )}
-
-          {/* Hidden/Shielded YouTube IFrame */}
-          <div className="absolute inset-0 w-full h-full pointer-events-none scale-105">
-            <div id="custom-yt-player" className="w-full h-full" />
-          </div>
-
-          {/* Transparent Pointer-Blocking Shield Overlays (Blocks clicking YouTube title bar & bottom-right YouTube logo) */}
-          <div
-            className="absolute top-0 left-0 right-0 h-16 pointer-events-auto z-20 bg-transparent select-none cursor-default"
-            onClick={(e) => { e.stopPropagation(); }}
-            onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            aria-hidden="true"
-          />
-          <div
-            className="absolute bottom-0 right-0 w-44 h-16 pointer-events-auto z-20 bg-transparent select-none cursor-default"
-            onClick={(e) => { e.stopPropagation(); }}
-            onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            aria-hidden="true"
-          />
-
-          {/* Low-Data / Audio-Only Mode Visual Cover Card */}
-          {isAudioOnlyMode && (
-            <div className="absolute inset-0 z-25 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center select-none pointer-events-none">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center mb-3 animate-pulse shadow-xl">
-                <Headphones className="w-8 h-8 sm:w-10 sm:h-10" />
-              </div>
-              <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 border border-emerald-800/40 px-3 py-1 rounded-full mb-2 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                Low Data Mode Active (240p)
+          <div className="flex items-center gap-2">
+            {lesson.isFree ? (
+              <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full flex items-center gap-1">
+                <Check className="w-3 h-3" /> Free Preview
               </span>
-              <h3 className="text-base sm:text-lg md:text-xl font-black text-white max-w-md truncate px-4">
-                {lesson.title}
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-200 mt-1 max-w-sm font-semibold">
-                🎧 Audio Revision Mode Active (Data Saver)
-              </p>
-              <p className="text-[10px] text-slate-400 mt-1">
-                Visual stream paused for high-speed mobile data saving
-              </p>
-            </div>
-          )}
-
-          {/* Click / Double-Tap to Play/Pause Center Overlay */}
-          <div
-            onClick={handlePlayerTouch}
-            className="absolute inset-0 z-10 cursor-pointer flex items-center justify-center bg-black/10 hover:bg-black/20 transition"
-          >
-            {!isPlaying && (
-              <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xl backdrop-blur-md transform hover:scale-110 active:scale-95 transition">
-                <Play className="w-7 h-7 ml-1 fill-white" />
-              </div>
-            )}
+            ) : hasAccess ? (
+              <span className="text-[11px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full flex items-center gap-1">
+                <Check className="w-3 h-3" /> Full Access Active
+              </span>
+            ) : null}
           </div>
+        </div>
 
-          {/* Custom Overlay Control Bar */}
-          <div className="relative z-30 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 flex flex-col gap-2 pt-8">
-            {/* Blue Progress Bar with Interactive Drag Dot */}
-            <div className="relative flex items-center w-full group/bar">
-              <div className="relative w-full h-2 bg-white/25 rounded-full overflow-visible pointer-events-none">
-                <div
-                  className="bg-blue-600 h-full rounded-full transition-all"
-                  style={{ width: `${progressPercent}%` }}
-                />
-                <div
-                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-md transition-all scale-100 group-hover/bar:scale-125"
-                  style={{ left: `calc(${progressPercent}% - 8px)` }}
-                />
-              </div>
-
-              <input
-                type="range"
-                min={0}
-                max={duration || 100}
-                value={currentTime}
-                onChange={handleSliderChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
+        {/* Video Player OR Locked Screen */}
+        {!hasAccess ? (
+          /* ================= OTT LOCKED STATE SCREEN ================= */
+          <div className="bg-[#121722] rounded-3xl p-8 md:p-12 border border-white/[0.08] shadow-2xl flex flex-col items-center text-center max-w-2xl mx-auto my-8">
+            <div className="w-20 h-20 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-5">
+              <Lock className="w-10 h-10" />
             </div>
 
-            {/* Bottom Control Actions */}
-            <div className="flex items-center justify-between text-white text-xs font-semibold pt-1">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <button
-                  onClick={togglePlay}
-                  aria-label={isPlaying ? "Pause video" : "Play video"}
-                  className="touch-target-44 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition cursor-pointer active:scale-90"
-                >
-                  {isPlaying ? (
-                    <Pause className="w-4 h-4 fill-white" />
-                  ) : (
-                    <Play className="w-4 h-4 fill-white ml-0.5" />
-                  )}
-                </button>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3.5 py-1 rounded-full mb-3">
+              Episode Locked
+            </span>
 
-                <button
-                  onClick={() => seekBy(-10)}
-                  aria-label="Seek back 10 seconds"
-                  className="touch-target-44 w-10 h-10 flex items-center justify-center hover:text-blue-400 active:scale-90 transition cursor-pointer"
-                  title="10s Back (Or double-tap left)"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
+            <h2 className="text-xl md:text-2xl font-bold text-[#F8FAFC]">
+              {lesson.title}
+            </h2>
+            <p className="text-xs md:text-sm text-[#94A3B8] mt-2 max-w-md leading-relaxed">
+              To stream this masterclass episode and unlock the complete syllabus, notes vault, and verified certificate, enroll in this masterclass.
+            </p>
 
-                <button
-                  onClick={() => seekBy(10)}
-                  aria-label="Seek forward 10 seconds"
-                  className="touch-target-44 w-10 h-10 flex items-center justify-center hover:text-blue-400 active:scale-90 transition cursor-pointer"
-                  title="10s Forward (Or double-tap right)"
-                >
-                  <RotateCw className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={toggleMute}
-                  aria-label={isMuted ? "Unmute audio" : "Mute audio"}
-                  className="touch-target-44 w-10 h-10 flex items-center justify-center hover:text-blue-400 active:scale-90 transition cursor-pointer"
-                >
-                  {isMuted ? (
-                    <VolumeX className="w-4 h-4 text-red-400" />
-                  ) : (
-                    <Volume2 className="w-4 h-4" />
-                  )}
-                </button>
-
-                <span className="text-[11px] font-mono text-white/85 ml-1">
-                  {formatTime(currentTime)} / {formatTime(duration)}
+            <div className="mt-6 p-4 rounded-2xl bg-[#0A0D14] border border-white/[0.06] w-full flex items-center justify-between">
+              <div className="text-left">
+                <span className="text-[10px] uppercase font-bold text-[#94A3B8] block">
+                  {course.code} • {course.accessMonths || 3} Months Access
+                </span>
+                <span className="text-base font-bold text-[#F8FAFC]">
+                  {course.title}
                 </span>
               </div>
+              <div className="text-right">
+                <span className="text-xl font-bold text-[#0052FF]">
+                  ₹{Math.round(course.pricePaise / 100)}
+                </span>
+              </div>
+            </div>
 
-              <div className="flex items-center gap-2 sm:gap-3">
-                {/* Desktop / Tablet Direct Speed Chips */}
-                <div className="hidden sm:flex items-center gap-1 bg-white/10 rounded-xl p-0.5 border border-white/10">
-                  {[1, 1.25, 1.5, 2].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setSpeedDirect(s)}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
-                        playbackRate === s
-                          ? "bg-blue-600 text-white shadow-xs"
-                          : "text-white/80 hover:bg-white/15"
-                      }`}
-                    >
-                      {s}x
-                    </button>
-                  ))}
+            <Link
+              href={`/checkout?courseId=${course.id}`}
+              className="mt-6 px-8 py-3.5 rounded-full bg-gradient-to-r from-[#0956FF] to-[#002984] hover:from-blue-600 hover:to-blue-800 text-white text-xs md:text-sm font-bold shadow-xl shadow-blue-900/40 transition inline-flex items-center gap-2 active:scale-95"
+            >
+              <Unlock className="w-4 h-4" />
+              <span>Unlock Masterclass Now</span>
+            </Link>
+          </div>
+        ) : (
+          /* ================= THEATER VIDEO PLAYER ================= */
+          <div className="flex flex-col gap-3">
+            <PiracyShield contentType="video" className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/[0.08] bg-black">
+              <div
+                ref={containerRef}
+                className="relative bg-black aspect-video w-full flex flex-col justify-end group select-none overflow-hidden"
+              >
+                {/* Resume Notification */}
+                {resumeNotification && (
+                  <div className="absolute top-4 left-4 z-30 bg-[#0052FF]/90 text-white text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1.5 animate-in fade-in duration-300">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{resumeNotification}</span>
+                  </div>
+                )}
+
+                {/* Subtle Dynamic Floating Watermark */}
+                <div 
+                  style={{ top: watermarkPos.top, left: watermarkPos.left }}
+                  className="absolute z-20 pointer-events-none transition-all duration-1000 ease-in-out opacity-25 select-none text-xs font-mono text-white/90 bg-black/40 backdrop-blur-xs px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm"
+                >
+                  {studentWatermark}
                 </div>
 
-                {/* Mobile Speed Toggle */}
-                <button
-                  onClick={changeSpeed}
-                  aria-label={`Playback speed: ${playbackRate}x`}
-                  className="sm:hidden touch-target-44 min-h-[44px] px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold transition active:scale-95 cursor-pointer"
+                {/* Double Tap Feedback */}
+                {doubleTapRipple && (
+                  <div
+                    className={`absolute top-1/2 -translate-y-1/2 z-30 pointer-events-none text-white text-sm font-bold px-4 py-2 rounded-2xl bg-black/85 backdrop-blur-md shadow-2xl animate-pulse flex items-center gap-1.5 ${
+                      doubleTapRipple.side === "left" ? "left-8" : "right-8"
+                    }`}
+                  >
+                    <span>{doubleTapRipple.text}</span>
+                  </div>
+                )}
+
+                {/* Hidden/Shielded YouTube IFrame */}
+                <div className="absolute inset-0 w-full h-full pointer-events-none scale-105">
+                  <div id="custom-yt-player" className="w-full h-full" />
+                </div>
+
+                {/* Transparent Pointer-Blocking Shield Overlays */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-16 pointer-events-auto z-20 bg-transparent select-none cursor-default"
+                  onClick={(e) => { e.stopPropagation(); }}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  aria-hidden="true"
+                />
+                <div
+                  className="absolute bottom-0 right-0 w-44 h-16 pointer-events-auto z-20 bg-transparent select-none cursor-default"
+                  onClick={(e) => { e.stopPropagation(); }}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  aria-hidden="true"
+                />
+
+                {/* Low-Data / Audio-Only Mode Overlay */}
+                {isAudioOnlyMode && (
+                  <div className="absolute inset-0 z-25 bg-[#0A0D14]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center select-none pointer-events-none">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-[#0052FF] flex items-center justify-center mb-3 animate-pulse">
+                      <Headphones className="w-8 h-8 sm:w-10 sm:h-10" />
+                    </div>
+                    <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full mb-2 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      Low Data Mode Active (240p)
+                    </span>
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-white max-w-md truncate px-4">
+                      {lesson.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-[#94A3B8] mt-1 max-w-sm">
+                      Audio Revision Stream • Visual frame paused to save bandwidth
+                    </p>
+                  </div>
+                )}
+
+                {/* Touch to Play/Pause Center Overlay */}
+                <div
+                  onClick={handlePlayerTouch}
+                  className="absolute inset-0 z-10 cursor-pointer flex items-center justify-center bg-black/10 hover:bg-black/20 transition"
                 >
-                  {playbackRate}x
-                </button>
+                  {!isPlaying && (
+                    <div className="w-16 h-16 rounded-full bg-[#0052FF] text-white flex items-center justify-center shadow-2xl backdrop-blur-md transform hover:scale-105 active:scale-95 transition">
+                      <Play className="w-7 h-7 ml-1 fill-white" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Custom Overlay Control Bar */}
+                <div className="relative z-30 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 flex flex-col gap-2 pt-8">
+                  {/* OTT Royal Blue Progress Bar */}
+                  <div className="relative flex items-center w-full group/bar">
+                    <div className="relative w-full h-1.5 bg-white/20 rounded-full overflow-visible pointer-events-none">
+                      <div
+                        className="bg-[#0052FF] h-full rounded-full transition-all"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                      <div
+                        className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-[#0052FF] border-2 border-white shadow-md transition-all scale-100 group-hover/bar:scale-125"
+                        style={{ left: `calc(${progressPercent}% - 7px)` }}
+                      />
+                    </div>
+
+                    <input
+                      type="range"
+                      min={0}
+                      max={duration || 100}
+                      value={currentTime}
+                      onChange={handleSliderChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      aria-label="Seek video slider"
+                    />
+                  </div>
+
+                  {/* Playback Actions Row */}
+                  <div className="flex items-center justify-between text-white text-xs font-semibold pt-1">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <button
+                        onClick={togglePlay}
+                        aria-label={isPlaying ? "Pause video" : "Play video"}
+                        className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition cursor-pointer active:scale-90"
+                      >
+                        {isPlaying ? (
+                          <Pause className="w-4 h-4 fill-white" />
+                        ) : (
+                          <Play className="w-4 h-4 fill-white ml-0.5" />
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => seekBy(-10)}
+                        aria-label="Seek back 10 seconds"
+                        className="w-9 h-9 flex items-center justify-center hover:text-blue-400 active:scale-90 transition cursor-pointer"
+                        title="10s Back (Or double-tap left)"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => seekBy(10)}
+                        aria-label="Seek forward 10 seconds"
+                        className="w-9 h-9 flex items-center justify-center hover:text-blue-400 active:scale-90 transition cursor-pointer"
+                        title="10s Forward (Or double-tap right)"
+                      >
+                        <RotateCw className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={toggleMute}
+                        aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+                        className="w-9 h-9 flex items-center justify-center hover:text-blue-400 active:scale-90 transition cursor-pointer"
+                      >
+                        {isMuted ? (
+                          <VolumeX className="w-4 h-4 text-red-400" />
+                        ) : (
+                          <Volume2 className="w-4 h-4" />
+                        )}
+                      </button>
+
+                      <span className="text-[11px] font-mono text-[#94A3B8] ml-1">
+                        {formatTime(currentTime)} / {formatTime(duration)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      {/* Speed Chips */}
+                      <div className="hidden sm:flex items-center gap-1 bg-white/[0.08] rounded-xl p-0.5 border border-white/[0.06]">
+                        {[1, 1.25, 1.5, 2].map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setSpeedDirect(s)}
+                            className={`px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                              playbackRate === s
+                                ? "bg-[#0052FF] text-white"
+                                : "text-white/70 hover:bg-white/10"
+                            }`}
+                          >
+                            {s}x
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={toggleFullscreen}
+                        aria-label="Toggle fullscreen"
+                        className="w-9 h-9 flex items-center justify-center hover:text-blue-400 active:scale-90 transition cursor-pointer"
+                      >
+                        <Maximize className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </PiracyShield>
+
+            {/* Sticky Action Bar */}
+            <div className="sticky top-2 z-30 bg-[#121722]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-3 shadow-2xl flex flex-wrap items-center justify-between gap-3">
+              {/* Left: Previous & Watched */}
+              <div className="flex items-center gap-2">
+                {prevLesson ? (
+                  <Link
+                    href={`/watch/${prevLesson.id}`}
+                    className="px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-[#F8FAFC] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Previous Episode</span>
+                  </Link>
+                ) : (
+                  <button
+                    disabled
+                    className="px-3.5 py-2 rounded-xl bg-white/[0.02] border border-white/[0.04] text-[#94A3B8]/40 text-xs font-semibold flex items-center gap-1.5 cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Previous Episode</span>
+                  </button>
+                )}
 
                 <button
-                  onClick={toggleFullscreen}
-                  aria-label="Toggle fullscreen"
-                  className="touch-target-44 w-10 h-10 flex items-center justify-center hover:text-blue-400 active:scale-90 transition cursor-pointer"
-                >
-                  <Maximize className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </PiracyShield>
-
-      {/* Rural-Friendly Playback Controls & Low-Data Audio Mode Quick Strip */}
-      <div className="bg-white rounded-2xl p-3 md:p-4 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        {/* Seek Buttons: ⏪ -10s and +10s ⏩ */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => seekBy(-10)}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black transition cursor-pointer flex items-center gap-1.5 border border-slate-200 shadow-2xs"
-            title="Seek back 10 seconds"
-            aria-label="Seek back 10 seconds"
-          >
-            <span>⏪ -10s</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => seekBy(10)}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black transition cursor-pointer flex items-center gap-1.5 border border-slate-200 shadow-2xs"
-            title="Seek forward 10 seconds"
-            aria-label="Seek forward 10 seconds"
-          >
-            <span>+10s ⏩</span>
-          </button>
-        </div>
-
-        {/* Playback Speed Selector: 1x, 1.25x, 1.5x, 2x */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-          <span className="text-[10px] font-bold text-slate-500 px-1.5 hidden sm:inline">Speed:</span>
-          {[1, 1.25, 1.5, 2].map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSpeedDirect(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
-                playbackRate === s
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-slate-700 hover:bg-white hover:text-slate-900"
-              }`}
-              aria-label={`Set playback speed to ${s}x`}
-            >
-              {s}x
-            </button>
-          ))}
-        </div>
-
-        {/* Low-Data / Audio-Only Mode Toggle */}
-        <button
-          type="button"
-          onClick={toggleAudioOnlyMode}
-          className={`px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 border shadow-xs active:scale-95 ${
-            isAudioOnlyMode
-              ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20"
-              : "bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200"
-          }`}
-          title="Low-Data Audio Revision Mode"
-          aria-label="Low-Data Audio Revision Mode"
-        >
-          <Headphones className="w-4 h-4 text-emerald-600" />
-          <span>
-            {isAudioOnlyMode
-              ? "🎧 Audio Mode Active (Data Saver)"
-              : "🎧 Audio-Only Mode (Save Data)"}
-          </span>
-        </button>
-      </div>
-    </>
-  )}
-
-      {/* Bottom 2-Column: Lesson Overview + Live Synchronized Note Dock */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2 cols): Lesson Details & Interactive Live Notes Dock */}
-        <div className="lg:col-span-2 flex flex-col gap-5">
-          {/* Lesson Details Card */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <span className="text-xs font-extrabold text-blue-600 uppercase tracking-wider">
-                  Lesson {lesson.position} • {course.title}
-                </span>
-                <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 mt-1">
-                  {lesson.title}
-                </h1>
-              </div>
-
-              {/* Student Like (👍) Button */}
-              <button
-                type="button"
-                onClick={handleToggleLike}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all border shadow-xs active:scale-95 cursor-pointer shrink-0 self-start sm:self-center ${
-                  isLiked
-                    ? "bg-blue-600 text-white border-blue-600 shadow-blue-500/20"
-                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-                }`}
-                title="Like this lecture"
-              >
-                <ThumbsUp className={`w-4 h-4 ${isLiked ? "fill-white" : ""}`} />
-                <span>{isLiked ? "Liked" : "Like"}</span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                    isLiked ? "bg-white/20 text-white" : "bg-white text-slate-700 border border-slate-200"
+                  type="button"
+                  onClick={toggleMarkWatched}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer active:scale-95 border ${
+                    isCurrentWatched
+                      ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                      : "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.06] text-[#F8FAFC]"
                   }`}
                 >
-                  {likesCount}
-                </span>
-              </button>
-            </div>
+                  <CheckCircle2 className={`w-4 h-4 ${isCurrentWatched ? "text-emerald-400" : "text-[#94A3B8]"}`} />
+                  <span>{isCurrentWatched ? "Watched" : "Mark Watched"}</span>
+                </button>
+              </div>
 
-            {/* Multi-Part Series Chaining Banner */}
-            {(currentSeriesTitle || lesson.partNumber || (nextLesson && allCourseLessons.length > 1)) && (
-              <div className="p-4 rounded-2xl bg-linear-to-r from-indigo-50 to-blue-50 border border-indigo-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
-                    #{lesson.partNumber || lesson.position || 1}
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase text-indigo-700 tracking-wider block">
-                      {currentSeriesTitle ? `Series: ${currentSeriesTitle}` : `Video Series`}
-                    </span>
-                    <span className="text-xs font-bold text-slate-900">
-                      Part {lesson.partNumber || lesson.position || 1}
-                      {lesson.totalParts ? ` / ${lesson.totalParts}` : ""}
-                    </span>
-                  </div>
-                </div>
+              {/* Right: Audio Mode, Notes & Next Episode */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleAudioOnlyMode}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer active:scale-95 border ${
+                    isAudioOnlyMode
+                      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                      : "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.06] text-[#94A3B8] hover:text-[#F8FAFC]"
+                  }`}
+                  title="Toggle Low-Data Audio Mode"
+                >
+                  <Headphones className="w-4 h-4" />
+                  <span className="hidden sm:inline">{isAudioOnlyMode ? "Audio Mode On" : "Audio Mode"}</span>
+                </button>
 
-                {nextLesson && (
+                <Link
+                  href="/notes"
+                  className="px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-[#94A3B8] hover:text-[#F8FAFC] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95"
+                >
+                  <FileText className="w-4 h-4 text-[#0052FF]" />
+                  <span className="hidden md:inline">Open Episode PDF Notes</span>
+                  <span className="md:hidden">Notes</span>
+                </Link>
+
+                {nextLesson ? (
                   <Link
                     href={`/watch/${nextLesson.id}`}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm transition active:scale-95"
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#0956FF] to-[#002984] hover:from-blue-600 hover:to-blue-800 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-blue-900/40 active:scale-95"
                   >
-                    <span>Next Part ({nextLesson.partNumber ? `Part ${nextLesson.partNumber}` : nextLesson.title.slice(0, 18)}) ▶️</span>
+                    <span>Next Episode</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                ) : (
+                  <Link
+                    href="/certificate"
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-emerald-900/40 active:scale-95"
+                  >
+                    <Award className="w-4 h-4" />
+                    <span>Claim Certificate</span>
                   </Link>
                 )}
               </div>
-            )}
-
-            <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-              {lesson.description ||
-                "Practical memory and Vedic maths demonstration with international trainer Prashant Dhumal Sir."}
-            </p>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Right Column (1 col): Up-Next Lesson Playlist */}
-        <div className="flex flex-col gap-3">
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs">
-            <h3 className="font-extrabold text-sm text-slate-900 mb-3 flex items-center justify-between">
-              <span>Up-Next Playlist</span>
-              <span className="text-xs text-blue-600 font-bold">
-                {allCourseLessons.length} Lessons
-              </span>
-            </h3>
+        {/* 2-Column Cinema Layout: Episode Synopsis (Left) & Hotstar Episodes List (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2">
+          {/* Left Column: Episode Details (8 Cols) */}
+          <div className="lg:col-span-8 flex flex-col gap-5">
+            <div className="bg-[#121722] rounded-2xl p-6 border border-white/[0.08] space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#0052FF]">
+                      Episode {lesson.position || currentIndex + 1} • {course.title}
+                    </span>
+                    {lesson.seriesTitle && (
+                      <span className="text-[10px] font-semibold text-[#94A3B8] bg-white/[0.05] px-2 py-0.5 rounded-md border border-white/[0.06]">
+                        {lesson.seriesTitle}
+                      </span>
+                    )}
+                  </div>
+                  <h1 className="text-xl md:text-2xl font-bold text-[#F8FAFC]">
+                    {lesson.title}
+                  </h1>
+                </div>
 
-            <div className="flex flex-col gap-2">
-              {allCourseLessons.map((l) => {
-                const isCurrent = l.id === lesson.id;
-                const isAccessible = l.isFree || hasAccess;
-
-                return (
-                  <Link
-                    key={l.id}
-                    href={`/watch/${l.id}`}
-                    className={`p-3 rounded-2xl border transition flex items-center justify-between gap-3 text-xs ${
-                      isCurrent
-                        ? "bg-blue-50 border-blue-300 text-blue-700 font-bold shadow-2xs"
-                        : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-white hover:border-slate-300"
+                {/* Like Button */}
+                <button
+                  type="button"
+                  onClick={handleToggleLike}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition border active:scale-95 cursor-pointer shrink-0 self-start sm:self-center ${
+                    isLiked
+                      ? "bg-[#0052FF] text-white border-blue-500 shadow-md shadow-blue-900/30"
+                      : "bg-white/[0.04] text-[#94A3B8] border-white/[0.08] hover:bg-white/[0.08] hover:text-[#F8FAFC]"
+                  }`}
+                  title="Like this lecture"
+                >
+                  <ThumbsUp className={`w-4 h-4 ${isLiked ? "fill-white" : ""}`} />
+                  <span>{isLiked ? "Liked" : "Like"}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      isLiked ? "bg-white/20 text-white" : "bg-white/10 text-white"
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      {isCurrent ? (
-                        <div className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0 animate-ping" />
-                      ) : isAccessible ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      ) : (
-                        <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      )}
+                    {likesCount}
+                  </span>
+                </button>
+              </div>
 
-                      <span className="truncate">{l.title}</span>
-                    </div>
+              <p className="text-xs md:text-sm text-[#94A3B8] leading-relaxed">
+                {lesson.description ||
+                  "Practical memory techniques and Vedic maths demonstration with international trainer Prashant Dhumal Sir."}
+              </p>
 
-                    <div className="shrink-0 flex items-center gap-1.5">
-                      {l.isFree && (
-                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                          FREE
-                        </span>
-                      )}
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                    </div>
-                  </Link>
-                );
-              })}
+              {/* Quick Specs / Tags */}
+              <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/[0.06] text-xs text-[#94A3B8]">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Duration: {formatTime(lesson.durationSec || duration)}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Award className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Official MindMaster Curriculum</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Disney+ Hotstar Style Episodes List (4 Cols) */}
+          <div className="lg:col-span-4 flex flex-col gap-3">
+            <div className="bg-[#121722] rounded-2xl p-4 border border-white/[0.08] flex flex-col gap-3">
+              <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                <h3 className="font-bold text-sm text-[#F8FAFC]">
+                  Course Episodes
+                </h3>
+                <span className="text-xs text-[#0052FF] font-semibold">
+                  {allCourseLessons.length} Episodes
+                </span>
+              </div>
+
+              {/* Episode Rail */}
+              <div className="flex flex-col gap-2 max-h-[600px] overflow-y-auto pr-1">
+                {allCourseLessons.map((l, idx) => {
+                  const isCurrent = l.id === lesson.id;
+                  const isWatched = watchedLessonIds.has(l.id);
+                  const isAccessible = l.isFree || hasAccess;
+                  const epNum = (idx + 1).toString().padStart(2, "0");
+                  const thumbUrl = l.videoId
+                    ? `https://img.youtube.com/vi/${l.videoId}/mqdefault.jpg`
+                    : null;
+
+                  return (
+                    <Link
+                      key={l.id}
+                      href={`/watch/${l.id}`}
+                      className={`group p-2.5 rounded-xl border transition-all flex items-center gap-3 text-xs ${
+                        isCurrent
+                          ? "bg-blue-600/10 border-blue-500/50 text-[#F8FAFC]"
+                          : "bg-white/[0.02] border-white/[0.06] text-[#94A3B8] hover:bg-white/[0.05] hover:border-white/[0.12] hover:text-[#F8FAFC]"
+                      }`}
+                    >
+                      {/* 16:9 Mini Thumbnail */}
+                      <div className="relative w-20 aspect-video rounded-lg overflow-hidden bg-black/60 shrink-0 border border-white/10">
+                        {thumbUrl ? (
+                          <img
+                            src={thumbUrl}
+                            alt={l.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-[#0A0D14]">
+                            <Play className="w-4 h-4 text-white/50" />
+                          </div>
+                        )}
+
+                        {/* Playing / Watched Indicator Badge */}
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Play className="w-4 h-4 fill-white text-white" />
+                        </div>
+
+                        {/* Top-left Episode Number */}
+                        <div className="absolute top-1 left-1 px-1 py-0.2 rounded bg-black/70 text-[9px] font-mono text-white/80">
+                          {epNum}
+                        </div>
+                      </div>
+
+                      {/* Episode Details */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-[#0052FF]">
+                            EP {epNum}
+                          </span>
+                          {l.isFree && (
+                            <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                              FREE
+                            </span>
+                          )}
+                        </div>
+                        <h4 className={`font-semibold text-xs line-clamp-1 mt-0.5 ${isCurrent ? "text-blue-400" : "text-[#F8FAFC]"}`}>
+                          {l.title}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1 text-[10px] text-[#94A3B8]">
+                          <span>{formatTime(l.durationSec || 600)}</span>
+                          {isWatched && (
+                            <span className="inline-flex items-center gap-0.5 text-emerald-400 font-medium">
+                              <CheckCircle2 className="w-3 h-3" /> Watched
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right Status Indicator */}
+                      <div className="shrink-0">
+                        {isCurrent ? (
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#0052FF] animate-pulse" />
+                        ) : isWatched ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        ) : isAccessible ? (
+                          <Play className="w-3.5 h-3.5 text-[#94A3B8]/60 group-hover:text-white" />
+                        ) : (
+                          <Lock className="w-3.5 h-3.5 text-[#94A3B8]/40" />
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -1367,7 +1332,7 @@ export default function WatchLessonPage({
       <Suspense
         fallback={
           <div className="flex items-center justify-center min-h-[400px]">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-3 border-[#0052FF] border-t-transparent rounded-full animate-spin" />
           </div>
         }
       >

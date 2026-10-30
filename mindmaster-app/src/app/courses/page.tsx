@@ -13,13 +13,18 @@ import {
   Calculator, 
   Calendar, 
   Landmark, 
-  Zap 
+  Zap,
+  Tag,
+  GraduationCap,
+  MessageCircle,
+  PhoneCall,
+  Plus,
+  Lock
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
 import FilterChips, { StandardFilter } from "@/components/courses/FilterChips";
 import { getStaffCourses, getStaffStudents, fetchDbCourses } from "@/lib/staffStore";
 import { ACADEMY_CATEGORIES, AcademyCategory, matchesAcademyCategory } from "@/lib/academyCategories";
-import EmptyState from "@/components/common/EmptyState";
 import { useLanguage } from "@/lib/LanguageContext";
 
 type FeeFilter = "All" | "Free" | "Paid";
@@ -40,44 +45,10 @@ interface CatalogCourse {
   category: "Memory" | "Vedic Maths" | "Teacher Certification" | "Calendar Technique";
   imageSrc: string;
   icon: any;
-  standards?: number[]; // [5,6,7...]; empty/undefined = for all / other courses
+  standards?: number[];
 }
 
-// Production Clean Slate: 0 Fake Courses
 const CATALOG_COURSES: CatalogCourse[] = [];
-
-const TINT_STYLES = {
-  mint: {
-    header: "bg-emerald-50/70 border-emerald-100",
-    badgeText: "text-emerald-700",
-    badgeBg: "bg-emerald-50 border-emerald-200",
-    iconColor: "text-emerald-600",
-  },
-  sky: {
-    header: "bg-blue-50/70 border-blue-100",
-    badgeText: "text-blue-700",
-    badgeBg: "bg-blue-50 border-blue-200",
-    iconColor: "text-blue-600",
-  },
-  lavender: {
-    header: "bg-indigo-50/70 border-indigo-100",
-    badgeText: "text-indigo-700",
-    badgeBg: "bg-indigo-50 border-indigo-200",
-    iconColor: "text-indigo-600",
-  },
-  peach: {
-    header: "bg-amber-50/70 border-amber-100",
-    badgeText: "text-amber-700",
-    badgeBg: "bg-amber-50 border-amber-200",
-    iconColor: "text-amber-600",
-  },
-  purple: {
-    header: "bg-purple-50/70 border-purple-100",
-    badgeText: "text-purple-700",
-    badgeBg: "bg-purple-50 border-purple-200",
-    iconColor: "text-purple-600",
-  },
-};
 
 function extractStandardNumber(val: any): number | null {
   if (!val) return null;
@@ -127,7 +98,6 @@ export default function CoursesCatalogPage() {
         const profile = JSON.parse(raw);
         setStudentProfile(profile);
 
-        // Pre-select student's enrolled/recorded standard if available
         const stdRaw = profile.standard || profile.target_standard || profile.grade;
         let stdFound: number | null = extractStandardNumber(stdRaw);
 
@@ -149,7 +119,6 @@ export default function CoursesCatalogPage() {
     } catch {}
   }, []);
 
-  // Map dynamic staff courses to CatalogCourse items
   const dynamicCatalogCourses: CatalogCourse[] = staffCourses.map((sc) => {
     const existing = CATALOG_COURSES.find((c) => c.code === sc.code || c.id === sc.id);
     const isFreeCourse = sc.isFree || sc.pricePaise === 0;
@@ -194,10 +163,7 @@ export default function CoursesCatalogPage() {
     };
   });
 
-  const activeCatalog = dynamicCatalogCourses;
-
-  // Unrestricted Student Access: Students can view & enroll in all courses across categories
-  const visibleCourses = activeCatalog;
+  const visibleCourses = dynamicCatalogCourses;
 
   const filteredCourses = visibleCourses.filter((course) => {
     const staffMatch = staffCourses.find(
@@ -205,7 +171,6 @@ export default function CoursesCatalogPage() {
     );
     const courseStandards = staffMatch?.standards ?? course.standards;
 
-    // 1. Primary Category Filter (6 Core Academic & Memory Tracks)
     if (selectedCategory !== "All Categories") {
       const isMatch = matchesAcademyCategory({
         title: course.title,
@@ -219,7 +184,6 @@ export default function CoursesCatalogPage() {
       if (!isMatch) return false;
     }
 
-    // 2. Standard Filter ("All", "5th"..."12th", "Other Courses")
     if (activeStandard !== "all") {
       if (activeStandard === "other") {
         if (courseStandards && courseStandards.length > 0) return false;
@@ -230,7 +194,6 @@ export default function CoursesCatalogPage() {
       }
     }
 
-    // 3. Fee Filter (All / Free / Paid)
     if (feeFilter === "Free") return course.isFree;
     if (feeFilter === "Paid") return !course.isFree;
     return true;
@@ -239,41 +202,43 @@ export default function CoursesCatalogPage() {
   return (
     <AppShell>
       <title>Certified Courses Catalog | MindMaster Academy</title>
-      <meta name="description" content="Explore Prashant Dhumal's certified courses in Memory Techniques, Vedic Maths, and Calendar Mastery." />
-      <div className="flex flex-col gap-6 select-none touch-manipulation">
-
-        {/* Header with Spring 2025 Enrollment Chip */}
-        <div className="flex flex-col gap-2">
+      <meta
+        name="description"
+        content="Explore Prashant Dhumal's certified courses in Memory Techniques, Vedic Maths, and Calendar Mastery."
+      />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6 select-none text-[#F8FAFC]">
+        {/* Header with Term Chip */}
+        <div className="flex flex-col gap-2 pb-4 border-b border-white/[0.08]">
           <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[10px] font-extrabold text-blue-700 uppercase tracking-wider shadow-2xs">
-              <Sparkles className="w-3 h-3 text-blue-600" />
-              <span>SPRING 2026 ENROLLMENT OPEN</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-bold text-blue-400 uppercase tracking-wider">
+              <Sparkles className="w-3 h-3 text-[#0052FF]" />
+              <span>Session 2026 Admissions Open</span>
             </span>
 
-            <span className="text-xs text-slate-600 font-semibold">
+            <span className="text-xs text-[#94A3B8] font-medium">
               Showing {filteredCourses.length} Certified Courses
             </span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
-            All Courses
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[#F8FAFC] tracking-tight">
+            All Masterclasses
           </h1>
-          <p className="text-xs md:text-sm text-slate-600 max-w-2xl leading-relaxed font-normal">
-            Explore certified memory mastery, competitive exam prep, and speed calculation workshops curated for Maharashtra board and recruitment aspirants.
+          <p className="text-xs md:text-sm text-[#94A3B8] max-w-2xl leading-relaxed">
+            Explore certified memory mastery, competitive exam prep, and speed calculation workshops curated for Maharashtra students and recruitment aspirants.
           </p>
         </div>
 
-        {/* 1. Primary Category Tabs: 6 Main Academy Categories */}
+        {/* 1. Primary Category Tabs */}
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between text-xs text-slate-600 font-medium px-0.5">
-            <span className="flex items-center gap-1.5 font-bold text-slate-800">
-              <span>🏷️</span> Course Categories:
+          <div className="flex items-center justify-between text-xs text-[#94A3B8] px-0.5">
+            <span className="flex items-center gap-1.5 font-bold text-[#F8FAFC]">
+              <Tag className="w-3.5 h-3.5 text-[#0052FF]" /> Course Categories:
             </span>
-            <span className="text-[11px] text-blue-600 font-semibold">
+            <span className="text-[11px] text-[#0052FF] font-semibold">
               Open to all learners
             </span>
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none touch-pan-x" role="tablist" aria-label="Academy categories">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" role="tablist">
             {ACADEMY_CATEGORIES.map((cat) => {
               const isActive = selectedCategory === cat;
               return (
@@ -282,10 +247,10 @@ export default function CoursesCatalogPage() {
                   role="tab"
                   aria-selected={isActive}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`min-h-[38px] px-4 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all duration-150 border cursor-pointer active:scale-95 touch-manipulation flex items-center justify-center gap-1.5 ${
+                  className={`min-h-[38px] px-4 py-2 rounded-xl text-xs font-bold shrink-0 transition-all border cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 ${
                     isActive
-                      ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/25"
-                      : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/50"
+                      ? "bg-[#0052FF] text-white border-blue-500 shadow-md shadow-blue-900/40"
+                      : "bg-white/[0.04] text-[#94A3B8] border-white/[0.06] hover:bg-white/[0.08] hover:text-[#F8FAFC]"
                   }`}
                 >
                   <span>{cat}</span>
@@ -296,16 +261,16 @@ export default function CoursesCatalogPage() {
         </div>
 
         {/* 2. Secondary Filter: Standard & Fee Pills */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-white/[0.06]">
           <div className="flex-1">
-            <div className="flex items-center justify-between text-xs text-slate-600 font-medium px-0.5 mb-1.5">
-              <span className="flex items-center gap-1.5 font-bold text-slate-800">
-                <span>🎓</span> Select Standard:
+            <div className="flex items-center justify-between text-xs text-[#94A3B8] px-0.5 mb-1.5">
+              <span className="flex items-center gap-1.5 font-bold text-[#F8FAFC]">
+                <GraduationCap className="w-3.5 h-3.5 text-[#0052FF]" /> Select Standard:
               </span>
               {activeStandard !== "all" && (
                 <button
                   onClick={() => setActiveStandard("all")}
-                  className="text-[11px] text-blue-600 hover:underline font-bold cursor-pointer"
+                  className="text-[11px] text-blue-400 hover:underline font-bold cursor-pointer"
                 >
                   Show All (Reset)
                 </button>
@@ -327,8 +292,8 @@ export default function CoursesCatalogPage() {
                   onClick={() => setFeeFilter(chip)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
                     isActive
-                      ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                      ? "bg-[#0052FF] text-white border-blue-500 shadow-sm"
+                      : "bg-white/[0.04] text-[#94A3B8] border-white/[0.06] hover:bg-white/[0.08] hover:text-[#F8FAFC]"
                   }`}
                 >
                   {chip}
@@ -340,44 +305,39 @@ export default function CoursesCatalogPage() {
 
         {/* Course Cards Grid or Attractive Empty State */}
         {filteredCourses.length === 0 ? (
-          <div className="bg-gradient-to-br from-blue-50/90 via-white to-indigo-50/90 rounded-3xl p-8 md:p-12 border border-blue-200/80 shadow-sm text-center flex flex-col items-center justify-center max-w-2xl mx-auto my-6 animate-fadeIn">
-            <div className="w-16 h-16 rounded-3xl bg-blue-100/80 text-blue-600 flex items-center justify-center mb-4 shadow-inner">
-              <Sparkles className="w-8 h-8 text-blue-600" />
+          <div className="bg-[#121722] rounded-2xl p-8 md:p-12 border border-white/[0.08] shadow-2xl text-center flex flex-col items-center justify-center max-w-xl mx-auto my-6">
+            <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-[#0052FF] flex items-center justify-center mb-4">
+              <Sparkles className="w-8 h-8 text-[#0052FF]" />
             </div>
-            <span className="px-3.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-wider mb-2">
-              🚀 Coming Soon • Launching Shortly
+            <span className="px-3.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider mb-2">
+              Coming Soon • Launching Shortly
             </span>
-            <h3 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight">
-              New Courses Launching Soon!
+            <h3 className="text-xl md:text-2xl font-bold text-[#F8FAFC]">
+              New Courses Launching Soon
             </h3>
-            <span className="text-xs font-semibold text-blue-600 mt-0.5">
-              Comprehensive Curriculum &amp; HD Video Lectures in Preparation
+            <span className="text-xs font-semibold text-blue-400 mt-0.5">
+              Comprehensive Curriculum & HD Video Lectures in Preparation
             </span>
-            <p className="text-xs md:text-sm text-slate-600 max-w-lg mt-2 mb-6 leading-relaxed">
-              Prashant Sir's new HD video lectures and official study material are being uploaded. Click below to pre-book and get notified immediately when batches open.
+            <p className="text-xs md:text-sm text-[#94A3B8] max-w-md mt-2 mb-6 leading-relaxed">
+              Prashant Sir&apos;s new HD video lectures and official study material are being uploaded. Click below to pre-book and get notified immediately.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <a
                 href={`https://wa.me/918459344077?text=${encodeURIComponent("Namaskar Prashant Sir, please notify me when the new MindMaster online course batch launches!")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-full shadow-md shadow-emerald-500/20 inline-flex items-center gap-2 transition cursor-pointer active:scale-95"
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-900/30 inline-flex items-center gap-2 transition active:scale-95"
               >
-                <span>💬</span>
-                <span>Notify Me on WhatsApp (Pre-Book)</span>
+                <MessageCircle className="w-4 h-4" />
+                <span>Notify Me on WhatsApp</span>
               </a>
               <a
                 href="tel:+918459344077"
-                className="px-5 py-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs rounded-full shadow-2xs inline-flex items-center gap-1.5 transition cursor-pointer"
+                className="px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-[#F8FAFC] border border-white/[0.08] font-bold text-xs rounded-xl inline-flex items-center gap-1.5 transition"
               >
-                <span>📞 +91 84593 44077</span>
+                <PhoneCall className="w-3.5 h-3.5 text-blue-400" />
+                <span>+91 84593 44077</span>
               </a>
-              <Link
-                href="/staff/login"
-                className="px-5 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold text-xs rounded-full shadow-2xs inline-flex items-center gap-1.5 transition cursor-pointer"
-              >
-                <span>➕ Add Course (Admin Login)</span>
-              </Link>
             </div>
           </div>
         ) : (
@@ -387,44 +347,42 @@ export default function CoursesCatalogPage() {
                 (sc) => sc.code === course.code || sc.id === course.id
               );
               const courseStandards = staffMatch?.standards ?? course.standards;
-              const tint = TINT_STYLES[course.tint];
               const Icon = course.icon;
 
               return (
                 <div
                   key={course.id}
-                  className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs hover:border-blue-300 hover:shadow-lg transition-all flex flex-col justify-between group active:scale-[0.99]"
+                  className="bg-[#121722] rounded-2xl border border-white/[0.08] overflow-hidden shadow-xl hover:border-blue-500/40 transition-all flex flex-col justify-between group"
                 >
-                  {/* Tint Header with 3D Thumbnail */}
-                  <div className={`p-5 border-b ${tint.header} flex flex-col gap-3 relative`}>
+                  {/* Header with Icon & 3D Artwork */}
+                  <div className="p-5 border-b border-white/[0.06] bg-white/[0.02] flex flex-col gap-3 relative">
                     <div className="flex items-center justify-between flex-wrap gap-1.5">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`text-[10px] font-extrabold uppercase tracking-wider bg-white px-2.5 py-0.5 rounded-full border ${tint.badgeBg} ${tint.badgeText} shadow-2xs`}>
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 px-2.5 py-0.5 rounded-full border border-blue-500/20">
                           {course.badge}
                         </span>
 
-                        {/* Standard Tag Badge */}
-                        <span className="text-[10px] font-bold bg-white text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full shadow-2xs">
+                        <span className="text-[10px] font-bold bg-white/[0.04] text-[#94A3B8] border border-white/[0.06] px-2.5 py-0.5 rounded-full">
                           {courseStandards && courseStandards.length > 0
                             ? (courseStandards.length === 8 ? "Class 5th - 12th" : `${courseStandards.map((s: number) => `${s}th`).join(", ")} Std`)
                             : "All Standards"}
                         </span>
                       </div>
 
-                      <span className="text-[10px] text-slate-700 bg-white/90 px-2.5 py-0.5 rounded-full font-bold shadow-2xs">
+                      <span className="text-[10px] text-[#94A3B8] bg-white/[0.04] px-2.5 py-0.5 rounded-full font-semibold">
                         {course.subBadge}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                        <div className={`w-8 h-8 rounded-xl bg-white shadow-2xs flex items-center justify-center ${tint.iconColor}`}>
+                      <div className="flex items-center gap-2 text-xs font-bold text-[#F8FAFC]">
+                        <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-[#0052FF] flex items-center justify-center">
                           <Icon className="w-4 h-4 stroke-[2]" />
                         </div>
                         <span className="truncate">{course.track}</span>
                       </div>
 
-                      <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden bg-white/80 p-1 shadow-2xs border border-white group-hover:scale-105 transition-transform duration-300">
+                      <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden bg-white/[0.04] p-1 border border-white/[0.08] group-hover:scale-105 transition-transform duration-300">
                         <Image
                           src={course.imageSrc}
                           alt={course.title}
@@ -438,33 +396,29 @@ export default function CoursesCatalogPage() {
                   {/* Card Body */}
                   <div className="p-5 flex-1 flex flex-col justify-between gap-4">
                     <div>
-                      <h3 className="font-extrabold text-base text-slate-900 leading-snug group-hover:text-blue-600 transition">
+                      <h3 className="font-bold text-base text-[#F8FAFC] leading-snug group-hover:text-blue-400 transition">
                         {course.title}
                       </h3>
-                      <p className="text-xs text-slate-600 mt-1.5 line-clamp-2 leading-relaxed font-normal">
+                      <p className="text-xs text-[#94A3B8] mt-1.5 line-clamp-2 leading-relaxed">
                         {course.description}
                       </p>
-                      <div className="text-[11px] text-slate-600 font-medium mt-3 flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <div className="text-[11px] text-[#94A3B8] font-medium mt-3 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#0052FF] shrink-0" />
                         <span>{course.meta}</span>
                       </div>
                     </div>
 
                     {/* Card Footer */}
-                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                      <span className={`text-base font-extrabold ${course.isFree ? "text-emerald-600" : "text-slate-900"}`}>
+                    <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between">
+                      <span className={`text-base font-bold ${course.isFree ? "text-emerald-400" : "text-[#F8FAFC]"}`}>
                         {course.price}
                       </span>
 
                       <Link
                         href={`/course/${course.id}`}
-                        className={`touch-target-44 min-h-[44px] px-5 py-2.5 rounded-full text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 touch-manipulation ${
-                          course.isFree
-                            ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/25"
-                            : "border border-blue-600 text-blue-600 hover:bg-blue-50"
-                        }`}
+                        className="px-4 py-2 rounded-xl bg-[#0052FF] hover:bg-blue-600 text-white text-xs font-bold transition shadow-md shadow-blue-900/30 flex items-center gap-1 active:scale-95"
                       >
-                        <span>{course.isFree ? "Start Free" : "Unlock Syllabus"}</span>
+                        <span>View Details</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>
@@ -474,29 +428,6 @@ export default function CoursesCatalogPage() {
             })}
           </div>
         )}
-
-        {/* Bottom Hybrid Certification Banner */}
-        <div className="bg-white rounded-3xl p-5 md:p-6 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-extrabold text-sm text-slate-900">
-                MindMaster Centre Pune Offline Hybrid Certification
-              </h4>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Students in Narhe, Ambegaon & Katraj receive proctored batch certificates at completion.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200">
-              Official Academy Certification
-            </span>
-          </div>
-        </div>
       </div>
     </AppShell>
   );

@@ -66,13 +66,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Loading state while verifying auth to prevent content flashing
   if (isAuthenticated === null) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-700">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0A0D14] text-[#F8FAFC]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-bold text-slate-900">
-            Verifying MindMaster Academy session...
+          <div className="w-10 h-10 border-3 border-[#0052FF] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-semibold text-[#94A3B8] tracking-wide">
+            Loading MindMaster Studio...
           </span>
-
         </div>
       </div>
     );
@@ -80,12 +79,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <LanguageProvider>
-      <div className="min-h-screen flex bg-slate-50 text-slate-800">
-        {/* Desktop Left Sidebar */}
+      <div className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F8FAFC]">
+        {/* Desktop Left Expandable Rail (68px to 240px) */}
         <SidebarNav />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-8">
+        <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-8 lg:pl-[68px]">
           {/* Offline Connectivity Status */}
           <OfflineBanner />
 
@@ -93,7 +92,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <TopBar />
 
           {/* Page Content */}
-          <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8">
+          <main className="flex-1 w-full mx-auto">
             {children}
           </main>
         </div>

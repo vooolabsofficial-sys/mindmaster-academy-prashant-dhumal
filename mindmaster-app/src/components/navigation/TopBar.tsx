@@ -1,15 +1,15 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, Brain, Globe, Download, HelpCircle, ChevronDown } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, Globe, ChevronDown, Download, HelpCircle } from "lucide-react";
 import StudentNotificationBell from "@/components/notifications/StudentNotificationBell";
 import { useLanguage } from "@/lib/LanguageContext";
 import LanguageModal from "@/components/common/LanguageModal";
 
 export default function TopBar() {
   const [studentName, setStudentName] = useState("Student");
-  const [studentGrade, setStudentGrade] = useState("MindMaster Academy");
+  const [studentGrade, setStudentGrade] = useState("Pro Academy");
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
@@ -41,7 +41,7 @@ export default function TopBar() {
       if (raw) {
         const p = JSON.parse(raw);
         if (p.full_name) setStudentName(p.full_name);
-        if (p.grade) setStudentGrade(`${p.grade} • Maharashtra`);
+        if (p.grade) setStudentGrade(p.grade);
       }
     } catch {}
   }, []);
@@ -54,113 +54,110 @@ export default function TopBar() {
     .toUpperCase() || "MM";
 
   return (
-    <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3 sm:px-4 md:px-8 py-2.5 sm:py-3.5 transition-all select-none shadow-[0_2px_12px_rgba(15,23,42,0.03)] touch-manipulation">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4 md:gap-6">
-        {/* Left: Mobile Brand & Centre Badge */}
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
+    <header className="sticky top-0 z-30 bg-[#0A0D14]/85 backdrop-blur-2xl border-b border-white/[0.06] px-4 md:px-8 py-3 select-none text-[#F8FAFC]">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        {/* Left: Mobile Brand & OTT Badge */}
+        <div className="flex items-center gap-3 shrink-0">
           <Link
             href="/home"
-            aria-label="MindMaster Home"
-            className="lg:hidden flex items-center gap-2 touch-target-44 active:scale-95 transition"
+            aria-label="MindMaster Originals"
+            className="lg:hidden flex items-center gap-2 active:scale-95 transition"
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/25 shrink-0">
-              <Brain className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0956FF] to-[#002984] flex items-center justify-center text-white font-black text-xs shadow-[0_0_12px_rgba(9,86,255,0.4)]">
+              MM
             </div>
-            <span className="font-black text-sm sm:text-base text-slate-900 tracking-tight">MindMaster</span>
+            <span className="font-extrabold text-sm tracking-tight text-[#F8FAFC]">MindMaster</span>
           </Link>
 
-          {/* Centre Badge - Prominent */}
-          <div className="hidden sm:inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 shadow-2xs">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>{t("topbar.portalBadge")}</span>
+          <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-[11px] font-semibold text-[#94A3B8]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="tracking-wide">STUDIO OTT PORTAL</span>
           </div>
         </div>
 
-        {/* Center: Search Bar - Wider & Taller */}
-        <div className="hidden md:flex flex-1 max-w-xl mx-4">
+        {/* Center: Search Field (Dark Glass) */}
+        <div className="hidden md:flex flex-1 max-w-md mx-4">
           <div className="relative w-full">
-            <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              aria-label="Search courses, memory formulas, and lessons"
-              placeholder={t("topbar.searchPlaceholder")}
-              className="w-full pl-12 pr-14 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/15 transition shadow-2xs"
+              aria-label="Search courses, formulas, and masterclasses"
+              placeholder="Search masterclasses, formulas, episodes..."
+              className="w-full pl-10 pr-12 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs font-medium text-[#F8FAFC] placeholder:text-[#94A3B8]/60 focus:outline-none focus:border-[#0052FF] focus:bg-white/[0.07] focus:ring-1 focus:ring-[#0052FF] transition"
             />
-            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded-lg text-xs font-bold bg-white text-slate-400 border border-slate-200 shadow-2xs pointer-events-none">
-              ⌘ K
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white/[0.06] text-[#94A3B8] border border-white/10 pointer-events-none">
+              ⌘K
             </span>
           </div>
         </div>
 
-        {/* Right: Actions - Larger & Touch-Friendly */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Language Selector: English First, Opens Full Modal with All Languages on Click */}
-          <div className="flex items-center gap-1.5">
+        {/* Right: Language Pill, Help, Notifications & Avatar */}
+        <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+          {/* Language Switcher Pill */}
+          <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.08] p-1 rounded-full">
             <button
               type="button"
               onClick={() => setIsLangModalOpen(true)}
-              aria-label="Select Language / भाषा निवडा"
-              title="Click to view all languages in MindMaster App"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-extrabold text-slate-800 transition cursor-pointer shadow-2xs active:scale-95"
+              aria-label="Select Language"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold text-[#F8FAFC] hover:bg-white/[0.08] transition cursor-pointer"
             >
-              <Globe className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <Globe className="w-3.5 h-3.5 text-blue-400 shrink-0" />
               <span>{currentLanguage === "en" ? "English" : languageInfo.nativeName}</span>
-              <ChevronDown className="w-3 h-3 text-slate-400" />
+              <ChevronDown className="w-3 h-3 text-[#94A3B8]" />
             </button>
 
             {currentLanguage !== "en" && (
               <button
                 type="button"
                 onClick={() => setLanguage("en")}
-                className="px-2.5 py-1 rounded-full text-[11px] font-black bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition cursor-pointer flex items-center gap-1"
-                title="Reset language back to English"
+                className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#0052FF] hover:bg-blue-600 text-white transition cursor-pointer"
+                title="Switch to English"
               >
-                <span>Switch to English</span>
+                Switch to English
               </button>
             )}
           </div>
 
-          {/* Install App PWA CTA */}
+          {/* Install App CTA */}
           {isInstallable && (
             <button
               type="button"
               onClick={handleInstallClick}
               aria-label="Install App"
-              title="Install App"
-              className="touch-target-44 flex items-center gap-1.5 sm:gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-sm shadow-blue-500/25 transition cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 bg-white/[0.06] hover:bg-white/[0.1] text-xs font-semibold text-[#F8FAFC] px-3 py-1.5 rounded-full border border-white/[0.08] transition cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Install App</span>
+              <Download className="w-3.5 h-3.5 text-blue-400" />
+              <span>Install</span>
             </button>
           )}
 
-          {/* In-App Notifications Bell Dropdown */}
+          {/* Notifications Dropdown */}
           <StudentNotificationBell />
 
-          {/* Student Help Center & How-To Guide */}
+          {/* Help Center */}
           <Link
             href="/help"
-            aria-label="How to Use App Guide"
-            title="How to Use MindMaster App / ॲप कसे वापरावे"
-            className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 active:scale-95 rounded-full transition cursor-pointer flex items-center justify-center shrink-0 min-h-[40px] min-w-[40px]"
+            aria-label="How to Use Guide"
+            className="p-2 text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/[0.05] rounded-full transition cursor-pointer"
+            title="Help &amp; Guide"
           >
-            <HelpCircle className="w-5 h-5 stroke-[2]" />
+            <HelpCircle className="w-4 h-4 stroke-[1.8]" />
           </Link>
 
-          {/* Student Profile Pill - Enriched & Bigger */}
+          {/* Student Profile Avatar */}
           <Link
             href="/profile"
             aria-label={`Student Profile: ${studentName}`}
-            className="flex items-center gap-3 p-1.5 sm:pr-4 rounded-full hover:bg-slate-50 border border-transparent hover:border-slate-200 active:scale-98 transition cursor-pointer min-h-[44px]"
+            className="flex items-center gap-2.5 p-1 rounded-full hover:bg-white/[0.05] transition cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-full bg-blue-600 text-white text-sm font-black flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/25">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#0956FF] to-[#002984] text-white text-xs font-black flex items-center justify-center shrink-0 ring-1 ring-white/20 shadow-[0_0_12px_rgba(0,82,255,0.3)]">
               {initials}
             </div>
-            <div className="hidden sm:flex flex-col text-left">
-              <span className="text-sm font-extrabold text-slate-900 leading-tight">
+            <div className="hidden xl:flex flex-col text-left">
+              <span className="text-xs font-bold text-[#F8FAFC] leading-none truncate max-w-[100px]">
                 {studentName}
               </span>
-              <span className="text-xs text-slate-600 font-medium leading-tight mt-0.5">
+              <span className="text-[10px] text-[#94A3B8] leading-tight mt-0.5 truncate max-w-[100px]">
                 {studentGrade}
               </span>
             </div>
@@ -168,7 +165,6 @@ export default function TopBar() {
         </div>
       </div>
 
-      {/* Language Selection Modal */}
       <LanguageModal isOpen={isLangModalOpen} onClose={() => setIsLangModalOpen(false)} />
     </header>
   );
