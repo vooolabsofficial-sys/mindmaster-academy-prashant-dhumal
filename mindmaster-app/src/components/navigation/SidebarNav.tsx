@@ -9,13 +9,11 @@ import {
   FileText, 
   Award, 
   Settings, 
-  Sparkles,
-  HelpCircle,
-  ShieldCheck
+  HelpCircle
 } from "lucide-react";
 import { getUnreadCountForStudent } from "@/lib/messageStore";
 
-const OTT_NAV_ITEMS = [
+const NAV_ITEMS = [
   { href: "/home", altHref: "/", label: "Home", icon: Home },
   { href: "/my-courses", label: "My Courses", icon: PlaySquare },
   { href: "/notes", label: "Study Vault (PDFs)", icon: FileText },
@@ -53,30 +51,30 @@ export default function SidebarNav() {
 
   return (
     <>
-      {/* Desktop Expandable Navigation Rail (Disney+ Hotstar Architecture) */}
+      {/* Desktop Expandable Navigation Rail */}
       <aside 
-        className="group/rail hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-50 w-[68px] hover:w-60 bg-[#0A0D14]/95 backdrop-blur-2xl border-r border-white/[0.06] transition-all duration-300 ease-out select-none overflow-hidden hover:shadow-[8px_0_40px_rgba(0,0,0,0.8)]"
+        className="group/rail hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-50 w-[68px] hover:w-60 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300 ease-out select-none overflow-hidden hover:shadow-xl text-slate-800 dark:text-slate-100"
       >
-        {/* Top OTT Brand Monogram */}
-        <div className="h-18 flex items-center px-[18px] border-b border-white/[0.05] shrink-0">
+        {/* Top Brand Monogram */}
+        <div className="h-18 flex items-center px-[18px] border-b border-slate-200/70 dark:border-slate-800 shrink-0">
           <Link href="/home" className="flex items-center gap-3.5 group/logo cursor-pointer">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0956FF] to-[#002984] flex items-center justify-center text-white font-black text-xs tracking-tighter shrink-0 shadow-[0_0_16px_rgba(9,86,255,0.4)] group-hover/logo:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-[#2563EB] flex items-center justify-center text-white font-black text-xs tracking-tight shrink-0 shadow-xs group-hover/logo:scale-105 transition-transform">
               MM
             </div>
             <div className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200 delay-100 whitespace-nowrap">
-              <span className="font-extrabold text-sm tracking-tight text-[#F8FAFC] block leading-none">
+              <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white block leading-none">
                 MINDMASTER
               </span>
-              <span className="text-[10px] font-bold tracking-widest uppercase text-blue-400 mt-1 block">
-                ORIGINALS
+              <span className="text-[10px] font-bold tracking-wider uppercase text-blue-600 dark:text-blue-400 mt-1 block">
+                ACADEMY PORTAL
               </span>
             </div>
           </Link>
         </div>
 
-        {/* Core 5 OTT Swimlane Items */}
+        {/* Core Navigation Items */}
         <nav className="flex-1 py-6 flex flex-col gap-1.5 px-2.5">
-          {OTT_NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
               pathname === item.href ||
@@ -89,14 +87,14 @@ export default function SidebarNav() {
                 href={item.href}
                 className={`relative flex items-center h-11 px-3 rounded-xl transition-all duration-200 group/item cursor-pointer ${
                   isActive
-                    ? "bg-white/[0.08] text-[#F8FAFC] font-bold shadow-[inset_3px_0_0_#0052FF]"
-                    : "text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/[0.04]"
+                    ? "bg-blue-50 dark:bg-slate-800 text-[#2563EB] dark:text-blue-400 font-bold shadow-[inset_3px_0_0_#2563EB] dark:shadow-[inset_3px_0_0_#3B82F6]"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60"
                 }`}
               >
                 <div className="w-6 h-6 flex items-center justify-center shrink-0">
                   <Icon 
                     className={`w-5 h-5 transition-transform duration-200 group-hover/item:scale-110 ${
-                      isActive ? "text-[#0052FF] stroke-[2.2]" : "text-[#94A3B8] stroke-[1.8]"
+                      isActive ? "text-[#2563EB] dark:text-blue-400 stroke-[2.2]" : "text-slate-500 dark:text-slate-400 stroke-[1.8]"
                     }`} 
                   />
                 </div>
@@ -108,7 +106,7 @@ export default function SidebarNav() {
 
                 {/* Notification Badge */}
                 {item.hasUnread && unreadCount > 0 && (
-                  <span className="absolute right-3 w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center opacity-0 group-hover/rail:opacity-100 transition-opacity">
+                  <span className="absolute right-3 w-4 h-4 rounded-full bg-[#2563EB] text-white text-[9px] font-bold flex items-center justify-center opacity-0 group-hover/rail:opacity-100 transition-opacity">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -118,13 +116,13 @@ export default function SidebarNav() {
         </nav>
 
         {/* Bottom Utility & Student Profile Badge */}
-        <div className="p-3 border-t border-white/[0.06] shrink-0 flex flex-col gap-2 bg-[#0A0D14]/60">
+        <div className="p-3 border-t border-slate-200/70 dark:border-slate-800 shrink-0 flex flex-col gap-2 bg-slate-50/50 dark:bg-slate-900/40">
           <Link
             href="/help"
-            className="flex items-center h-10 px-3 rounded-xl text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/[0.04] transition-all cursor-pointer"
+            className="flex items-center h-10 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all cursor-pointer"
           >
             <div className="w-6 h-6 flex items-center justify-center shrink-0">
-              <HelpCircle className="w-4 h-4 text-[#94A3B8] stroke-[1.8]" />
+              <HelpCircle className="w-4 h-4 text-slate-500 dark:text-slate-400 stroke-[1.8]" />
             </div>
             <span className="ml-3 text-xs tracking-wide whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-all duration-200 delay-75">
               How to Use Guide
@@ -133,17 +131,17 @@ export default function SidebarNav() {
 
           <Link
             href="/profile"
-            className="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer"
+            className="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all cursor-pointer"
           >
-            <div className="relative w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm ring-1 ring-white/20">
+            <div className="relative w-8 h-8 rounded-full bg-[#2563EB] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
               {studentName[0] || "S"}
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-[#0A0D14]" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#0F172A]" />
             </div>
             <div className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200 delay-100 whitespace-nowrap">
-              <span className="text-xs font-bold text-[#F8FAFC] block leading-none truncate max-w-[130px]">
+              <span className="text-xs font-bold text-slate-900 dark:text-white block leading-none truncate max-w-[130px]">
                 {studentName}
               </span>
-              <span className="text-[10px] text-emerald-400 font-semibold mt-1 block">
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block">
                 Active Member
               </span>
             </div>
@@ -151,9 +149,9 @@ export default function SidebarNav() {
         </div>
       </aside>
 
-      {/* Cinematic Scrim Backdrop on Rail Hover */}
+      {/* Backdrop Scrim on Rail Hover */}
       <div 
-        className="hidden lg:block fixed inset-0 bg-black/60 backdrop-blur-xs z-40 pointer-events-none opacity-0 group-hover/rail:opacity-100 transition-opacity duration-300"
+        className="hidden lg:block fixed inset-0 bg-slate-900/20 dark:bg-black/50 backdrop-blur-xs z-40 pointer-events-none opacity-0 group-hover/rail:opacity-100 transition-opacity duration-300"
         aria-hidden="true"
       />
     </>

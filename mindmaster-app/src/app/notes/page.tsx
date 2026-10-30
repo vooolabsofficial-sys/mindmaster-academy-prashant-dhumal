@@ -415,20 +415,20 @@ export default function NotesWorkspacePage() {
 
         <div className="flex flex-col gap-6 max-w-7xl mx-auto select-none">
         {/* Top Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#1E293B] p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-xs transition-colors duration-200">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-3 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100 flex items-center gap-1.5">
+              <span className="px-3 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-800 flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5" />
                 Lecture Study Notes
               </span>
-              <span className="text-xs text-slate-400 font-semibold">ΓÇó</span>
-              <span className="text-xs text-slate-600 font-bold">{notesList.length} Total Notes Saved</span>
+              <span className="text-xs text-slate-400 font-semibold">•</span>
+              <span className="text-xs text-[#475569] dark:text-[#94A3B8] font-bold">{notesList.length} Total Notes Saved</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-black text-[#0F172A] dark:text-[#F1F5F9] tracking-tight">
               My Lecture Notes &amp; Insights
             </h1>
-            <p className="text-xs md:text-sm text-slate-600 font-medium mt-1">
+            <p className="text-xs md:text-sm text-[#475569] dark:text-[#94A3B8] font-medium mt-1">
               Notes taken live while watching lectures are automatically synced here with video timestamps and word count protections.
             </p>
           </div>
@@ -436,10 +436,10 @@ export default function NotesWorkspacePage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setActiveTab("notes")}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
                 activeTab === "notes"
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                  : "bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200"
+                  ? "bg-[#2563EB] dark:bg-[#3B82F6] text-white shadow-xs"
+                  : "bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[#475569] dark:text-slate-300 border border-slate-200 dark:border-slate-700"
               }`}
             >
               <FileText className="w-4 h-4" />
@@ -448,10 +448,10 @@ export default function NotesWorkspacePage() {
 
             <button
               onClick={() => setActiveTab("books")}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
                 activeTab === "books"
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                  : "bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200"
+                  ? "bg-[#2563EB] dark:bg-[#3B82F6] text-white shadow-xs"
+                  : "bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[#475569] dark:text-slate-300 border border-slate-200 dark:border-slate-700"
               }`}
             >
               <BookOpen className="w-4 h-4" />
@@ -461,7 +461,7 @@ export default function NotesWorkspacePage() {
             {activeTab === "notes" && (
               <button
                 onClick={handleStartNewNote}
-                className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>New Note</span>
@@ -488,8 +488,8 @@ export default function NotesWorkspacePage() {
                 onClick={() => setSelectedCourseFilter(chip.id)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
                   selectedCourseFilter === chip.id
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:border-slate-300"
+                    ? "bg-[#2563EB] dark:bg-[#3B82F6] text-white shadow-xs"
+                    : "bg-white dark:bg-slate-800 text-[#475569] dark:text-slate-300 hover:text-[#0F172A] dark:hover:text-white border border-slate-200 dark:border-slate-700 hover:border-slate-300"
                 }`}
               >
                 {chip.label}
@@ -505,7 +505,7 @@ export default function NotesWorkspacePage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search keyword, formula..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-[#0F172A] dark:text-[#F1F5F9] placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden focus:border-[#2563EB] dark:focus:border-blue-500 shadow-2xs"
             />
           </div>
         </div>
@@ -515,18 +515,18 @@ export default function NotesWorkspacePage() {
           
           {/* Left Column: Interactive Live Note Editor (5 cols) */}
           <div className="lg:col-span-5 flex flex-col gap-4 sticky top-24">
-            <div className="bg-white rounded-3xl p-6 border-2 border-blue-100 shadow-xs flex flex-col gap-4">
+            <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-6 border-2 border-blue-100 dark:border-blue-900/40 shadow-xs flex flex-col gap-4">
               {/* Editor Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-[#2563EB] dark:text-blue-400">
                     <Edit3 className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-sm text-slate-900">
+                    <h3 className="font-extrabold text-sm text-[#0F172A] dark:text-[#F1F5F9]">
                       {editingNoteId ? "Edit Lecture Note" : "Write Study Note"}
                     </h3>
-                    <p className="text-[11px] text-slate-500 font-medium">
+                    <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] font-medium">
                       Protected with dynamic word limits
                     </p>
                   </div>
@@ -646,22 +646,22 @@ export default function NotesWorkspacePage() {
                   onChange={handleBodyChange}
                   placeholder={`Write your lecture notes here. Maximum ${maxWordsAllowed} words allowed based on lesson duration to maintain app speed...`}
                   rows={8}
-                  className={`w-full p-3.5 rounded-2xl bg-slate-50 border text-xs text-slate-800 leading-relaxed placeholder-slate-400 focus:outline-none ${
+                  className={`w-full p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border text-xs text-slate-800 dark:text-[#F1F5F9] leading-relaxed placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden ${
                     isOverLimit
                       ? "border-red-400 focus:border-red-500 bg-red-50/20"
-                      : "border-slate-200 focus:border-blue-500"
+                      : "border-slate-200 dark:border-slate-700 focus:border-[#2563EB] dark:focus:border-blue-500"
                   }`}
                 />
 
                 {/* Progress bar visualizer */}
-                <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
                   <div
                     className={`h-full transition-all duration-200 ${
                       isOverLimit
                         ? "bg-red-500"
                         : isNearLimit
                         ? "bg-amber-500"
-                        : "bg-blue-600"
+                        : "bg-[#2563EB] dark:bg-[#3B82F6]"
                     }`}
                     style={{
                       width: `${Math.min(100, (currentWordCount / maxWordsAllowed) * 100)}%`,
@@ -669,29 +669,29 @@ export default function NotesWorkspacePage() {
                   />
                 </div>
 
-                <p className="text-[10px] text-slate-500 mt-1 font-medium">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-medium">
                   * Limit is calibrated to lesson duration ({Math.round(activeLesson?.durationSec / 60)} min video) to keep the app lightning fast.
                 </p>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/60">
                 {editingNoteId ? (
                   <button
                     onClick={handleStartNewNote}
-                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 transition cursor-pointer"
                   >
                     Cancel Edit
                   </button>
                 ) : (
-                  <span className="text-[11px] text-slate-400 font-medium">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                     Autosaves every 2 seconds
                   </span>
                 )}
 
                 <button
                   onClick={handleManualSave}
-                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer ml-auto"
+                  className="px-6 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 dark:bg-[#3B82F6] dark:hover:bg-blue-600 text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer ml-auto"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>Save Note</span>
@@ -704,33 +704,33 @@ export default function NotesWorkspacePage() {
           <div className="lg:col-span-7 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-extrabold text-sm text-slate-900">
+                <h3 className="font-extrabold text-sm text-[#0F172A] dark:text-[#F1F5F9]">
                   Notes List ({filteredNotes.length})
                 </h3>
-                <p className="text-[11px] text-slate-500 font-medium">
+                <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] font-medium">
                   Click any note to edit or jump to the exact video lecture timestamp
                 </p>
               </div>
 
-              <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+              <span className="text-xs font-bold text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800">
                 {filteredNotes.length} Found
               </span>
             </div>
 
             {filteredNotes.length === 0 ? (
-              <div className="bg-white rounded-3xl p-12 border border-slate-200 text-center flex flex-col items-center justify-center gap-3 shadow-2xs">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+              <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-12 border border-slate-200/80 dark:border-slate-700/60 text-center flex flex-col items-center justify-center gap-3 shadow-2xs">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-[#2563EB] dark:text-blue-400">
                   <FileText className="w-6 h-6" />
                 </div>
-                <h4 className="font-extrabold text-sm text-slate-900">No notes found</h4>
-                <p className="text-xs text-slate-500 max-w-sm">
+                <h4 className="font-extrabold text-sm text-[#0F172A] dark:text-[#F1F5F9]">No notes found</h4>
+                <p className="text-xs text-[#475569] dark:text-[#94A3B8] max-w-sm">
                   {searchQuery 
                     ? `No notes match "${searchQuery}". Try changing your search query or filter.` 
                     : "No lecture notes created yet. You can write notes while watching lectures in the video player or right here in this editor."}
                 </p>
                 <button
                   onClick={handleStartNewNote}
-                  className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-xs hover:bg-blue-700 transition"
+                  className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 dark:bg-[#3B82F6] dark:hover:bg-blue-600 text-white text-xs font-bold shadow-xs transition"
                 >
                   Write First Note
                 </button>
@@ -745,25 +745,25 @@ export default function NotesWorkspacePage() {
                   return (
                     <div
                       key={note.id}
-                      className={`p-5 rounded-3xl border transition flex flex-col gap-3 shadow-xs ${
+                      className={`p-5 rounded-2xl border transition flex flex-col gap-3 shadow-xs ${
                         isEditing
-                          ? "bg-blue-50/50 border-blue-400 ring-2 ring-blue-500/20"
-                          : "bg-white border-slate-200 hover:border-blue-300"
+                          ? "bg-blue-50/50 dark:bg-blue-950/40 border-[#2563EB] ring-2 ring-blue-500/20"
+                          : "bg-white dark:bg-[#1E293B] border-slate-200/80 dark:border-slate-700/60 hover:border-[#2563EB]/40 dark:hover:border-blue-500/40"
                       }`}
                     >
                       {/* Note Top Bar: Course Badge, Lesson Badge, Timestamp & Word Count */}
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-1.5">
                           {note.courseCode && (
-                            <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-200">
+                            <span className="text-[10px] font-extrabold text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
                               {note.courseCode}
                             </span>
                           )}
-                          <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200 truncate max-w-[200px]">
+                          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 truncate max-w-[200px]">
                             {note.lessonTitle || note.courseTitle}
                           </span>
                           {note.timestampSec !== undefined && note.timestampSec > 0 && (
-                            <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+                            <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               at {formatTime(note.timestampSec)}
                             </span>
@@ -772,10 +772,10 @@ export default function NotesWorkspacePage() {
 
                         <div className="flex items-center gap-2">
                           {/* Word count badge */}
-                          <span className="text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200">
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
                             {wordCount} / {maxLimit} words
                           </span>
-                          <span className="text-[10px] text-slate-400 font-medium">
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                             {note.updatedAt}
                           </span>
                         </div>
@@ -783,29 +783,29 @@ export default function NotesWorkspacePage() {
 
                       {/* Note Title & Content */}
                       <div>
-                        <h4 className="font-extrabold text-sm md:text-base text-slate-900 mb-1">
+                        <h4 className="font-extrabold text-sm md:text-base text-[#0F172A] dark:text-[#F1F5F9] mb-1">
                           {note.title}
                         </h4>
-                        <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line font-normal">
+                        <p className="text-xs text-[#475569] dark:text-[#94A3B8] leading-relaxed whitespace-pre-line font-normal">
                           {note.body}
                         </p>
                       </div>
 
                       {/* Bottom Action Row: Jump to Video Lecture + Edit + Delete */}
-                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-1">
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700/60 mt-1">
                         {/* Video Lecture Deep Link */}
                         {note.lessonId ? (
                           <Link
                             href={`/watch/${note.lessonId}${note.timestampSec ? `?t=${note.timestampSec}` : ""}`}
-                            className="px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 transition inline-flex items-center gap-1.5 shadow-2xs"
+                            className="px-3.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-[#2563EB] dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-800 transition inline-flex items-center gap-1.5 shadow-2xs"
                           >
-                            <Play className="w-3 h-3 fill-blue-700 text-blue-700" />
+                            <Play className="w-3 h-3 fill-current text-[#2563EB] dark:text-blue-400" />
                             <span>
                               Jump to Video Lecture {note.timestampSec ? `(${formatTime(note.timestampSec)})` : ""}
                             </span>
                           </Link>
                         ) : (
-                          <span className="text-[11px] text-slate-400 font-medium">
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                             Course Reference Note
                           </span>
                         )}
@@ -814,15 +814,15 @@ export default function NotesWorkspacePage() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleEditNote(note)}
-                            className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[#0F172A] dark:text-[#F1F5F9] border border-slate-200 dark:border-slate-700 text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer"
                           >
-                            <Edit3 className="w-3 h-3 text-blue-600" />
+                            <Edit3 className="w-3 h-3 text-[#2563EB] dark:text-blue-400" />
                             <span>Edit</span>
                           </button>
 
                           <button
                             onClick={() => handleDeleteNote(note.id)}
-                            className="p-1.5 rounded-xl text-red-500 hover:bg-red-50 transition cursor-pointer"
+                            className="p-1.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
                             title="Delete note"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -840,16 +840,16 @@ export default function NotesWorkspacePage() {
     ) : (
       /* Books & PDFs Tab */
       <div className="flex flex-col gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-white dark:bg-[#1E293B] p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200">
           <div>
-            <h2 className="text-xl font-extrabold text-slate-900">
+            <h2 className="text-xl font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">
               Official Course Handbooks &amp; PDF Library
             </h2>
-            <p className="text-xs text-slate-600 mt-1">
+            <p className="text-xs text-[#475569] dark:text-[#94A3B8] mt-1">
               Read online in high resolution or download study materials for offline revision.
             </p>
           </div>
-          <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-3.5 py-1.5 rounded-full shadow-2xs">
+          <span className="text-xs font-bold text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 px-3.5 py-1.5 rounded-full shadow-2xs">
             {booksList.length} Verified Books Available
           </span>
         </div>
@@ -858,29 +858,29 @@ export default function NotesWorkspacePage() {
           {booksList.map((book) => (
             <div
               key={book.id}
-              className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs hover:shadow-md transition flex flex-col justify-between gap-4"
+              className="bg-white dark:bg-[#1E293B] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 shadow-xs hover:border-[#2563EB]/40 dark:hover:border-blue-500/40 transition flex flex-col justify-between gap-4"
             >
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800">
                     {book.courseTitle}
                   </span>
-                  <span className="text-xs text-slate-500 font-medium">
+                  <span className="text-xs text-[#475569] dark:text-[#94A3B8] font-medium">
                     {book.pages} Pages
                   </span>
                 </div>
-                <h3 className="font-extrabold text-base text-slate-900 line-clamp-2 mt-1">
+                <h3 className="font-extrabold text-base text-[#0F172A] dark:text-[#F1F5F9] line-clamp-2 mt-1">
                   {book.title}
                 </h3>
               </div>
 
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/60">
                 <button
                   onClick={() => {
                     setReadingBook(book);
                     setPdfZoom(100);
                   }}
-                  className="flex-1 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-sm shadow-blue-500/20"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 dark:bg-[#3B82F6] dark:hover:bg-blue-600 text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                 >
                   <BookOpen className="w-4 h-4" />
                   <span>Read PDF</span>
@@ -889,7 +889,7 @@ export default function NotesWorkspacePage() {
                 <a
                   href={book.filePath}
                   download
-                  className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                  className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[#475569] dark:text-slate-300 transition"
                   title="Download PDF"
                 >
                   <Download className="w-4 h-4" />
@@ -904,19 +904,19 @@ export default function NotesWorkspacePage() {
     {/* PDF Reader Modal */}
     {readingBook && (
       <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-6 animate-fade-in">
-        <div className="bg-white rounded-3xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200">
+        <div className="bg-white dark:bg-[#1E293B] rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700">
           {/* Modal Top Bar */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-[#2563EB] dark:text-blue-400 flex items-center justify-center shrink-0">
                 <BookOpen className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <h3 className="font-extrabold text-sm text-slate-900 truncate">
+                <h3 className="font-extrabold text-sm text-[#0F172A] dark:text-[#F1F5F9] truncate">
                   {readingBook.title}
                 </h3>
-                <span className="text-xs text-slate-500 font-medium">
-                  {readingBook.courseTitle} ΓÇó {readingBook.pages} Pages
+                <span className="text-xs text-[#475569] dark:text-[#94A3B8] font-medium">
+                  {readingBook.courseTitle} • {readingBook.pages} Pages
                 </span>
               </div>
             </div>
@@ -924,17 +924,17 @@ export default function NotesWorkspacePage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPdfZoom((prev) => Math.max(60, prev - 15))}
-                className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition cursor-pointer"
+                className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-[#0F172A] dark:text-[#F1F5F9] transition cursor-pointer"
                 title="Zoom Out"
               >
                 <ZoomOut className="w-4 h-4" />
               </button>
-              <span className="text-xs font-mono font-bold text-slate-600 px-1">
+              <span className="text-xs font-mono font-bold text-[#0F172A] dark:text-[#F1F5F9] px-1">
                 {pdfZoom}%
               </span>
               <button
                 onClick={() => setPdfZoom((prev) => Math.min(180, prev + 15))}
-                className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition cursor-pointer"
+                className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-[#0F172A] dark:text-[#F1F5F9] transition cursor-pointer"
                 title="Zoom In"
               >
                 <ZoomIn className="w-4 h-4" />
@@ -942,14 +942,14 @@ export default function NotesWorkspacePage() {
               <a
                 href={readingBook.filePath}
                 download
-                className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition ml-2 cursor-pointer"
+                className="p-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 dark:bg-[#3B82F6] dark:hover:bg-blue-600 text-white transition ml-2 cursor-pointer shadow-xs"
                 title="Download PDF"
               >
                 <Download className="w-4 h-4" />
               </a>
               <button
                 onClick={() => setReadingBook(null)}
-                className="p-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 transition ml-1 cursor-pointer"
+                className="p-2 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-[#0F172A] dark:text-[#F1F5F9] transition ml-1 cursor-pointer"
                 title="Close"
               >
                 <X className="w-4 h-4" />

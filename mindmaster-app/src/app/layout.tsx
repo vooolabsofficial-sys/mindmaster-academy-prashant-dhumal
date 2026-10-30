@@ -3,6 +3,9 @@ import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
+import { ThemeProvider } from "@/lib/ThemeContext";
+import MaintenanceBanner from "@/components/common/MaintenanceBanner";
+import { Toaster } from "sonner";
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -41,15 +44,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0B57D0",
+  themeColor: "#2563EB",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
 };
-
-import MaintenanceBanner from "@/components/common/MaintenanceBanner";
-import { Toaster } from "sonner";
 
 export default function RootLayout({
   children,
@@ -62,13 +62,20 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('mindmaster_theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');document.documentElement.style.colorScheme='dark';}else{document.documentElement.classList.remove('dark');document.documentElement.setAttribute('data-theme','light');document.documentElement.style.colorScheme='light';}}catch(e){}})();`,
+          }}
+        />
       </head>
-      <body suppressHydrationWarning className="min-h-full flex flex-col bg-slate-50 text-slate-800 font-sans antialiased">
-        <MaintenanceBanner />
-        <ServiceWorkerRegister />
-        <PwaInstallPrompt />
-        <Toaster richColors position="top-right" closeButton />
-        {children}
+      <body suppressHydrationWarning className="min-h-full flex flex-col bg-[#F8FAFC] dark:bg-[#0F172A] text-[#0F172A] dark:text-[#F1F5F9] font-sans antialiased transition-colors duration-200">
+        <ThemeProvider>
+          <MaintenanceBanner />
+          <ServiceWorkerRegister />
+          <PwaInstallPrompt />
+          <Toaster richColors position="top-right" closeButton />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

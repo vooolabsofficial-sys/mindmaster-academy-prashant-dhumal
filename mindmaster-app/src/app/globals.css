@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-heading: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -7,47 +9,54 @@
 
 @layer base {
   :root {
-    --bg-app: #F8FAFC;
-    --card-surface: #FFFFFF;
+    /* Daylight Studio Theme (Default) */
+    --bg-canvas: #F8FAFC;
+    --surface: #FFFFFF;
+    --surface-subtle: #F1F5F9;
+    --surface-hover: #F8FAFC;
+    --border-color: rgba(226, 232, 240, 0.9);
+    --border-subtle: #E2E8F0;
     
-    /* Primary Royal Blue */
-    --primary-blue: #1D4ED8;
-    --primary-blue-hover: #1E40AF;
-    --primary-blue-light: #EFF6FF;
-    --primary-blue-subtle: #DBEAFE;
-    
-    /* Accents */
-    --accent-amber: #F59E0B;
-    --accent-amber-light: #FEF3C7;
-    --accent-emerald: #10B981;
-    --accent-emerald-light: #ECFDF5;
-    --accent-rose: #F43F5E;
-    --accent-rose-light: #FFF1F2;
+    --brand-primary: #2563EB;
+    --brand-primary-hover: #1D4ED8;
+    --brand-light: #EFF6FF;
 
-    /* High-contrast Clean Typography Tokens (UI/UX Pro Max) */
-    --heading-color: #0F172A; /* Slate 900 */
-    --body-color: #334155;    /* Slate 700 - high contrast readability */
+    --heading-color: #0F172A; /* Deep Slate */
+    --body-color: #334155;    /* Slate 700 */
     --muted-color: #64748B;   /* Slate 500 */
-    --border-subtle: #E2E8F0; /* Slate 200 */
-    --border-focus: #3B82F6;
 
-    /* OTT Cinema Dark Tokens (Disney+ Hotstar / Netflix Studio Grade) */
-    --ott-bg: #0A0D14;
-    --ott-surface: #121722;
-    --ott-surface-hover: #1A2130;
-    --ott-border: rgba(255, 255, 255, 0.08);
-    --ott-accent: #0052FF;
-    --ott-text-primary: #F8FAFC;
-    --ott-text-muted: #94A3B8;
+    /* Subtle Natural Shadow */
+    --card-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+  }
+
+  .dark {
+    /* Soft Matte Slate Dark Theme (Non-cyberpunk, warm night study) */
+    --bg-canvas: #0F172A;
+    --surface: #1E293B;
+    --surface-subtle: #172033;
+    --surface-hover: #273549;
+    --border-color: rgba(51, 65, 85, 0.7);
+    --border-subtle: #334155;
+
+    --brand-primary: #3B82F6;
+    --brand-primary-hover: #2563EB;
+    --brand-light: rgba(59, 130, 246, 0.12);
+
+    --heading-color: #F1F5F9; /* Warm Slate 100 */
+    --body-color: #CBD5E1;    /* Slate 300 */
+    --muted-color: #94A3B8;   /* Slate 400 */
+
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
   }
 
   body {
-    background-color: var(--bg-app);
+    background-color: var(--bg-canvas);
     color: var(--body-color);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -58,74 +67,19 @@
   }
 }
 
-/* UI/UX Pro Max Card & Button Utility Classes (Bright, Modern, Non-Dark) */
-.pro-card {
-  background-color: #FFFFFF;
-  border-radius: 1.25rem;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+/* Academic Dual-Theme Card Utility */
+.academic-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  box-shadow: var(--card-shadow);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.pro-card:hover {
-  border-color: #CBD5E1;
-  box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
-}
-
-.pro-card-interactive {
-  cursor: pointer;
-  transform: translateY(0);
-}
-
-.pro-card-interactive:hover {
+.academic-card:hover {
+  background-color: var(--surface-hover);
+  border-color: rgba(148, 163, 184, 0.4);
   transform: translateY(-2px);
-}
-
-.pro-btn-primary {
-  background-color: #1D4ED8;
-  color: #FFFFFF;
-  font-weight: 600;
-  border-radius: 9999px;
-  padding: 0.625rem 1.25rem;
-  font-size: 0.875rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.2);
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-}
-
-.pro-btn-primary:hover {
-  background-color: #1E40AF;
-  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.35);
-  transform: translateY(-1px);
-}
-
-.pro-btn-primary:active {
-  transform: scale(0.98);
-}
-
-.pro-btn-secondary {
-  background-color: #FFFFFF;
-  color: #0F172A;
-  border: 1px solid #E2E8F0;
-  font-weight: 600;
-  border-radius: 9999px;
-  padding: 0.625rem 1.25rem;
-  font-size: 0.875rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-}
-
-.pro-btn-secondary:hover {
-  background-color: #F8FAFC;
-  border-color: #CBD5E1;
 }
 
 /* Custom modern scrollbars */
@@ -140,11 +94,14 @@
   background: #CBD5E1;
   border-radius: 9999px;
 }
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
 }
 
-/* UI/UX Pro Max Mobile Touch Ergonomics & Accessibility Utilities */
+/* Touch Ergonomics & Accessibility Utilities */
 .touch-manipulation {
   touch-action: manipulation;
 }
@@ -197,49 +154,3 @@
     display: none !important;
   }
 }
-
-/* OTT Cinema Shimmer & Glass Input Styles (Netflix / Disney+ Hotstar) */
-.ott-card {
-  background-color: #121722;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1rem;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.ott-card:hover {
-  background-color: #1A2130;
-  border-color: rgba(255, 255, 255, 0.16);
-  transform: translateY(-2px);
-}
-
-.ott-input {
-  background-color: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  color: #F8FAFC;
-  border-radius: 0.75rem;
-  transition: all 0.2s ease-in-out;
-}
-
-.ott-input:focus {
-  outline: none;
-  background-color: rgba(255, 255, 255, 0.07);
-  border-color: #0052FF;
-  box-shadow: 0 0 0 2px rgba(0, 82, 255, 0.25);
-}
-
-.ott-input-error {
-  border-color: rgba(239, 68, 68, 0.8) !important;
-  color: #F87171 !important;
-}
-
-.ott-shimmer {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.03) 75%);
-  background-size: 200% 100%;
-  animation: ottShimmer 1.5s infinite;
-}
-
-@keyframes ottShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-

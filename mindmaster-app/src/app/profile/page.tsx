@@ -38,10 +38,13 @@ import {
   Clock,
   RotateCcw,
   ChevronDown,
+  Sun,
+  Moon,
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
 import { signOutAndClearCookie } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useTheme } from "@/lib/ThemeContext";
 import LanguageModal from "@/components/common/LanguageModal";
 import { generateFeeReceiptPdf, generateCourseCertificatePdf } from "@/lib/pdfGenerator";
 import { getAllOfflineBooks, clearAllOfflineVault, syncQueuedWatchHeartbeats, OfflineBookRecord } from "@/lib/offlineStorage";
@@ -61,6 +64,7 @@ import {
 
 export default function ProfileSettingsPage() {
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
 
   // Navigation active tab inside settings
   const [activeTab, setActiveTab] = useState<"profile" | "preferences" | "security" | "storage" | "tickets" | "legal">("profile");
@@ -581,28 +585,28 @@ export default function ProfileSettingsPage() {
         {/* =========================================================================
             1. PHONE-STYLE STUDENT HERO CARD
            ========================================================================= */}
-        <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#E4E8F8] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-6 md:p-8 border border-slate-200/80 dark:border-slate-700/60 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 transition-colors duration-200">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-[#E8F1FD] text-[#0B57D0] flex items-center justify-center text-xl font-black ring-4 ring-white shadow-xs shrink-0">
+              <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center text-xl font-black ring-4 ring-white dark:ring-slate-800 shadow-xs shrink-0">
                 {initials}
               </div>
-              <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white" />
+              <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-800" />
             </div>
 
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl md:text-2xl font-extrabold text-[#0E1B3D] tracking-tight">
+                <h1 className="text-xl md:text-2xl font-extrabold text-[#0F172A] dark:text-[#F1F5F9] tracking-tight">
                   {fullName}
                 </h1>
-                <span className="bg-blue-50 text-[#0B57D0] border border-blue-200 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                <span className="bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
                   VERIFIED STUDENT
                 </span>
               </div>
-              <p className="text-xs text-[#5A6478] font-medium mt-1">
+              <p className="text-xs text-[#475569] dark:text-[#94A3B8] font-medium mt-1">
                 {standard} • {district} ({taluka})
               </p>
-              <div className="flex items-center gap-2 text-xs text-slate-400 font-mono mt-1">
+              <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-mono mt-1">
                 <span>{phone}</span>
                 <span>•</span>
                 <span>{school}</span>
@@ -619,22 +623,22 @@ export default function ProfileSettingsPage() {
                 setTicketErrors({});
                 setIsTicketModalOpen(true);
               }}
-              className="px-3.5 py-2 rounded-xl bg-blue-50 border border-blue-200 text-[#0B57D0] text-xs font-bold hover:bg-blue-100 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 text-[#2563EB] dark:text-blue-400 text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/50 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
               title="Raise In-App Support Ticket"
             >
-              <LifeBuoy className="w-3.5 h-3.5 text-[#0B57D0]" />
+              <LifeBuoy className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" />
               <span>Raise Support Ticket</span>
             </button>
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="px-4 py-2 rounded-xl bg-white border border-[#E4E8F8] text-[#0E1B3D] text-xs font-bold hover:border-[#0B57D0] hover:bg-[#F5F7FF] transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#0F172A] dark:text-[#F1F5F9] text-xs font-bold hover:border-[#2563EB] dark:hover:border-blue-500 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
-              <Edit3 className="w-3.5 h-3.5 text-[#0B57D0]" />
+              <Edit3 className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" />
               <span>{isEditing ? "Cancel" : "Edit Profile"}</span>
             </button>
             <button
               onClick={handleSignOut}
-              className="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition cursor-pointer"
+              className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-900/50 transition cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
@@ -643,11 +647,11 @@ export default function ProfileSettingsPage() {
         </div>
 
         {/* Quick Segment Navigation Pills (Phone Settings Style) */}
-        <div className="flex items-center gap-2 p-1.5 bg-[#F5F7FF] rounded-2xl border border-[#E4E8F8] overflow-x-auto text-xs font-bold text-[#5A6478]">
+        <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 overflow-x-auto text-xs font-bold text-[#475569] dark:text-[#94A3B8]">
           <button
             onClick={() => setActiveTab("profile")}
             className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === "profile" ? "bg-white text-[#0B57D0] shadow-xs font-extrabold" : "hover:text-[#0E1B3D]"
+              activeTab === "profile" ? "bg-white dark:bg-[#1E293B] text-[#2563EB] dark:text-blue-400 shadow-xs font-extrabold" : "hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
             }`}
           >
             <User className="w-4 h-4" />
@@ -656,16 +660,16 @@ export default function ProfileSettingsPage() {
           <button
             onClick={() => setActiveTab("preferences")}
             className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === "preferences" ? "bg-white text-[#0B57D0] shadow-xs font-extrabold" : "hover:text-[#0E1B3D]"
+              activeTab === "preferences" ? "bg-white dark:bg-[#1E293B] text-[#2563EB] dark:text-blue-400 shadow-xs font-extrabold" : "hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
             }`}
           >
             <Globe className="w-4 h-4" />
-            <span>Language & Video</span>
+            <span>Language & Theme</span>
           </button>
           <button
             onClick={() => setActiveTab("security")}
             className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === "security" ? "bg-white text-[#0B57D0] shadow-xs font-extrabold" : "hover:text-[#0E1B3D]"
+              activeTab === "security" ? "bg-white dark:bg-[#1E293B] text-[#2563EB] dark:text-blue-400 shadow-xs font-extrabold" : "hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
             }`}
           >
             <Lock className="w-4 h-4" />
@@ -674,7 +678,7 @@ export default function ProfileSettingsPage() {
           <button
             onClick={() => setActiveTab("tickets")}
             className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === "tickets" ? "bg-white text-[#0B57D0] shadow-xs font-extrabold" : "hover:text-[#0E1B3D]"
+              activeTab === "tickets" ? "bg-white dark:bg-[#1E293B] text-[#2563EB] dark:text-blue-400 shadow-xs font-extrabold" : "hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
             }`}
           >
             <LifeBuoy className="w-4 h-4" />
@@ -686,7 +690,7 @@ export default function ProfileSettingsPage() {
           <button
             onClick={() => setActiveTab("storage")}
             className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === "storage" ? "bg-white text-[#0B57D0] shadow-xs font-extrabold" : "hover:text-[#0E1B3D]"
+              activeTab === "storage" ? "bg-white dark:bg-[#1E293B] text-[#2563EB] dark:text-blue-400 shadow-xs font-extrabold" : "hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
             }`}
           >
             <Smartphone className="w-4 h-4" />
@@ -695,7 +699,7 @@ export default function ProfileSettingsPage() {
           <button
             onClick={() => setActiveTab("legal")}
             className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === "legal" ? "bg-white text-[#0B57D0] shadow-xs font-extrabold" : "hover:text-[#0E1B3D]"
+              activeTab === "legal" ? "bg-white dark:bg-[#1E293B] text-[#2563EB] dark:text-blue-400 shadow-xs font-extrabold" : "hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
             }`}
           >
             <FileText className="w-4 h-4" />
@@ -707,20 +711,20 @@ export default function ProfileSettingsPage() {
             SECTION 1: EDIT ACADEMIC PROFILE
            ========================================================================= */}
         {activeTab === "profile" && (
-          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 shadow-xs space-y-6 transition-colors duration-200">
+            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-700/60 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0B57D0] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 flex items-center justify-center">
                   <User className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-[#0E1B3D]">Academic Student Details</h2>
-                  <p className="text-xs text-[#5A6478]">
+                  <h2 className="text-base font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">Academic Student Details</h2>
+                  <p className="text-xs text-[#475569] dark:text-[#94A3B8]">
                     Your verified credentials registered with MindMaster Academy Satara & Pune centers.
                   </p>
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
+              <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-100 dark:border-emerald-900/50 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Enrolled Learner
               </span>
             </div>
@@ -728,22 +732,22 @@ export default function ProfileSettingsPage() {
             <form onSubmit={handleSaveAcademicProfile} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
-                  <label className="font-bold text-[#0E1B3D] block mb-1.5">Student Full Name</label>
+                  <label className="font-bold text-[#0F172A] dark:text-[#F1F5F9] block mb-1.5">Student Full Name</label>
                   <input
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
-                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-[#0F172A] dark:text-[#F1F5F9] font-medium focus:bg-white dark:focus:bg-slate-900 focus:border-[#2563EB] dark:focus:border-blue-500 focus:outline-hidden"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#0E1B3D] block mb-1.5">Standard / Class / Year</label>
+                  <label className="font-bold text-[#0F172A] dark:text-[#F1F5F9] block mb-1.5">Standard / Class / Year</label>
                   <select
                     value={standard}
                     onChange={(e) => setStandard(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-[#0F172A] dark:text-[#F1F5F9] font-medium focus:bg-white dark:focus:bg-slate-900 focus:border-[#2563EB] dark:focus:border-blue-500 focus:outline-hidden"
                   >
                     <option value="5th - 8th Standard (Scholarship)">5th - 8th Standard (Scholarship)</option>
                     <option value="9th - 10th Standard (SSC / CBSE)">9th - 10th Standard (SSC / CBSE)</option>
@@ -755,11 +759,11 @@ export default function ProfileSettingsPage() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#0E1B3D] block mb-1.5">Target Exam / Goal</label>
+                  <label className="font-bold text-[#0F172A] dark:text-[#F1F5F9] block mb-1.5">Target Exam / Goal</label>
                   <select
                     value={targetExam}
                     onChange={(e) => setTargetExam(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-[#0F172A] dark:text-[#F1F5F9] font-medium focus:bg-white dark:focus:bg-slate-900 focus:border-[#2563EB] dark:focus:border-blue-500 focus:outline-hidden"
                   >
                     <option value="Vedic Maths & Speed Memory">Vedic Maths & Speed Memory</option>
                     <option value="10th SSC Board Maths Special">10th SSC Board Maths Special</option>
@@ -770,44 +774,44 @@ export default function ProfileSettingsPage() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#0E1B3D] block mb-1.5">School / College / Institute Name</label>
+                  <label className="font-bold text-[#0F172A] dark:text-[#F1F5F9] block mb-1.5">School / College / Institute Name</label>
                   <input
                     type="text"
                     value={school}
                     onChange={(e) => setSchool(e.target.value)}
                     placeholder="e.g. Yashwantrao Chavan College, Satara"
-                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-[#0F172A] dark:text-[#F1F5F9] font-medium focus:bg-white dark:focus:bg-slate-900 focus:border-[#2563EB] dark:focus:border-blue-500 focus:outline-hidden"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#0E1B3D] block mb-1.5">Village / City</label>
+                  <label className="font-bold text-[#0F172A] dark:text-[#F1F5F9] block mb-1.5">Village / City</label>
                   <input
                     type="text"
                     value={village}
                     onChange={(e) => setVillage(e.target.value)}
                     placeholder="e.g. Narhe / Powai Naka"
-                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-[#0F172A] dark:text-[#F1F5F9] font-medium focus:bg-white dark:focus:bg-slate-900 focus:border-[#2563EB] dark:focus:border-blue-500 focus:outline-hidden"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#0E1B3D] block mb-1.5">Taluka</label>
+                  <label className="font-bold text-[#0F172A] dark:text-[#F1F5F9] block mb-1.5">Taluka</label>
                   <input
                     type="text"
                     value={taluka}
                     onChange={(e) => setTaluka(e.target.value)}
                     placeholder="e.g. Satara / Haveli"
-                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-[#0F172A] dark:text-[#F1F5F9] font-medium focus:bg-white dark:focus:bg-slate-900 focus:border-[#2563EB] dark:focus:border-blue-500 focus:outline-hidden"
                   />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="font-bold text-[#0E1B3D] block mb-1.5">District (Maharashtra)</label>
+                  <label className="font-bold text-[#0F172A] dark:text-[#F1F5F9] block mb-1.5">District (Maharashtra)</label>
                   <select
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-[#0E1B3D] font-medium focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-[#0F172A] dark:text-[#F1F5F9] font-medium focus:bg-white dark:focus:bg-slate-900 focus:border-[#2563EB] dark:focus:border-blue-500 focus:outline-hidden"
                   >
                     <option value="Satara">Satara (Head Office)</option>
                     <option value="Pune">Pune (Campus Center)</option>
@@ -827,7 +831,7 @@ export default function ProfileSettingsPage() {
                 <button
                   type="submit"
                   disabled={isSavingProfile}
-                  className="px-6 py-2.5 rounded-xl bg-[#0B57D0] hover:bg-[#0052FF] text-white text-xs font-bold transition shadow-xs flex items-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
+                  className="px-6 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 dark:bg-[#3B82F6] dark:hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs flex items-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
                   {isSavingProfile ? (
                     <>
@@ -847,33 +851,84 @@ export default function ProfileSettingsPage() {
         )}
 
         {/* =========================================================================
-            SECTION 2: APP LANGUAGE & VIDEO PLAYBACK PREFERENCES
+            SECTION 2: APP LANGUAGE, THEME & VIDEO PLAYBACK PREFERENCES
            ========================================================================= */}
         {activeTab === "preferences" && (
-          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 shadow-xs space-y-6 transition-colors duration-200">
+            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-700/60 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 flex items-center justify-center">
                   <Globe className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-[#0E1B3D]">Language & Video Preferences</h2>
-                  <p className="text-xs text-[#5A6478]">
-                    Personalize default display language and player playback speed for Vedic lectures.
+                  <h2 className="text-base font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">Display, Theme & Video Preferences</h2>
+                  <p className="text-xs text-[#475569] dark:text-[#94A3B8]">
+                    Personalize daylight/night reading themes, default language, and player playback speed for Vedic lectures.
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-5">
-              {/* Language Selector */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Reading Theme Mode Toggle */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-xs font-extrabold text-[#0E1B3D]">
+                  <h3 className="text-xs font-extrabold text-[#0F172A] dark:text-[#F1F5F9] flex items-center gap-1.5">
+                    {theme === "dark" ? (
+                      <Moon className="w-4 h-4 text-blue-400" />
+                    ) : (
+                      <Sun className="w-4 h-4 text-[#2563EB]" />
+                    )}
+                    <span>Reading Mode / थीम: {theme === "dark" ? "Soft Matte Night (Dark)" : "Daylight Studio (Light)"}</span>
+                  </h3>
+                  <p className="text-[11px] text-[#475569] dark:text-[#94A3B8]">
+                    Clean daylight mode for day study, or soft matte slate for night study with zero eye fatigue.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTheme("light");
+                      toast.success("Switched to Daylight Studio (Light)");
+                    }}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      theme === "light"
+                        ? "bg-[#2563EB] text-white shadow-xs"
+                        : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
+                    }`}
+                  >
+                    <Sun className="w-3.5 h-3.5" />
+                    <span>Daylight (Light)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTheme("dark");
+                      toast.success("Switched to Soft Matte Night (Dark)");
+                    }}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      theme === "dark"
+                        ? "bg-[#3B82F6] text-white shadow-xs"
+                        : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
+                    }`}
+                  >
+                    <Moon className="w-3.5 h-3.5" />
+                    <span>Soft Matte (Dark)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Language Selector */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-xs font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">
                     Language / भाषा: {languageInfo.nativeName} ({languageInfo.englishName})
                   </h3>
-                  <p className="text-[11px] text-[#5A6478]">
-                    Active: <strong className="text-[#0B57D0]">{languageInfo.nativeName}</strong> • English is the strict primary default.
+                  <p className="text-[11px] text-[#475569] dark:text-[#94A3B8]">
+                    Active: <strong className="text-[#2563EB] dark:text-blue-400">{languageInfo.nativeName}</strong> • English is the strict primary default.
                   </p>
                 </div>
 
@@ -885,7 +940,7 @@ export default function ProfileSettingsPage() {
                         setLanguage("en");
                         toast.success("Language reset to English (Default)");
                       }}
-                      className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-[#0B57D0] text-white hover:bg-[#0052FF] transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-[#2563EB] dark:bg-[#3B82F6] text-white hover:bg-blue-700 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
                     >
                       <Globe className="w-3.5 h-3.5" />
                       <span>Switch to English</span>
@@ -900,8 +955,8 @@ export default function ProfileSettingsPage() {
                     }}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                       currentLanguage === "en"
-                        ? "bg-[#0B57D0] text-white shadow-xs"
-                        : "bg-white border border-[#E4E8F8] text-[#5A6478] hover:text-[#0E1B3D]"
+                        ? "bg-[#2563EB] dark:bg-[#3B82F6] text-white shadow-xs"
+                        : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
                     }`}
                   >
                     English (Default)
@@ -910,7 +965,7 @@ export default function ProfileSettingsPage() {
                   <button
                     type="button"
                     onClick={() => setIsLangModalOpen(true)}
-                    className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-blue-50 border border-blue-200 text-[#0B57D0] hover:bg-blue-100 transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 text-[#2563EB] dark:text-blue-400 hover:bg-blue-100 transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
                   >
                     <Globe className="w-3.5 h-3.5" />
                     <span>Select Language / सर्व भाषा ({supportedLanguages.length})</span>
@@ -920,13 +975,13 @@ export default function ProfileSettingsPage() {
               </div>
 
               {/* Default Playback Speed */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-xs font-extrabold text-[#0E1B3D] flex items-center gap-1.5">
-                    <Gauge className="w-4 h-4 text-[#0B57D0]" />
+                  <h3 className="text-xs font-extrabold text-[#0F172A] dark:text-[#F1F5F9] flex items-center gap-1.5">
+                    <Gauge className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
                     <span>Default Video Playback Speed</span>
                   </h3>
-                  <p className="text-[11px] text-[#5A6478]">
+                  <p className="text-[11px] text-[#475569] dark:text-[#94A3B8]">
                     Sets initial playback tempo when watching Prashant Sir&apos;s speed calculation videos.
                   </p>
                 </div>
@@ -939,8 +994,8 @@ export default function ProfileSettingsPage() {
                       onClick={() => handlePlaybackSpeedChange(speed)}
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                         playbackSpeed === speed
-                          ? "bg-[#0B57D0] text-white shadow-xs"
-                          : "bg-white border border-[#E4E8F8] text-[#5A6478] hover:text-[#0E1B3D]"
+                          ? "bg-[#2563EB] dark:bg-[#3B82F6] text-white shadow-xs"
+                          : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[#475569] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
                       }`}
                     >
                       {speed}
@@ -956,27 +1011,27 @@ export default function ProfileSettingsPage() {
             SECTION 3: PASSWORD & 4-DIGIT RECOVERY PIN & DEVICE LOCK
            ========================================================================= */}
         {activeTab === "security" && (
-          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 shadow-xs space-y-6 transition-colors duration-200">
+            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-700/60 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
                   <KeyRound className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-[#0E1B3D]">Password & 4-Digit Security PIN</h2>
-                  <p className="text-xs text-[#5A6478]">
+                  <h2 className="text-base font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">Password & 4-Digit Security PIN</h2>
+                  <p className="text-xs text-[#475569] dark:text-[#94A3B8]">
                     Manage your single-device login password and quick 4-digit PIN for instant offline recovery.
                   </p>
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
+              <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-100 dark:border-emerald-900/50 flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" /> Single-Device Protected
               </span>
             </div>
 
             <form onSubmit={handleUpdateSecurity} className="space-y-4 max-w-xl">
               <div>
-                <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                <label className="block text-xs font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1.5">
                   Update Account Password (Optional)
                 </label>
                 <div className="relative">
@@ -985,21 +1040,21 @@ export default function ProfileSettingsPage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Leave empty to keep current password..."
-                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-xs font-medium text-[#0E1B3D] pr-10 focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-xs font-medium text-[#0F172A] dark:text-[#F1F5F9] pr-10 focus:bg-white dark:focus:bg-slate-900 focus:border-[#2563EB] dark:focus:border-blue-500 focus:outline-hidden"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                   >
                     {showPassword ? <X className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[11px] text-[#5A6478] mt-1">Minimum 6 characters required if updating.</p>
+                <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] mt-1">Minimum 6 characters required if updating.</p>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                <label className="block text-xs font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1.5">
                   4-Digit Offline Recovery PIN
                 </label>
                 <input
@@ -1008,9 +1063,9 @@ export default function ProfileSettingsPage() {
                   value={recoveryPin}
                   onChange={(e) => setRecoveryPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
                   placeholder="1234"
-                  className="w-36 p-2.5 rounded-xl bg-slate-50 border border-[#E4E8F8] text-center text-sm font-mono font-bold tracking-widest text-[#0E1B3D] focus:bg-white focus:border-[#0B57D0] focus:outline-hidden"
+                  className="w-36 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-center text-sm font-mono font-bold tracking-widest text-[#0F172A] dark:text-[#F1F5F9] focus:bg-white dark:focus:bg-slate-900 focus:border-[#2563EB] dark:focus:border-blue-500 focus:outline-hidden"
                 />
-                <p className="text-[11px] text-[#5A6478] mt-1">
+                <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] mt-1">
                   Use this 4-digit PIN to reset your password without waiting for SMS or OTP.
                 </p>
               </div>
@@ -1019,7 +1074,7 @@ export default function ProfileSettingsPage() {
                 type="submit"
                 loading={isUpdatingSecurity}
                 loadingText="Updating Security..."
-                className="px-6 py-2.5 rounded-xl bg-[#0B57D0] hover:bg-[#0052FF] text-white text-xs font-bold transition shadow-xs flex items-center gap-2"
+                className="px-6 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 dark:bg-[#3B82F6] dark:hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs flex items-center gap-2"
               >
                 <ShieldCheck className="w-4 h-4" />
                 <span>Update Security Credentials</span>
@@ -1027,34 +1082,34 @@ export default function ProfileSettingsPage() {
             </form>
 
             {/* Active Device Session Management & Reset */}
-            <div className="border-t border-[#E4E8F8] pt-6 space-y-4">
+            <div className="border-t border-slate-200/80 dark:border-slate-700/60 pt-6 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0B57D0] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 flex items-center justify-center shrink-0">
                   <Smartphone className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold text-[#0E1B3D]">
+                  <h3 className="text-sm font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">
                     Active Device Session & Single-Device Protection
                   </h3>
-                  <p className="text-xs text-[#5A6478]">
+                  <p className="text-xs text-[#475569] dark:text-[#94A3B8]">
                     MindMaster Academy enforces single-device DRM to protect course videos. Only 1 device can stream at any time.
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-bold text-[#0E1B3D]">Current Device Active</span>
-                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <span className="text-xs font-bold text-[#0F172A] dark:text-[#F1F5F9]">Current Device Active</span>
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                       1 Device Locked
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#5A6478]">
-                    Bound to Mobile Number: <strong className="text-[#0E1B3D] font-mono">{phone}</strong>
+                  <p className="text-[11px] text-[#475569] dark:text-[#94A3B8]">
+                    Bound to Mobile Number: <strong className="text-[#0F172A] dark:text-[#F1F5F9] font-mono">{phone}</strong>
                   </p>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500">
                     If you changed your mobile phone or get a &quot;Session already active on another device&quot; prompt, release your session lock or raise a support ticket below.
                   </p>
                 </div>
@@ -1065,7 +1120,7 @@ export default function ProfileSettingsPage() {
                     onClick={handleDeviceSessionReset}
                     loading={isResettingDevice}
                     loadingText="Resetting Device..."
-                    className="px-4 py-2 text-xs font-bold rounded-xl bg-white hover:bg-blue-50 border border-blue-200 text-[#0B57D0]"
+                    className="px-4 py-2 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-[#0F172A] dark:text-[#F1F5F9]"
                   >
                     <RefreshCw className="w-3.5 h-3.5 mr-1" />
                     <span>Request Device Reset</span>
@@ -1081,7 +1136,7 @@ export default function ProfileSettingsPage() {
                       );
                       setIsTicketModalOpen(true);
                     }}
-                    className="px-4 py-2 text-xs font-bold rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[#0B57D0] flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 text-xs font-bold rounded-xl bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800 text-[#2563EB] dark:text-blue-400 flex items-center gap-1.5 cursor-pointer"
                   >
                     <LifeBuoy className="w-3.5 h-3.5" />
                     <span>Raise Ticket for Device Reset</span>
@@ -1096,15 +1151,15 @@ export default function ProfileSettingsPage() {
             SECTION 4: IN-APP SUPPORT TICKETS & HELPDESK
            ========================================================================= */}
         {activeTab === "tickets" && (
-          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#E4E8F8] pb-4 gap-4">
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 shadow-xs space-y-6 transition-colors duration-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200/80 dark:border-slate-700/60 pb-4 gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0B57D0] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 flex items-center justify-center">
                   <LifeBuoy className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-[#0E1B3D]">In-App Support Tickets & Helpdesk</h2>
-                  <p className="text-xs text-[#5A6478]">
+                  <h2 className="text-base font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">In-App Support Tickets & Helpdesk</h2>
+                  <p className="text-xs text-[#475569] dark:text-[#94A3B8]">
                     Direct academic and technical assistance. No external WhatsApp required.
                   </p>
                 </div>
@@ -1119,7 +1174,7 @@ export default function ProfileSettingsPage() {
                   setTicketErrors({});
                   setIsTicketModalOpen(true);
                 }}
-                className="px-4 py-2.5 rounded-xl bg-[#0B57D0] hover:bg-[#0052FF] text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-2 cursor-pointer self-start sm:self-auto active:scale-95"
+                className="px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 dark:bg-[#3B82F6] dark:hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-2 cursor-pointer self-start sm:self-auto active:scale-95"
               >
                 <Plus className="w-4 h-4" />
                 <span>Raise New Ticket</span>
@@ -1127,28 +1182,28 @@ export default function ProfileSettingsPage() {
             </div>
 
             {/* Support Info & SLA Banner */}
-            <div className="p-4 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2 text-[#0E1B3D]">
-                <Clock className="w-4 h-4 text-[#0B57D0] shrink-0" />
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-[#0F172A] dark:text-[#F1F5F9]">
+                <Clock className="w-4 h-4 text-[#2563EB] dark:text-blue-400 shrink-0" />
                 <span><strong>Support Hours:</strong> {platformSettings.supportHours}</span>
               </div>
-              <p className="text-[11px] text-[#5A6478]">
+              <p className="text-[11px] text-[#475569] dark:text-[#94A3B8]">
                 {platformSettings.ticketNotice}
               </p>
             </div>
 
             {/* My Tickets List */}
             <div className="space-y-3">
-              <h3 className="text-xs font-extrabold text-[#0E1B3D]">My Support Tickets ({tickets.length})</h3>
+              <h3 className="text-xs font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">My Support Tickets ({tickets.length})</h3>
 
               {tickets.length === 0 ? (
-                <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-[#E4E8F8] bg-slate-50/50 space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#0B57D0] flex items-center justify-center mx-auto">
+                <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 flex items-center justify-center mx-auto">
                     <LifeBuoy className="w-6 h-6" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-extrabold text-[#0E1B3D]">No Support Tickets Yet</h4>
-                    <p className="text-[11px] text-[#5A6478] max-w-sm mx-auto mt-1">
+                    <h4 className="text-xs font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">No Support Tickets Yet</h4>
+                    <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] max-w-sm mx-auto mt-1">
                       Facing an issue with video playback, device reset, or notes? Tap &quot;Raise New Ticket&quot; above to contact our staff.
                     </p>
                   </div>
@@ -1161,7 +1216,7 @@ export default function ProfileSettingsPage() {
                     return (
                       <div
                         key={t.id}
-                        className="rounded-2xl border border-[#E4E8F8] bg-white p-4.5 space-y-3 hover:border-blue-200 transition"
+                        className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800/40 p-4.5 space-y-3 hover:border-blue-400 dark:hover:border-blue-500 transition"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -1191,7 +1246,7 @@ export default function ProfileSettingsPage() {
                         </div>
 
                         <div>
-                          <h4 className="text-xs font-extrabold text-[#0E1B3D]">
+                          <h4 className="text-xs font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">
                             {t.subject || "Support Query"}
                           </h4>
                           <p className="text-xs text-[#5A6478] mt-1 leading-relaxed whitespace-pre-wrap">
@@ -1296,37 +1351,37 @@ export default function ProfileSettingsPage() {
             SECTION 5: OFFLINE VAULT STORAGE & PWA APP INSTALL
            ========================================================================= */}
         {activeTab === "storage" && (
-          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 shadow-xs space-y-6 transition-colors duration-200">
+            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-700/60 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 flex items-center justify-center">
                   <Smartphone className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-[#0E1B3D]">Offline Storage Vault & PWA App</h2>
-                  <p className="text-xs text-[#5A6478]">
+                  <h2 className="text-base font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">Offline Storage Vault & PWA App</h2>
+                  <p className="text-xs text-[#475569] dark:text-[#94A3B8]">
                     In-app encrypted digital books stored in your phone&apos;s browser memory for offline bus and train travel.
                   </p>
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 flex items-center gap-1">
+              <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-lg border border-blue-100 dark:border-blue-900/50 flex items-center gap-1">
                 <BookOpen className="w-3.5 h-3.5" /> {offlineBooks.length} Books Cached
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] space-y-1">
-                <p className="text-xs font-bold text-[#5A6478]">Saved Offline Books</p>
-                <p className="text-2xl font-black text-[#0E1B3D]">{offlineBooks.length}</p>
-                <p className="text-[11px] text-[#5A6478]">
-                  Total storage used: <span className="font-bold text-[#0B57D0]">{totalOfflineMb} MB</span>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 space-y-1">
+                <p className="text-xs font-bold text-[#475569] dark:text-[#94A3B8]">Saved Offline Books</p>
+                <p className="text-2xl font-black text-[#0F172A] dark:text-[#F1F5F9]">{offlineBooks.length}</p>
+                <p className="text-[11px] text-[#475569] dark:text-[#94A3B8]">
+                  Total storage used: <span className="font-bold text-[#2563EB] dark:text-blue-400">{totalOfflineMb} MB</span>
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] flex flex-col justify-between gap-3">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex flex-col justify-between gap-3">
                 <div>
-                  <p className="text-xs font-bold text-[#0E1B3D]">Clear In-App Books</p>
-                  <p className="text-[11px] text-[#5A6478]">
+                  <p className="text-xs font-bold text-[#0F172A] dark:text-[#F1F5F9]">Clear In-App Books</p>
+                  <p className="text-[11px] text-[#475569] dark:text-[#94A3B8]">
                     Frees storage by removing encrypted PDF notes from device memory.
                   </p>
                 </div>
@@ -1334,17 +1389,17 @@ export default function ProfileSettingsPage() {
                   type="button"
                   onClick={handleClearCache}
                   disabled={isClearingStorage || offlineBooks.length === 0}
-                  className="px-4 py-2 rounded-xl bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold transition flex items-center justify-center gap-2 active:scale-95 disabled:opacity-40 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs font-bold transition flex items-center justify-center gap-2 active:scale-95 disabled:opacity-40 cursor-pointer"
                 >
                   {isClearingStorage ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                   <span>Clear Vault Books</span>
                 </button>
               </div>
 
-              <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-200/80 flex flex-col justify-between gap-3">
+              <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/40 flex flex-col justify-between gap-3">
                 <div>
-                  <p className="text-xs font-bold text-[#0E1B3D]">Clear Cache & Sync</p>
-                  <p className="text-[11px] text-[#5A6478]">
+                  <p className="text-xs font-bold text-[#0F172A] dark:text-[#F1F5F9]">Clear Cache & Sync</p>
+                  <p className="text-[11px] text-[#475569] dark:text-[#94A3B8]">
                     Flushes Service Worker caches & syncs queued watch telemetry to server.
                   </p>
                 </div>
@@ -1353,7 +1408,7 @@ export default function ProfileSettingsPage() {
                   onClick={handleClearCacheAndSync}
                   loading={isClearingCacheAndSyncing}
                   loadingText="Syncing..."
-                  className="w-full py-2 text-xs font-bold rounded-xl bg-white hover:bg-blue-100 border border-blue-300 text-[#0B57D0]"
+                  className="w-full py-2 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-slate-700 border border-blue-300 dark:border-slate-600 text-[#2563EB] dark:text-blue-400"
                 >
                   <RefreshCw className="w-3.5 h-3.5 mr-1" />
                   <span>Sync & Clear Cache</span>
@@ -1362,13 +1417,13 @@ export default function ProfileSettingsPage() {
             </div>
 
             {/* PWA Home Screen Installation */}
-            <div className="p-5 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
-                <h3 className="text-xs font-extrabold text-[#0E1B3D] flex items-center gap-1.5">
-                  <Smartphone className="w-4 h-4 text-[#0B57D0]" />
+                <h3 className="text-xs font-extrabold text-[#0F172A] dark:text-[#F1F5F9] flex items-center gap-1.5">
+                  <Smartphone className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
                   <span>Install MindMaster App on Device</span>
                 </h3>
-                <p className="text-[11px] text-[#5A6478]">
+                <p className="text-[11px] text-[#475569] dark:text-[#94A3B8]">
                   Install MindMaster directly to your home screen for instant fullscreen launch without URL bars.
                 </p>
               </div>
@@ -1376,7 +1431,7 @@ export default function ProfileSettingsPage() {
               <button
                 type="button"
                 onClick={handleInstallApp}
-                className="px-5 py-2.5 rounded-xl bg-[#0B57D0] hover:bg-[#0052FF] text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-2 shrink-0 active:scale-95 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 dark:bg-[#3B82F6] dark:hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-2 shrink-0 active:scale-95 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 <span>{isInstalled ? "App Installed (Launch)" : "Install App on Device"}</span>
@@ -1389,15 +1444,15 @@ export default function ProfileSettingsPage() {
             SECTION 6: OFFICIAL RECEIPTS, CERTIFICATES & LEGAL CENTER
            ========================================================================= */}
         {activeTab === "legal" && (
-          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 shadow-xs space-y-6 transition-colors duration-200">
+            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-700/60 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0B57D0] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 flex items-center justify-center">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-[#0E1B3D]">Official Receipts & Legal Center</h2>
-                  <p className="text-xs text-[#5A6478]">
+                  <h2 className="text-base font-extrabold text-[#0F172A] dark:text-[#F1F5F9]">Official Receipts & Legal Center</h2>
+                  <p className="text-xs text-[#475569] dark:text-[#94A3B8]">
                     Verified institutional documentation signed by Director Prashant Dhumal Sir.
                   </p>
                 </div>
@@ -1408,14 +1463,14 @@ export default function ProfileSettingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               <Link
                 href="/my-courses"
-                className="p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] hover:border-[#0B57D0] hover:bg-blue-50/30 transition flex flex-col justify-between gap-3"
+                className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 hover:border-[#2563EB] dark:hover:border-blue-500 hover:bg-blue-50/30 transition flex flex-col justify-between gap-3"
               >
                 <div>
-                  <CreditCard className="w-5 h-5 text-[#0B57D0]" />
-                  <h4 className="font-extrabold text-xs text-[#0E1B3D] mt-2">My Enrolled Courses</h4>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">View active admissions &amp; validity</p>
+                  <CreditCard className="w-5 h-5 text-[#2563EB] dark:text-blue-400" />
+                  <h4 className="font-extrabold text-xs text-[#0F172A] dark:text-[#F1F5F9] mt-2">My Enrolled Courses</h4>
+                  <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] mt-0.5">View active admissions &amp; validity</p>
                 </div>
-                <span className="text-[11px] font-bold text-[#0B57D0] flex items-center gap-1">
+                <span className="text-[11px] font-bold text-[#2563EB] dark:text-blue-400 flex items-center gap-1">
                   <span>Go to My Courses</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </span>

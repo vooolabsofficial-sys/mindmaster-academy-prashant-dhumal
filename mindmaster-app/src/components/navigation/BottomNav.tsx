@@ -40,7 +40,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Mobile Navigation Bar"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0A0D14]/90 backdrop-blur-2xl border-t border-white/[0.08] px-2 py-1.5 shadow-[0_-8px_32px_rgba(0,0,0,0.8)] pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 px-2 py-1.5 shadow-lg pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] transition-colors duration-200"
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         {MOBILE_NAV_ITEMS.map((item) => {
@@ -56,30 +56,32 @@ export default function BottomNav() {
               href={item.href}
               aria-label={item.label}
               className={`flex flex-col items-center justify-center min-h-[46px] min-w-[54px] py-1 px-1 rounded-xl transition-all duration-200 relative cursor-pointer active:scale-95 ${
-                isActive ? "text-[#F8FAFC]" : "text-[#94A3B8] hover:text-[#F8FAFC]"
+                isActive
+                  ? "text-[#2563EB] dark:text-blue-400 font-bold"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <div className="relative p-1">
                 <Icon
                   className={`w-5 h-5 transition-transform duration-200 ${
-                    isActive ? "text-[#0052FF] stroke-[2.3] scale-110" : "stroke-[1.8]"
+                    isActive ? "text-[#2563EB] dark:text-blue-400 stroke-[2.3] scale-105" : "stroke-[1.8]"
                   }`}
                 />
                 {item.hasUnread && unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#0052FF] text-white text-[8px] font-bold flex items-center justify-center ring-2 ring-[#0A0D14]">
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#2563EB] text-white text-[8px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-[#0F172A]">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </div>
 
-              <span className={`text-[10px] font-semibold tracking-tight transition-colors ${
-                isActive ? "text-[#F8FAFC] font-bold" : "text-[#94A3B8]"
+              <span className={`text-[10px] font-medium tracking-tight transition-colors ${
+                isActive ? "text-[#2563EB] dark:text-blue-400 font-bold" : "text-slate-600 dark:text-slate-400"
               }`}>
                 {item.label}
               </span>
 
               {isActive && (
-                <span className="w-1 h-1 rounded-full bg-[#0052FF] shadow-[0_0_8px_#0052FF] mt-0.5" />
+                <span className="w-1 h-1 rounded-full bg-[#2563EB] dark:bg-blue-400 mt-0.5" />
               )}
             </Link>
           );
