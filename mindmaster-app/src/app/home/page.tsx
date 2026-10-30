@@ -24,8 +24,11 @@ import AppShell from "@/components/navigation/AppShell";
 import { getStaffCourses, StaffCourse, fetchDbCourses } from "@/lib/staffStore";
 import { createClient } from "@/lib/supabase/client";
 import { ACADEMY_CATEGORIES, AcademyCategory, matchesAcademyCategory } from "@/lib/academyCategories";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function StudentHomePage() {
+  const { currentLanguage } = useLanguage();
+  const isMarathi = currentLanguage === "mr";
   const [studentName, setStudentName] = useState<string>("Student");
   const [courses, setCourses] = useState<StaffCourse[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<AcademyCategory>("All Categories");
@@ -440,7 +443,7 @@ export default function StudentHomePage() {
                     <div className="p-6 flex-1 flex flex-col justify-between gap-4">
                       <div>
                         <h3 className="font-extrabold text-base md:text-lg text-slate-900 leading-snug group-hover:text-blue-600 transition-colors">
-                          {c.title}
+                          {isMarathi ? (c.titleMr || c.title) : (c.title || c.titleMr)}
                         </h3>
                         <p className="text-xs text-slate-600 mt-1.5 leading-relaxed font-normal line-clamp-2">
                           {c.description || "MindMaster Academy certified memory and speed learning course."}

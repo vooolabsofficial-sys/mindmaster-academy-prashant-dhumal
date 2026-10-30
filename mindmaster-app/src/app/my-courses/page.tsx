@@ -28,8 +28,11 @@ import { getStoredVideos } from "@/lib/playlistStore";
 import { normalizePhone } from "@/lib/phoneUtils";
 import { getStudentActiveEnrollments } from "@/app/actions/studentAccess";
 import { formatIST, isExpiredIST, getRemainingTimeIST } from "@/lib/istTime";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function MyLearningPage() {
+  const { currentLanguage } = useLanguage();
+  const isMarathi = currentLanguage === "mr";
   const [courses, setCourses] = useState<StaffCourse[]>([]);
   const [activePurchases, setActivePurchases] = useState<Record<string, string>>({});
   const [studentName, setStudentName] = useState<string>("");
@@ -406,13 +409,19 @@ export default function MyLearningPage() {
                       <div className="p-5 flex-1 flex flex-col justify-between gap-4">
                         <div>
                           <h3 className="font-extrabold text-base text-slate-900">
-                            {course.titleMr || course.title}
+                            {isMarathi ? (course.titleMr || course.title) : (course.title || course.titleMr)}
                           </h3>
-                          {course.titleMr && course.title !== course.titleMr && (
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">
-                              {course.title}
-                            </p>
-                          )}
+                          {isMarathi
+                            ? course.title && course.title !== course.titleMr && (
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                  {course.title}
+                                </p>
+                              )
+                            : course.titleMr && course.titleMr !== course.title && (
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                  {course.titleMr}
+                                </p>
+                              )}
                           <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                             {course.description || "MindMaster Academy certified memory and speed training sessions."}
                           </p>

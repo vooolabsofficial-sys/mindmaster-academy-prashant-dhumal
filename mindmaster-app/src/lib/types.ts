@@ -56,7 +56,7 @@ export interface Course {
   ratingCount: number;
   lessonsCount: number;
   totalDurationHours: number;
-  category: "all" | "memory" | "vedic" | "police" | "calendar" | "free";
+  category: "all" | "memory" | "vedic" | "police" | "calendar" | "free" | "trainer";
   features: string[];
   targetSegment?: TargetSegment;
   targetSegmentConfig?: TargetSegmentConfig;

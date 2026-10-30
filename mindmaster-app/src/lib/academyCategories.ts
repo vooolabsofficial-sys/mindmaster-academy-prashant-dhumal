@@ -1,12 +1,12 @@
 // Central MindMaster Academy Category Classification & Filtering
-// Covers Memory, School, Jr College, Police Bharti & Scholarship
+// Covers Memory, School, Jr College, Teacher Certification & Scholarship
 
 export const ACADEMY_CATEGORIES = [
   "All Categories",
   "Mind Memory & Vedic Maths",
   "School (1st–10th Std)",
   "Jr. College (11th–12th)",
-  "Police Bharti & MPSC",
+  "Teacher Certification",
   "Scholarship",
 ] as const;
 
@@ -52,11 +52,11 @@ export function matchesAcademyCategory(
         /11th|12th|hsc|junior college|college|अकरावी|बारावी/i.test(text)
       );
 
-    case "Police Bharti & MPSC":
+    case "Teacher Certification":
       return (
-        cat === "police" ||
-        cat === "mpsc" ||
-        /police|bharti|mpsc|पोलीस|भरती|स्पर्धा/i.test(text)
+        cat === "trainer" ||
+        cat === "teacher" ||
+        /trainer|teacher|certification|शिक्षक|ट्रेनर|प्रशिक्षक/i.test(text)
       );
 
     case "Scholarship":

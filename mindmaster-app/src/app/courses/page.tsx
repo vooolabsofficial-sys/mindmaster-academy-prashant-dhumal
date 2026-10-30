@@ -20,6 +20,7 @@ import FilterChips, { StandardFilter } from "@/components/courses/FilterChips";
 import { getStaffCourses, getStaffStudents, fetchDbCourses } from "@/lib/staffStore";
 import { ACADEMY_CATEGORIES, AcademyCategory, matchesAcademyCategory } from "@/lib/academyCategories";
 import EmptyState from "@/components/common/EmptyState";
+import { useLanguage } from "@/lib/LanguageContext";
 
 type FeeFilter = "All" | "Free" | "Paid";
 const FEE_CHIPS: FeeFilter[] = ["All", "Free", "Paid"];
@@ -36,7 +37,7 @@ interface CatalogCourse {
   price: string;
   isFree: boolean;
   tint: "mint" | "sky" | "lavender" | "peach" | "purple";
-  category: "Memory" | "Vedic Maths" | "Police Bharti" | "Calendar Technique";
+  category: "Memory" | "Vedic Maths" | "Teacher Certification" | "Calendar Technique";
   imageSrc: string;
   icon: any;
   standards?: number[]; // [5,6,7...]; empty/undefined = for all / other courses
@@ -93,6 +94,8 @@ function extractStandardNumber(val: any): number | null {
 }
 
 export default function CoursesCatalogPage() {
+  const { currentLanguage } = useLanguage();
+  const isMarathi = currentLanguage === "mr";
   const [selectedCategory, setSelectedCategory] = useState<AcademyCategory>("All Categories");
   const [feeFilter, setFeeFilter] = useState<FeeFilter>("All");
   const [activeStandard, setActiveStandard] = useState<StandardFilter>("all");
@@ -150,11 +153,12 @@ export default function CoursesCatalogPage() {
   const dynamicCatalogCourses: CatalogCourse[] = staffCourses.map((sc) => {
     const existing = CATALOG_COURSES.find((c) => c.code === sc.code || c.id === sc.id);
     const isFreeCourse = sc.isFree || sc.pricePaise === 0;
+    const resolvedTitle = isMarathi ? (sc.titleMr || sc.title) : (sc.title || sc.titleMr);
     const cat: CatalogCourse["category"] =
       sc.category === "vedic"
         ? "Vedic Maths"
-        : sc.category === "police"
-        ? "Police Bharti"
+        : sc.category === "trainer" || sc.code === "MM-02" || sc.code === "MM-06"
+        ? "Teacher Certification"
         : sc.category === "calendar"
         ? "Calendar Technique"
         : "Memory";
@@ -162,7 +166,7 @@ export default function CoursesCatalogPage() {
     if (existing) {
       return {
         ...existing,
-        title: sc.titleMr || sc.title,
+        title: resolvedTitle,
         description: sc.description || existing.description,
         price: isFreeCourse ? "FREE" : `₹${Math.round(sc.pricePaise / 100)}`,
         isFree: isFreeCourse,
@@ -176,8 +180,8 @@ export default function CoursesCatalogPage() {
       code: sc.code,
       badge: sc.badgeText || (isFreeCourse ? "FREE" : "POPULAR"),
       subBadge: sc.subtitle || "MindMaster Certified",
-      track: sc.titleMr || sc.title,
-      title: sc.titleMr || sc.title,
+      track: resolvedTitle,
+      title: resolvedTitle,
       description: sc.description || "Prashant Dhumal Sir certified video training curriculum.",
       meta: `${sc.lessonsCount || 8} Lessons • ${sc.accessMonths || 6} Months Access • English & Marathi`,
       price: isFreeCourse ? "FREE" : `₹${Math.round(sc.pricePaise / 100)}`,
