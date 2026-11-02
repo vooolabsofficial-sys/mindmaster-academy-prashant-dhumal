@@ -11,6 +11,7 @@ export interface VideoModalProps {
   batchYear: string;
   quote: string;
   posterImg: string;
+  youtubeId?: string;
   videoDuration?: string;
   marksheetScore?: string;
   keyTakeaway?: string;
@@ -27,17 +28,18 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   batchYear,
   quote,
   posterImg,
-  videoDuration = '2:14',
-  marksheetScore = '98/100 Written',
+  youtubeId,
+  videoDuration = '6:00',
+  marksheetScore = '100% Concept Recall',
   keyTakeaway = 'MindMaster 1-7-30 spaced memory palace method',
 }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(Boolean(youtubeId));
 
   if (!isOpen) return null;
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn cursor-pointer"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn cursor-pointer"
       onClick={onClose}
     >
       <div 
@@ -49,7 +51,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></span>
             <span className="font-label-caps text-xs text-secondary font-bold uppercase tracking-wider">
-              {category} • Verified Case Study
+              {category} • Official Video
             </span>
           </div>
           <button
@@ -63,64 +65,76 @@ export const VideoModal: React.FC<VideoModalProps> = ({
 
         {/* Video Player Box */}
         <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
-          <img
-            src={posterImg}
-            alt={title}
-            className={`w-full h-full object-cover transition-opacity duration-500 ${isPlaying ? 'opacity-40 blur-xs scale-105' : 'opacity-85'}`}
-          />
-
-          {!isPlaying ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 p-6 text-center">
-              <button
-                onClick={() => setIsPlaying(true)}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-2xl hover:scale-110 hover:bg-secondary-container transition-all cursor-pointer group"
-              >
-                <span className="material-symbols-outlined text-4xl sm:text-5xl ml-1 text-white">play_arrow</span>
-              </button>
-              <p className="text-white text-sm font-title-md mt-4 drop-shadow-md">
-                Click to play student interview ({videoDuration})
-              </p>
-              <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white/90 text-xs font-label-caps">
-                <span className="material-symbols-outlined text-emerald-400 text-[16px]">verified</span>
-                Verified Marks & Roll No. on File
-              </div>
-            </div>
+          {youtubeId && isPlaying ? (
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+              title={title}
+              className="w-full h-full border-0 aspect-video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
           ) : (
-            <div className="absolute inset-0 flex flex-col justify-between p-6 bg-gradient-to-t from-black/90 via-transparent to-black/60">
-              <div className="flex justify-between items-center text-white text-xs">
-                <span className="px-2.5 py-1 rounded-md bg-secondary text-white font-bold">{rankBadge}</span>
-                <span className="text-white/80">HD 1080p • Live Batch Recording</span>
-              </div>
-              
-              <div className="text-center my-auto">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest/20 backdrop-blur-md text-white border border-white/20 mb-3">
-                  <span className="material-symbols-outlined text-secondary animate-spin">sync</span>
-                  <span className="text-sm font-semibold">Streaming Student Testimonial...</span>
-                </div>
-                <p className="text-white text-lg font-headline-sm italic max-w-xl mx-auto drop-shadow-md">
-                  "{quote}"
-                </p>
-              </div>
+            <>
+              <img
+                src={posterImg}
+                alt={title}
+                className={`w-full h-full object-cover transition-opacity duration-500 ${isPlaying ? 'opacity-40 blur-xs scale-105' : 'opacity-85'}`}
+              />
 
-              {/* Player controls bar simulation */}
-              <div className="space-y-2">
-                <div className="w-full bg-white/30 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-secondary h-full w-2/3 animate-pulse"></div>
-                </div>
-                <div className="flex items-center justify-between text-white/90 text-xs font-mono">
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => setIsPlaying(false)} className="hover:text-secondary">
-                      <span className="material-symbols-outlined text-[18px]">pause</span>
-                    </button>
-                    <span>01:14 / {videoDuration}</span>
+              {!isPlaying ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 p-6 text-center">
+                  <button
+                    onClick={() => setIsPlaying(true)}
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-2xl hover:scale-110 hover:bg-secondary-container transition-all cursor-pointer group"
+                  >
+                    <span className="material-symbols-outlined text-4xl sm:text-5xl ml-1 text-white">play_arrow</span>
+                  </button>
+                  <p className="text-white text-sm font-title-md mt-4 drop-shadow-md">
+                    Click to play video ({videoDuration})
+                  </p>
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white/90 text-xs font-label-caps">
+                    <span className="material-symbols-outlined text-emerald-400 text-[16px]">verified</span>
+                    Official MindMaster Academy
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">volume_up</span>
-                    <span className="material-symbols-outlined text-[18px]">fullscreen</span>
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex flex-col justify-between p-6 bg-gradient-to-t from-black/90 via-transparent to-black/60">
+                  <div className="flex justify-between items-center text-white text-xs">
+                    <span className="px-2.5 py-1 rounded-md bg-secondary text-white font-bold">{rankBadge}</span>
+                    <span className="text-white/80">HD 1080p • Live Batch Recording</span>
+                  </div>
+                  
+                  <div className="text-center my-auto">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest/20 backdrop-blur-md text-white border border-white/20 mb-3">
+                      <span className="material-symbols-outlined text-secondary animate-spin">sync</span>
+                      <span className="text-sm font-semibold">Streaming Student Testimonial...</span>
+                    </div>
+                    <p className="text-white text-lg font-headline-sm italic max-w-xl mx-auto drop-shadow-md">
+                      "{quote}"
+                    </p>
+                  </div>
+
+                  {/* Player controls bar simulation */}
+                  <div className="space-y-2">
+                    <div className="w-full bg-white/30 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-secondary h-full w-2/3 animate-pulse"></div>
+                    </div>
+                    <div className="flex items-center justify-between text-white/90 text-xs font-mono">
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => setIsPlaying(false)} className="hover:text-secondary">
+                          <span className="material-symbols-outlined text-[18px]">pause</span>
+                        </button>
+                        <span>01:14 / {videoDuration}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[18px]">volume_up</span>
+                        <span className="material-symbols-outlined text-[18px]">fullscreen</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              )}
+            </>
           )}
         </div>
 

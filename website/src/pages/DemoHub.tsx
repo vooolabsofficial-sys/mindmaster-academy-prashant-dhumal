@@ -423,6 +423,60 @@ export const DemoHub: React.FC = () => {
             </p>
           </div>
 
+          {/* Featured Academy Orientation Video Player */}
+          <div className="mb-12 rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-center">
+              <div className="w-full lg:w-3/5 aspect-video rounded-2xl overflow-hidden shadow-inner bg-black">
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/8Nyi_FVeUNw?rel=0&modestbranding=1"
+                  title="संकल्प एकच, सक्षम पिढी घडविणे - प्रशांत धुमाळ सर"
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+              <div className="w-full lg:w-2/5 text-white flex flex-col justify-between">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/90 text-white text-xs font-bold uppercase tracking-wider mb-3">
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    Special Intro Video (६ मिनिटे)
+                  </div>
+                  <h3 className="font-heading-bold text-2xl sm:text-3xl font-black text-white leading-tight">
+                    संकल्प एकच, सक्षम पिढी घडविणे
+                  </h3>
+                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mt-2.5">
+                    प्रशांत धुमाळ सर — १ ते १०० पाढे सेकंदात तोंडपाठ, सुंदर हस्ताक्षर (१०-१५% बोर्ड गुण वाढ) आणि स्वामी विवेकानंद मेमरी तंत्रज्ञानाचे सविस्तर स्पष्टीकरण.
+                  </p>
+                </div>
+                <div className="mt-5 space-y-2 border-t border-slate-800 pt-4">
+                  <div className="flex items-center gap-2 text-xs text-amber-300 font-semibold">
+                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                    <span>१ ते १०० पाढे सेकंदात (उदा. ९९ × ८ = ७९२)</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-blue-300 font-semibold">
+                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                    <span>सुंदर हस्ताक्षर • १० वी / १२ वी बोर्डात १५-१८ गुणांचा फायदा</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-emerald-300 font-semibold">
+                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                    <span>स्वामी विवेकानंद व्हिज्युअल मेमरी सायन्स</span>
+                  </div>
+                  <div className="pt-2">
+                    <a
+                      href="https://youtu.be/8Nyi_FVeUNw"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+                    >
+                      <span>Watch full video on YouTube</span>
+                      <span className="material-symbols-outlined text-xs">open_in_new</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-surface-container-lowest rounded-3xl p-6 sm:p-10 shadow-xl border border-surface-variant grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             {/* Left Col: Demo Highlights */}
             <div className="lg:col-span-5 flex flex-col gap-6">

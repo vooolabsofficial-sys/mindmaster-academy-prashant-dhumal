@@ -32,6 +32,7 @@ export default function StudentHomePage() {
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
   const [freeLessons, setFreeLessons] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showOrientationModal, setShowOrientationModal] = useState<boolean>(false);
 
   // Swimlane scroll refs
   const continueScrollRef = useRef<HTMLDivElement>(null);
@@ -167,6 +168,15 @@ export default function StudentHomePage() {
                 <Info className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                 <span>Course Episodes</span>
               </Link>
+
+              <button
+                type="button"
+                onClick={() => setShowOrientationModal(true)}
+                className="px-4 py-3 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-600 dark:text-red-400 font-bold text-xs sm:text-sm border border-red-200 dark:border-red-900/40 transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Play className="w-4 h-4 fill-current ml-0.5" />
+                <span>{isMarathi ? "६ मिनिटांचा परिचय" : "Academy Intro (6 Min)"}</span>
+              </button>
             </div>
           </div>
 
@@ -548,6 +558,63 @@ export default function StudentHomePage() {
             ))}
           </div>
         </section>
+
+        {/* Orientation Video Modal */}
+        {showOrientationModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
+            onClick={() => setShowOrientationModal(false)}
+          >
+            <div
+              className="relative w-full max-w-3xl bg-slate-900 text-white rounded-2xl shadow-2xl overflow-hidden border border-slate-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-slate-950/60">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                    {isMarathi ? "संकल्प एकच, सक्षम पिढी घडविणे • प्रशांत धुमाळ सर" : "Official Orientation • Prashant Dhumal Sir"}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowOrientationModal(false)}
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="relative aspect-video w-full bg-black">
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/8Nyi_FVeUNw?autoplay=1&rel=0&modestbranding=1"
+                  title="माइंड मास्टर ॲकॅडमी परिचय - प्रशांत धुमाळ सर"
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+              <div className="p-4 sm:p-5 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <p className="font-bold text-sm text-white">
+                    {isMarathi ? "१ ते १०० पाढे सेकंदात • सुंदर हस्ताक्षर • स्वामी विवेकानंद मेमरी सायन्स" : "1 to 100 Tables in Seconds • Handwriting • Visual Memory Science"}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {isMarathi ? "बोर्ड परीक्षा, MPSC, NEET आणि स्कॉलरशिपसाठी विशेष मार्गदर्शन" : "Special guidance for Board Exams, MPSC, NEET, & Scholarships"}
+                  </p>
+                </div>
+                <a
+                  href="https://youtu.be/8Nyi_FVeUNw"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                >
+                  <span>YouTube</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppShell>
   );

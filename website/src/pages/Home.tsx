@@ -19,6 +19,7 @@ export const Home: React.FC = () => {
   const [liveDbCourses, setLiveDbCourses] = useState<LiveDbCourse[]>([]);
   const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
   const [showPromoPopup, setShowPromoPopup] = useState(false);
+  const [isIntroVideoPlaying, setIsIntroVideoPlaying] = useState(false);
 
   useEffect(() => {
     let timer: any = null;
@@ -95,6 +96,20 @@ export const Home: React.FC = () => {
                 </span>
               </a>
 
+              {/* Video Intro CTA */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsIntroVideoPlaying(true);
+                  const el = document.getElementById('hero-intro-player');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-md shadow-red-600/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-lg text-white" style={{ fontVariationSettings: "'FILL' 1" }}>play_circle</span>
+                <span>६ मिनिटांचा स्पेशल परिचय पहा</span>
+              </button>
+
               {/* Secondary Action */}
               <a
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-slate-800 font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-2xs hover:bg-slate-50 hover:text-[#0052FF] transition-all border border-slate-200"
@@ -104,7 +119,7 @@ export const Home: React.FC = () => {
                     : cms.hero?.secondaryCtaUrl || '/demo'
                 }
               >
-                <span className="material-symbols-outlined text-lg text-[#0052FF]">play_circle</span>
+                <span className="material-symbols-outlined text-lg text-[#0052FF]">school</span>
                 <span>{cms.hero?.secondaryCtaText || 'Free Demo Hub'}</span>
               </a>
 
@@ -118,24 +133,91 @@ export const Home: React.FC = () => {
               </a>
             </div>
 
-            {/* Hero Showcase: Classroom Photo Card */}
-            <div className="w-full max-w-5xl mt-space-2xl relative">
-              <div className="absolute inset-0 bg-secondary/5 rounded-3xl blur-xl transform scale-[0.98] translate-y-3"></div>
-              <div className="relative bg-surface-container-lowest rounded-2xl md:rounded-3xl p-2 md:p-3 shadow-xl overflow-hidden border border-surface-variant/40">
-                <img
-                  alt="Indian students studying around a laptop in bright classroom"
-                  className="w-full aspect-[16/9] md:aspect-[21/10] object-cover rounded-xl md:rounded-2xl"
-                  src={cms.hero?.bannerImages?.[0] || '/assets/images/classroom_students_group.png'}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/assets/images/classroom_students_group.png';
-                  }}
-                />
-                <div className="absolute bottom-6 left-6 hidden md:flex items-center gap-space-sm bg-surface-container-lowest/95 backdrop-blur-md px-space-md py-space-xs rounded-full shadow-sm">
-                  <span className="material-symbols-outlined text-secondary text-title-md">psychology</span>
-                  <span className="font-body-sm text-xs text-primary-container font-semibold">
-                    Live Interactive Cognitive Batches • Satara HQ & Pune Hubs
-                  </span>
-                </div>
+            {/* Hero Showcase: Official Intro Video (8Nyi_FVeUNw) & Classroom Card */}
+            <div id="hero-intro-player" className="w-full max-w-5xl mt-space-2xl relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 via-blue-500/10 to-indigo-500/10 rounded-3xl blur-2xl transform scale-[0.98] translate-y-3 pointer-events-none"></div>
+              <div className="relative bg-slate-900 rounded-2xl md:rounded-3xl p-2 md:p-3 shadow-2xl overflow-hidden border border-slate-800">
+                {isIntroVideoPlaying ? (
+                  <div className="relative w-full aspect-[16/9] md:aspect-[21/10] rounded-xl md:rounded-2xl overflow-hidden bg-black shadow-inner">
+                    <iframe
+                      src="https://www.youtube-nocookie.com/embed/8Nyi_FVeUNw?autoplay=1&rel=0&modestbranding=1"
+                      title="माइंड मास्टर ॲकॅडमी परिचय - प्रशांत धुमाळ सर | संकल्प एकच, सक्षम पिढी घडविणे"
+                      className="w-full h-full border-0 aspect-[16/9] md:aspect-[21/10]"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                    <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+                      <button
+                        onClick={() => setIsIntroVideoPlaying(false)}
+                        className="px-3 py-1.5 rounded-full bg-black/80 hover:bg-black text-white text-xs font-semibold backdrop-blur-md border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-lg"
+                      >
+                        <span className="material-symbols-outlined text-sm">close</span>
+                        <span>Close Video</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div 
+                    onClick={() => setIsIntroVideoPlaying(true)}
+                    className="relative w-full aspect-[16/9] md:aspect-[21/10] rounded-xl md:rounded-2xl overflow-hidden cursor-pointer group bg-slate-950"
+                  >
+                    <img
+                      alt="माइंड मास्टर ॲकॅडमी परिचय - प्रशांत धुमाळ सर | संकल्प एकच, सक्षम पिढी घडविणे"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100"
+                      src="https://img.youtube.com/vi/8Nyi_FVeUNw/maxresdefault.jpg"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/assets/images/classroom_students_group.png';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-black/30 group-hover:from-slate-950/90 transition-all" />
+                    
+                    {/* Top Badges */}
+                    <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-[11px] sm:text-xs font-bold shadow-lg uppercase tracking-wider">
+                        <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                        OFFICIAL 6-MIN INTRO VIDEO
+                      </span>
+                      <span className="px-3 py-1 rounded-full bg-white/20 text-white text-[11px] sm:text-xs font-semibold backdrop-blur-md border border-white/20">
+                        HD 1080p
+                      </span>
+                    </div>
+
+                    {/* Centered Glowing Red Play Button */}
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 group-hover:scale-110 group-hover:bg-red-500 transition-all cursor-pointer ring-8 ring-red-600/20">
+                        <span className="material-symbols-outlined text-4xl sm:text-5xl ml-1 text-white" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          play_arrow
+                        </span>
+                      </div>
+                      <div className="mt-4 max-w-lg">
+                        <p className="text-white text-lg sm:text-2xl md:text-3xl font-black drop-shadow-lg tracking-tight">
+                          संकल्प एकच, सक्षम पिढी घडविणे
+                        </p>
+                        <p className="text-white/90 text-xs sm:text-sm font-medium mt-1.5 drop-shadow-md">
+                          प्रशांत धुमाळ सर (आंतरराष्ट्रीय मेमरी ट्रेनर) • क्लिक करा व संपूर्ण व्हिडिओ पहा
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Bottom Pill Bar */}
+                    <div className="absolute bottom-4 left-4 right-4 z-10 hidden sm:flex items-center justify-between gap-3 bg-black/60 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/10 text-white text-xs">
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1.5 text-amber-300 font-semibold">
+                          <span className="material-symbols-outlined text-sm">calculate</span> १ ते १०० पाढे सेकंदात
+                        </span>
+                        <span className="text-white/30">•</span>
+                        <span className="flex items-center gap-1.5 text-blue-300 font-semibold">
+                          <span className="material-symbols-outlined text-sm">edit</span> सुंदर हस्ताक्षर
+                        </span>
+                        <span className="text-white/30">•</span>
+                        <span className="flex items-center gap-1.5 text-emerald-300 font-semibold">
+                          <span className="material-symbols-outlined text-sm">psychology</span> स्वामी विवेकानंद मेमरी सायन्स
+                        </span>
+                      </div>
+                      <span className="font-mono text-white/90 bg-white/10 px-2 py-0.5 rounded">6:00 MIN</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -476,6 +558,91 @@ export const Home: React.FC = () => {
               <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto mt-2">
                 Live batch celebrations and merit ranks from our Satara Flagship HQ and Pune Hubs.
               </p>
+            </div>
+
+            {/* Featured Academy Orientation Video Banner */}
+            <div className="w-full mb-8 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white border border-slate-700 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
+              <div className="flex-1 space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/90 text-white text-xs font-bold uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  Official Academy Orientation (६:०० Min)
+                </div>
+                <h3 className="font-heading-bold text-2xl sm:text-3xl font-black text-white">
+                  संकल्प एकच, सक्षम पिढी घडविणे
+                </h3>
+                <p className="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-xl">
+                  प्रशांत धुमाळ सर — १ ते १०० पाढे सेकंदात तोंडपाठ, सुंदर हस्ताक्षर (१०-१५% गुण वाढ) आणि स्वामी विवेकानंद मेमरी सायन्सचे संपूर्ण विश्लेषण.
+                </p>
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setModalData({
+                        isOpen: true,
+                        title: 'संकल्प एकच, सक्षम पिढी घडविणे - प्रशांत धुमाळ सर',
+                        studentName: 'प्रशांत धुमाळ सर (संस्थापक व आंतरराष्ट्रीय मेमरी ट्रेनर)',
+                        rankBadge: 'OFFICIAL ORIENTATION',
+                        category: 'Academy Intro',
+                        location: 'सातारा मुख्यालय (HQ)',
+                        batchYear: '२०२६-२७ शैक्षणिक सत्र',
+                        quote: 'ग्रामीण भागातील मुले केवळ पैशांच्या अभावामुळे किंवा महागड्या सुविधांअभावी शिक्षणात मागे राहू नयेत, हाच आमचा संकल्प आहे.',
+                        posterImg: 'https://img.youtube.com/vi/8Nyi_FVeUNw/maxresdefault.jpg',
+                        youtubeId: '8Nyi_FVeUNw',
+                        videoDuration: '6:00',
+                        marksheetScore: '१ ते १०० पाढे सेकंदात • सुंदर हस्ताक्षर',
+                        keyTakeaway: 'स्वामी विवेकानंद व्हिज्युअल मेमरी सायन्स व बोर्ड परीक्षा टाइम मॅनेजमेंट',
+                        onClose: () => setModalData(null),
+                      })
+                    }
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-red-600/30 transition-all cursor-pointer active:scale-95"
+                  >
+                    <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>play_circle</span>
+                    <span>व्हिडिओ पहा (Watch 6-Min Intro)</span>
+                  </button>
+                  <a
+                    href="https://youtu.be/8Nyi_FVeUNw"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md border border-white/20 transition-all"
+                  >
+                    <span>YouTube वर उघडा</span>
+                    <span className="material-symbols-outlined text-sm">open_in_new</span>
+                  </a>
+                </div>
+              </div>
+              <div 
+                onClick={() =>
+                  setModalData({
+                    isOpen: true,
+                    title: 'संकल्प एकच, सक्षम पिढी घडविणे - प्रशांत धुमाळ सर',
+                    studentName: 'प्रशांत धुमाळ सर (संस्थापक व आंतरराष्ट्रीय मेमरी ट्रेनर)',
+                    rankBadge: 'OFFICIAL ORIENTATION',
+                    category: 'Academy Intro',
+                    location: 'सातारा मुख्यालय (HQ)',
+                    batchYear: '२०२६-२७ शैक्षणिक सत्र',
+                    quote: 'ग्रामीण भागातील मुले केवळ पैशांच्या अभावामुळे किंवा महागड्या सुविधांअभावी शिक्षणात मागे राहू नयेत, हाच आमचा संकल्प आहे.',
+                    posterImg: 'https://img.youtube.com/vi/8Nyi_FVeUNw/maxresdefault.jpg',
+                    youtubeId: '8Nyi_FVeUNw',
+                    videoDuration: '6:00',
+                    marksheetScore: '१ ते १०० पाढे सेकंदात • सुंदर हस्ताक्षर',
+                    keyTakeaway: 'स्वामी विवेकानंद व्हिज्युअल मेमरी सायन्स व बोर्ड परीक्षा टाइम मॅनेजमेंट',
+                    onClose: () => setModalData(null),
+                  })
+                }
+                className="w-full md:w-80 aspect-video rounded-2xl overflow-hidden relative cursor-pointer group shadow-lg shrink-0 border border-white/10"
+              >
+                <img
+                  src="https://img.youtube.com/vi/8Nyi_FVeUNw/maxresdefault.jpg"
+                  alt="प्रशांत धुमाळ सर - संकल्प एकच, सक्षम पिढी घडविणे"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <span className="material-symbols-outlined text-2xl ml-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
+                  </div>
+                </div>
+                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 text-white text-[10px] font-mono">6:00</span>
+              </div>
             </div>
 
             {/* Results Photo Cards Grid */}
