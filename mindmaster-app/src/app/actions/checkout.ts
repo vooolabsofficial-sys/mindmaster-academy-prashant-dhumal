@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { COURSE_ID_MAP } from "@/lib/mockData";
 import { getStaffCoupons, getStaffStudents, saveStaffCoupon, getStaffCourses, getStaffBooks } from "@/lib/staffStore";
-import { hasUserRedeemedCoupon, recordCouponRedemption } from "@/lib/couponRedemptionStore";
+import { hasUserRedeemedCoupon, recordCouponRedemption, atomicRedeemCoupon } from "@/lib/couponRedemptionStore";
 import { normalizePhone } from "@/lib/phoneUtils";
 import { calculateExpiryIST, extendExpiryIST, formatIST } from "@/lib/istTime";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -1059,26 +1059,18 @@ export async function verifyRazorpayPayment({
     const cleanCode = couponCode.trim().toUpperCase();
     const discountAmountPaise = Math.max(0, item.pricePaise - amountPaise);
 
-    try {
-      const staffCoupons = getStaffCoupons();
-      const cpn = staffCoupons.find((c) => c.code.toUpperCase() === cleanCode);
-      if (cpn) {
-        const newUsed = (cpn.used_count || cpn.totalUsed || 0) + 1;
-        const isNowFull = newUsed >= (cpn.usage_limit || cpn.maxTotalUses || 500);
-        saveStaffCoupon({
-          ...cpn,
-          totalUsed: newUsed,
-          used_count: newUsed,
-          status: isNowFull ? "expired" : cpn.status,
-        });
-      }
-    } catch {}
+    const staffCoupons = getStaffCoupons();
+    const cpn = staffCoupons.find((c) => c.code.toUpperCase() === cleanCode);
+    const maxUses = cpn?.usage_limit || cpn?.maxTotalUses;
+    const perUserUsage = cpn?.per_user_usage || cpn?.usageLimitPerUser || "once";
 
-    recordCouponRedemption(
-      finalUserId,
-      couponId || cleanCode,
-      cleanCode,
-      {
+    const redeemResult = await atomicRedeemCoupon({
+      couponCode: cleanCode,
+      userId: finalUserId,
+      maxUses,
+      perUserUsage: perUserUsage as any,
+      studentMobile,
+      details: {
         studentName: studentName || "Student",
         studentMobile: studentMobile || "",
         courseId: actualItemType === "course" ? item.id : undefined,
@@ -1089,8 +1081,21 @@ export async function verifyRazorpayPayment({
         originalPricePaise: item.pricePaise,
         discountPaise: discountAmountPaise,
         paidPaise: amountPaise,
-      }
-    );
+      },
+    });
+
+    if (cpn && redeemResult.success) {
+      try {
+        const newUsed = (cpn.used_count || cpn.totalUsed || 0) + 1;
+        const isNowFull = maxUses ? newUsed >= maxUses : false;
+        saveStaffCoupon({
+          ...cpn,
+          totalUsed: newUsed,
+          used_count: newUsed,
+          status: isNowFull ? "expired" : cpn.status,
+        });
+      } catch {}
+    }
   };
 
   if (isSupabaseConfigured) {

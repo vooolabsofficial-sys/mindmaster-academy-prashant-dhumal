@@ -15,6 +15,75 @@ if (!globalThis._mma_server_coupon_redemptions) {
   globalThis._mma_server_coupon_redemptions = [];
 }
 
+// In-process atomic lock per coupon code for concurrency safety
+const couponLocks = new Map<string, Promise<void>>();
+
+export async function withCouponLock<T>(couponCode: string, fn: () => Promise<T>): Promise<T> {
+  const key = couponCode.trim().toUpperCase();
+  while (couponLocks.has(key)) {
+    try {
+      await couponLocks.get(key);
+    } catch {}
+  }
+  let resolveLock: () => void = () => {};
+  const lockPromise = new Promise<void>((res) => {
+    resolveLock = res;
+  });
+  couponLocks.set(key, lockPromise);
+
+  try {
+    return await fn();
+  } finally {
+    couponLocks.delete(key);
+    resolveLock();
+  }
+}
+
+export async function atomicRedeemCoupon(params: {
+  couponCode: string;
+  userId: string;
+  maxUses?: number;
+  perUserUsage?: "once" | "multiple";
+  studentMobile?: string;
+  details?: {
+    studentName?: string;
+    studentMobile?: string;
+    courseId?: string;
+    courseTitle?: string;
+    bookId?: string;
+    bookTitle?: string;
+    itemType?: "course" | "book";
+    originalPricePaise?: number;
+    discountPaise?: number;
+    paidPaise?: number;
+  };
+}): Promise<{ success: boolean; error?: string; redemption?: CouponRedemptionRecord }> {
+  return withCouponLock(params.couponCode, async () => {
+    const cleanCode = params.couponCode.trim().toUpperCase();
+    const cleanMobile = params.studentMobile ? params.studentMobile.replace(/[^0-9]/g, "").slice(-10) : "";
+
+    // 1. Check single use per user
+    if (params.perUserUsage === "once") {
+      if (
+        hasUserRedeemedCoupon(params.userId, cleanCode) ||
+        (cleanMobile && hasUserRedeemedCoupon(cleanMobile, cleanCode))
+      ) {
+        return { success: false, error: "Coupon already redeemed by this student (1x limit)." };
+      }
+    }
+
+    // 2. Check total usage limit atomically
+    const currentRedemptions = getRedemptionsByCoupon(cleanCode);
+    if (params.maxUses !== undefined && params.maxUses > 0 && currentRedemptions.length >= params.maxUses) {
+      return { success: false, error: "Coupon usage quota is fully exhausted." };
+    }
+
+    // 3. Atomically record redemption
+    const record = recordCouponRedemption(params.userId, cleanCode, cleanCode, params.details);
+    return { success: true, redemption: record };
+  });
+}
+
 export function hasUserRedeemedCoupon(userId: string, couponIdentifier: string): boolean {
   if (!userId || !couponIdentifier) return false;
   const list = getRedemptions();
