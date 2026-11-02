@@ -7,7 +7,12 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/courses", "/course/", "/login", "/books"],
+        allow: ["/", "/courses", "/course/", "/login", "/books", "/verify-certificate"],
+        disallow: ["/admin/", "/sub/", "/api/", "/checkout", "/watch/"],
+      },
+      {
+        userAgent: ["PerplexityBot", "ChatGPT-User"],
+        allow: ["/", "/courses", "/course/", "/books", "/verify-certificate"],
         disallow: ["/admin/", "/sub/", "/api/", "/checkout", "/watch/"],
       },
     ],
