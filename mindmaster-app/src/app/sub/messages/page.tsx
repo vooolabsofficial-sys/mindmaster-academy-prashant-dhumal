@@ -31,9 +31,19 @@ export default function SubAdminMessagesPage() {
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [resolutionNoteInput, setResolutionNoteInput] = useState("");
 
-  // Filters
+  // Filters & Pagination
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<"all" | "unread">("all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -42,10 +52,14 @@ export default function SubAdminMessagesPage() {
     await fetchDbConversations();
     const filters: { unreadOnly?: boolean; search?: string } = {};
     if (filterMode === "unread") filters.unreadOnly = true;
-    if (searchQuery) filters.search = searchQuery;
+    if (debouncedSearchQuery) filters.search = debouncedSearchQuery;
     setConversations(getConversationsForStaff(filters));
     setTotalUnread(getUnreadCountForStaff());
   };
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchQuery, filterMode]);
 
   useEffect(() => {
     reload();
@@ -68,7 +82,7 @@ export default function SubAdminMessagesPage() {
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, filterMode]);
+  }, [debouncedSearchQuery, filterMode]);
 
   useEffect(() => {
     if (activeConvId) {
@@ -138,6 +152,8 @@ export default function SubAdminMessagesPage() {
   };
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
+  const totalPages = Math.max(1, Math.ceil(conversations.length / PAGE_SIZE));
+  const paginatedConversations = conversations.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <PermissionGuard permission="messages.manage">
@@ -193,12 +209,12 @@ export default function SubAdminMessagesPage() {
               </div>
 
               <div className="flex-1 overflow-y-auto divide-y divide-[#E4E8F8]">
-                {conversations.length === 0 ? (
+                {paginatedConversations.length === 0 ? (
                   <div className="p-8 text-center">
                     <p className="text-xs text-[#8A94A6]">No conversations.</p>
                   </div>
                 ) : (
-                  conversations.map((conv) => (
+                  paginatedConversations.map((conv) => (
                     <button
                       key={conv.id}
                       onClick={() => setActiveConvId(conv.id)}
@@ -248,6 +264,31 @@ export default function SubAdminMessagesPage() {
                   ))
                 )}
               </div>
+
+              {/* Pagination Toolbar */}
+              {totalPages > 1 && (
+                <div className="p-2.5 border-t border-[#E4E8F8] bg-[#F5F7FF] flex items-center justify-between text-[11px] font-semibold text-[#5A6478]">
+                  <span>Page {page} of {totalPages}</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      className="px-2 py-1 rounded-lg bg-white border border-[#E4E8F8] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+                    >
+                      Prev
+                    </button>
+                    <button
+                      type="button"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      className="px-2 py-1 rounded-lg bg-white border border-[#E4E8F8] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Pane */}

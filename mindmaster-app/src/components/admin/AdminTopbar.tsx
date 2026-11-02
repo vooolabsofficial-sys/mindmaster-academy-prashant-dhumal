@@ -67,6 +67,7 @@ export default function AdminTopbar() {
   const [searchResults, setSearchResults] = useState<StudentRecord[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setStaff(getCurrentStaff());
@@ -99,9 +100,13 @@ export default function AdminTopbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handle live student search
+  // Handle live student search with 250ms debounce
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
+    if (searchDebounceTimerRef.current) {
+      clearTimeout(searchDebounceTimerRef.current);
+    }
+
     const q = query.trim().toLowerCase();
     if (q.length < 2) {
       setSearchResults([]);
@@ -109,22 +114,24 @@ export default function AdminTopbar() {
       return;
     }
 
-    try {
-      const allStudents = getStaffStudents();
-      const filtered = allStudents
-        .filter((s) => {
-          const name = (s.name || (s as any).studentName || "").toLowerCase();
-          const phone = (s.phone || "").toLowerCase();
-          const district = (s.district || "").toLowerCase();
-          return name.includes(q) || phone.includes(q) || district.includes(q);
-        })
-        .slice(0, 6);
+    searchDebounceTimerRef.current = setTimeout(() => {
+      try {
+        const allStudents = getStaffStudents();
+        const filtered = allStudents
+          .filter((s) => {
+            const name = (s.name || (s as any).studentName || "").toLowerCase();
+            const phone = (s.phone || "").toLowerCase();
+            const district = (s.district || "").toLowerCase();
+            return name.includes(q) || phone.includes(q) || district.includes(q);
+          })
+          .slice(0, 6);
 
-      setSearchResults(filtered);
-      setIsSearchOpen(true);
-    } catch {
-      setSearchResults([]);
-    }
+        setSearchResults(filtered);
+        setIsSearchOpen(true);
+      } catch {
+        setSearchResults([]);
+      }
+    }, 250);
   };
 
   const handleSelectStudent = (student: StudentRecord) => {

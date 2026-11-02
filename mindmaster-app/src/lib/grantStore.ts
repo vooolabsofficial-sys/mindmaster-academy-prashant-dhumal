@@ -134,8 +134,17 @@ export function getGrants(): Grant[] {
   }
 }
 
+let _cachedDbGrants: { data: Grant[]; expiresAt: number } | null = null;
+
+export function invalidateGrantsCache(): void {
+  _cachedDbGrants = null;
+}
+
 export async function fetchDbGrants(): Promise<Grant[]> {
   try {
+    if (_cachedDbGrants && Date.now() < _cachedDbGrants.expiresAt) {
+      return _cachedDbGrants.data;
+    }
     const supabase = getSupabase();
     if (!supabase) return getGrants();
     const { data, error } = await supabase
@@ -210,6 +219,7 @@ export async function fetchDbGrants(): Promise<Grant[]> {
       };
     });
 
+    _cachedDbGrants = { data: mapped, expiresAt: Date.now() + 30_000 };
     saveGrants(mapped);
     return mapped;
   } catch {
@@ -218,6 +228,7 @@ export async function fetchDbGrants(): Promise<Grant[]> {
 }
 
 export function saveGrants(grants: Grant[]): void {
+  invalidateGrantsCache();
   if (typeof window === "undefined") {
     SERVER_MEM_STORE.set(STORAGE_KEY_GRANTS, grants);
     return;

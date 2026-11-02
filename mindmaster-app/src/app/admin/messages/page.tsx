@@ -53,10 +53,24 @@ export default function StaffMessagesPage() {
   const [resolutionNoteInput, setResolutionNoteInput] = useState("");
   const [resettingPhone, setResettingPhone] = useState<string | null>(null);
 
-  // Filters
+  // Filters & Pagination
   const [statusTab, setStatusTab] = useState<StatusTab>("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchQuery, statusTab, categoryFilter]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -216,9 +230,9 @@ export default function StaffMessagesPage() {
       return false;
     }
 
-    // Search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    // Debounced Search query
+    if (debouncedSearchQuery.trim()) {
+      const q = debouncedSearchQuery.toLowerCase();
       const matchName = (c.studentName || "").toLowerCase().includes(q);
       const matchPhone = (c.studentPhone || c.studentId || "").toLowerCase().includes(q);
       const matchCourse = (c.courseTitle || "").toLowerCase().includes(q);
@@ -228,6 +242,9 @@ export default function StaffMessagesPage() {
 
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredConversations.length / PAGE_SIZE));
+  const paginatedConversations = filteredConversations.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
 
@@ -381,13 +398,13 @@ export default function StaffMessagesPage() {
 
               {/* Tickets Cards List */}
               <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 max-h-[680px]">
-                {filteredConversations.length === 0 ? (
+                {paginatedConversations.length === 0 ? (
                   <div className="p-8 text-center text-slate-400 dark:text-slate-500 space-y-2">
                     <MessageSquare className="w-8 h-8 mx-auto stroke-1" />
                     <p className="text-xs font-semibold">No tickets match the selected criteria.</p>
                   </div>
                 ) : (
-                  filteredConversations.map((conv) => {
+                  paginatedConversations.map((conv) => {
                     const isSelected = activeConvId === conv.id;
                     const phone = (conv.studentPhone || conv.studentId || "").replace(/[^0-9]/g, "").slice(-10);
                     const status = conv.status || "Open";
@@ -506,6 +523,31 @@ export default function StaffMessagesPage() {
                   })
                 )}
               </div>
+
+              {/* Tickets Pagination Toolbar */}
+              {totalPages > 1 && (
+                <div className="p-2.5 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  <span>Page {page} of {totalPages} ({filteredConversations.length} tickets)</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      className="px-2.5 py-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                    >
+                      Prev
+                    </button>
+                    <button
+                      type="button"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      className="px-2.5 py-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Pane: Active Thread Workspace */}

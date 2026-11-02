@@ -27,6 +27,12 @@ export default function SubActivityPage() {
   const [todayAdmissions, setTodayAdmissions] = useState<number>(0);
   const [cashCollected, setCashCollected] = useState<number>(0);
   const [filterType, setFilterType] = useState<string>("all");
+  const [page, setPage] = useState<number>(1);
+  const PAGE_SIZE = 25;
+
+  useEffect(() => {
+    setPage(1);
+  }, [filterType]);
 
   useEffect(() => {
     const current = getCurrentStaff();
@@ -72,6 +78,9 @@ export default function SubActivityPage() {
     if (filterType === "all") return true;
     return log.category === filterType || log.entityType.toLowerCase() === filterType.toLowerCase();
   });
+
+  const totalPages = Math.max(1, Math.ceil(displayedLogs.length / PAGE_SIZE));
+  const paginatedLogs = displayedLogs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <AdminShell>
@@ -158,38 +167,65 @@ export default function SubActivityPage() {
               </p>
             </div>
           ) : (
-            <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:top-3 before:bottom-3 before:left-3 sm:before:left-4 before:w-0.5 before:bg-[#E4E8F8]">
-              {displayedLogs.map((log) => {
-                const badge = getActionBadge(log.action);
-                return (
-                  <div key={log.id} className="relative group">
-                    <div className="absolute -left-6 sm:-left-8 top-1.5 w-6 h-6 rounded-full bg-white border-2 border-[#0B57D0] flex items-center justify-center text-[10px] shadow-xs group-hover:scale-110 transition-transform">
-                      {badge.icon}
-                    </div>
-
-                    <div className="bg-[#FAFBFD] group-hover:bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl p-4 transition-all">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`px-2.5 py-0.5 rounded-md font-mono text-[11px] font-bold border ${badge.bg}`}>
-                            {log.action}
-                          </span>
-                          <span className="text-xs font-bold text-[#0E1B3D]">
-                            {log.targetStudentName || log.entityName || log.entityId}
-                          </span>
-                        </div>
-                        <span className="font-mono text-[11px] text-[#8A94A6] whitespace-nowrap">
-                          {log.recorded_at_ist || log.timestamp}
-                        </span>
+            <>
+              <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:top-3 before:bottom-3 before:left-3 sm:before:left-4 before:w-0.5 before:bg-[#E4E8F8]">
+                {paginatedLogs.map((log) => {
+                  const badge = getActionBadge(log.action);
+                  return (
+                    <div key={log.id} className="relative group">
+                      <div className="absolute -left-6 sm:-left-8 top-1.5 w-6 h-6 rounded-full bg-white border-2 border-[#0B57D0] flex items-center justify-center text-[10px] shadow-xs group-hover:scale-110 transition-transform">
+                        {badge.icon}
                       </div>
 
-                      <p className="text-xs text-[#5A6478] mt-2 leading-relaxed">
-                        {log.details}
-                      </p>
+                      <div className="bg-[#FAFBFD] group-hover:bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl p-4 transition-all">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`px-2.5 py-0.5 rounded-md font-mono text-[11px] font-bold border ${badge.bg}`}>
+                              {log.action}
+                            </span>
+                            <span className="text-xs font-bold text-[#0E1B3D]">
+                              {log.targetStudentName || log.entityName || log.entityId}
+                            </span>
+                          </div>
+                          <span className="font-mono text-[11px] text-[#8A94A6] whitespace-nowrap">
+                            {log.recorded_at_ist || log.timestamp}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-[#5A6478] mt-2 leading-relaxed">
+                          {log.details}
+                        </p>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-6 mt-6 border-t border-[#E4E8F8] text-xs text-[#5A6478]">
+                  <span>Page {page} of {totalPages} ({displayedLogs.length} events)</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      className="px-3 py-1.5 rounded-xl border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      className="px-3 py-1.5 rounded-xl border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    >
+                      Next
+                    </button>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
