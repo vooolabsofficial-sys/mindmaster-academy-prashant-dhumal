@@ -69,7 +69,7 @@ export async function POST(req: Request) {
           id: dbStaff.id,
           staffId: dbStaff.staff_id,
           name: dbStaff.full_name,
-          email: dbStaff.email || `${(dbStaff.staff_id || "staff").toLowerCase()}@mindmasteracademy.in`,
+          email: dbStaff.email || `${(dbStaff.staff_id || "staff").toLowerCase()}@mindmasteredu.in`,
           phone: dbStaff.phone,
           role: dbStaff.role,
           password: dbStaff.password_hash,

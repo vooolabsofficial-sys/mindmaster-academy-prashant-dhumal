@@ -200,7 +200,7 @@ export default function SubAdminManagerPage() {
       const updated: StaffUser = {
         ...editingStaff,
         name: formName.trim(),
-        email: formEmail.trim() || `${formName.trim().toLowerCase().replace(/\s+/g, ".")}@mindmasteracademy.in`,
+        email: formEmail.trim() || `${formName.trim().toLowerCase().replace(/\s+/g, ".")}@mindmasteredu.in`,
         phone: formPhone.trim(),
         district: formDistrict,
         centre: formCentre.trim() || undefined,
@@ -220,7 +220,7 @@ export default function SubAdminManagerPage() {
         id: `staff-${Date.now()}`,
         staffId: newStaffId,
         name: formName.trim(),
-        email: formEmail.trim() || `${formName.trim().toLowerCase().replace(/\s+/g, ".")}@mindmasteracademy.in`,
+        email: formEmail.trim() || `${formName.trim().toLowerCase().replace(/\s+/g, ".")}@mindmasteredu.in`,
         phone: formPhone.trim(),
         district: formDistrict,
         centre: formCentre.trim() || undefined,
@@ -970,7 +970,7 @@ export default function SubAdminManagerPage() {
                           type="email"
                           value={formEmail}
                           onChange={(e) => setFormEmail(e.target.value)}
-                          placeholder="e.g. anand@mindmasteracademy.in"
+                          placeholder="e.g. anand@mindmasteredu.in"
                           className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                         />
                       </div>

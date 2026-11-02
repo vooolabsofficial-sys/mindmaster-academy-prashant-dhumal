@@ -452,7 +452,7 @@ export function generateFeeReceiptPdf(data: FeeReceiptData) {
     15,
     281
   );
-  doc.text("Website: mindmasteracademy.in | Student Support: +91 84593 44077", 15, 286);
+  doc.text("Website: mindmasteredu.in | Student Support: +91 84593 44077", 15, 286);
 
   // Trigger browser download
   doc.save(`MindMaster_Receipt_${data.receiptNo}.pdf`);
@@ -536,7 +536,7 @@ export function generateCourseCertificatePdf(data: CertificateData) {
 
   doc.setFontSize(8.5);
   doc.setTextColor(...primaryColor);
-  doc.text("Official Online Verification: mindmasteracademy.in/verify-certificate", 148.5, 142, { align: "center" });
+  doc.text("Official Online Verification: mindmasteredu.in/verify-certificate", 148.5, 142, { align: "center" });
 
   // Signature lines
   const sigY = 165;

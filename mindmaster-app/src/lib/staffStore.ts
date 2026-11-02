@@ -1690,7 +1690,7 @@ export async function fetchDbStaff(): Promise<StaffUser[]> {
       id: s.id,
       staffId: s.staff_id,
       name: s.full_name,
-      email: s.email || `${(s.staff_id || "staff").toLowerCase()}@mindmasteracademy.in`,
+      email: s.email || `${(s.staff_id || "staff").toLowerCase()}@mindmasteredu.in`,
       phone: s.phone,
       role: s.role,
       permissions: (s.staff_permissions || []).map((p: any) => p.permission_key),

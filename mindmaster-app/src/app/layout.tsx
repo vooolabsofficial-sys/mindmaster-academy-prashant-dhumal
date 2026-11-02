@@ -22,7 +22,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://app.mindmasteracademy.com"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://app.mindmasteredu.in"),
   title: {
     default: "MindMaster Academy | Prashant Dhumal — Memory & Vedic Maths Training",
     template: "%s | MindMaster Academy",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     "MPSC Vedic Maths",
     "Mind Master Prashant Dhumal"
   ],
-  authors: [{ name: "Prashant Dhumal Sir", url: "https://mindmasteracademy.com" }],
+  authors: [{ name: "Prashant Dhumal Sir", url: "https://mindmasteredu.in" }],
   creator: "Prashant Dhumal",
   publisher: "MindMaster Academy",
   alternates: {
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_IN",
     alternateLocale: "mr_IN",
-    url: "https://app.mindmasteracademy.com",
+    url: "https://app.mindmasteredu.in",
     siteName: "MindMaster Academy",
     title: "MindMaster Academy | Prashant Dhumal — Memory & Vedic Maths Training",
     description: "Train your brain with Prashant Dhumal Sir. Master Photographic Memory, Speed Vedic Maths, and Calendar calculations.",
@@ -92,15 +92,15 @@ const academySchemaJson = {
   "@graph": [
     {
       "@type": "EducationalOrganization",
-      "@id": "https://mindmasteracademy.com/#organization",
+      "@id": "https://mindmasteredu.in/#organization",
       "name": "MindMaster Academy",
       "alternateName": "माइंडमास्टर अकॅडमी",
-      "url": "https://mindmasteracademy.com",
-      "logo": "https://mindmasteracademy.com/assets/images/memory_seminar_brain_3d.png",
+      "url": "https://mindmasteredu.in",
+      "logo": "https://mindmasteredu.in/assets/images/memory_seminar_brain_3d.png",
       "description": "Premier cognitive development institute offering Memory Training, Vedic Maths, Superfast Calendar calculation, and Brain Gym techniques by Prashant Dhumal Sir.",
       "founder": {
         "@type": "Person",
-        "@id": "https://mindmasteracademy.com/#founder",
+        "@id": "https://mindmasteredu.in/#founder",
         "name": "Prashant Dhumal",
         "jobTitle": "International Memory Trainer & Author",
         "description": "Renowned Memory Coach and Vedic Mathematics Master with 15+ years of empowering 50,000+ students and teachers across Maharashtra."
@@ -127,11 +127,11 @@ const academySchemaJson = {
     },
     {
       "@type": "WebSite",
-      "@id": "https://mindmasteracademy.com/#website",
-      "url": "https://mindmasteracademy.com",
+      "@id": "https://mindmasteredu.in/#website",
+      "url": "https://mindmasteredu.in",
       "name": "MindMaster Academy",
       "publisher": {
-        "@id": "https://mindmasteracademy.com/#organization"
+        "@id": "https://mindmasteredu.in/#organization"
       },
       "inLanguage": ["en", "mr"]
     }

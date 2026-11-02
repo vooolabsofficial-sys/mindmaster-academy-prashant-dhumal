@@ -78,6 +78,6 @@ npm run test:e2e-live
 
 ## ६. डोमेन आणि होस्टिंग स्ट्रक्चर (Vercel Architecture)
 
-* **वेबसाईट (Vite + React):** `https://mindmasteracademy.in` (Root Domain)
-* **वेब ॲप (Next.js 16 Portal):** `https://app.mindmasteracademy.in` (Subdomain)
-* **कुकी डोमेन:** `.mindmasteracademy.in` (वेबसाईटवरून ॲपमध्ये जाताना लॉगिन आपोआप टिकून राहते).
+* **वेबसाईट (Vite + React):** `https://mindmasteredu.in` (Root Domain)
+* **वेब ॲप (Next.js 16 Portal):** `https://app.mindmasteredu.in` (Subdomain)
+* **कुकी डोमेन:** `.mindmasteredu.in` (वेबसाईटवरून ॲपमध्ये जाताना लॉगिन आपोआप टिकून राहते).

@@ -22,6 +22,10 @@ export function getCookieDomain(hostOrReq?: string | any): string | undefined {
     return undefined;
   }
 
+  if (hostname.includes("mindmasteredu.in")) {
+    return process.env.NEXT_PUBLIC_COOKIE_DOMAIN || ".mindmasteredu.in";
+  }
+
   if (hostname.includes("mindmasteracademy.in")) {
     return process.env.NEXT_PUBLIC_COOKIE_DOMAIN || ".mindmasteracademy.in";
   }

@@ -84,7 +84,7 @@ export const Courses: React.FC = () => {
   });
 
   const handleFreeDownload = (resourceName: string, fileName: string) => {
-    const webOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://mindmasteracademy.in';
+    const webOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://mindmasteredu.in';
     const textContent = `MINDMASTER ACADEMY — FREE STUDY RESOURCE\n\nTitle: ${resourceName}\nMentor: Prashant Dhumal Sir\nWebsite: ${webOrigin}\nHelpline: +91 84593 44077\n\nEnjoy this high-value cognitive acceleration guide from MindMaster Academy!`;
     const element = document.createElement('a');
     const file = new Blob([textContent], { type: 'text/plain' });

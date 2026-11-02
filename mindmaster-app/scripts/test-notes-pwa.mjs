@@ -111,7 +111,7 @@ async function runTests() {
   test("README documents DNS setup, cookie domain, and marketing CTA links", () => {
     assert(readmeSrc.includes("Marketing Website Connect & DNS Setup"), "Marketing DNS section missing");
     assert(readmeSrc.includes("NEXT_PUBLIC_COOKIE_DOMAIN"), "Cookie domain documentation missing");
-    assert(readmeSrc.includes("https://app.mindmasteracademy.com/home"), "Enroll CTA link missing");
+    assert(readmeSrc.includes("https://app.mindmasteredu.in/home") || readmeSrc.includes("https://app.mindmasteracademy.com/home"), "Enroll CTA link missing");
     assert(readmeSrc.includes("cname.vercel-dns.com"), "Vercel CNAME documentation missing");
   });
 

@@ -288,7 +288,7 @@ export default function CouponManagerPage() {
 
     const msg = `🎓 *MindMaster Academy — Special Discount Coupon!*\n\nSpecial discount from Prashant Dhumal Sir's Academy:\n🎟️ Coupon Code: *${cpn.code}*\n💰 Discount: *${discountStr}*\n📚 Applicable Courses: *${courseStr}*\n⏳ Validity: *${validityStr}*\n👥 Limit: *${limitStr}*${
       cpn.school ? `\n🏫 School: *${cpn.school}*` : ""
-    }\n\n👉 To enroll and apply coupon, visit:\nhttps://mindmasteracademy.in/checkout?coupon=${cpn.code}`;
+    }\n\n👉 To enroll and apply coupon, visit:\nhttps://mindmasteredu.in/checkout?coupon=${cpn.code}`;
 
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(msg);

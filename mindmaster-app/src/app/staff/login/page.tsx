@@ -71,7 +71,7 @@ function StaffLoginContent() {
           id: data.staff.staff_id,
           staffId: data.staff.staff_id,
           name: data.staff.name,
-          email: `${data.staff.staff_id.toLowerCase()}@mindmasteracademy.in`,
+          email: `${data.staff.staff_id.toLowerCase()}@mindmasteredu.in`,
           phone: data.staff.phone,
           role: data.staff.role,
           permissions: data.staff.permissions,

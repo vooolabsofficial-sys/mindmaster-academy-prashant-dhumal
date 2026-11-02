@@ -46,7 +46,7 @@ export const INITIAL_STAFF_USERS: StaffUser[] = [
     id: "staff-mma-001",
     staffId: "MMA-001",
     name: "Staff Coordinator (Sub Admin)",
-    email: "subadmin@mindmasteracademy.in",
+    email: "subadmin@mindmasteredu.in",
     phone: "+91 98765 43211",
     role: "sub_admin",
     permissions: [
@@ -62,7 +62,7 @@ export const INITIAL_STAFF_USERS: StaffUser[] = [
     id: "staff-mma-002",
     staffId: "MMA-002",
     name: "Sneha Patil (No Keys)",
-    email: "sneha.support@mindmasteracademy.in",
+    email: "sneha.support@mindmasteredu.in",
     phone: "+91 97650 98765",
     role: "sub_admin",
     permissions: [],

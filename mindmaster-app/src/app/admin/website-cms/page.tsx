@@ -246,7 +246,7 @@ export default function WebsiteCmsPage() {
             Marketing Website CMS Studio
           </h1>
           <p className="text-xs text-[#5A6478] mt-1">
-            Visual control centre for mindmasteracademy.in — edit banners, toppers, admission ticker, offline centres, and leads CRM.
+            Visual control centre for mindmasteredu.in — edit banners, toppers, admission ticker, offline centres, and leads CRM.
           </p>
         </div>
 
@@ -448,7 +448,7 @@ export default function WebsiteCmsPage() {
                     announcement: { ...cmsData.announcement, ctaUrl: e.target.value },
                   })
                 }
-                placeholder="e.g. /courses or https://app.mindmasteracademy.in/checkout"
+                placeholder="e.g. /courses or https://app.mindmasteredu.in/checkout"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-sm text-[#0E1B3D]"
               />
             </div>

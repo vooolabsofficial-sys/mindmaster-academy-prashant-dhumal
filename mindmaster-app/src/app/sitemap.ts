@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.mindmasteracademy.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.mindmasteredu.in";
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {

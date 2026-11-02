@@ -21,7 +21,7 @@ export const getAppBaseUrl = (): string => {
   }
 
   // Default production subdomain for the web app
-  return "https://app.mindmasteracademy.in";
+  return "https://app.mindmasteredu.in";
 };
 
 // Generate full app URL for any route
@@ -75,7 +75,7 @@ export const fetchLiveCoursesFromApp = async (): Promise<LiveDbCourse[]> => {
 };
 
 export const getWhatsAppPreBookUrl = (courseTitle: string = "MindMaster Academy Courses"): string => {
-  const text = `Namaskar Prashant Sir, I visited mindmasteracademy.in. Please notify me and reserve my seat when the "${courseTitle}" batch launches!`;
+  const text = `Namaskar Prashant Sir, I visited mindmasteredu.in. Please notify me and reserve my seat when the "${courseTitle}" batch launches!`;
   return `https://wa.me/918459344077?text=${encodeURIComponent(text)}`;
 };
 

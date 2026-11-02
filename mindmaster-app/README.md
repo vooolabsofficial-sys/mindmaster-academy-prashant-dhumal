@@ -182,7 +182,7 @@ CRON_SECRET=your-secure-cron-secret-token
   - Generates verifiable PDF certificate styled with academy crest, gold border, and digital signature of Prashant Dhumal Sir.
 - **Public Verification URL**:
   - Each certificate assigned a unique cryptographic verification ID (`MMA-CERT-2026-XXXX`).
-  - QR code embedded on certificate links to public validation page `mindmasteracademy.in/verify/[certId]`.
+  - QR code embedded on certificate links to public validation page `mindmasteredu.in/verify/[certId]`.
 - **Social Sharing**:
   - Direct 1-tap sharing to WhatsApp status, LinkedIn, and Instagram stories.
 
@@ -242,36 +242,37 @@ Verify under **Project Settings $\rightarrow$ Cron Jobs** that `/api/cron/cleanu
 ## 🌐 Marketing Website Connect & DNS Setup (Step 10 — T9)
 
 ### 1. DNS Records Setup
-Configure your domain registrar (e.g. Cloudflare / GoDaddy / Namecheap) as follows:
+Configure your domain registrar (e.g. Cloudflare / GoDaddy / Hostinger) as follows:
 
 | Type | Name | Target / Value | Purpose |
 | :--- | :--- | :--- | :--- |
-| **A** / **CNAME** | `@` (`mindmasteracademy.com`) | Marketing host IP / CNAME | Static Marketing Website / Landing Page |
-| **CNAME** | `app` (`app.mindmasteracademy.com`) | `cname.vercel-dns.com` | MindMaster Next.js PWA LMS |
-| **TXT** | `_vercel` | Vercel verification token | Domain ownership verification |
+| **A** | `@` (`mindmasteredu.in`) | `76.76.21.21` | Marketing Website (Vercel) |
+| **CNAME** | `www` (`www.mindmasteredu.in`) | `cname.vercel-dns.com` | Marketing Website Alias |
+| **CNAME** | `app` (`app.mindmasteredu.in`) | `cname.vercel-dns.com` | MindMaster Next.js PWA LMS (Portal) |
+| **TXT** | `_vercel` | Vercel verification token | Domain ownership verification (if asked) |
 
 ### 2. Shared Cookie Domain Configuration
 Ensure your environment variable in Vercel is set to the parent domain:
 ```env
-NEXT_PUBLIC_COOKIE_DOMAIN=.mindmasteracademy.com
-NEXT_PUBLIC_APP_URL=https://app.mindmasteracademy.com
+NEXT_PUBLIC_COOKIE_DOMAIN=.mindmasteredu.in
+NEXT_PUBLIC_APP_URL=https://app.mindmasteredu.in
 ```
-All auth sessions set `Domain=.mindmasteracademy.com; Path=/; SameSite=Lax; Secure`, allowing seamless single sign-on between the marketing landing page and the learning app.
+All auth sessions set `Domain=.mindmasteredu.in; Path=/; SameSite=Lax; Secure`, allowing seamless single sign-on between the marketing landing page and the learning app.
 
 ### 3. Marketing Landing Page Button Link Updates
 Update all CTA buttons on the marketing website:
-- **"Enroll Now" / "प्रवेश घ्या"**: Link to `https://app.mindmasteracademy.com/home`
-- **"Login" / "लॉगिन"**: Link to `https://app.mindmasteracademy.com/login?next=/home`
-- **"Explore Courses" / "कोर्सेस पहा"**: Link to `https://app.mindmasteracademy.com/courses`
-- **"Free Trial" / "मोफत डेमो"**: Link to `https://app.mindmasteracademy.com/watch/les-mm01-01`
+- **"Enroll Now" / "प्रवेश घ्या"**: Link to `https://app.mindmasteredu.in/home`
+- **"Login" / "लॉगिन"**: Link to `https://app.mindmasteredu.in/login?next=/home`
+- **"Explore Courses" / "कोर्सेस पहा"**: Link to `https://app.mindmasteredu.in/courses`
+- **"Free Trial" / "मोफत डेमो"**: Link to `https://app.mindmasteredu.in/watch/les-mm01-01`
 
 ### 4. Auth & Onboarding Flow Verification
 - **Case 1 (Logged-in Student)**:
-  - Student visits `mindmasteracademy.com` and clicks **"Enroll Now"**.
-  - Browser navigates to `app.mindmasteracademy.com/home`.
+  - Student visits `mindmasteredu.in` and clicks **"Enroll Now"**.
+  - Browser navigates to `app.mindmasteredu.in/home`.
   - Middleware detects active session cookie (`mindmaster_session` or `sb-*-auth-token`) $\rightarrow$ lands directly on `/home` without showing login screen.
 - **Case 2 (New Student Registration)**:
-  - Student clicks **"Enroll Now"** $\rightarrow$ directed to `app.mindmasteracademy.com/home`.
+  - Student clicks **"Enroll Now"** $\rightarrow$ directed to `app.mindmasteredu.in/home`.
   - Middleware route guard intercepts unauthenticated request $\rightarrow$ redirects to `/login?next=/home`.
   - Student enters mobile number $\rightarrow$ verifies 6-digit OTP $\rightarrow$ redirected to `/onboarding?next=/home`.
   - Student enters District/Taluka/School $\rightarrow$ regional grants auto-apply $\rightarrow$ redirected to target `/home` with course access unlocked!
@@ -283,10 +284,10 @@ Update all CTA buttons on the marketing website:
 Complete the following verification steps before taking the platform live for public traffic:
 
 ### Section A: DNS & Domain Routing
-1. Point `mindmasteracademy.com` root domain A/CNAME to marketing static site.
-2. Point `app.mindmasteracademy.com` CNAME to `cname.vercel-dns.com`.
+1. Point `mindmasteredu.in` root domain A record to `76.76.21.21` (Marketing static site).
+2. Point `app.mindmasteredu.in` CNAME to `cname.vercel-dns.com`.
 3. Verify SSL certificate generation and HTTPS enforcement across all subdomains.
-4. Verify cookie domain `.mindmasteracademy.com` allows single sign-on between landing pages and LMS.
+4. Verify cookie domain `.mindmasteredu.in` allows single sign-on between landing pages and LMS.
 
 ### Section B: Payment Gateway
 1. Switch Razorpay from Test Mode to **Live Mode**.
