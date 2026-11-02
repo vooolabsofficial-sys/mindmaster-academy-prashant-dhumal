@@ -9,6 +9,17 @@ import { fetchDbAuditLogs } from "@/lib/auditLogger";
 import { fetchDbStaff } from "@/lib/staffStore";
 import { formatIST } from "@/lib/istTime";
 import StatusBadge from "@/components/ui/StatusBadge";
+import {
+  Download,
+  Search,
+  X,
+  ClipboardList,
+  GraduationCap,
+  DollarSign,
+  BookOpen,
+  ShieldCheck,
+  AlertTriangle,
+} from "lucide-react";
 
 export default function AuditLogPage() {
   const [logs, setLogs] = useState<ForensicAuditLogEntry[]>([]);
@@ -156,9 +167,10 @@ export default function AuditLogPage() {
               <button
                 type="button"
                 onClick={handleExportCsv}
-                className="px-4 py-2 bg-[#0B57D0] hover:bg-[#0842A0] text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-2"
+                className="px-4 py-2 bg-[#0B57D0] hover:bg-[#0842A0] text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-2 cursor-pointer"
               >
-                <span>📥</span> Export Forensic CSV
+                <Download className="w-3.5 h-3.5" />
+                <span>Export Forensic CSV</span>
               </button>
               <span className="px-3.5 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D]">
                 Total: {filteredLogs.length}
@@ -169,18 +181,18 @@ export default function AuditLogPage() {
           {/* Category Tabs */}
           <div className="flex flex-wrap items-center gap-2 border-b border-[#E4E8F8] pb-3">
             {[
-              { id: "all", label: "All Categories", icon: "📋" },
-              { id: "admissions", label: "Admissions & Grants", icon: "🎓" },
-              { id: "settlements", label: "Cash & Settlements", icon: "💰" },
-              { id: "catalog", label: "Catalog & CMS Edits", icon: "📚" },
-              { id: "security", label: "Logins & Security", icon: "🛡️" },
-              { id: "high_risk", label: "🚨 High-Risk / Alerts", icon: "⚠️" },
+              { id: "all", label: "All Categories", icon: <ClipboardList className="w-3.5 h-3.5" /> },
+              { id: "admissions", label: "Admissions & Grants", icon: <GraduationCap className="w-3.5 h-3.5" /> },
+              { id: "settlements", label: "Cash & Settlements", icon: <DollarSign className="w-3.5 h-3.5" /> },
+              { id: "catalog", label: "Catalog & CMS Edits", icon: <BookOpen className="w-3.5 h-3.5" /> },
+              { id: "security", label: "Logins & Security", icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+              { id: "high_risk", label: "High-Risk / Alerts", icon: <AlertTriangle className="w-3.5 h-3.5" /> },
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setCategoryFilter(tab.id)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                   categoryFilter === tab.id
                     ? tab.id === "high_risk"
                       ? "bg-rose-600 text-white shadow-sm"
@@ -198,7 +210,7 @@ export default function AuditLogPage() {
           <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
             {/* Search */}
             <div className="relative w-full md:w-80">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#8A94A6]">🔍</span>
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8A94A6] pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
@@ -433,9 +445,9 @@ export default function AuditLogPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedLog(null)}
-                    className="p-2 text-[#5A6478] hover:bg-[#F5F7FF] rounded-full text-base font-bold"
+                    className="p-1.5 text-[#5A6478] hover:bg-[#F5F7FF] rounded-full cursor-pointer"
                   >
-                    ✕
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 

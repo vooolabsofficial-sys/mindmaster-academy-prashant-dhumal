@@ -36,6 +36,7 @@ import {
   Image as ImageIcon,
   Loader2,
   AlertCircle,
+  HardDrive,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -601,9 +602,15 @@ export default function DigitalBooksManagerPage() {
                         )}
 
                         <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium mt-2">
-                          <span>📄 {book.pages} Pages</span>
+                          <span className="inline-flex items-center gap-1">
+                            <FileText className="w-3 h-3 text-slate-400" />
+                            <span>{book.pages} Pages</span>
+                          </span>
                           <span>•</span>
-                          <span>💾 {book.fileSizeMb} MB</span>
+                          <span className="inline-flex items-center gap-1">
+                            <HardDrive className="w-3 h-3 text-slate-400" />
+                            <span>{book.fileSizeMb} MB</span>
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -933,8 +940,9 @@ export default function DigitalBooksManagerPage() {
                               <p className="font-extrabold text-[#0E1B3D] truncate text-xs">
                                 {formFilePath.split("/").pop()}
                               </p>
-                              <p className="text-[11px] text-slate-500">
-                                💾 {formFileSizeMb} MB • Ready
+                              <p className="text-[11px] text-slate-500 inline-flex items-center gap-1">
+                                <HardDrive className="w-3 h-3 text-slate-400" />
+                                <span>{formFileSizeMb} MB • Ready</span>
                               </p>
                             </div>
                           </div>

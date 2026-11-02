@@ -28,6 +28,26 @@ import {
   SubAdminCashSummary,
 } from "@/lib/grantStore";
 import { formatIST, calculateExpiryIST, isExpiredIST } from "@/lib/istTime";
+import {
+  Gift,
+  Plus,
+  FileSpreadsheet,
+  CheckCircle2,
+  X,
+  Phone,
+  Edit,
+  Check,
+  AlertCircle,
+  Banknote,
+  Smartphone,
+  GraduationCap,
+  BookOpen,
+  Layers,
+  Users,
+  MapPin,
+  Building,
+  Globe,
+} from "lucide-react";
 
 const POPULAR_DISTRICTS = ["Pune", "Satara", "Kolhapur", "Solapur", "Sangli", "Ahmednagar", "Nashik", "Thane", "Mumbai"];
 
@@ -424,14 +444,16 @@ export default function GrantsManagerPage() {
                 onClick={() => setIsBulkCustomizerOpen(true)}
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-full shadow-md transition cursor-pointer active:scale-95"
               >
-                <span>📋</span> Bulk Excel / CSV Customizer
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>Bulk Excel / CSV Customizer</span>
               </button>
 
               <button
                 onClick={handleOpenDrawer}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-full shadow-md transition cursor-pointer active:scale-95"
               >
-                <span>🎁</span> + New Grant
+                <Plus className="w-4 h-4" />
+                <span>New Grant</span>
               </button>
             </div>
           </div>
@@ -440,9 +462,12 @@ export default function GrantsManagerPage() {
           {actionFeedback && (
             <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between shadow-xs animate-fadeIn">
               <span className="flex items-center gap-2">
-                <span>✅</span> {actionFeedback}
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{actionFeedback}</span>
               </span>
-              <button onClick={() => setActionFeedback(null)} className="text-emerald-700 hover:text-emerald-950 font-bold">✕</button>
+              <button onClick={() => setActionFeedback(null)} className="p-1 rounded-full hover:bg-emerald-100 text-emerald-700 cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
             </div>
           )}
 

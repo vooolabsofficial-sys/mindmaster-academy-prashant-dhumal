@@ -19,6 +19,15 @@ import {
   parseBulkYouTubeLinks,
   importPlaylistLessons,
 } from "@/lib/playlistStore";
+import {
+  Search,
+  ClipboardList,
+  UploadCloud,
+  AlertTriangle,
+  CheckCircle2,
+  X,
+  Film,
+} from "lucide-react";
 
 export default function PlaylistImportPage() {
   const router = useRouter();
@@ -270,7 +279,7 @@ export default function PlaylistImportPage() {
           {!hasApiKey && (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-start gap-3">
-                <span className="text-xl">⚠️</span>
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-xs font-bold text-amber-900">
                     YouTube Data API Key Not Configured
@@ -295,8 +304,8 @@ export default function PlaylistImportPage() {
           {importSuccess && (
             <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl font-bold">
-                  ✓
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-emerald-900">
@@ -401,7 +410,8 @@ export default function PlaylistImportPage() {
                     </>
                   ) : (
                     <>
-                      <span>🔍</span> Fetch Playlist
+                      <Search className="w-3.5 h-3.5" />
+                      <span>Fetch Playlist</span>
                     </>
                   )}
                 </button>
@@ -452,7 +462,8 @@ export default function PlaylistImportPage() {
                   type="submit"
                   className="px-6 py-3 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-2xl shadow-md transition flex items-center justify-center gap-2"
                 >
-                  <span>📋</span> Parse Links & Preview ({bulkText.split("\n").filter((l) => l.trim()).length} lines)
+                  <ClipboardList className="w-3.5 h-3.5" />
+                  <span>Parse Links & Preview ({bulkText.split("\n").filter((l) => l.trim()).length} lines)</span>
                 </button>
               </form>
 
@@ -680,9 +691,10 @@ export default function PlaylistImportPage() {
                     type="button"
                     onClick={handleExecuteImport}
                     disabled={selectedCount === 0}
-                    className="px-8 py-3.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-full shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="px-8 py-3.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-full shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                   >
-                    <span>🚀</span> Import {selectedCount} Lessons to Course
+                    <UploadCloud className="w-4 h-4" />
+                    <span>Import {selectedCount} Lessons to Course</span>
                   </button>
                 </div>
               </div>
@@ -700,9 +712,9 @@ export default function PlaylistImportPage() {
                   <button
                     type="button"
                     onClick={() => setShowNewCourseModal(false)}
-                    className="text-[#5A6478] hover:text-[#0E1B3D]"
+                    className="p-1 rounded-full hover:bg-slate-100 text-[#5A6478] hover:text-[#0E1B3D] cursor-pointer"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 

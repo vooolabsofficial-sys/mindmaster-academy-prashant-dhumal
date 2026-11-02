@@ -6,7 +6,24 @@ import PermissionGuard from "@/components/admin/PermissionGuard";
 import { StaffUser } from "@/lib/types";
 import { getCurrentStaff, getStaffCourses, logStaffAction } from "@/lib/staffStore";
 import BroadcastNotificationModal from "@/components/admin/BroadcastNotificationModal";
-import { Phone, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import {
+  Phone,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  RefreshCw,
+  User,
+  Send,
+  MessageSquare,
+  Search,
+  Filter,
+  Check,
+  ChevronRight,
+  ShieldCheck,
+  Radio,
+  ExternalLink,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Conversation,
@@ -22,6 +39,8 @@ import {
   updateTicketStatus,
 } from "@/lib/messageStore";
 
+type StatusTab = "all" | "Open" | "In Progress" | "Resolved";
+
 export default function StaffMessagesPage() {
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -32,29 +51,20 @@ export default function StaffMessagesPage() {
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [resolutionNoteInput, setResolutionNoteInput] = useState("");
+  const [resettingPhone, setResettingPhone] = useState<string | null>(null);
 
   // Filters
+  const [statusTab, setStatusTab] = useState<StatusTab>("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterMode, setFilterMode] = useState<"all" | "unread" | "course" | "district">("all");
-  const [filterCourseId, setFilterCourseId] = useState("");
-  const [filterDistrict, setFilterDistrict] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const reload = async () => {
     setStaff(getCurrentStaff());
     await fetchDbConversations();
-    const filters: {
-      unreadOnly?: boolean;
-      courseId?: string;
-      district?: string;
-      search?: string;
-    } = {};
-    if (filterMode === "unread") filters.unreadOnly = true;
-    if (filterMode === "course" && filterCourseId) filters.courseId = filterCourseId;
-    if (filterMode === "district" && filterDistrict) filters.district = filterDistrict;
-    if (searchQuery) filters.search = searchQuery;
-    setConversations(getConversationsForStaff(filters));
+    const all = getConversationsForStaff();
+    setConversations(all);
     setTotalUnread(getUnreadCountForStaff());
   };
 
@@ -77,11 +87,6 @@ export default function StaffMessagesPage() {
   }, [activeConvId]);
 
   useEffect(() => {
-    reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, filterMode, filterCourseId, filterDistrict]);
-
-  useEffect(() => {
     if (activeConvId) {
       fetchDbMessages(activeConvId).then((msgs) => setMessages(msgs));
       markConversationReadByStaff(activeConvId);
@@ -91,6 +96,42 @@ export default function StaffMessagesPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Direct 1-Click Quick Reset Device Lock
+  const handleQuickResetDevice = async (phone: string, studentName: string) => {
+    const cleanPhone = phone.replace(/[^0-9]/g, "").slice(-10);
+    if (!cleanPhone) {
+      toast.error("Valid student phone number required");
+      return;
+    }
+
+    setResettingPhone(cleanPhone);
+    try {
+      const res = await fetch("/api/student/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reset-device", phone: cleanPhone }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Device lock reset failed");
+      }
+
+      logStaffAction(
+        "STUDENT_DEVICE_RESET",
+        "student",
+        cleanPhone,
+        studentName,
+        `Staff ${staff.name} quick-reset DRM device lock for student phone ${cleanPhone}`
+      );
+
+      toast.success(`DRM lock released for ${studentName} (${cleanPhone})! Student can now log in.`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reset device lock.");
+    } finally {
+      setResettingPhone(null);
+    }
+  };
 
   const handleSend = () => {
     if (!composerText.trim() || !activeConvId) return;
@@ -106,10 +147,9 @@ export default function StaffMessagesPage() {
     reload();
   };
 
-  const handleMarkInProgress = () => {
-    if (!activeConv) return;
+  const handleMarkInProgress = (conv: Conversation) => {
     updateTicketStatus({
-      conversationId: activeConv.id,
+      conversationId: conv.id,
       status: "In Progress",
       staffId: staff.staffId || staff.id,
       staffName: staff.name,
@@ -117,9 +157,9 @@ export default function StaffMessagesPage() {
     logStaffAction(
       "TICKET_STATUS_IN_PROGRESS",
       "student",
-      activeConv.studentId,
-      activeConv.studentName,
-      `Staff ${staff.name} marked ticket ${activeConv.id} (${activeConv.category || "Issue"}) as In Progress`
+      conv.studentId,
+      conv.studentName,
+      `Staff ${staff.name} marked ticket ${conv.id} as In Progress`
     );
     toast.success("Ticket marked as In Progress");
     reload();
@@ -148,295 +188,461 @@ export default function StaffMessagesPage() {
     reload();
   };
 
-  const activeConv = conversations.find((c) => c.id === activeConvId);
+  const handleOpenStudentDrawer = (phone: string, name?: string) => {
+    window.dispatchEvent(
+      new CustomEvent("mma_open_student_drawer", { detail: { phone, name } })
+    );
+  };
 
-  // Unique course list from conversations for filter dropdown
-  const coursesInConvs = Array.from(
-    new Map(
-      getConversationsForStaff()
-        .filter((c) => c.courseId && c.courseTitle)
-        .map((c) => [c.courseId!, c.courseTitle!])
-    ).entries()
-  );
-
-  const districtsInConvs = Array.from(
+  // Extract Categories
+  const categoriesInConvs = Array.from(
     new Set(
-      getConversationsForStaff()
-        .filter((c) => c.district)
-        .map((c) => c.district!)
+      conversations
+        .map((c) => c.category)
+        .filter(Boolean) as string[]
     )
   );
+
+  // Filter Conversations
+  const filteredConversations = conversations.filter((c) => {
+    // Status tab filter
+    if (statusTab !== "all") {
+      const currentStatus = c.status || "Open";
+      if (currentStatus !== statusTab) return false;
+    }
+
+    // Category filter
+    if (categoryFilter !== "all" && c.category !== categoryFilter) {
+      return false;
+    }
+
+    // Search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = (c.studentName || "").toLowerCase().includes(q);
+      const matchPhone = (c.studentPhone || c.studentId || "").toLowerCase().includes(q);
+      const matchCourse = (c.courseTitle || "").toLowerCase().includes(q);
+      const matchMsg = (c.lastMessage || "").toLowerCase().includes(q);
+      if (!matchName && !matchPhone && !matchCourse && !matchMsg) return false;
+    }
+
+    return true;
+  });
+
+  const activeConv = conversations.find((c) => c.id === activeConvId);
+
+  // Status Tab Counts
+  const countOpen = conversations.filter((c) => (c.status || "Open") === "Open").length;
+  const countInProgress = conversations.filter((c) => c.status === "In Progress").length;
+  const countResolved = conversations.filter((c) => c.status === "Resolved").length;
 
   return (
     <PermissionGuard permission="messages.manage">
       <AdminShell>
-        <div className="space-y-0 font-sans">
+        <div className="space-y-4 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-t-3xl border border-[#E4E8F8] shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-[#1E293B] p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-2xl font-extrabold text-[#0E1B3D]">Messages</h2>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#EBF3FE] text-[#0B57D0]">
+                <h2 className="text-xl font-extrabold text-slate-900 dark:text-white font-heading">
+                  Support Ticket Desk
+                </h2>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/40 text-[#2563EB] dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
                   messages.manage
                 </span>
                 {totalUnread > 0 && (
-                  <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full">
+                  <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full">
                     {totalUnread} unread
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#5A6478] mt-1">
-                In-app student conversations — reply, filter, and manage support threads.
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Direct student issue resolutions, device lock resets, and support inquiries.
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5 self-start sm:self-auto">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setIsBroadcastModalOpen(true)}
-                className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition inline-flex items-center gap-2 cursor-pointer active:scale-95"
               >
-                <span>📢</span>
-                <span>Send Broadcast Alert</span>
+                <Radio className="w-4 h-4" />
+                <span>Send Broadcast Notice</span>
               </button>
             </div>
           </div>
 
-          {/* Two-Pane Layout */}
-          <div className="flex bg-white border-x border-b border-[#E4E8F8] rounded-b-3xl overflow-hidden min-h-[600px]">
-            {/* Left Pane: Conversation List */}
-            <div className="w-full md:w-[380px] border-r border-[#E4E8F8] flex flex-col shrink-0">
-              {/* Search + Filters */}
-              <div className="p-3 border-b border-[#E4E8F8] space-y-2">
-                <input
-                  type="text"
-                  placeholder="Search students, courses..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full text-xs px-3 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl focus:outline-none focus:border-[#0B57D0] text-[#0E1B3D]"
-                />
-                <div className="flex flex-wrap gap-1.5">
-                  {(["all", "unread", "course", "district"] as const).map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setFilterMode(f)}
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold capitalize transition-all ${
-                        filterMode === f
-                          ? "bg-[#0B57D0] text-white"
-                          : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF]"
-                      }`}
-                    >
-                      {f === "all" ? "All" : f === "unread" ? `Unread (${totalUnread})` : f === "course" ? "By Course" : "By District"}
-                    </button>
-                  ))}
+          {/* Status Tabs Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#1E293B] p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            {/* Status Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <button
+                type="button"
+                onClick={() => setStatusTab("all")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  statusTab === "all"
+                    ? "bg-[#2563EB] text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <span>All Tickets</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${statusTab === "all" ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"}`}>
+                  {conversations.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusTab("Open")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  statusTab === "Open"
+                    ? "bg-amber-500 text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>Open</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${statusTab === "Open" ? "bg-white/20 text-white" : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"}`}>
+                  {countOpen}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusTab("In Progress")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  statusTab === "In Progress"
+                    ? "bg-indigo-600 text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>In Progress</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${statusTab === "In Progress" ? "bg-white/20 text-white" : "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"}`}>
+                  {countInProgress}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusTab("Resolved")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  statusTab === "Resolved"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Resolved</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${statusTab === "Resolved" ? "bg-white/20 text-white" : "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"}`}>
+                  {countResolved}
+                </span>
+              </button>
+            </div>
+
+            {/* Category Filter Dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider shrink-0">
+                Category:
+              </span>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="text-xs px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+              >
+                <option value="all">All Categories</option>
+                {categoriesInConvs.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Two-Pane Ticket Desk */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 bg-white dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs min-h-[620px]">
+            {/* Left Pane: Tickets List */}
+            <div className="lg:col-span-5 border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-slate-800 flex flex-col">
+              {/* Search Box */}
+              <div className="p-3 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Filter by name, phone or message..."
+                    className="w-full pl-9 pr-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#2563EB] text-slate-900 dark:text-white placeholder:text-slate-400"
+                  />
                 </div>
-
-                {filterMode === "course" && (
-                  <select
-                    value={filterCourseId}
-                    onChange={(e) => setFilterCourseId(e.target.value)}
-                    className="w-full text-xs px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl"
-                  >
-                    <option value="">Select course...</option>
-                    {coursesInConvs.map(([id, title]) => (
-                      <option key={id} value={id}>{title}</option>
-                    ))}
-                  </select>
-                )}
-
-                {filterMode === "district" && (
-                  <select
-                    value={filterDistrict}
-                    onChange={(e) => setFilterDistrict(e.target.value)}
-                    className="w-full text-xs px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl"
-                  >
-                    <option value="">Select district...</option>
-                    {districtsInConvs.map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                )}
               </div>
 
-              {/* Conversation items */}
-              <div className="flex-1 overflow-y-auto divide-y divide-[#E4E8F8]">
-                {conversations.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <p className="text-xs text-[#8A94A6]">No conversations match filters.</p>
+              {/* Tickets Cards List */}
+              <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 max-h-[680px]">
+                {filteredConversations.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400 dark:text-slate-500 space-y-2">
+                    <MessageSquare className="w-8 h-8 mx-auto stroke-1" />
+                    <p className="text-xs font-semibold">No tickets match the selected criteria.</p>
                   </div>
                 ) : (
-                  conversations.map((conv) => (
-                    <button
-                      key={conv.id}
-                      onClick={() => setActiveConvId(conv.id)}
-                      className={`w-full p-3.5 text-left hover:bg-[#FAFBFD] transition-colors ${
-                        activeConvId === conv.id ? "bg-[#EBF3FE] border-l-2 border-[#0B57D0]" : ""
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 text-sm font-bold">
-                          {conv.studentName.charAt(0)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-bold text-xs text-[#0E1B3D] truncate">
-                              {conv.studentName}
-                            </h4>
-                            <span className="text-[10px] text-[#8A94A6] shrink-0 ml-2">
+                  filteredConversations.map((conv) => {
+                    const isSelected = activeConvId === conv.id;
+                    const phone = (conv.studentPhone || conv.studentId || "").replace(/[^0-9]/g, "").slice(-10);
+                    const status = conv.status || "Open";
+
+                    return (
+                      <div
+                        key={conv.id}
+                        className={`p-3.5 transition-colors cursor-pointer ${
+                          isSelected
+                            ? "bg-blue-50/70 dark:bg-blue-950/30 border-l-4 border-[#2563EB]"
+                            : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                        }`}
+                        onClick={() => setActiveConvId(conv.id)}
+                      >
+                        {/* Student Info & Status Strip */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                                {conv.studentName}
+                              </h4>
+                              {conv.unreadStaff > 0 && (
+                                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                              {conv.studentPhone || conv.studentId}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <span
+                              className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border ${
+                                status === "Resolved"
+                                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                  : status === "In Progress"
+                                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                                  : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                              }`}
+                            >
+                              {status}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
                               {new Date(conv.lastAt).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}
                             </span>
                           </div>
-                          {conv.courseTitle && (
-                            <span className="text-[10px] font-semibold text-[#0B57D0]">{conv.courseTitle}</span>
-                          )}
-                          <p className="text-[11px] text-[#5A6478] truncate mt-0.5">{conv.lastMessage}</p>
-                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                            {conv.category && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
-                                {conv.category}
-                              </span>
-                            )}
-                            <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border ${
-                              conv.status === "Resolved"
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                : conv.status === "In Progress"
-                                ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                                : "bg-amber-50 text-amber-700 border-amber-200"
-                            }`}>
-                              {conv.status || "Open"}
-                            </span>
-                          </div>
                         </div>
-                        {conv.unreadStaff > 0 && (
-                          <span className="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                            {conv.unreadStaff}
-                          </span>
-                        )}
+
+                        {/* Last Message Snippet */}
+                        <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 mt-2 leading-relaxed">
+                          {conv.lastMessage}
+                        </p>
+
+                        {/* Badges: Category & Course */}
+                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                          {conv.category && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/80">
+                              {conv.category}
+                            </span>
+                          )}
+                          {conv.courseTitle && (
+                            <span className="text-[10px] font-semibold text-[#2563EB] dark:text-blue-400 truncate max-w-[200px]">
+                              • {conv.courseTitle}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* 3 Direct Actions on Ticket Card */}
+                        <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1.5">
+                          {/* Call Student */}
+                          <a
+                            href={`tel:${phone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold flex items-center gap-1 transition"
+                            title="Call student immediately"
+                          >
+                            <Phone className="w-3 h-3 text-emerald-600" />
+                            <span>Call</span>
+                          </a>
+
+                          {/* Quick Reset Device */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuickResetDevice(phone, conv.studentName);
+                            }}
+                            disabled={resettingPhone === phone}
+                            className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800 text-[#2563EB] dark:text-blue-300 text-[11px] font-bold flex items-center gap-1 transition disabled:opacity-50"
+                            title="Reset DRM single-device session lock"
+                          >
+                            {resettingPhone === phone ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-3 h-3" />
+                            )}
+                            <span>Reset Device</span>
+                          </button>
+
+                          {/* 360° Profile */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenStudentDrawer(phone, conv.studentName);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold flex items-center gap-1 transition"
+                            title="Open Student 360° Profile & Access Drawer"
+                          >
+                            <User className="w-3 h-3" />
+                            <span>360°</span>
+                          </button>
+                        </div>
                       </div>
-                    </button>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
 
-            {/* Right Pane: Thread View */}
-            <div className="hidden md:flex flex-col flex-1">
-              {!activeConvId ? (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-[#F5F7FF] flex items-center justify-center mx-auto mb-3 text-3xl">
-                      💬
+            {/* Right Pane: Active Thread Workspace */}
+            <div className="lg:col-span-7 flex flex-col justify-between min-h-[500px]">
+              {!activeConv ? (
+                <div className="flex-1 flex items-center justify-center p-8 text-center text-slate-400 dark:text-slate-500">
+                  <div className="max-w-xs space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-500">
+                      <MessageSquare className="w-6 h-6 stroke-[1.8]" />
                     </div>
-                    <p className="text-xs text-[#8A94A6] font-medium">Select a conversation to reply</p>
+                    <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">Select a support ticket</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      View full student conversation, reset device lock, call, or resolve ticket directly.
+                    </p>
                   </div>
                 </div>
               ) : (
                 <>
-                  {/* Thread Header with Call Student & Status Actions */}
-                  {activeConv && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3.5 border-b border-[#E4E8F8] bg-[#FAFBFD]">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm shrink-0">
-                          {activeConv.studentName.charAt(0)}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-bold text-sm text-[#0E1B3D] truncate">{activeConv.studentName}</h3>
-                            {activeConv.category && (
-                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
-                                {activeConv.category}
-                              </span>
-                            )}
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                              activeConv.status === "Resolved"
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                : activeConv.status === "In Progress"
-                                ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                                : "bg-amber-50 text-amber-700 border-amber-200"
-                            }`}>
-                              {activeConv.status || "Open"}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-[11px] text-[#5A6478] mt-0.5 flex-wrap">
-                            <span>Phone: <strong className="font-mono text-[#0E1B3D]">{activeConv.studentPhone || (activeConv.studentId.startsWith("std-") ? "+91 84593 44077" : activeConv.studentId)}</strong></span>
-                            {activeConv.courseTitle && <span className="text-[#0B57D0] font-semibold">• {activeConv.courseTitle}</span>}
-                            {activeConv.district && <span className="text-[#8A94A6]">• {activeConv.district}</span>}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Call Student & Ticket Status Actions */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        <a
-                          href={`tel:${(activeConv.studentPhone || activeConv.studentId).replace(/[^0-9+]/g, "") || "+918459344077"}`}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                          title="Call student directly via telephone"
+                  {/* Thread Header with Actions */}
+                  <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                          {activeConv.studentName}
+                        </h3>
+                        {activeConv.category && (
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                            {activeConv.category}
+                          </span>
+                        )}
+                        <span
+                          className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${
+                            activeConv.status === "Resolved"
+                              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                              : activeConv.status === "In Progress"
+                              ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                              : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                          }`}
                         >
-                          <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Call Student</span>
-                        </a>
-
-                        {activeConv.status !== "In Progress" && activeConv.status !== "Resolved" && (
-                          <button
-                            type="button"
-                            onClick={handleMarkInProgress}
-                            className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                            title="Mark ticket as in progress"
-                          >
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>In Progress</span>
-                          </button>
-                        )}
-
-                        {activeConv.status !== "Resolved" && (
-                          <button
-                            type="button"
-                            onClick={() => setShowResolveModal(true)}
-                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-                            title="Mark ticket as resolved"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Resolve</span>
-                          </button>
-                        )}
+                          {activeConv.status || "Open"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                        <span>{activeConv.studentPhone || activeConv.studentId}</span>
+                        {activeConv.courseTitle && <span className="font-sans text-[#2563EB] dark:text-blue-400">• {activeConv.courseTitle}</span>}
                       </div>
                     </div>
-                  )}
 
-                  {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-[#FAFBFD]">
-                    {messages.map((msg) => {
-                      const isStaff = msg.senderType === "staff";
-                      return (
-                        <div key={msg.id} className={`flex ${isStaff ? "justify-end" : "justify-start"}`}>
+                    {/* Header Action Buttons */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={`tel:${(activeConv.studentPhone || activeConv.studentId).replace(/[^0-9]/g, "").slice(-10)}`}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
+                      >
+                        <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Call</span>
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleQuickResetDevice(
+                            activeConv.studentPhone || activeConv.studentId,
+                            activeConv.studentName
+                          )
+                        }
+                        disabled={resettingPhone !== null}
+                        className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 border border-blue-200 dark:border-blue-800 text-[#2563EB] dark:text-blue-300 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs disabled:opacity-50"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>Reset Device</span>
+                      </button>
+
+                      {activeConv.status !== "In Progress" && activeConv.status !== "Resolved" && (
+                        <button
+                          type="button"
+                          onClick={() => handleMarkInProgress(activeConv)}
+                          className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition flex items-center gap-1.5"
+                        >
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>In Progress</span>
+                        </button>
+                      )}
+
+                      {activeConv.status !== "Resolved" && (
+                        <button
+                          type="button"
+                          onClick={() => setShowResolveModal(true)}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Reply &amp; Resolve</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Messages Scroll Area */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/40 dark:bg-slate-900/30 max-h-[500px]">
+                    {messages.length === 0 ? (
+                      <div className="text-center py-8 text-xs text-slate-400">
+                        No previous messages in this conversation.
+                      </div>
+                    ) : (
+                      messages.map((msg) => {
+                        const isStaff = msg.senderType === "staff";
+                        return (
                           <div
-                            className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-xs ${
-                              isStaff
-                                ? "bg-[#0B57D0] text-white rounded-br-md"
-                                : "bg-white text-[#0E1B3D] border border-[#E4E8F8] rounded-bl-md"
-                            }`}
+                            key={msg.id}
+                            className={`flex ${isStaff ? "justify-end" : "justify-start"}`}
                           >
-                            {isStaff && (
-                              <p className="text-[10px] font-bold text-blue-200 mb-1">
-                                {msg.senderName} (Staff)
-                              </p>
-                            )}
-                            {!isStaff && (
-                              <p className="text-[10px] font-bold text-[#0B57D0] mb-1">{msg.senderName}</p>
-                            )}
-                            <p>{msg.body}</p>
-                            <p className={`text-[10px] mt-1.5 ${isStaff ? "text-blue-200" : "text-[#8A94A6]"}`}>
-                              {new Date(msg.at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                            </p>
+                            <div
+                              className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-xs ${
+                                isStaff
+                                  ? "bg-[#2563EB] text-white rounded-br-xs"
+                                  : "bg-white dark:bg-[#1E293B] text-slate-900 dark:text-slate-100 border border-slate-200/80 dark:border-slate-800 rounded-bl-xs"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-3 mb-1">
+                                <span className={`text-[10px] font-bold ${isStaff ? "text-blue-100" : "text-[#2563EB] dark:text-blue-400"}`}>
+                                  {isStaff ? `${msg.senderName} (Staff)` : msg.senderName}
+                                </span>
+                                <span className={`text-[9px] ${isStaff ? "text-blue-200" : "text-slate-400"}`}>
+                                  {new Date(msg.at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              </div>
+                              <p>{msg.body}</p>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                     <div ref={messagesEndRef} />
                   </div>
 
                   {/* Reply Composer */}
-                  <div className="p-4 border-t border-[#E4E8F8] bg-white">
+                  <div className="p-3 bg-white dark:bg-[#1E293B] border-t border-slate-200/80 dark:border-slate-800">
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
@@ -444,14 +650,16 @@ export default function StaffMessagesPage() {
                         onChange={(e) => setComposerText(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSend()}
                         placeholder={`Reply as ${staff.name}...`}
-                        className="flex-1 text-xs px-4 py-3 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl focus:outline-none focus:border-[#0B57D0]"
+                        className="flex-1 text-xs px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#2563EB] text-slate-900 dark:text-white placeholder:text-slate-400"
                       />
                       <button
+                        type="button"
                         onClick={handleSend}
                         disabled={!composerText.trim()}
-                        className="px-5 py-3 bg-[#0B57D0] hover:bg-[#0842A0] disabled:bg-slate-300 text-white text-xs font-bold rounded-xl transition-colors"
+                        className="px-4 py-2.5 bg-[#2563EB] hover:bg-blue-700 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                       >
-                        Send
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send</span>
                       </button>
                     </div>
                   </div>
@@ -467,28 +675,32 @@ export default function StaffMessagesPage() {
             courses={getStaffCourses()}
           />
 
-          {/* Resolve Ticket Modal */}
+          {/* Reply & Resolve Ticket Modal */}
           {showResolveModal && (
             <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+              <div className="bg-white dark:bg-[#1E293B] rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-extrabold text-slate-900">Resolve Support Ticket</h3>
-                    <p className="text-xs text-slate-500">Provide an optional resolution reply sent to the student.</p>
+                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Reply &amp; Resolve Support Ticket</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Record an official resolution summary note.
+                    </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Resolution Note / Reply</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Resolution Note / Reply
+                  </label>
                   <textarea
                     rows={3}
                     value={resolutionNoteInput}
                     onChange={(e) => setResolutionNoteInput(e.target.value)}
-                    placeholder="e.g. Issue verified and resolved. Device session lock has been reset."
-                    className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600"
+                    placeholder="e.g. Device lock released. Student verified and logged in successfully."
+                    className="w-full text-xs p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#2563EB] text-slate-900 dark:text-white"
                   />
                 </div>
 
@@ -496,7 +708,7 @@ export default function StaffMessagesPage() {
                   <button
                     type="button"
                     onClick={() => setShowResolveModal(false)}
-                    className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"
+                    className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                   >
                     Cancel
                   </button>
