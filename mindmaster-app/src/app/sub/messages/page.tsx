@@ -5,7 +5,7 @@ import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
 import { StaffUser } from "@/lib/types";
 import { getCurrentStaff, logStaffAction } from "@/lib/staffStore";
-import { Phone, CheckCircle2, Clock } from "lucide-react";
+import { Phone, CheckCircle2, Clock, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import {
   Conversation,
@@ -296,7 +296,9 @@ export default function SubAdminMessagesPage() {
               {!activeConvId ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-[#F5F7FF] flex items-center justify-center mx-auto mb-3 text-3xl">💬</div>
+                    <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3">
+                      <MessageSquare className="w-8 h-8" />
+                    </div>
                     <p className="text-xs text-[#8A94A6] font-medium">Select a conversation to reply</p>
                   </div>
                 </div>

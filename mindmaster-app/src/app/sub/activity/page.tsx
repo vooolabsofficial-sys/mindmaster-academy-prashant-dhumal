@@ -6,19 +6,20 @@ import { StaffUser } from "@/lib/types";
 import { getCurrentStaff } from "@/lib/staffStore";
 import { ForensicAuditLogEntry, fetchDbAuditLogs } from "@/lib/auditLogger";
 import { getGrants } from "@/lib/grantStore";
+import { GraduationCap, Wallet, ShieldCheck, Zap, Clock, FileText } from "lucide-react";
 
 function getActionBadge(action: string) {
   const a = action.toUpperCase();
   if (a.includes("GRANT") || a.includes("ADMISSION")) {
-    return { icon: "🎓", bg: "bg-blue-50 text-blue-700 border-blue-200" };
+    return { icon: <GraduationCap className="w-3.5 h-3.5 text-blue-700" />, bg: "bg-blue-50 text-blue-700 border-blue-200" };
   }
   if (a.includes("CASH") || a.includes("SETTLE") || a.includes("PAYMENT")) {
-    return { icon: "💰", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+    return { icon: <Wallet className="w-3.5 h-3.5 text-emerald-700" />, bg: "bg-emerald-50 text-emerald-700 border-emerald-200" };
   }
   if (a.includes("LOGIN") || a.includes("AUTH")) {
-    return { icon: "🛡️", bg: "bg-purple-50 text-purple-700 border-purple-200" };
+    return { icon: <ShieldCheck className="w-3.5 h-3.5 text-purple-700" />, bg: "bg-purple-50 text-purple-700 border-purple-200" };
   }
-  return { icon: "⚡", bg: "bg-[#EEF4FF] text-[#0B57D0] border-[#D0E2FF]" };
+  return { icon: <Zap className="w-3.5 h-3.5 text-blue-600" />, bg: "bg-[#EEF4FF] text-[#0B57D0] border-[#D0E2FF]" };
 }
 
 export default function SubActivityPage() {
@@ -124,22 +125,22 @@ export default function SubActivityPage() {
         </div>
 
         {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl border border-[#E4E8F8]">
-          <span className="text-xs font-bold text-[#5A6478] mr-2">Filter:</span>
+        <div className="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl border border-slate-200">
+          <span className="text-xs font-bold text-slate-500 mr-2">Filter:</span>
           {[
             { key: "all", label: "All Activity" },
-            { key: "admissions", label: "🎓 Admissions & Grants" },
-            { key: "settlements", label: "💰 Cash Recordings" },
-            { key: "security", label: "🛡️ Login History" },
+            { key: "admissions", label: "Admissions & Grants" },
+            { key: "settlements", label: "Cash Recordings" },
+            { key: "security", label: "Login History" },
           ].map((item) => (
             <button
               key={item.key}
               type="button"
               onClick={() => setFilterType(item.key)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                 filterType === item.key
-                  ? "bg-[#0B57D0] text-white shadow-xs"
-                  : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#E4E8F8]"
+                  ? "bg-[#0052FF] text-white shadow-xs"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
               {item.label}
@@ -148,21 +149,22 @@ export default function SubActivityPage() {
         </div>
 
         {/* Activity Timeline */}
-        <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm">
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-base font-bold text-[#0E1B3D] flex items-center gap-2">
-              <span>⏱️</span> Your Activity History ({displayedLogs.length})
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-blue-600" />
+              <span>Your Activity History ({displayedLogs.length})</span>
             </h2>
-            <span className="text-xs text-[#8A94A6]">IST Timestamps</span>
+            <span className="text-xs text-slate-400">IST Timestamps</span>
           </div>
 
           {displayedLogs.length === 0 ? (
             <div className="text-center py-16 px-4">
-              <div className="w-12 h-12 rounded-full bg-[#F5F7FF] flex items-center justify-center text-xl mx-auto mb-3">
-                📜
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-3">
+                <FileText className="w-6 h-6" />
               </div>
-              <p className="text-sm font-bold text-[#0E1B3D]">No activity recorded</p>
-              <p className="text-xs text-[#8A94A6] mt-1">
+              <p className="text-sm font-bold text-slate-900">No activity recorded</p>
+              <p className="text-xs text-slate-500 mt-1">
                 Your admissions, grants, and logins will automatically be immutably recorded here.
               </p>
             </div>

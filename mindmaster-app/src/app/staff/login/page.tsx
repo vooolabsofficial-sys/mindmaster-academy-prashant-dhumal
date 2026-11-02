@@ -103,42 +103,45 @@ function StaffLoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F7FF] flex flex-col justify-between items-center p-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-between items-center p-4 relative overflow-hidden select-none">
+      {/* Background Ambient Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-b from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+
       {/* Top Header */}
-      <div className="w-full max-w-md pt-8 text-center">
-        <div className="w-12 h-12 mx-auto rounded-2xl bg-[#0B57D0] flex items-center justify-center text-white text-2xl shadow-md mb-3">
-          🧠
+      <div className="w-full max-w-md pt-8 text-center relative z-10">
+        <div className="w-12 h-12 mx-auto rounded-2xl bg-[#0052FF] flex items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-3">
+          <ShieldCheck className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-extrabold text-[#0E1B3D] font-heading">
-          MindMaster Staff Console
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white font-heading">
+          MindMaster Staff Gateway
         </h1>
-        <p className="text-xs font-semibold text-[#5A6478] uppercase tracking-wider mt-1">
-          Authorized Staff Authentication Gateway
+        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">
+          Authorized Staff Authentication Portal
         </p>
       </div>
 
       {/* Login Card */}
-      <div className="w-full max-w-md bg-white border border-[#E4E8F8] rounded-3xl p-8 shadow-sm my-8">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none my-6 relative z-10">
         {/* Role Switcher */}
         <AuthRoleSwitcher activeRole={roleParam === "main_admin" ? "main_admin" : "sub_admin"} />
 
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-[#0E1B3D]">
-            {roleParam === "main_admin" ? "Main Admin Sign In" : "Sub-Admin Sign In"}
+        <div className="mb-5">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            {roleParam === "main_admin" ? "Main Admin Sign In" : "Sub-Admin Staff Sign In"}
           </h2>
-          <p className="text-xs text-[#5A6478] mt-1">
-            Argon2 password verification • Lockout after 5 failures • Auto session kill
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Argon2 password verification • 5-attempt security lock • Session protection
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-2">
-            <span className="text-base leading-none">⚠️</span>
-            <div className="flex-1">
+          <div className="mb-4 p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs rounded-2xl flex items-start gap-2.5 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <div className="flex-1 leading-snug">
               <p className="font-bold">Access Warning</p>
               <p className="text-[11px] mt-0.5">{error}</p>
               {lockoutSec && (
-                <p className="text-[10px] text-red-800 font-mono font-bold mt-1">
+                <p className="text-[10px] text-red-800 dark:text-red-300 font-mono font-bold mt-1">
                   ⏳ Locked: Try again in {Math.floor(lockoutSec / 60)}m {lockoutSec % 60}s
                 </p>
               )}
@@ -147,8 +150,8 @@ function StaffLoginContent() {
         )}
 
         {successMsg && (
-          <div className="mb-4 p-3.5 bg-green-50 border border-green-200 text-green-700 text-xs rounded-xl flex items-center gap-2">
-            <span className="text-base leading-none">✅</span>
+          <div className="mb-4 p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300 text-xs rounded-2xl flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <p className="font-semibold">{successMsg}</p>
           </div>
         )}

@@ -2,6 +2,23 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { 
+  UserCheck, 
+  MessageSquare, 
+  GraduationCap, 
+  Activity, 
+  Gift, 
+  BookOpen, 
+  Video, 
+  FileText, 
+  Tag, 
+  Clock, 
+  ArrowRight, 
+  ShieldCheck, 
+  Lock,
+  Layers,
+  Sparkles
+} from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
 import { getCurrentStaff, getAuditLogs, getStaffStudents } from "@/lib/staffStore";
 import { getUnreadCountForStaff, getConversationsForStaff } from "@/lib/messageStore";
@@ -65,34 +82,36 @@ export default function SubAdminRootPage() {
         {/* ========================================================================= */}
         {/* SECTION 0: WELCOME & ASSIGNED OPERATIONAL AUTHORITY BANNER */}
         {/* ========================================================================= */}
-        <section className="w-full bg-white border border-[#E4E8F8] rounded-3xl p-6 sm:p-7 relative overflow-hidden shadow-xs">
+        <section className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 relative overflow-hidden shadow-xs">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#EDE8FF] border border-[#D5CCFF] text-[#5E35B1] flex items-center justify-center shrink-0 shadow-xs text-2xl">
-                🧑‍💼
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50 text-[#0052FF] dark:text-blue-400 flex items-center justify-center shrink-0 shadow-xs">
+                <UserCheck className="w-6 h-6" />
               </div>
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="text-xl font-bold text-[#0E1B3D] font-heading tracking-tight">
+                  <h1 className="text-xl font-bold text-slate-900 dark:text-white font-heading tracking-tight">
                     Welcome, {staff.name}!
                   </h1>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#EDE8FF] text-[#5E35B1] border border-[#D5CCFF]">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-[#0052FF] dark:text-blue-400 border border-blue-200 dark:border-blue-900/50">
                     Sub-Admin Console
                   </span>
-                  <span className="font-mono text-[11px] font-bold text-[#5A6478] bg-[#F5F7FF] border border-[#E4E8F8] px-2 py-0.5 rounded-full">
+                  <span className="font-mono text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full">
                     {staff.staffId || staff.id}
                   </span>
                 </div>
-                <p className="text-xs text-[#5A6478] font-medium leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
                   MindMaster Academy Staff Console • Operational authority assigned by Main Admin.
                 </p>
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[11px] font-bold text-[#0E1B3D]">Active Modules:</span>
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                    <Layers className="w-3.5 h-3.5 text-blue-600" /> Active Modules:
+                  </span>
                   {staff.permissions && staff.permissions.length > 0 ? (
                     staff.permissions.map((p) => (
                       <span
                         key={p}
-                        className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#F5F7FF] text-[#5E35B1] border border-[#E9E3FF]"
+                        className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-50 dark:bg-slate-800 text-blue-700 dark:text-blue-300 border border-slate-200 dark:border-slate-700"
                       >
                         {p}
                       </span>
@@ -107,9 +126,10 @@ export default function SubAdminRootPage() {
             <div className="flex items-center gap-3 shrink-0">
               <Link
                 href="/sub/activity"
-                className="px-4 py-2 bg-[#F5F7FF] hover:bg-[#EDE8FF] border border-[#E4E8F8] text-[#0E1B3D] text-xs font-bold rounded-full transition-colors shadow-xs"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-full transition-colors shadow-xs"
               >
-                ⏱️ View My Activity
+                <Clock className="w-3.5 h-3.5 text-slate-500" />
+                <span>View My Activity</span>
               </Link>
             </div>
           </div>
@@ -120,30 +140,33 @@ export default function SubAdminRootPage() {
         {/* ========================================================================= */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Messages Tile */}
-          <div className="bg-white rounded-3xl p-5 border border-[#E4E8F8] shadow-xs flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold tracking-wider uppercase text-[#8A94A6]">
+                <span className="text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
                   STUDENT SUPPORT &amp; MESSAGES
                 </span>
-                <span className="text-lg">💬</span>
+                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#0052FF] flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4" />
+                </div>
               </div>
-              <p className="text-2xl font-black text-[#5E35B1] font-heading mt-2">
+              <p className="text-2xl font-black text-slate-900 dark:text-white font-heading mt-2">
                 {conversationCount} Conversations
               </p>
-              <p className="text-xs text-[#5A6478] mt-1">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                 {hasMsgPerm
                   ? `${msgUnread} unread queries requiring staff response`
                   : "Access gated (needs messages.manage)"}
               </p>
             </div>
             {hasMsgPerm && (
-              <div className="pt-4 mt-2 border-t border-[#F5F7FF] flex items-center justify-between text-xs">
-                <Link href="/sub/messages" className="text-[#5E35B1] font-bold hover:underline">
-                  Open Support Inbox →
+              <div className="pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                <Link href="/sub/messages" className="text-[#0052FF] dark:text-blue-400 font-bold hover:underline flex items-center gap-1">
+                  <span>Open Support Inbox</span>
+                  <ArrowRight className="w-3 h-3" />
                 </Link>
                 {msgUnread > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200">
+                  <span className="px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-[10px] font-bold border border-rose-200 dark:border-rose-900/50">
                     {msgUnread} New
                   </span>
                 )}
@@ -152,51 +175,57 @@ export default function SubAdminRootPage() {
           </div>
 
           {/* Student Cohorts Tile */}
-          <div className="bg-white rounded-3xl p-5 border border-[#E4E8F8] shadow-xs flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold tracking-wider uppercase text-[#8A94A6]">
+                <span className="text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
                   STUDENT COHORTS (VIEW ONLY)
                 </span>
-                <span className="text-lg">🎓</span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
               </div>
-              <p className="text-2xl font-black text-[#0B57D0] font-heading mt-2">
+              <p className="text-2xl font-black text-slate-900 dark:text-white font-heading mt-2">
                 {studentCount} Learners
               </p>
-              <p className="text-xs text-[#5A6478] mt-1">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                 {hasStudentPerm
-                  ? "360 profile lookup (drill telemetry reserved for Admin)"
+                  ? "360° profile lookup (drill telemetry reserved for Admin)"
                   : "Access gated (needs students.view)"}
               </p>
             </div>
             {hasStudentPerm && (
-              <div className="pt-4 mt-2 border-t border-[#F5F7FF] flex items-center justify-between text-xs">
-                <Link href="/sub/students" className="text-[#0B57D0] font-bold hover:underline">
-                  Search Learners →
+              <div className="pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                <Link href="/sub/students" className="text-[#0052FF] dark:text-blue-400 font-bold hover:underline flex items-center gap-1">
+                  <span>Search Learners</span>
+                  <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
             )}
           </div>
 
           {/* Personal Activity Tile */}
-          <div className="bg-white rounded-3xl p-5 border border-[#E4E8F8] shadow-xs flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold tracking-wider uppercase text-[#8A94A6]">
+                <span className="text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
                   OPERATOR AUDIT FEED
                 </span>
-                <span className="text-lg">⏱️</span>
+                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 flex items-center justify-center">
+                  <Activity className="w-4 h-4" />
+                </div>
               </div>
-              <p className="text-2xl font-black text-[#137333] font-heading mt-2">
+              <p className="text-2xl font-black text-slate-900 dark:text-white font-heading mt-2">
                 {logs.length} Actions
               </p>
-              <p className="text-xs text-[#5A6478] mt-1">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                 Personal mutating operations logged under {staff.staffId || staff.id}
               </p>
             </div>
-            <div className="pt-4 mt-2 border-t border-[#F5F7FF] flex items-center justify-between text-xs">
-              <Link href="/sub/activity" className="text-[#137333] font-bold hover:underline">
-                View My Activity Timeline →
+            <div className="pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <Link href="/sub/activity" className="text-purple-600 dark:text-purple-400 font-bold hover:underline flex items-center gap-1">
+                <span>View Activity Timeline</span>
+                <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
           </div>
@@ -205,17 +234,17 @@ export default function SubAdminRootPage() {
         {/* ========================================================================= */}
         {/* SECTION 2: PERMITTED MODULE LAUNCHERS */}
         {/* ========================================================================= */}
-        <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-3">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
             <div>
-              <h2 className="text-base font-bold text-[#0E1B3D] font-heading">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white font-heading">
                 Permitted Module Launchers
               </h2>
-              <p className="text-xs text-[#5A6478]">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Direct links to sub-admin operations matching your provisioned authority.
               </p>
             </div>
-            <span className="text-xs font-bold text-[#5E35B1] bg-[#EDE8FF] px-3 py-1 rounded-full border border-[#D5CCFF]">
+            <span className="text-xs font-bold text-[#0052FF] bg-blue-50 dark:bg-blue-950/60 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-900/50">
               {staff.permissions.length} Modules Active
             </span>
           </div>
@@ -225,16 +254,16 @@ export default function SubAdminRootPage() {
             {hasStudentPerm && (
               <Link
                 href="/sub/students"
-                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#0B57D0] hover:bg-white transition-all flex items-start gap-3.5 group"
+                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-[#0052FF] hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
               >
-                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
-                  🎓
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50 flex items-center justify-center text-[#0052FF] shadow-xs group-hover:scale-105 transition-transform">
+                  <GraduationCap className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#0B57D0]">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#0052FF]">
                     Student Finder &amp; 360° Profile
                   </h3>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Look up students, offline admissions &amp; access validity
                   </p>
                 </div>
@@ -245,16 +274,16 @@ export default function SubAdminRootPage() {
             {hasMsgPerm && (
               <Link
                 href="/sub/messages"
-                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#5E35B1] hover:bg-white transition-all flex items-start gap-3.5 group"
+                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-[#0052FF] hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
               >
-                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
-                  💬
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50 flex items-center justify-center text-[#0052FF] shadow-xs group-hover:scale-105 transition-transform">
+                  <MessageSquare className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#5E35B1]">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#0052FF]">
                     Student Support Messages
                   </h3>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Direct two-pane messaging and student assistance
                   </p>
                 </div>
@@ -265,16 +294,16 @@ export default function SubAdminRootPage() {
             {hasGrantPerm && (
               <Link
                 href="/sub/grants"
-                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#137333] hover:bg-white transition-all flex items-start gap-3.5 group"
+                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-emerald-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
               >
-                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
-                  🎁
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/50 flex items-center justify-center text-emerald-600 shadow-xs group-hover:scale-105 transition-transform">
+                  <Gift className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#137333]">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600">
                     Offline Admissions &amp; Grants
                   </h3>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Grant offline Cash / UPI course and book access
                   </p>
                 </div>
@@ -285,16 +314,16 @@ export default function SubAdminRootPage() {
             {hasCoursePerm && (
               <Link
                 href="/admin/courses"
-                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#0B57D0] hover:bg-white transition-all flex items-start gap-3.5 group"
+                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-blue-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
               >
-                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
-                  📚
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50 flex items-center justify-center text-blue-600 shadow-xs group-hover:scale-105 transition-transform">
+                  <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#0B57D0]">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600">
                     Courses Manager
                   </h3>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Create and edit academy courses and validity
                   </p>
                 </div>
@@ -305,16 +334,16 @@ export default function SubAdminRootPage() {
             {hasVideoPerm && (
               <Link
                 href="/admin/videos"
-                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#E53935] hover:bg-white transition-all flex items-start gap-3.5 group"
+                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-red-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
               >
-                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
-                  🎬
+                <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 shadow-xs group-hover:scale-105 transition-transform">
+                  <Video className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#E53935]">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-red-600">
                     YouTube Videos &amp; Playlists
                   </h3>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Manage lecture videos, free previews &amp; playlists
                   </p>
                 </div>
@@ -325,16 +354,16 @@ export default function SubAdminRootPage() {
             {hasBookPerm && (
               <Link
                 href="/admin/notes"
-                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#8E24AA] hover:bg-white transition-all flex items-start gap-3.5 group"
+                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-purple-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
               >
-                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
-                  📖
+                <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-900/50 flex items-center justify-center text-purple-600 shadow-xs group-hover:scale-105 transition-transform">
+                  <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#8E24AA]">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-purple-600">
                     Digital Books Manager
                   </h3>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Upload and manage PDF books and access
                   </p>
                 </div>
@@ -345,16 +374,16 @@ export default function SubAdminRootPage() {
             {hasCouponPerm && (
               <Link
                 href="/admin/coupons"
-                className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#FB8C00] hover:bg-white transition-all flex items-start gap-3.5 group"
+                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-amber-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
               >
-                <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
-                  🏷️
+                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900/50 flex items-center justify-center text-amber-600 shadow-xs group-hover:scale-105 transition-transform">
+                  <Tag className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#FB8C00]">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-600">
                     Discount Coupons
                   </h3>
-                  <p className="text-[11px] text-[#5A6478] mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Create and manage promo discount coupon codes
                   </p>
                 </div>
@@ -364,16 +393,16 @@ export default function SubAdminRootPage() {
             {/* 8. My Activity Launcher */}
             <Link
               href="/sub/activity"
-              className="p-4 rounded-2xl border border-[#E4E8F8] bg-[#F5F7FF] hover:border-[#137333] hover:bg-white transition-all flex items-start gap-3.5 group"
+              className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-emerald-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
             >
-              <div className="w-10 h-10 rounded-xl bg-white border border-[#E4E8F8] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
-                ⏱️
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/50 flex items-center justify-center text-emerald-600 shadow-xs group-hover:scale-105 transition-transform">
+                <Clock className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-[#0E1B3D] group-hover:text-[#137333]">
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600">
                   My Activity
                 </h3>
-                <p className="text-[11px] text-[#5A6478] mt-0.5">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   Personal audit trail and chronological actions
                 </p>
               </div>
@@ -384,41 +413,42 @@ export default function SubAdminRootPage() {
         {/* ========================================================================= */}
         {/* SECTION 3: RECENT AUDIT ACTIVITY TABLE */}
         {/* ========================================================================= */}
-        <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-3">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
             <div>
-              <h2 className="text-base font-bold text-[#0E1B3D] font-heading">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white font-heading">
                 Recent Assigned Activity &amp; Logs
               </h2>
-              <p className="text-xs text-[#5A6478]">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Verified actions dispatched under staff ID: {staff.staffId || staff.id}.
               </p>
             </div>
             <Link
               href="/sub/activity"
-              className="text-xs font-bold text-[#0B57D0] hover:underline"
+              className="text-xs font-bold text-[#0052FF] dark:text-blue-400 hover:underline flex items-center gap-1"
             >
-              View Full Feed →
+              <span>View Full Feed</span>
+              <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
 
           {logs.length === 0 ? (
-            <div className="p-8 text-center text-[#8A94A6] text-xs">
+            <div className="p-8 text-center text-slate-400 text-xs">
               No recent activity recorded for your account yet. Mutating actions will appear here automatically.
             </div>
           ) : (
-            <div className="divide-y divide-[#E4E8F8]">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {logs.map((log) => (
                 <div key={log.id} className="py-3 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[#F5F7FF] text-[#0E1B3D] border border-[#E4E8F8]">
+                    <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
                       {log.action}
                     </span>
-                    <span className="font-semibold text-[#0E1B3D]">
+                    <span className="font-semibold text-slate-900 dark:text-white">
                       {log.entityName || log.entityId}
                     </span>
                   </div>
-                  <span className="text-[10px] text-[#8A94A6]">
+                  <span className="text-[10px] text-slate-400">
                     {new Date(log.timestamp).toLocaleTimeString("en-IN", {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -430,8 +460,9 @@ export default function SubAdminRootPage() {
           )}
 
           {/* Scope Note */}
-          <div className="p-3 bg-[#FAF8FF] border border-[#E9E3FF] rounded-2xl text-[11px] text-[#5E35B1]">
-            🔒 <strong>Main Admin Safeguards:</strong> Master Settings, Sub-Admin management, System Audit Trail, Financial/Watch Telemetry Reports, and Deletion operations remain securely reserved for Main Admin (Prashant Sir).
+          <div className="p-3.5 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-2xl text-[11px] text-[#0052FF] dark:text-blue-400 flex items-center gap-2">
+            <Lock className="w-4 h-4 shrink-0" />
+            <span><strong>Main Admin Safeguards:</strong> Master Settings, Sub-Admin management, Financial/Watch Telemetry Reports, and Deletion operations remain securely reserved for Main Admin (Prashant Sir).</span>
           </div>
         </div>
       </div>
