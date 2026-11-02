@@ -142,9 +142,27 @@ export const Home: React.FC = () => {
                       title="माइंड मास्टर ॲकॅडमी परिचय - प्रशांत धुमाळ सर"
                       className="w-full h-full border-0 aspect-[16/9] md:aspect-[21/10]"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      sandbox="allow-scripts allow-same-origin allow-presentation"
                       allowFullScreen
                     />
-                    <div className="absolute top-3 right-3 z-10">
+                    {/* Invisible Corner Shields: Absorb clicks so user cannot click away to YouTube */}
+                    <div 
+                      className="absolute top-0 inset-x-0 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                      onClick={(e) => { e.stopPropagation(); }}
+                      onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      title="MindMaster Academy Player"
+                    />
+                    <div 
+                      className="absolute bottom-0 right-0 w-36 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                      onClick={(e) => { e.stopPropagation(); }}
+                      onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    />
+                    <div 
+                      className="absolute bottom-0 left-0 w-36 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                      onClick={(e) => { e.stopPropagation(); }}
+                      onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    />
+                    <div className="absolute top-3 right-3 z-20">
                       <button
                         onClick={() => setIsIntroVideoPlaying(false)}
                         className="px-3 py-1.5 rounded-full bg-black/75 hover:bg-black text-white text-xs font-semibold backdrop-blur-md border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-lg"

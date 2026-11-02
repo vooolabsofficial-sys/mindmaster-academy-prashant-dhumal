@@ -426,13 +426,30 @@ export const DemoHub: React.FC = () => {
           {/* Featured Academy Orientation Video Player */}
           <div className="mb-12 rounded-3xl overflow-hidden bg-surface-container-lowest border border-surface-variant/80 shadow-md p-4 sm:p-6 lg:p-8">
             <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-center">
-              <div className="w-full lg:w-3/5 aspect-video rounded-2xl overflow-hidden shadow-sm bg-slate-950">
+              <div className="relative w-full lg:w-3/5 aspect-video rounded-2xl overflow-hidden shadow-sm bg-slate-950">
                 <iframe
                   src="https://www.youtube-nocookie.com/embed/8Nyi_FVeUNw?rel=0&modestbranding=1"
                   title="MindMaster Academy Orientation - Prashant Dhumal Sir"
                   className="w-full h-full border-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  sandbox="allow-scripts allow-same-origin allow-presentation"
                   allowFullScreen
+                />
+                {/* Invisible Corner Shields: Prevent opening YouTube on logo/title clicks */}
+                <div 
+                  className="absolute top-0 inset-x-0 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                  onClick={(e) => { e.stopPropagation(); }}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                />
+                <div 
+                  className="absolute bottom-0 right-0 w-36 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                  onClick={(e) => { e.stopPropagation(); }}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                />
+                <div 
+                  className="absolute bottom-0 left-0 w-36 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                  onClick={(e) => { e.stopPropagation(); }}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 />
               </div>
               <div className="w-full lg:w-2/5 flex flex-col justify-between">

@@ -590,7 +590,24 @@ export default function StudentHomePage() {
                   title="माइंड मास्टर ॲकॅडमी परिचय - प्रशांत धुमाळ सर"
                   className="w-full h-full border-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  sandbox="allow-scripts allow-same-origin allow-presentation"
                   allowFullScreen
+                />
+                {/* Invisible Corner Shields: Prevent opening YouTube on logo/title clicks */}
+                <div 
+                  className="absolute top-0 inset-x-0 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                  onClick={(e) => { e.stopPropagation(); }}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                />
+                <div 
+                  className="absolute bottom-0 right-0 w-36 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                  onClick={(e) => { e.stopPropagation(); }}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                />
+                <div 
+                  className="absolute bottom-0 left-0 w-36 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                  onClick={(e) => { e.stopPropagation(); }}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 />
               </div>
               <div className="p-4 sm:p-5 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-4 flex-wrap">

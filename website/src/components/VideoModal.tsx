@@ -66,13 +66,32 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         {/* Video Player Box */}
         <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
           {youtubeId && isPlaying ? (
-            <iframe
-              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
-              title={title}
-              className="w-full h-full border-0 aspect-video"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
+            <div className="relative w-full h-full">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+                title={title}
+                className="w-full h-full border-0 aspect-video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                sandbox="allow-scripts allow-same-origin allow-presentation"
+                allowFullScreen
+              />
+              {/* Invisible Corner Shields: Prevent opening YouTube on logo/title clicks */}
+              <div 
+                className="absolute top-0 inset-x-0 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                onClick={(e) => { e.stopPropagation(); }}
+                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              />
+              <div 
+                className="absolute bottom-0 right-0 w-36 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                onClick={(e) => { e.stopPropagation(); }}
+                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              />
+              <div 
+                className="absolute bottom-0 left-0 w-36 h-14 z-10 pointer-events-auto bg-transparent select-none cursor-default"
+                onClick={(e) => { e.stopPropagation(); }}
+                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              />
+            </div>
           ) : (
             <>
               <img
