@@ -77,9 +77,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 5. Cache static immutable assets (_next/static/ chunks, icons) safely
+  // 5. Cache static immutable assets (_next/static/ chunks, icons, assets) safely
   if (url.origin === self.location.origin) {
-    if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
+    if (
+      url.pathname.startsWith("/_next/static/") ||
+      url.pathname.startsWith("/icons/") ||
+      url.pathname.startsWith("/assets/")
+    ) {
       event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) {

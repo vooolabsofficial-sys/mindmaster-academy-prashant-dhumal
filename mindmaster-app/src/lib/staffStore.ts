@@ -571,6 +571,7 @@ export function getStaffCourses(): Course[] {
 }
 
 export function saveStaffCourse(course: Course): void {
+  invalidateDbCache();
   const courses = getStaffCourses();
   const idx = courses.findIndex((c) => c.id === course.id);
   let updated: Course[];
@@ -746,6 +747,7 @@ export async function deleteCourseFromSupabase(courseId: string): Promise<boolea
 }
 
 export function deleteStaffCourse(courseId: string): void {
+  invalidateDbCache();
   const current = getCurrentStaff();
   if (current.role !== "main_admin") {
     safeAlert("Unauthorized: Only Main Admin can delete courses.");
@@ -787,6 +789,7 @@ export function getStaffBooks(): Book[] {
 }
 
 export function saveStaffBook(book: Book): void {
+  invalidateDbCache();
   const books = getStaffBooks();
   const idx = books.findIndex((b) => b.id === book.id || (book.code && b.code === book.code));
   let updated: Book[];
@@ -841,6 +844,7 @@ export function saveStaffBook(book: Book): void {
 }
 
 export function deleteStaffBook(bookId: string): void {
+  invalidateDbCache();
   const current = getCurrentStaff();
   if (current.role !== "main_admin") {
     safeAlert("Unauthorized: Only Main Admin can delete books.");
@@ -1186,6 +1190,7 @@ export function clearAllStaffCoupons(): void {
 }
 
 export function saveStaffCoupon(coupon: Coupon): void {
+  invalidateDbCache();
   const coupons = getStaffCoupons();
   const idx = coupons.findIndex((c) => c.id === coupon.id);
   let updated: Coupon[];
@@ -1259,6 +1264,7 @@ export function toggleStaffCouponStatus(couponId: string): Coupon | undefined {
 }
 
 export function deleteStaffCoupon(couponId: string): void {
+  invalidateDbCache();
   const current = getCurrentStaff();
   if (current.role !== "main_admin") {
     safeAlert("Unauthorized: Only Main Admin can delete coupons.");
@@ -1330,10 +1336,23 @@ export function sendInAppNotification(studentId: string, title: string, message:
 }
 
 // ----------------------------------------------------
-// DIRECT SUPABASE DB ASYNC FETCHERS & HYDRATION
+// DIRECT SUPABASE DB ASYNC FETCHERS & HYDRATION (WITH IN-MEMORY TTL CACHE)
 // ----------------------------------------------------
+let _cachedDbCourses: { data: Course[]; expiresAt: number } | null = null;
+let _cachedDbBooks: { data: Book[]; expiresAt: number } | null = null;
+let _cachedDbCoupons: { data: Coupon[]; expiresAt: number } | null = null;
+
+export function invalidateDbCache(): void {
+  _cachedDbCourses = null;
+  _cachedDbBooks = null;
+  _cachedDbCoupons = null;
+}
+
 export async function fetchDbCourses(): Promise<Course[]> {
   try {
+    if (_cachedDbCourses && Date.now() < _cachedDbCourses.expiresAt) {
+      return _cachedDbCourses.data;
+    }
     const supabase = getSupabase();
     if (!supabase) return getStaffCourses();
     const { data, error } = await supabase.from("courses").select("*").order("created_at", { ascending: true });
@@ -1368,6 +1387,7 @@ export async function fetchDbCourses(): Promise<Course[]> {
       category: d.category || "memory",
       features: d.features || [],
     }));
+    _cachedDbCourses = { data: mapped, expiresAt: Date.now() + 60_000 };
     safeSetItem(KEYS.COURSES, mapped);
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("mma_courses_changed"));
@@ -1380,6 +1400,9 @@ export async function fetchDbCourses(): Promise<Course[]> {
 
 export async function fetchDbCoupons(): Promise<Coupon[]> {
   try {
+    if (_cachedDbCoupons && Date.now() < _cachedDbCoupons.expiresAt) {
+      return _cachedDbCoupons.data;
+    }
     const supabase = getSupabase();
     if (!supabase) return getStaffCoupons();
     const { data, error } = await supabase.from("coupons").select("*").order("created_at", { ascending: false });
@@ -1402,6 +1425,7 @@ export async function fetchDbCoupons(): Promise<Coupon[]> {
       school: c.school || undefined,
       minOrderValuePaise: Number(c.min_order_value_paise) || 0,
     }));
+    _cachedDbCoupons = { data: mapped, expiresAt: Date.now() + 60_000 };
     safeSetItem(KEYS.COUPONS, mapped);
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("mma_coupons_changed"));
@@ -1686,6 +1710,9 @@ export async function fetchDbStaff(): Promise<StaffUser[]> {
 
 export async function fetchDbBooks(): Promise<Book[]> {
   try {
+    if (_cachedDbBooks && Date.now() < _cachedDbBooks.expiresAt) {
+      return _cachedDbBooks.data;
+    }
     const supabase = getSupabase();
     if (!supabase) return getStaffBooks();
     const { data, error } = await supabase
@@ -1717,6 +1744,7 @@ export async function fetchDbBooks(): Promise<Book[]> {
       createdAt: b.created_at,
     }));
 
+    _cachedDbBooks = { data: mapped, expiresAt: Date.now() + 60_000 };
     safeSetItem(KEYS.BOOKS, mapped);
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("mma_books_changed"));
