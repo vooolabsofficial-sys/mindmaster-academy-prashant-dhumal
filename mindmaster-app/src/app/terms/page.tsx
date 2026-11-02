@@ -136,14 +136,23 @@ export default function TermsPage() {
 
               <div id="sec-anti-piracy" className="space-y-4 pt-4 border-t border-slate-100">
                 <span className="text-[11px] font-black uppercase text-blue-600 tracking-wider">
-                  कलम ३ • बौद्धिक संपदा व कॉपीराइट
+                  कलम ३ • बौद्धिक संपदा व इन्फ्रास्ट्रक्चर
                 </span>
                 <h2 className="text-lg sm:text-xl font-black text-slate-900">
-                  ३. पायरसी प्रतिबंध, डायनॅमिक वॉटरमार्किंग व कॉपीराइट
+                  ३. पायरसी प्रतिबंध, इन्फ्रास्ट्रक्चर पारदर्शकता व कॉपीराइट
                 </h2>
                 <p>
                   माइंडमास्टर अकॅडमीच्या सर्व व्हिडिओ लेक्चर्स, ५०० वर्षांचे कॅलेंडर ट्रिक्स, वैदिक गणित सूत्रे, ट्रिक्स नोट्स आणि प्रश्नपत्रिका ही <strong>प्रशांत धुमाळ सर</strong> यांची स्वतंत्र बौद्धिक संपदा (Intellectual Property) आहे.
                 </p>
+                <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200/80 text-xs text-slate-800 space-y-2">
+                  <div className="font-extrabold flex items-center gap-1.5 text-blue-950">
+                    <Tv className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>परवडणारे शिक्षण व क्लाउड तंत्रज्ञान (Affordable Video Infrastructure):</span>
+                  </div>
+                  <p>
+                    ग्रामीण व गरजू विद्यार्थ्यांना अतिशय माफक फीमध्ये दर्जेदार शिक्षण मिळावे आणि खाजगी सर्व्हरचा प्रचंड खर्च विद्यार्थ्यांवर पडू नये, यासाठी अभ्यासक्रमाचे व्हिडिओ गुगल व युट्यूब क्लाउड तंत्रज्ञानाद्वारे सुरक्षितपणे माइंडमास्टर पोर्टलवर चालवले जातात.
+                  </p>
+                </div>
                 <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-900 space-y-2">
                   <div className="font-extrabold flex items-center gap-1.5 text-red-950">
                     <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
@@ -272,14 +281,23 @@ export default function TermsPage() {
 
             <div id="sec-anti-piracy" className="space-y-4 pt-4 border-t border-slate-100">
               <span className="text-[11px] font-black uppercase text-blue-600 tracking-wider">
-                Section 3 • Intellectual Property
+                Section 3 • Intellectual Property &amp; Video Infrastructure
               </span>
               <h2 className="text-lg sm:text-xl font-black text-slate-900">
-                3. Anti-Piracy, Dynamic Watermarking &amp; Copyright Notice
+                3. Anti-Piracy, Infrastructure Transparency &amp; Copyright Notice
               </h2>
               <p>
                 All video lectures, Vedic Maths mnemonic tables, 500-year calendar speed shortcuts, test series questions, and digital books are the exclusive intellectual property of <strong>Prashant Dhumal Sir / MindMaster Academy</strong>.
               </p>
+              <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200/80 text-xs text-slate-800 space-y-2">
+                <div className="font-extrabold flex items-center gap-1.5 text-blue-950">
+                  <Tv className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span>Affordable Learning &amp; Cloud Video Delivery Policy:</span>
+                </div>
+                <p>
+                  To eliminate expensive private video streaming surcharges (which needlessly inflate student fees by thousands of rupees), course modules are securely hosted on enterprise Google and YouTube cloud infrastructure and delivered seamlessly within the MindMaster Learning Portal. This ensures that every student across Maharashtra receives high-definition masterclasses at the most affordable fee possible.
+                </p>
+              </div>
               <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-900 space-y-2">
                 <div className="font-extrabold flex items-center gap-1.5 text-red-950">
                   <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />

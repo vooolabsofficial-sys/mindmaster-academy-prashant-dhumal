@@ -122,6 +122,27 @@ export const Terms: React.FC = () => {
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
               <span className="w-7 h-7 rounded-lg bg-blue-100 text-secondary flex items-center justify-center text-xs font-bold shrink-0">6</span>
+              <span>Digital Content Delivery & Affordable Infrastructure Policy</span>
+            </h2>
+            <p className="text-slate-600 text-sm leading-relaxed">
+              In strict alignment with our founding mission — <em>"संकल्प एकच, सक्षम पिढी घडविणे" (One Vow, Building an Empowered Generation)</em> — MindMaster Academy is dedicated to delivering world-class cognitive and memory masterclasses at the most affordable fee structure possible, ensuring rural, middle-class, and economically modest student families are never excluded by technology costs.
+            </p>
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 text-xs sm:text-sm text-slate-700 space-y-2.5">
+              <p>
+                <strong>Infrastructure Transparency:</strong> To eliminate costly private video server overheads and streaming bandwidth markups (which typically inflate student course fees by thousands of rupees), our video masterclasses and orientation modules are securely hosted on enterprise Google and YouTube cloud infrastructure and delivered seamlessly within the MindMaster Learning Portal.
+              </p>
+              <p>
+                <strong>Proprietary Curriculum & Content Protection:</strong> All learning media, unlisted video sessions, Vedic maths formulas, mnemonic anchor peg lists, and study kit workbooks remain the exclusive intellectual property of MindMaster Academy and Founder Prashant Dhumal. Enrolled students receive a personal, non-transferable academic viewing license.
+              </p>
+            </div>
+          </section>
+
+          <hr className="border-slate-100" />
+
+          {/* Section 7 */}
+          <section className="space-y-3">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+              <span className="w-7 h-7 rounded-lg bg-blue-100 text-secondary flex items-center justify-center text-xs font-bold shrink-0">7</span>
               <span>Governing Law & Legal Jurisdiction</span>
             </h2>
             <p className="text-slate-600 text-sm">
@@ -131,10 +152,10 @@ export const Terms: React.FC = () => {
 
           <hr className="border-slate-100" />
 
-          {/* Section 7 */}
+          {/* Section 8 */}
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-lg bg-blue-100 text-secondary flex items-center justify-center text-xs font-bold shrink-0">7</span>
+              <span className="w-7 h-7 rounded-lg bg-blue-100 text-secondary flex items-center justify-center text-xs font-bold shrink-0">8</span>
               <span>Contact & Academy Address</span>
             </h2>
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2 text-xs sm:text-sm">

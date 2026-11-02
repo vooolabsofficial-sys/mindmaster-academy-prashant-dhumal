@@ -74,6 +74,10 @@ export const DemoHub: React.FC = () => {
     {
       q: "Can outstation students attend online from any district in Maharashtra?",
       a: "Yes! Over 60% of our 5,000+ students attend via high-definition two-way interactive virtual batches with dedicated study material kits delivered to their doorstep."
+    },
+    {
+      q: "How does MindMaster offer masterclasses at such an affordable fee?",
+      a: "Our founding mission is to build an empowered generation across Maharashtra without financial barriers. By utilizing enterprise Google and YouTube cloud streaming infrastructure directly within our custom student portal, we eliminate expensive private server surcharges and pass 100% of the cost savings directly to student families."
     }
   ];
 
