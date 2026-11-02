@@ -172,10 +172,10 @@ export default function StudentHomePage() {
               <button
                 type="button"
                 onClick={() => setShowOrientationModal(true)}
-                className="px-4 py-3 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-600 dark:text-red-400 font-bold text-xs sm:text-sm border border-red-200 dark:border-red-900/40 transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-[#2563EB] dark:text-blue-400 font-bold text-xs sm:text-sm border border-blue-200 dark:border-blue-800/60 transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-current ml-0.5" />
-                <span>{isMarathi ? "६ मिनिटांचा परिचय" : "Academy Intro (6 Min)"}</span>
+                <span>{isMarathi ? "अकादमी परिचय व्हिडिओ" : "Orientation Video"}</span>
               </button>
             </div>
           </div>
@@ -571,7 +571,7 @@ export default function StudentHomePage() {
             >
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-slate-950/60">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] animate-pulse" />
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
                     {isMarathi ? "संकल्प एकच, सक्षम पिढी घडविणे • प्रशांत धुमाळ सर" : "Official Orientation • Prashant Dhumal Sir"}
                   </span>
@@ -606,7 +606,7 @@ export default function StudentHomePage() {
                   href="https://youtu.be/8Nyi_FVeUNw"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                  className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
                 >
                   <span>YouTube</span>
                   <ArrowRight className="w-3.5 h-3.5" />
