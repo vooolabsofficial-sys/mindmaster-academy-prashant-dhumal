@@ -7,8 +7,6 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test:100k": "npx tsx scripts/test-100k-mega-ecosystem.mjs",
-    "test:mega": "npx tsx scripts/test-super-mega-ecosystem.mjs",
     "test:all": "npx tsx scripts/test-all.mjs",
     "test:notes-pwa": "npx tsx scripts/test-notes-pwa.mjs",
     "test:admin-courses": "npx tsx scripts/test-admin-courses-coupons.mjs",
