@@ -380,19 +380,21 @@ export const Footer: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-1.5 pt-1">
+              <div className="flex flex-col gap-2 pt-1">
                 <a
                   href="tel:+918459344077"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-secondary transition-colors"
+                  className="inline-flex items-center gap-2 py-1.5 min-h-[44px] text-xs font-bold text-slate-800 hover:text-secondary transition-colors"
+                  aria-label="Call MindMaster Academy helpline: +91 84593 44077"
                 >
-                  <span className="material-symbols-outlined text-secondary text-[16px]">call</span>
+                  <span className="material-symbols-outlined text-secondary text-[18px]">call</span>
                   <span>+91 84593 44077</span>
                 </a>
                 <a
                   href="mailto:mindmasterdhumal@gmail.com"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-secondary transition-colors truncate"
+                  className="inline-flex items-center gap-2 py-1.5 min-h-[44px] text-xs font-semibold text-slate-700 hover:text-secondary transition-colors truncate"
+                  aria-label="Email MindMaster Academy: mindmasterdhumal@gmail.com"
                 >
-                  <span className="material-symbols-outlined text-secondary text-[16px]">mail</span>
+                  <span className="material-symbols-outlined text-secondary text-[18px]">mail</span>
                   <span>mindmasterdhumal@gmail.com</span>
                 </a>
               </div>
@@ -401,11 +403,11 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Legal Copyright Bar */}
-        <div className="border-t border-slate-200 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-xs text-slate-500">
+        <div className="border-t border-slate-200 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-xs text-slate-600">
           <p>
             © 2026 MindMaster Academy • Founded & Mentored by <strong>Prashant Dhumal</strong> • Satara, Maharashtra.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-medium text-slate-600">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-700">
             <Link to="/privacy" className="hover:text-secondary transition-colors underline-offset-4 hover:underline">
               Privacy Policy
             </Link>
@@ -426,7 +428,7 @@ export const Footer: React.FC = () => {
               href={getAppUrl('/staff/login')}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-400 hover:text-slate-600 transition-colors"
+              className="text-slate-600 hover:text-slate-900 font-semibold transition-colors underline-offset-4 hover:underline"
               title="Restricted Staff & Admin Portal"
             >
               Staff Portal

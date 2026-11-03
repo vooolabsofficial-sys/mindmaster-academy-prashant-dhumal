@@ -136,8 +136,9 @@ export const Home: React.FC = () => {
 
               {/* Clean Student Portal Login */}
               <a
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-100 text-slate-700 font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-2xs hover:bg-slate-200 transition-all border border-slate-300"
-                href={getAppUrl('/login?next=/home')}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-100 text-slate-800 font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-2xs hover:bg-slate-200 transition-all border border-slate-300"
+                href={getAppUrl('/login')}
+                title="Student Login / Web Portal"
               >
                 <span className="material-symbols-outlined text-lg text-[#0052FF]">account_circle</span>
                 <span>Student Login</span>
@@ -236,9 +237,9 @@ export const Home: React.FC = () => {
                       <span>•</span>
                       <span>Web &amp; Mobile</span>
                     </div>
-                    <h3 className="font-extrabold text-lg sm:text-xl text-slate-900 tracking-tight">
+                    <h2 className="font-extrabold text-lg sm:text-xl text-slate-900 tracking-tight">
                       MindMaster Digital Student Portal
-                    </h3>
+                    </h2>
                     <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-xl leading-relaxed">
                       Single login access for all your lectures, practice drills, and official study material across laptop, tablet, or phone.
                     </p>
@@ -349,8 +350,8 @@ export const Home: React.FC = () => {
         <section className="w-full bg-slate-50/80 py-20 px-gutter-mobile lg:px-gutter-desktop border-b border-slate-200/80">
           <div className="max-w-container-max mx-auto">
             <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-bold mb-3">
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100 border border-amber-300 text-amber-950 text-xs font-extrabold mb-3 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse"></span>
                 <span>Flagship Curriculum &amp; Upcoming Batches</span>
               </div>
               <h2 className="font-heading-bold text-3xl md:text-4xl text-slate-900 tracking-tight font-bold">
@@ -526,7 +527,7 @@ export const Home: React.FC = () => {
                     href="https://wa.me/918459344077?text=Namaskar%20Prashant%20Sir%2C%20I%20would%20like%20to%20consult%20regarding%20MindMaster%20Academy%20batches."
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md shadow-emerald-700/20 transition-all cursor-pointer"
                   >
                     <span>💬</span>
                     <span>Chat Directly with Prashant Sir on WhatsApp</span>
@@ -571,7 +572,7 @@ export const Home: React.FC = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                  <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-emerald-600 text-white font-extrabold text-[11px] shadow-md uppercase tracking-wider">
+                  <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-emerald-700 text-white font-extrabold text-[11px] shadow-md uppercase tracking-wider">
                     State Honors &amp; Medals
                   </span>
                   {/* Interactive Play Button */}
@@ -639,7 +640,7 @@ export const Home: React.FC = () => {
                           onClose: () => setModalData(null),
                         })
                       }
-                      className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer"
+                      className="text-xs font-extrabold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[16px]">play_circle</span>
                       <span>Watch Story</span>
@@ -725,7 +726,7 @@ export const Home: React.FC = () => {
                           onClose: () => setModalData(null),
                         })
                       }
-                      className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                      className="text-xs font-extrabold text-blue-800 hover:text-blue-950 flex items-center gap-1 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[16px]">play_circle</span>
                       <span>Watch Story</span>

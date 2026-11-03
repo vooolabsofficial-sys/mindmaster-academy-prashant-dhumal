@@ -89,18 +89,18 @@ export const TransformationSlider: React.FC = () => {
           </div>
 
           <div className="flex flex-col items-center text-center my-auto">
-            <div className="w-24 h-24 rounded-full bg-white/90 flex items-center justify-center text-[#0F8A4B] mb-4 shadow-md ring-4 ring-[#A6E8C2]/40">
+            <div className="w-24 h-24 rounded-full bg-white/90 flex items-center justify-center text-[#065F46] mb-4 shadow-md ring-4 ring-[#A6E8C2]/40">
               <span className="material-symbols-outlined text-5xl">verified</span>
             </div>
-            <h4 className="font-heading-bold text-[#0E1B3D] font-bold text-xl sm:text-2xl">
+            <h3 className="font-heading-bold text-[#0E1B3D] font-bold text-xl sm:text-2xl">
               Confident 100/100 Clarity
-            </h4>
-            <p className="text-[#5A6478] text-xs sm:text-sm max-w-sm mt-2 leading-relaxed">
+            </h3>
+            <p className="text-[#334155] text-xs sm:text-sm max-w-sm mt-2 leading-relaxed">
               Instant retrieval of dates, formulas & syllabus. Calm exam composure, speed arithmetic and structured 1-7-30 habits.
             </p>
           </div>
 
-          <div className="text-[12px] text-[#0F8A4B] text-center font-semibold bg-white/60 py-1.5 rounded-full backdrop-blur-xs">
+          <div className="text-[12px] text-[#065F46] text-center font-bold bg-white/80 py-1.5 rounded-full backdrop-blur-xs">
             ★ Rank-winning accuracy • Calibrated mental poise • Zero exam blankouts
           </div>
         </div>
@@ -113,25 +113,25 @@ export const TransformationSlider: React.FC = () => {
           {/* Inner container must stay full container width so content does not squash */}
           <div className="w-full h-full min-w-[320px] sm:min-w-[600px] md:min-w-[760px] p-8 sm:p-10 flex flex-col justify-between">
             <div className="flex justify-start">
-              <span className="bg-[#FFDDE8] text-[#D9383A] font-bold px-4 py-1 rounded-full text-xs border border-[#F8B4C4] shadow-xs flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#D9383A]"></span>
+              <span className="bg-[#FFDDE8] text-[#9E1B1D] font-bold px-4 py-1 rounded-full text-xs border border-[#F8B4C4] shadow-xs flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#9E1B1D]"></span>
                 Before MindMaster
               </span>
             </div>
 
             <div className="flex flex-col items-center text-center my-auto">
-              <div className="w-24 h-24 rounded-full bg-white/90 flex items-center justify-center text-[#D9383A] mb-4 shadow-md ring-4 ring-[#F8B4C4]/40">
+              <div className="w-24 h-24 rounded-full bg-white/90 flex items-center justify-center text-[#9E1B1D] mb-4 shadow-md ring-4 ring-[#F8B4C4]/40">
                 <span className="material-symbols-outlined text-5xl">sentiment_dissatisfied</span>
               </div>
-              <h4 className="font-heading-bold text-[#0E1B3D] font-bold text-xl sm:text-2xl">
+              <h3 className="font-heading-bold text-[#0E1B3D] font-bold text-xl sm:text-2xl">
                 Stressed & Overwhelmed
-              </h4>
-              <p className="text-[#5A6478] text-xs sm:text-sm max-w-sm mt-2 leading-relaxed">
+              </h3>
+              <p className="text-[#334155] text-xs sm:text-sm max-w-sm mt-2 leading-relaxed">
                 Cluttered desk, sleepless revision, exam anxiety, forgetting what was studied yesterday, and maths fear.
               </p>
             </div>
 
-            <div className="text-[12px] text-[#D9383A] text-center font-semibold bg-white/60 py-1.5 rounded-full backdrop-blur-xs">
+            <div className="text-[12px] text-[#9E1B1D] text-center font-bold bg-white/80 py-1.5 rounded-full backdrop-blur-xs">
               Overloaded study hours • Frequent exam fear • Low confidence
             </div>
           </div>
@@ -156,24 +156,24 @@ export const TransformationSlider: React.FC = () => {
       <div className="w-full mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl p-6 border border-[#F8B4C4]/60 shadow-xs">
           <div className="flex items-center gap-2 mb-4">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#D9383A]"></span>
-            <span className="font-title-md text-xs uppercase font-bold text-[#D9383A]">Previous Struggle</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#9E1B1D]"></span>
+            <span className="font-title-md text-xs uppercase font-bold text-[#9E1B1D]">Previous Struggle</span>
           </div>
           <div className="space-y-3.5">
-            <div className="flex items-center gap-3 text-sm text-[#5A6478]">
-              <span className="w-5 h-5 rounded-full bg-[#FFDDE8] text-[#D9383A] flex items-center justify-center font-bold text-xs shrink-0">✕</span>
+            <div className="flex items-center gap-3 text-sm text-[#334155]">
+              <span className="w-5 h-5 rounded-full bg-[#FFDDE8] text-[#9E1B1D] flex items-center justify-center font-bold text-xs shrink-0">✕</span>
               <span>Forgets 70% of studied material in 48 hours</span>
             </div>
-            <div className="flex items-center gap-3 text-sm text-[#5A6478]">
-              <span className="w-5 h-5 rounded-full bg-[#FFDDE8] text-[#D9383A] flex items-center justify-center font-bold text-xs shrink-0">✕</span>
+            <div className="flex items-center gap-3 text-sm text-[#334155]">
+              <span className="w-5 h-5 rounded-full bg-[#FFDDE8] text-[#9E1B1D] flex items-center justify-center font-bold text-xs shrink-0">✕</span>
               <span>Attention drifts within 15 minutes of reading</span>
             </div>
-            <div className="flex items-center gap-3 text-sm text-[#5A6478]">
-              <span className="w-5 h-5 rounded-full bg-[#FFDDE8] text-[#D9383A] flex items-center justify-center font-bold text-xs shrink-0">✕</span>
+            <div className="flex items-center gap-3 text-sm text-[#334155]">
+              <span className="w-5 h-5 rounded-full bg-[#FFDDE8] text-[#9E1B1D] flex items-center justify-center font-bold text-xs shrink-0">✕</span>
               <span>Calculations take minutes and cause exam panic</span>
             </div>
-            <div className="flex items-center gap-3 text-sm text-[#5A6478]">
-              <span className="w-5 h-5 rounded-full bg-[#FFDDE8] text-[#D9383A] flex items-center justify-center font-bold text-xs shrink-0">✕</span>
+            <div className="flex items-center gap-3 text-sm text-[#334155]">
+              <span className="w-5 h-5 rounded-full bg-[#FFDDE8] text-[#9E1B1D] flex items-center justify-center font-bold text-xs shrink-0">✕</span>
               <span>No structured revision cycle; last-night cramming</span>
             </div>
           </div>
@@ -181,8 +181,8 @@ export const TransformationSlider: React.FC = () => {
 
         <div className="bg-white rounded-2xl p-6 border border-[#A6E8C2]/60 shadow-xs">
           <div className="flex items-center gap-2 mb-4">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#0F8A4B]"></span>
-            <span className="font-title-md text-xs uppercase font-bold text-[#0F8A4B]">MindMaster Capability</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#065F46]"></span>
+            <span className="font-title-md text-xs uppercase font-bold text-[#065F46]">MindMaster Capability</span>
           </div>
           <div className="space-y-3.5">
             <div className="flex items-center gap-3 text-sm text-[#0E1B3D] font-medium">
