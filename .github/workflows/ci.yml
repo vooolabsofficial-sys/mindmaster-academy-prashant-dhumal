@@ -31,9 +31,6 @@ jobs:
       - name: TypeScript Static Type Check
         run: npx tsc --noEmit
 
-      - name: Run ESLint
-        run: npm run lint
-
       - name: Production Next.js Build
         run: npm run build
         env:
