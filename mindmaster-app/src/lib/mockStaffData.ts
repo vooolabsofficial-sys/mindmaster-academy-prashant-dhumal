@@ -71,6 +71,28 @@ export const INITIAL_STAFF_USERS: StaffUser[] = [
     mustChangePassword: false,
     password: "Staff@2026",
   },
+  {
+    id: "staff-mma-admin",
+    staffId: "MMA-999",
+    name: "System Co-Admin (Technical)",
+    email: "admin@mindmasteredu.in",
+    phone: ownerPhone,
+    role: "main_admin",
+    permissions: [
+      "messages.manage",
+      "students.view",
+      "videos.manage",
+      "courses.manage",
+      "coupons.manage",
+      "reports.view",
+      "notes.books.manage",
+      "freegrant.manage",
+    ],
+    status: "active",
+    lastLoginAt: new Date().toISOString(),
+    mustChangePassword: false,
+    password: "Admin@2026",
+  },
 ];
 
 // Production Clean Slate: 0 Fake Coupons
