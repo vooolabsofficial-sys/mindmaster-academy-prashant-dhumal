@@ -1,9 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 
 export const Terms: React.FC = () => {
   return (
     <main className="w-full pt-28 pb-20 bg-background min-h-screen">
+      <SEO
+        title="Terms & Conditions | MindMaster Academy"
+        description="Official Terms of Service and enrollment policies for MindMaster Academy courses, seminars, and digital platform founded by Prashant Dhumal Sir."
+        keywords="MindMaster Terms, Prashant Dhumal Terms of Service, MindMaster Academy Student Policies"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-6">

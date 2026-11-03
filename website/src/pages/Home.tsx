@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 import { TransformationSlider } from '../components/TransformationSlider';
 import { VideoModal, VideoModalProps } from '../components/VideoModal';
 import { DottedColorfulBrain } from '../components/DottedColorfulBrain';
@@ -47,6 +48,18 @@ export const Home: React.FC = () => {
 
   return (
     <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen">
+      <SEO
+        title="MindMaster Academy | Prashant Dhumal — Memory & Vedic Maths Training"
+        description="MindMaster Academy Pune — Premier cognitive training by Prashant Dhumal Sir. Master Photographic Memory, Superfast Vedic Maths, 500-Year Calendar Tricks & Teacher Training."
+        keywords="MindMaster Academy, Prashant Dhumal, Memory Training Pune, Vedic Maths Maharashtra, Superfast Calendar Satara, Police Bharti Memory, Brain Gym Narhe"
+        schema={{
+          "@type": "WebPage",
+          "@id": "https://mindmasteredu.in/#webpage",
+          "url": "https://mindmasteredu.in",
+          "name": "MindMaster Academy — Memory & Vedic Maths Training",
+          "description": "Premier cognitive training by Prashant Dhumal Sir. Master Photographic Memory, Superfast Vedic Maths, 500-Year Calendar Tricks & Teacher Training."
+        }}
+      />
       <div className="flex flex-col w-full overflow-hidden">
         {/* Hero Section */}
         <section className="relative w-full pt-space-2xl md:pt-space-3xl pb-space-2xl px-gutter-mobile lg:px-gutter-desktop overflow-hidden">

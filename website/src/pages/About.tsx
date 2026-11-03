@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { fetchLiveWebsiteCms, WebsiteCmsData, DEFAULT_WEBSITE_CMS } from '../config/appConfig';
-import { Link } from 'react-router-dom'; export const About: React.FC = () => {
+import { Link } from 'react-router-dom';
+import { SEO } from '../components/SEO';
+
+export const About: React.FC = () => {
   const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
 
   useEffect(() => {
@@ -13,7 +16,27 @@ import { Link } from 'react-router-dom'; export const About: React.FC = () => {
     };
   }, []);
 
-  return ( <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen"> <div className="flex flex-col w-full"> <div className="relative w-full overflow-hidden">
+  return (
+    <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen">
+      <SEO
+        title="About Prashant Dhumal Sir & MindMaster Academy | Mission & Legacy"
+        description="Learn about Prashant Dhumal Sir, International Memory Coach & Vedic Mathematics Master with 15+ years of empowering 50,000+ students across Maharashtra."
+        keywords="Prashant Dhumal Sir, MindMaster Founder, Memory Coach Pune, Vedic Maths Author Satara, Cognitive Acceleration Maharashtra"
+        schema={{
+          "@type": "AboutPage",
+          "@id": "https://mindmasteredu.in/about#aboutpage",
+          "url": "https://mindmasteredu.in/about",
+          "name": "About MindMaster Academy & Prashant Dhumal Sir",
+          "description": "Learn about Prashant Dhumal Sir, International Memory Coach & Vedic Mathematics Master with 15+ years of empowering 50,000+ students across Maharashtra.",
+          "mainEntity": {
+            "@type": "Person",
+            "name": "Prashant Dhumal",
+            "jobTitle": "International Memory Trainer & Author",
+            "description": "Renowned Memory Coach and Vedic Mathematics Master empowering 50,000+ students and teachers across Maharashtra."
+          }
+        }}
+      />
+      <div className="flex flex-col w-full"> <div className="relative w-full overflow-hidden">
 <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-secondary-fixed/40 rounded-full blur-3xl pointer-events-none -z-10"></div> <section className="w-full max-w-container-max mx-auto px-gutter-desktop pt-space-3xl pb-space-2xl text-center flex flex-col items-center"> <div className="inline-flex items-center gap-space-xs px-space-md py-1.5 rounded-full bg-secondary-fixed/50 mb-space-lg shadow-sm">
 <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
 <span className="font-label-caps text-label-caps text-secondary tracking-widest">SINCE 2015</span>

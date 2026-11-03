@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 import { SyllabusModal, CourseSyllabusData } from '../components/SyllabusModal';
 import {
   getAppUrl,
@@ -140,6 +141,52 @@ export const Courses: React.FC = () => {
 
   return (
     <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen">
+      <SEO
+        title="Certified Memory & Vedic Maths Courses | MindMaster Academy"
+        description="Explore certified cognitive training programs by Prashant Dhumal Sir: Superfast Vedic Maths, Photographic Memory, 500-Year Calendar Mastery & Teachers Training."
+        keywords="Vedic Maths Courses, Memory Techniques Course Pune, Prashant Dhumal Syllabus, Teachers Training Maharashtra, Vedic Maths Certification"
+        schema={{
+          "@type": "ItemList",
+          "@id": "https://mindmasteredu.in/courses#courselist",
+          "name": "MindMaster Academy Certified Courses",
+          "description": "Certified Cognitive Acceleration and Vedic Mathematics Courses by Prashant Dhumal Sir",
+          "itemListElement": [
+            {
+              "@type": "Course",
+              "position": 1,
+              "name": "Photographic Memory Mastery (MM-01)",
+              "description": "Master visual pegging, association hooks, and rapid factual recall for academic exams.",
+              "provider": {
+                "@type": "Organization",
+                "name": "MindMaster Academy",
+                "sameAs": "https://mindmasteredu.in"
+              }
+            },
+            {
+              "@type": "Course",
+              "position": 2,
+              "name": "Superfast Vedic Mathematics (MM-02)",
+              "description": "Perform complex arithmetic, square roots, and multiplications in seconds without paper.",
+              "provider": {
+                "@type": "Organization",
+                "name": "MindMaster Academy",
+                "sameAs": "https://mindmasteredu.in"
+              }
+            },
+            {
+              "@type": "Course",
+              "position": 3,
+              "name": "500-Year Superfast Calendar Mastery (MM-03)",
+              "description": "Calculate exact day of the week for any date across 500 years within 2 seconds.",
+              "provider": {
+                "@type": "Organization",
+                "name": "MindMaster Academy",
+                "sameAs": "https://mindmasteredu.in"
+              }
+            }
+          ]
+        }}
+      />
       <div className="flex flex-col w-full">
         {/* Hero Section */}
         <section className="w-full relative overflow-hidden bg-surface-bright py-space-2xl md:py-space-3xl border-b border-surface-variant/40">

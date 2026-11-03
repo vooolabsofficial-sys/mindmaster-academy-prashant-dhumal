@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 import { DottedColorfulBrain } from '../components/DottedColorfulBrain';
 
 // Web Audio API Sound Synthesizer (Works 100% offline, zero external dependencies)
@@ -1306,6 +1307,23 @@ export const BrainGames: React.FC = () => {
 
   return (
     <main className="w-full pt-28 pb-20 bg-background min-h-screen relative overflow-hidden">
+      <SEO
+        title="Brain Gym & Interactive Memory Games | MindMaster Academy"
+        description="Train your cognitive speed with interactive brain games: 500-Year Calendar Trainer, Vedic Speed Multiply, Number Memory Matrix & Stroop Focus Drills."
+        keywords="Brain Games, Memory Training Games, Vedic Maths Speed Quiz, Calendar Trick Practice, Neuro Drills Pune"
+        schema={{
+          "@type": "WebApplication",
+          "name": "MindMaster Interactive Brain Gym",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "All",
+          "description": "Interactive cognitive acceleration tool for calendar calculations, speed maths, and visual recall.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "INR"
+          }
+        }}
+      />
       {/* Clean Background Glow */}
       <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[340px] bg-secondary-fixed/30 blur-[120px] rounded-full pointer-events-none -z-10" />
 

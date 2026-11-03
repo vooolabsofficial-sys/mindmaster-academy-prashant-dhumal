@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 import { VideoModal, VideoModalProps } from '../components/VideoModal';
 import {
   fetchLiveWebsiteCms,
@@ -240,6 +241,20 @@ export const Results: React.FC = () => {
 
   return (
     <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen">
+      <SEO
+        title="Student Success Stories & Exam Results | MindMaster Academy"
+        description="Real results from 5,000+ students across Maharashtra: MPSC rankers, scholarship toppers, and mathematics high-scorers trained by Prashant Dhumal Sir."
+        keywords="MindMaster Student Results, MPSC Memory Toppers, Vedic Maths Success Stories, Prashant Dhumal Reviews Maharashtra"
+        schema={{
+          "@type": "CollectionPage",
+          "name": "MindMaster Academy Student Results & Testimonials",
+          "description": "Verified student case studies and merit achievements from MindMaster Academy.",
+          "about": {
+            "@type": "EducationalOrganization",
+            "name": "MindMaster Academy"
+          }
+        }}
+      />
       <div className="flex flex-col w-full">
         {/* Hero Section */}
         <section className="w-full bg-surface-container-lowest py-space-2xl md:py-space-3xl border-b border-surface-variant/40">

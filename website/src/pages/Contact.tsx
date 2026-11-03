@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 import {
   fetchLiveWebsiteCms,
   submitWebsiteLead,
@@ -52,6 +53,30 @@ export const Contact: React.FC = () => {
 
   return (
     <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen">
+      <SEO
+        title="Contact MindMaster Academy | Helpline, Centres & Support"
+        description="Connect with Prashant Dhumal Sir's team. Helpline: +91 84593 44077. Offline training centres in Satara & Pune Narhe. Inquire about school workshops & admissions."
+        keywords="Contact MindMaster Academy, Prashant Dhumal Phone Number, MindMaster Satara Address, Memory Seminar Booking Pune"
+        schema={{
+          "@type": "ContactPage",
+          "name": "Contact MindMaster Academy",
+          "url": "https://mindmasteredu.in/contact",
+          "mainEntity": {
+            "@type": "EducationalOrganization",
+            "name": "MindMaster Academy",
+            "telephone": "+91-8459344077",
+            "email": "mindmasterdhumal@gmail.com",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Narhe Hub Node",
+              "addressLocality": "Pune",
+              "addressRegion": "Maharashtra",
+              "postalCode": "411041",
+              "addressCountry": "IN"
+            }
+          }
+        }}
+      />
       <div className="flex flex-col w-full">
         <section className="w-full bg-surface-container-low/60 py-space-3xl px-gutter-desktop border-b border-surface-variant/40">
           <div className="max-w-container-max mx-auto flex flex-col items-center">

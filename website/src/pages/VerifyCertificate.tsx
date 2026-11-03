@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 import { getAppUrl } from '../config/appConfig';
 
 export interface VerifiedCertificate {
@@ -67,6 +68,11 @@ export const VerifyCertificate: React.FC = () => {
 
   return (
     <main className="w-full pt-24 sm:pt-28 bg-slate-50 min-h-screen">
+      <SEO
+        title="Verify Certificate Online | MindMaster Academy"
+        description="Verify the authenticity of MindMaster Academy course completion certificates issued by Prashant Dhumal Sir. Real-time cryptographic validation."
+        keywords="Verify MindMaster Certificate, Prashant Dhumal Certificate Check, Vedic Maths Certificate Verification"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 flex flex-col items-center">
         {/* Verification Header */}
         <div className="text-center max-w-xl mx-auto mb-8">

@@ -1,9 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 
 export const PrivacyPolicy: React.FC = () => {
   return (
     <main className="w-full pt-28 pb-20 bg-background min-h-screen">
+      <SEO
+        title="Privacy Policy | MindMaster Academy"
+        description="Learn how MindMaster Academy protects student privacy, mobile OTP authentication, and learning progress records in compliance with Indian IT laws."
+        keywords="MindMaster Privacy Policy, Student Data Security, Prashant Dhumal Academy Privacy"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-6">

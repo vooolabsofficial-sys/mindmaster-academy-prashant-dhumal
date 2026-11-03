@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 import { submitWebsiteLead } from '../config/appConfig';
 
 export const DemoHub: React.FC = () => {
@@ -83,6 +84,27 @@ export const DemoHub: React.FC = () => {
 
   return (
     <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen">
+      <SEO
+        title="Free Memory & Vedic Maths Demo Class | MindMaster Academy"
+        description="Experience Prashant Dhumal Sir's live cognitive memory demo. See real-time 500-year calendar calculations and rapid Vedic multiplication before enrolling."
+        keywords="Free Demo Memory Training, Vedic Maths Trial Class, Prashant Dhumal Demo Pune, Live Orientation Webinar Satara"
+        schema={{
+          "@type": "VideoObject",
+          "name": "MindMaster Academy Orientation & Memory Demo by Prashant Dhumal Sir",
+          "description": "Live demonstration of photographic memory techniques and speed calculations by International Memory Trainer Prashant Dhumal.",
+          "thumbnailUrl": "https://mindmasteredu.in/assets/images/memory_seminar_brain_3d.png",
+          "uploadDate": "2026-01-01",
+          "embedUrl": "https://www.youtube-nocookie.com/embed/8Nyi_FVeUNw",
+          "publisher": {
+            "@type": "Organization",
+            "name": "MindMaster Academy",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://mindmasteredu.in/assets/images/memory_seminar_brain_3d.png"
+            }
+          }
+        }}
+      />
       {/* Top Header Section */}
       <section className="relative w-full py-12 lg:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-b from-surface-container-lowest via-surface-container-low/40 to-background">
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[720px] h-[340px] bg-secondary-fixed/40 rounded-full blur-3xl pointer-events-none -z-10"></div>

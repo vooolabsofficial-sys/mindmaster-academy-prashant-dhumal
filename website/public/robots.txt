@@ -1,0 +1,24 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Disallow admin or private paths if any
+Disallow: /api/
+Disallow: /admin/
+Disallow: /sub/
+
+# AI Crawlers - Allow search & overview indexing
+User-agent: Googlebot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# XML Sitemap
+Sitemap: https://mindmasteredu.in/sitemap.xml
