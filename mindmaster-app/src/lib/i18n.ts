@@ -74,7 +74,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     "nav.profile": "Profile",
 
     "topbar.searchPlaceholder": "Search courses, memory formulas, lessons...",
-    "topbar.portalBadge": "Student Portal • Narhe Centre, Pune",
+    "topbar.portalBadge": "Student Portal • Satara Centre",
     "topbar.installApp": "Install App",
 
     "profile.title": "Student Profile & Settings",
@@ -90,7 +90,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     "profile.language": "Language",
     "profile.languageSub": "Application language preference",
     "profile.help": "Help & Support Helpline",
-    "profile.helpSub": "Direct telephone helpline to Narhe Campus Desk",
+    "profile.helpSub": "Direct telephone helpline to Satara Campus Desk",
     "profile.appVersion": "App Version",
     "profile.logout": "Sign Out from All Devices",
 

@@ -154,7 +154,7 @@ function LegalContent() {
               MindMaster Academy • Head Office
             </h4>
             <p className="text-[11px] text-slate-500">
-              Near Powai Naka, Satara (415001) | Pune Campus: Zeal Chowk, Narhe, Pune
+              Near Powai Naka, Satara, Taluka: Satara, Dist: Satara, Maharashtra 415001
             </p>
           </div>
         </div>

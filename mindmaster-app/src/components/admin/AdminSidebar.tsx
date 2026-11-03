@@ -184,7 +184,7 @@ export default function AdminSidebar() {
               {staff.name}
             </p>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-              ID: {staff.staffId || staff.id} • Narhe Centre
+              ID: {staff.staffId || staff.id} • Satara Centre
             </p>
           </div>
 
@@ -260,7 +260,7 @@ export default function AdminSidebar() {
         <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 text-[11px] text-slate-500 dark:text-slate-400 mt-4 space-y-1.5">
           <div className="flex items-center space-x-1.5 font-bold text-slate-900 dark:text-white">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Narhe Support Hub</span>
+            <span>Satara Support Hub</span>
           </div>
           <p className="text-[10px] leading-tight text-slate-500 dark:text-slate-400">
             Staff actions are recorded in security audit trail.

@@ -107,10 +107,10 @@ const academySchemaJson = {
       },
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "Narhe Hub Node",
-        "addressLocality": "Pune",
+        "streetAddress": "Satara City Centre",
+        "addressLocality": "Satara",
         "addressRegion": "Maharashtra",
-        "postalCode": "411041",
+        "postalCode": "415001",
         "addressCountry": "IN"
       },
       "aggregateRating": {

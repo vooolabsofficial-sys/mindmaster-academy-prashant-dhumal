@@ -51,7 +51,7 @@ export const Home: React.FC = () => {
       <SEO
         title="MindMaster Academy | Prashant Dhumal — Memory & Vedic Maths Training"
         description="MindMaster Academy Pune — Premier cognitive training by Prashant Dhumal Sir. Master Photographic Memory, Superfast Vedic Maths, 500-Year Calendar Tricks & Teacher Training."
-        keywords="MindMaster Academy, Prashant Dhumal, Memory Training Pune, Vedic Maths Maharashtra, Superfast Calendar Satara, Police Bharti Memory, Brain Gym Narhe"
+        keywords="MindMaster Academy, Prashant Dhumal, Memory Training Satara, Vedic Maths Maharashtra, Superfast Calendar Satara, Taluka Satara, Dist Satara, Police Bharti Memory"
         schema={{
           "@type": "WebPage",
           "@id": "https://mindmasteredu.in/#webpage",

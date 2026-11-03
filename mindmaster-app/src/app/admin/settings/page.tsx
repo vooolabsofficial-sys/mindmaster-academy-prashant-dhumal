@@ -42,8 +42,8 @@ export default function AdminSettingsPage() {
   // Section 1: Academy Identity & Certificate Branding
   const [academyTitle, setAcademyTitle] = useState(DEFAULT_PLATFORM_SETTINGS.academy_title || "MindMaster Academy");
   const [founderName, setFounderName] = useState(DEFAULT_PLATFORM_SETTINGS.founder_name || "Prashant Dhumal Sir");
-  const [centreAddress, setCentreAddress] = useState(DEFAULT_PLATFORM_SETTINGS.centre_address || "Powai Naka, Satara, Maharashtra 415001");
-  const [puneAddress, setPuneAddress] = useState(DEFAULT_PLATFORM_SETTINGS.pune_address || "Zeal Chowk, Narhe, Pune, Maharashtra 411041");
+  const [centreAddress, setCentreAddress] = useState(DEFAULT_PLATFORM_SETTINGS.centre_address || "Powai Naka, Satara, Taluka: Satara, Dist: Satara, Maharashtra 415001");
+  const [puneAddress, setPuneAddress] = useState(DEFAULT_PLATFORM_SETTINGS.pune_address || "Satara City Centre, Taluka: Satara, Dist: Satara, Maharashtra 415001");
   const [signatureUrl, setSignatureUrl] = useState(DEFAULT_PLATFORM_SETTINGS.signature_url || "/branding/prashant_sir_signature.png");
   const [stampUrl, setStampUrl] = useState(DEFAULT_PLATFORM_SETTINGS.stamp_url || "/branding/mindmaster_seal.png");
 
@@ -520,7 +520,7 @@ export default function AdminSettingsPage() {
                       type="text"
                       value={puneAddress}
                       onChange={(e) => setPuneAddress(e.target.value)}
-                      placeholder="Zeal Chowk, Narhe, Pune, Maharashtra 411041"
+                      placeholder="Satara, Taluka: Satara, Dist: Satara, Maharashtra 415001"
                       className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
                     />
                     <p className="text-[11px] text-[#5A6478] mt-1">Secondary offline branch campus address.</p>

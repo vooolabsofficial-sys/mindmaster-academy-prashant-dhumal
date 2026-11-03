@@ -313,8 +313,7 @@ export function generateFeeReceiptPdf(data: FeeReceiptData) {
   const settings = getPlatformSettings();
   const academyName = (settings.academy_title || "MINDMASTER ACADEMY").toUpperCase();
   const founderSignatory = settings.founder_name || "Prashant Dhumal Sir";
-  const sataraAddr = settings.centre_address || "Powai Naka, Satara (415001)";
-  const puneAddr = settings.pune_address || "Zeal Chowk, Narhe, Pune";
+  const sataraAddr = settings.centre_address || "Powai Naka, Satara, Taluka: Satara, Dist: Satara (415001)";
   const supportNum = settings.whatsapp_number || settings.support_phone || "+91 84593 44077";
   const supportMail = settings.support_email || "mindmasterdhumal@gmail.com";
 
@@ -328,7 +327,7 @@ export function generateFeeReceiptPdf(data: FeeReceiptData) {
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...grayTextColor);
   doc.text(`Founder & Master Trainer: ${founderSignatory}`, 15, 30);
-  doc.text(`Head Office: ${sataraAddr} | Pune Campus: ${puneAddr}`, 15, 35);
+  doc.text(`Head Office: ${sataraAddr}`, 15, 35);
   doc.text(`Helpline / WhatsApp: ${supportNum} | Email: ${supportMail}`, 15, 40);
 
   // Top Right Receipt Badge

@@ -14,7 +14,7 @@ export interface SEOProps {
 export const SEO: React.FC<SEOProps> = ({
   title,
   description,
-  keywords = "MindMaster Academy, Prashant Dhumal, Memory Training Pune, Vedic Maths, Superfast Calendar, Brain Training Maharashtra, Satara, Narhe Pune",
+  keywords = "MindMaster Academy, Prashant Dhumal, Memory Training Satara, Vedic Maths Maharashtra, Superfast Calendar, Brain Training, Satara, Taluka Satara, Dist Satara",
   canonical,
   ogType = "website",
   ogImage = "https://mindmasteredu.in/assets/images/memory_seminar_brain_3d.png",

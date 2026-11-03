@@ -31,7 +31,7 @@ export default function StudentSupportPage() {
   const [supportSettings, setSupportSettings] = useState({
     supportPhone: "+91 84593 44077",
     supportEmail: "mindmasterdhumal@gmail.com",
-    centreAddress: "Narhe Centre Desk, Pune",
+    centreAddress: "Satara, Taluka: Satara, Dist: Satara, Maharashtra 415001",
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -43,7 +43,7 @@ export default function StudentSupportPage() {
           setSupportSettings({
             supportPhone: data.settings.support_phone || "+91 84593 44077",
             supportEmail: data.settings.support_email || "mindmasterdhumal@gmail.com",
-            centreAddress: data.settings.centre_address || "Narhe Centre Desk, Pune",
+            centreAddress: data.settings.centre_address || "Satara, Taluka: Satara, Dist: Satara, Maharashtra 415001",
           });
         }
       })

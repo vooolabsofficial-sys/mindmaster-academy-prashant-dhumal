@@ -55,8 +55,8 @@ export const Contact: React.FC = () => {
     <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen">
       <SEO
         title="Contact MindMaster Academy | Helpline, Centres & Support"
-        description="Connect with Prashant Dhumal Sir's team. Helpline: +91 84593 44077. Offline training centres in Satara & Pune Narhe. Inquire about school workshops & admissions."
-        keywords="Contact MindMaster Academy, Prashant Dhumal Phone Number, MindMaster Satara Address, Memory Seminar Booking Pune"
+        description="Connect with Prashant Dhumal Sir's team. Helpline: +91 84593 44077. Campus Address: Satara, Taluka: Satara, Dist: Satara, Maharashtra 415001. Inquire about cognitive courses & admissions."
+        keywords="Contact MindMaster Academy, Prashant Dhumal Phone Number, MindMaster Satara Address, Memory Training Satara, Taluka Satara, Dist Satara"
         schema={{
           "@type": "ContactPage",
           "name": "Contact MindMaster Academy",
@@ -68,10 +68,10 @@ export const Contact: React.FC = () => {
             "email": "mindmasterdhumal@gmail.com",
             "address": {
               "@type": "PostalAddress",
-              "streetAddress": "Narhe Hub Node",
-              "addressLocality": "Pune",
+              "streetAddress": "Satara City Centre",
+              "addressLocality": "Satara",
               "addressRegion": "Maharashtra",
-              "postalCode": "411041",
+              "postalCode": "415001",
               "addressCountry": "IN"
             }
           }

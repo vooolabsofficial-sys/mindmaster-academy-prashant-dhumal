@@ -254,7 +254,7 @@ function StaffLoginContent() {
       </div>
 
       <p className="text-xs text-[#8A94A6] pb-4 text-center">
-        ● Strictly In-App Staff Console • Narhe Centre Desk • v2.0.0
+        ● Strictly In-App Staff Console • Satara Centre Desk • v2.0.0
       </p>
     </div>
   );

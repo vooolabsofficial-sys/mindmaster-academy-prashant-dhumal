@@ -91,7 +91,7 @@ export default function AdminShell({ children }: AdminShellProps) {
 
       {/* Universal Enterprise Staff Footer */}
       <footer className="py-4 border-t border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-[#1E293B]/80 text-center text-xs text-slate-500 dark:text-slate-400 transition-colors duration-200">
-        MindMaster Academy Staff Console • Narhe Centre Hub • DRM &amp; Role Access Protected
+        MindMaster Academy Staff Console • Satara Centre Hub • DRM &amp; Role Access Protected
       </footer>
     </div>
   );
