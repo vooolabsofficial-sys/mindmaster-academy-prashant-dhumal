@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, ShieldCheck } from "lucide-react";
 import { setCurrentStaff } from "@/lib/staffStore";
 import AuthRoleSwitcher from "@/components/auth/AuthRoleSwitcher";
 import SubmitButton from "@/components/ui/SubmitButton";
