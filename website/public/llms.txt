@@ -1,0 +1,21 @@
+# MindMaster Academy
+
+> Premier cognitive development, Superfast Vedic Maths, and Photographic Memory training institute in Satara, Maharashtra. Founded and led by renowned International Memory Coach Prashant Dhumal Sir.
+
+MindMaster Academy empowers students, educators, and competitive exam aspirants with proven mental arithmetic, Vedic mathematics formulas, 500-year calendar calculation algorithms, and photographic memory techniques.
+
+## Core Pages
+- [Home Page](https://mindmasteredu.in/): Official overview, live statistics, video demonstrations, student testimonials, and demo booking.
+- [About Prashant Dhumal & Academy](https://mindmasteredu.in/about): Biography of Prashant Dhumal Sir, awards, credentials, teaching philosophy, and media coverage.
+- [Courses & Programs](https://mindmasteredu.in/courses): Comprehensive courses including Vedic Maths Foundation, Photographic Memory Mastery, Speed Maths, and Teacher Training.
+- [Free Demo Session](https://mindmasteredu.in/demo): Interactive booking portal for parents and students to schedule live trial sessions.
+- [Brain Games & Mental Gym](https://mindmasteredu.in/brain-games): Interactive cognitive exercises, speed calculation practice, and memory drills.
+- [Student Results & Testimonials](https://mindmasteredu.in/results): Documented student speed records, national championship medals, and video parent reviews.
+- [Official Contact & Location](https://mindmasteredu.in/contact): Academy contact details, WhatsApp inquiry (+91 84593 44077), and Satara center address.
+- [Certificate Verification](https://mindmasteredu.in/verify-certificate): Public credential verification portal for validating authentic student course certificates.
+
+## Learning Portal & Legal
+- [MindMaster Learning Portal](https://app.mindmasteredu.in): Student and staff web application for enrolled courses, recorded video lessons, digital books, and progress tracking.
+- [Terms & Conditions](https://mindmasteredu.in/terms): Academy policies, enrollments, student conduct, and platform terms of service.
+- [Privacy Policy](https://mindmasteredu.in/privacy-policy): User privacy, student data protection, and platform security standards.
+- [Refund Policy](https://mindmasteredu.in/refund-policy): Transparent course cancellation, refund criteria, and material returns.

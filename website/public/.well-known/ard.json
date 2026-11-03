@@ -1,0 +1,31 @@
+{
+  "$schema": "https://agenticresourcediscovery.org/schema/v1/manifest.json",
+  "name": "MindMaster Academy",
+  "description": "Premier cognitive development, Superfast Vedic Maths, and Photographic Memory training institute in Satara, Maharashtra, founded by Prashant Dhumal Sir.",
+  "url": "https://mindmasteredu.in",
+  "provider": {
+    "name": "MindMaster Academy",
+    "url": "https://mindmasteredu.in"
+  },
+  "contact": {
+    "email": "support@mindmasteredu.in",
+    "phone": "+918459344077",
+    "address": "Near Powai Naka, Satara City, Taluka: Satara, Dist: Satara, Maharashtra 415001"
+  },
+  "resources": [
+    {
+      "type": "llms-txt",
+      "url": "https://mindmasteredu.in/llms.txt"
+    },
+    {
+      "type": "sitemap",
+      "url": "https://mindmasteredu.in/sitemap.xml"
+    }
+  ],
+  "capabilities": {
+    "courses": "https://mindmasteredu.in/courses",
+    "demoBooking": "https://mindmasteredu.in/demo",
+    "verification": "https://mindmasteredu.in/verify-certificate",
+    "portal": "https://app.mindmasteredu.in"
+  }
+}

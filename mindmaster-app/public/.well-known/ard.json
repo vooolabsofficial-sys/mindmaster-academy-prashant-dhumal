@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agenticresourcediscovery.org/schema/v1/manifest.json",
+  "name": "MindMaster Academy Portal",
+  "description": "Student & Staff Learning Application for MindMaster Academy, Satara.",
+  "url": "https://app.mindmasteredu.in",
+  "provider": {
+    "name": "MindMaster Academy",
+    "url": "https://mindmasteredu.in"
+  },
+  "resources": [
+    {
+      "type": "llms-txt",
+      "url": "https://app.mindmasteredu.in/llms.txt"
+    },
+    {
+      "type": "sitemap",
+      "url": "https://app.mindmasteredu.in/sitemap.xml"
+    }
+  ]
+}

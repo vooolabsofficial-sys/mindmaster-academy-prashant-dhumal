@@ -1,0 +1,16 @@
+# MindMaster Academy — Student & Staff Web Portal
+
+> Dedicated learning platform, digital courseware, lecture videos, and student progress tracking for MindMaster Academy, Satara. Founded by Prashant Dhumal Sir.
+
+This portal provides authenticated and guest access to MindMaster Academy's cognitive training curricula, Abacus & Vedic Maths course materials, and certificate validation.
+
+## Portal Features & Navigation
+- [Learning Hub Home](https://app.mindmasteredu.in/home): Student personalized dashboard, enrolled courses, and continue-learning lessons.
+- [Course Catalog](https://app.mindmasteredu.in/courses): Browse comprehensive courses, video curriculums, and lesson previews.
+- [Digital Books Library](https://app.mindmasteredu.in/books): Interactive learning materials, workbooks, and practice problem sets.
+- [Certificate Verification](https://app.mindmasteredu.in/verify-certificate): Public credential verification tool for issued certificates.
+- [Student Login](https://app.mindmasteredu.in/login): Secure student portal access via phone or email authentication.
+- [Staff & Admin Portal](https://app.mindmasteredu.in/staff/login): Administrative and faculty access for batch tracking, student approvals, and CMS controls.
+
+## Main Website
+- [MindMaster Academy Website](https://mindmasteredu.in): Public website, demo session booking, parent testimonials, and contact.
