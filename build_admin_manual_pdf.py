@@ -460,6 +460,17 @@ HTML_CONTENT = """<!DOCTYPE html>
     <li>❌ <strong>पासवर्ड विसरल्यास:</strong> <code>/staff/forgot-password</code> वर जा किंवा मुख्य डेटाबेस ॲडमिनिस्ट्रेटरशी संपर्क साधा.</li>
   </ul>
 
+  <h3 class="section-title">१.३ मुख्य ॲडमिनचा पहिला लॉगिन व पासवर्ड सेट करणे (Initial Executive Setup):</h3>
+  <div class="info-card" style="background: #f0fdf4; border-left-color: #16a34a;">
+    <strong style="color: #166534;">🔑 सिस्टीम सुरू करताना पहिला मुख्य ॲडमिन लॉगिन कसा करावा?</strong>
+    <ol class="steps-list" style="margin-top: 6px;">
+      <li><strong>सुरुवातीचा डीफॉल्ट लॉगिन:</strong> डेव्हलपमेंट किंवा सिस्टीम लाँच वेळी दिलेला मुख्य Staff ID (उदा. <code>MMA-000</code>) आणि सुरुवातीचा डीफॉल्ट पासवर्ड वापरून <code>/admin/login</code> वर लॉगिन करा.</li>
+      <li><strong>तात्काळ पासवर्ड बदलणे:</strong> पहिल्या लॉगिननंतर सुरक्षेसाठी लगेच उजव्या कोपऱ्यातील प्रोफाइल आयकॉनवर क्लिक करा किंवा <code>/staff/change-password</code> वर जा.</li>
+      <li><strong>मजबूत पासवर्ड नियम:</strong> किमान ८ अक्षरे, कॅपिटल अक्षर, अंक व विशेष चिन्ह (उदा. <code>Mind@2026#Satara</code>) असा स्वतःचा गोपनीय पासवर्ड सेट करा.</li>
+      <li><strong>कन्फर्म करा:</strong> पासवर्ड सेव्ह होताच सिस्टीममध्ये Argon2id एनक्रिप्शनने तो कायमचा सुरक्षित होतो. आता फक्त तुम्हीच हा पासवर्ड वापरून ॲडमिन कन्सोल उघडू शकाल.</li>
+    </ol>
+  </div>
+
   <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 18px 0;">
 
   <h2 class="chapter-title"><span class="badge">प्रकरण २</span> ॲडमिन टॉपबार टूल्स (Admin Topbar Controls)</h2>
@@ -586,6 +597,20 @@ HTML_CONTENT = """<!DOCTYPE html>
 
   <h3 class="section-title">५.२ विद्यार्थ्याचा पासवर्ड रीसेट करणे (Reset PIN):</h3>
   <p>विद्यार्थी ४-अंकी पिन विसरल्यास <strong>"Reset Password"</strong> वर क्लिक करून तात्पुरता पिन (उदा. <code>1234</code>) सेट करा.</p>
+
+  <h3 class="section-title">५.३ विद्यार्थ्याचा संपूर्ण व्यवहार इतिहास व अधिकृत फी पावती (Fee Receipts & Payment Ledger):</h3>
+  <div class="info-card" style="background: #eff6ff; border-left-color: #2563eb;">
+    <strong style="color: #1e40af;">💳 विद्यार्थ्याच्या सर्व ऑनलाईन व ऑफलाईन व्यवहारांची तपासणी:</strong>
+    <p style="margin-top: 5px; font-size: 12px; color: #334155;">
+      <code>/admin/students</code> मध्ये विद्यार्थ्याच्या नावावर क्लिक केल्यावर उघडणाऱ्या <strong>Student 360 Drawer</strong> मध्ये चौथा टॅब <strong>"Receipts & Fees"</strong> जोडला आहे:
+    </p>
+    <ul class="check-list" style="margin-top: 6px;">
+      <li><strong>एकत्रित लेजर (Unified Ledger):</strong> विद्यार्थ्याने रेझरपे/UPI द्वारे केलेले ऑनलाईन पेमेंट किंवा केंद्रावर दिलेली रोख फी/हप्ता या सर्वांची अचूक नोंद येथे एकत्र दिसते.</li>
+      <li><strong>१-क्लिक A4 फी पावती PDF:</strong> <strong>"Download PDF Receipt"</strong> वर क्लिक करताच अधिकृत क्रमांक (उदा. <code>REC-VEDIC-8492</code>), विद्यार्थ्याचे नाव, फोन, भरलेली फी आणि प्रशांत सरांच्या स्वाक्षरीसह A4 पावती जनरेट होते.</li>
+      <li><strong>थेट व्हॉट्सॲप शेअर:</strong> <strong>"Share to WhatsApp"</strong> बटनाने पालकांच्या व्हॉट्सॲपवर फी पावतीचा अधिकृत मेसेज एका सेकंदात पाठवता येतो.</li>
+      <li><strong>विद्यार्थी स्वतःही पावती घेऊ शकतो:</strong> विद्यार्थ्याला त्याच्या <code>/profile</code> मधील <em>"माझे कोर्सेस, व्यवहार व फी पावत्या"</em> आणि <code>/my-courses</code> मधील <em>"फी पावत्या"</em> टॅबमधून कधीही स्वतःची पावती डाऊनलोड करता येते.</li>
+    </ul>
+  </div>
 
   <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 18px 0;">
 
@@ -851,6 +876,21 @@ HTML_CONTENT = """<!DOCTYPE html>
         <td><strong>१२</strong></td>
         <td><strong>व्हिडिओ रेकॉर्डिंग किंवा चोरी करण्याचा प्रयत्न (Anti-Piracy Detection)</strong></td>
         <td><strong>वॉटरमार्क तपासणी:</strong> व्हिडिओवर विद्यार्थ्याचा फोन नंबर सतत हलक्या अक्षरात तरंगत असतो. जर सोशल मीडियावर चोरीचा व्हिडिओ आढळला, तर त्या नंबरवरून विद्यार्थ्याचा शोध घेऊन <code>/admin/students</code> मधून त्याला कायमचे सस्पेंड करा.</td>
+      </tr>
+      <tr>
+        <td><strong>१३</strong></td>
+        <td><strong>विद्यार्थ्याला किंवा पालकांना अधिकृत फी पावती (Official Fee Receipt) हवी आहे</strong></td>
+        <td><strong>१-क्लिक पावती:</strong> <code>/admin/students</code> वर विद्यार्थ्याचा फोन सर्च करा -> <strong>Student Drawer</strong> उघडा -> <strong>"Receipts & Fees"</strong> टॅबवर जाऊन <strong>"Download PDF Receipt"</strong> दाबा किंवा <strong>"Share via WhatsApp"</strong> दाबा. विद्यार्थी स्वतःही <code>/profile</code> वरून पावती डाऊनलोड करू शकतो.</td>
+      </tr>
+      <tr>
+        <td><strong>१४</strong></td>
+        <td><strong>विद्यार्थ्याने अर्धी फी दिली असून उर्वरित हप्ता बाकी आहे (Installment Pending)</strong></td>
+        <td><strong>हप्ता ट्रॅकिंग:</strong> ऑफलाईन ॲडमिशन देताना <em>"Installment Due"</em> रक्कम व अंतिम तारीख टाका. पावतीवर व ड्रॉवरमध्ये पिवळ्या रंगात <em>"हप्ता बाकी"</em> असा अलर्ट दिसेल. उर्वरित फी जमा झाल्यावर <strong>"Clear Due"</strong> करून पूर्ण पावती द्या.</td>
+      </tr>
+      <tr>
+        <td><strong>१५</strong></td>
+        <td><strong>नवीन ॲडमिन किंवा सब-ॲडमिन बनवला, त्याला लॉगिन कसे करावे ते समजत नाही</strong></td>
+        <td><strong>प्रथम लॉगिन पद्धत:</strong> त्याला त्याचा Staff ID व तात्पुरता पासवर्ड पाठवा. त्याने <code>/staff/login</code> वर लॉगिन करावे. सिस्टीम त्याला थेट <code>/staff/change-password</code> वर नेईल, जेथे त्याने किमान ८ अक्षरांचा स्वतःचा नवा पासवर्ड सेट करावा.</td>
       </tr>
     </tbody>
   </table>
