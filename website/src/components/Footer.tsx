@@ -168,16 +168,6 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
-                <a
-                  href={getAppUrl('/staff/login')}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-[#0052FF] transition-colors block py-0.5"
-                >
-                  Staff Portal
-                </a>
-              </li>
-              <li>
                 <Link to="/privacy" className="hover:text-[#0052FF] transition-colors block py-0.5">
                   Privacy Policy
                 </Link>

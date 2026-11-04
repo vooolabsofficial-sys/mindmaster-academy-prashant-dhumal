@@ -1,6 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type LanguageCode = 'en' | 'mr' | 'hi';
+export type LanguageCode =
+  | 'en'
+  | 'mr'
+  | 'hi'
+  | 'gu'
+  | 'kn'
+  | 'te'
+  | 'ta'
+  | 'bn'
+  | 'ml'
+  | 'pa'
+  | 'or'
+  | 'ur';
 
 export interface LanguageInfo {
   code: LanguageCode;
@@ -13,6 +25,15 @@ export const SUPPORTED_LANGUAGES: LanguageInfo[] = [
   { code: 'en', nativeName: 'English', englishName: 'English', flag: '🇬🇧' },
   { code: 'mr', nativeName: 'मराठी', englishName: 'Marathi', flag: '🇮🇳' },
   { code: 'hi', nativeName: 'हिंदी', englishName: 'Hindi', flag: '🇮🇳' },
+  { code: 'gu', nativeName: 'ગુજરાતી', englishName: 'Gujarati', flag: '🇮🇳' },
+  { code: 'kn', nativeName: 'ಕನ್ನಡ', englishName: 'Kannada', flag: '🇮🇳' },
+  { code: 'te', nativeName: 'తెలుగు', englishName: 'Telugu', flag: '🇮🇳' },
+  { code: 'ta', nativeName: 'தமிழ்', englishName: 'Tamil', flag: '🇮🇳' },
+  { code: 'bn', nativeName: 'বাংলা', englishName: 'Bengali', flag: '🇮🇳' },
+  { code: 'ml', nativeName: 'മലയാളം', englishName: 'Malayalam', flag: '🇮🇳' },
+  { code: 'pa', nativeName: 'ਪੰਜਾਬੀ', englishName: 'Punjabi', flag: '🇮🇳' },
+  { code: 'or', nativeName: 'ଓଡ଼ିଆ', englishName: 'Odia', flag: '🇮🇳' },
+  { code: 'ur', nativeName: 'اردو', englishName: 'Urdu', flag: '🇮🇳' },
 ];
 
 export const DEFAULT_LANGUAGE: LanguageCode = 'en';
