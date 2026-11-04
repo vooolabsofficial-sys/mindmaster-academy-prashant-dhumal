@@ -127,7 +127,7 @@ export const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Right CTA Actions: Student Login & Helpline */}
+          {/* Right CTA Actions: Student Login */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Student Login Button -> Directly navigates to MindMaster App Login */}
             <a
@@ -138,14 +138,6 @@ export const Navbar: React.FC = () => {
               <span className="material-symbols-outlined text-[18px]">account_circle</span>
               <span className="whitespace-nowrap hidden sm:inline">Student Login</span>
               <span className="whitespace-nowrap sm:hidden">Login</span>
-            </a>
-
-            <a
-              href="tel:+918459344077"
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/20 border border-white/35 hover:bg-white/30 hidden lg:flex items-center justify-center text-white transition-all shadow-inner"
-              title="Call Satara HQ: +91 84593 44077"
-            >
-              <span className="material-symbols-outlined text-[16px]">call</span>
             </a>
 
             {/* Mobile Menu Toggle Button */}
