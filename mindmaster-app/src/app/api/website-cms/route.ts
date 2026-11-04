@@ -81,6 +81,25 @@ export async function POST(req: NextRequest) {
         source: cleanLead.source || "Website Inquiries",
       });
 
+      // Asynchronously sync lead to Supabase Cloud Database (PostgreSQL)
+      try {
+        const { createAdminClient } = await import("@/lib/supabase/admin");
+        const supabase = createAdminClient();
+        await supabase.from("leads").insert({
+          id: newLead.id,
+          name: newLead.name,
+          phone: newLead.phone,
+          email: newLead.email || null,
+          course_interest: newLead.courseInterest,
+          message: newLead.message || null,
+          source: newLead.source,
+          status: newLead.status,
+          created_at: newLead.createdAt,
+        });
+      } catch (sbErr) {
+        console.warn("Supabase lead cloud persistence notice:", sbErr);
+      }
+
       return NextResponse.json(
         { success: true, message: "Inquiry received successfully!", lead: newLead },
         { status: 201, headers: CORS_HEADERS }
