@@ -108,9 +108,9 @@ function saveLocalLogs(logs: ForensicAuditLogEntry[]) {
       if (!fs.existsSync(paths.dataDir)) {
         fs.mkdirSync(paths.dataDir, { recursive: true });
       }
-      // Cap to 3,000 entries
-      const capped = logs.slice(0, 3000);
-      fs.writeFileSync(paths.auditFile, JSON.stringify(capped, null, 2), "utf-8");
+      // Cap to 1,500 entries to prevent disk bloat
+      const capped = logs.slice(0, 1500);
+      fs.writeFileSync(paths.auditFile, JSON.stringify(capped), "utf-8");
     }
   } catch (err) {
     console.warn("Failed to write .data/audit_logs.json:", err);
@@ -206,8 +206,8 @@ export function recordServerAuditLog(entry: AuditLogInput): ForensicAuditLogEntr
 
   globalThis._mma_server_audit_logs.unshift(newLogEntry);
 
-  if (globalThis._mma_server_audit_logs.length > 3000) {
-    globalThis._mma_server_audit_logs = globalThis._mma_server_audit_logs.slice(0, 3000);
+  if (globalThis._mma_server_audit_logs.length > 1500) {
+    globalThis._mma_server_audit_logs = globalThis._mma_server_audit_logs.slice(0, 1500);
   }
 
   // Backup to local disk

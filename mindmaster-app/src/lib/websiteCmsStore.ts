@@ -442,7 +442,9 @@ export function addLeadSync(lead: {
     createdAt: new Date().toISOString(),
   };
 
-  const updatedLeads = [newLead, ...current.leads];
+  // FIFO Storage Cap: Keeps latest 1,500 inquiries to prevent uncontrolled file size growth
+  const MAX_LEADS_STORED = 1500;
+  const updatedLeads = [newLead, ...current.leads].slice(0, MAX_LEADS_STORED);
   writeWebsiteCmsSync({ leads: updatedLeads });
   return newLead;
 }
