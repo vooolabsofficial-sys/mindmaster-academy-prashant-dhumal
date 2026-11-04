@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { getAppUrl } from '../config/appConfig';
+import { LanguageSelector } from './LanguageSelector';
 
 export const Footer: React.FC = () => {
   return (
@@ -105,54 +106,30 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Column 2: Academic Programs (2.5 Cols) */}
+          {/* Column 2: Quick Links (3 Cols) */}
           <div className="lg:col-span-3">
             <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">
-              Academic Programs
+              Quick Links
             </h3>
-            <ul className="space-y-3 text-sm text-slate-600">
+            <ul className="space-y-2.5 text-sm text-slate-600">
               <li>
-                <Link to="/courses" className="hover:text-[#0052FF] transition-colors block py-0.5">
-                  Vedic Mathematics
+                <Link to="/" className="hover:text-[#0052FF] transition-colors block py-0.5">
+                  Home
                 </Link>
               </li>
               <li>
                 <Link to="/courses" className="hover:text-[#0052FF] transition-colors block py-0.5">
-                  Photographic Memory Mastery
+                  All Courses
                 </Link>
               </li>
-              <li>
-                <Link to="/courses" className="hover:text-[#0052FF] transition-colors block py-0.5">
-                  500-Year Calendar Speed Tricks
-                </Link>
-              </li>
-              <li>
-                <Link to="/courses" className="hover:text-[#0052FF] transition-colors block py-0.5">
-                  Speed Math &amp; Calculation Drills
-                </Link>
-              </li>
-              <li>
-                <Link to="/courses" className="hover:text-[#0052FF] transition-colors block py-0.5">
-                  Certified Teacher Training (TTT)
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 3: Quick Navigation & Verification (2.5 Cols) */}
-          <div className="lg:col-span-2">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">
-              Explore &amp; Verify
-            </h3>
-            <ul className="space-y-3 text-sm text-slate-600">
               <li>
                 <Link to="/about" className="hover:text-[#0052FF] transition-colors block py-0.5">
                   About Prashant Sir
                 </Link>
               </li>
               <li>
-                <Link to="/demo" className="hover:text-[#0052FF] transition-colors block py-0.5">
-                  Free Demo Hub
+                <Link to="/results" className="hover:text-[#0052FF] transition-colors block py-0.5">
+                  Student Results
                 </Link>
               </li>
               <li>
@@ -161,20 +138,64 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/results" className="hover:text-[#0052FF] transition-colors block py-0.5">
-                  Student Success Stories
-                </Link>
-              </li>
-              <li>
-                <Link to="/verify-certificate" className="inline-flex items-center gap-1.5 text-emerald-800 hover:text-emerald-950 font-bold transition-colors py-0.5">
-                  <span className="material-symbols-outlined text-[15px] text-emerald-600">verified</span>
-                  <span>Verify Certificate &amp; Marksheet</span>
+                <Link to="/contact" className="hover:text-[#0052FF] transition-colors block py-0.5">
+                  Contact Satara HQ
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 4: Satara Campus & Direct Support (3 Cols) */}
+          {/* Column 3: Credential Verification & Portals (2.5 Cols) */}
+          <div className="lg:col-span-2">
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">
+              Verification &amp; Portals
+            </h3>
+            <ul className="space-y-2.5 text-sm text-slate-600">
+              <li>
+                <Link to="/verify-certificate" className="inline-flex items-center gap-1.5 text-emerald-800 hover:text-emerald-950 font-bold transition-colors py-0.5">
+                  <span className="material-symbols-outlined text-[15px] text-emerald-600">verified</span>
+                  <span>Verify Certificate</span>
+                </Link>
+              </li>
+              <li>
+                <a
+                  href={getAppUrl('/login')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#0052FF] transition-colors block py-0.5"
+                >
+                  Student Login
+                </a>
+              </li>
+              <li>
+                <a
+                  href={getAppUrl('/staff/login')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#0052FF] transition-colors block py-0.5"
+                >
+                  Staff Portal
+                </a>
+              </li>
+              <li>
+                <Link to="/privacy" className="hover:text-[#0052FF] transition-colors block py-0.5">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="hover:text-[#0052FF] transition-colors block py-0.5">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/refund" className="hover:text-[#0052FF] transition-colors block py-0.5">
+                  Refund Policy
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 4: Satara Campus & Direct Support (2.5 Cols) */}
           <div className="lg:col-span-3">
             <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">
               Satara Flagship Campus
@@ -205,12 +226,12 @@ export const Footer: React.FC = () => {
                 </a>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-1">
                 <a
                   href={getAppUrl('/login')}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 min-h-[44px] rounded-full bg-slate-900 hover:bg-[#0052FF] text-white text-xs font-bold transition-all shadow-sm"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 min-h-[40px] rounded-full bg-slate-900 hover:bg-[#0052FF] text-white text-xs font-bold transition-all shadow-sm"
                 >
                   <span>Student Portal Login</span>
                   <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -220,35 +241,13 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        {/* Clean Legal & Copyright Bar */}
-        <div className="border-t border-slate-200 mt-12 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-600">
-          <p className="text-center md:text-left">
+        {/* Clean Language Selector & Copyright Bar */}
+        <div className="border-t border-slate-200 mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <LanguageSelector variant="footer" />
+
+          <p className="text-center md:text-right text-xs text-slate-500">
             © 2026 MindMaster Academy. Founded &amp; mentored by <strong>Prashant Dhumal</strong>. Satara, Maharashtra.
           </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-5 font-semibold text-slate-700">
-            <Link to="/privacy" className="hover:text-[#0052FF] transition-colors">
-              Privacy Policy
-            </Link>
-            <span>•</span>
-            <Link to="/terms" className="hover:text-[#0052FF] transition-colors">
-              Terms of Service
-            </Link>
-            <span>•</span>
-            <Link to="/refund" className="hover:text-[#0052FF] transition-colors">
-              Refund Policy
-            </Link>
-            <span>•</span>
-            <a
-              href={getAppUrl('/staff/login')}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-700 hover:text-slate-900 font-semibold transition-colors"
-              title="Faculty &amp; Staff Login"
-            >
-              Staff Portal
-            </a>
-          </div>
         </div>
       </div>
     </footer>

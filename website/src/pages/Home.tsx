@@ -144,16 +144,6 @@ export const Home: React.FC = () => {
                 <span className="material-symbols-outlined text-lg">event_available</span>
                 <span>Book Free Demo Class</span>
               </button>
-
-              {/* Clean Student Portal Login */}
-              <a
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-100 text-slate-800 font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-2xs hover:bg-slate-200 transition-all border border-slate-300"
-                href={getAppUrl('/login')}
-                title="Student Login / Web Portal"
-              >
-                <span className="material-symbols-outlined text-lg text-[#0052FF]">account_circle</span>
-                <span>Student Login</span>
-              </a>
             </div>
 
             {/* Hero Showcase: Clean High-Resolution Video Player */}

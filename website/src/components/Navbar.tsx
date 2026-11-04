@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getAppUrl, fetchLiveWebsiteCms, WebsiteCmsData, DEFAULT_WEBSITE_CMS } from '../config/appConfig';
 import { LoginModal } from './LoginModal';
-import { LanguageSelector } from './LanguageSelector';
 
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,7 +38,6 @@ export const Navbar: React.FC = () => {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Courses', path: '/courses' },
-    { name: 'Free Demo', path: '/demo', isDemo: true },
     { name: 'About', path: '/about' },
     { name: 'Results', path: '/results' },
     { name: 'Contact', path: '/contact' },
@@ -112,23 +110,15 @@ export const Navbar: React.FC = () => {
                   className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-title-md transition-all flex items-center gap-1.5 ${
                     active
                       ? 'bg-white text-[#0052FF] font-extrabold shadow-xs scale-105'
-                      : link.isDemo
-                      ? 'bg-emerald-500 text-white font-extrabold hover:bg-emerald-600 shadow-xs ring-1 ring-emerald-300'
                       : link.isGame
                       ? 'bg-amber-400 text-slate-900 font-extrabold hover:bg-amber-300 shadow-xs ring-1 ring-amber-300/80'
                       : 'text-white font-bold hover:bg-white/20'
                   }`}
                 >
-                  {link.isDemo && (
-                    <span className="material-symbols-outlined text-[15px]">event_available</span>
-                  )}
                   {link.isGame && (
                     <span className="material-symbols-outlined text-[15px]">sports_esports</span>
                   )}
                   <span>{link.name}</span>
-                  {link.isDemo && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                  )}
                   {link.isGame && (
                     <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping"></span>
                   )}
@@ -137,15 +127,12 @@ export const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Right CTA Actions: Language Selector & Student Login */}
+          {/* Right CTA Actions: Student Login & Helpline */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Language Selector (Primary: English) */}
-            <LanguageSelector variant="desktop" />
-
             {/* Student Login Button -> Directly navigates to MindMaster App Login */}
             <a
               href={getAppUrl('/login')}
-              className="inline-flex items-center justify-center bg-white text-[#0052FF] hover:bg-sky-50 font-title-md text-xs sm:text-sm font-extrabold px-3 sm:px-4 py-2 rounded-full shadow-md hover:scale-105 active:scale-95 transition-all ring-2 ring-white/40 shrink-0 gap-1.5 cursor-pointer"
+              className="inline-flex items-center justify-center bg-white text-[#0052FF] hover:bg-sky-50 font-title-md text-xs sm:text-sm font-extrabold px-3.5 sm:px-4 py-2 rounded-full shadow-md hover:scale-105 active:scale-95 transition-all ring-2 ring-white/40 shrink-0 gap-1.5 cursor-pointer"
               title="Student Login / Web Portal"
             >
               <span className="material-symbols-outlined text-[18px]">account_circle</span>
@@ -185,23 +172,15 @@ export const Navbar: React.FC = () => {
                 className={`flex items-center justify-between px-4 py-2.5 rounded-2xl text-sm font-title-md transition-all ${
                   isActive(link.path)
                     ? 'bg-white text-[#0052FF] font-bold shadow-xs'
-                    : link.isDemo
-                    ? 'bg-emerald-500 text-white font-extrabold shadow-sm'
                     : link.isGame
                     ? 'bg-amber-400 text-slate-900 font-extrabold shadow-sm'
                     : 'text-white/90 hover:bg-white/15'
                 }`}
               >
                 <span className="flex items-center gap-2">
-                  {link.isDemo && <span className="material-symbols-outlined text-[18px]">event_available</span>}
                   {link.isGame && <span className="material-symbols-outlined text-[18px]">sports_esports</span>}
                   <span>{link.name}</span>
                 </span>
-                {link.isDemo && (
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-wider">
-                    Free (₹0)
-                  </span>
-                )}
                 {link.isGame && (
                   <span className="px-2 py-0.5 rounded-full bg-slate-900 text-amber-300 text-[10px] font-bold uppercase tracking-wider">
                     Play Now
@@ -221,9 +200,6 @@ export const Navbar: React.FC = () => {
                 <span>Student Login</span>
               </a>
             </div>
-
-            {/* Mobile Language Selector */}
-            <LanguageSelector variant="mobile" />
           </div>
         )}
       </div>

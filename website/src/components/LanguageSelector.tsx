@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage, SUPPORTED_LANGUAGES, LanguageCode } from '../context/LanguageContext';
 
-export const LanguageSelector: React.FC<{ variant?: 'desktop' | 'mobile' }> = ({ variant = 'desktop' }) => {
+export const LanguageSelector: React.FC<{ variant?: 'desktop' | 'mobile' | 'footer' }> = ({ variant = 'desktop' }) => {
   const { language, setLanguage, languageInfo } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,6 +30,34 @@ export const LanguageSelector: React.FC<{ variant?: 'desktop' | 'mobile' }> = ({
     setLanguage(code);
     setIsOpen(false);
   };
+
+  if (variant === 'footer') {
+    return (
+      <div className="inline-flex items-center gap-1.5 p-1 rounded-full bg-slate-200/80 border border-slate-300/80 text-xs shadow-inner">
+        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-2.5 hidden sm:inline">
+          Language:
+        </span>
+        {SUPPORTED_LANGUAGES.map((lang) => {
+          const isSelected = language === lang.code;
+          return (
+            <button
+              key={lang.code}
+              type="button"
+              onClick={() => handleSelect(lang.code)}
+              className={`px-3 py-1 rounded-full font-bold text-xs transition-all flex items-center gap-1 cursor-pointer ${
+                isSelected
+                  ? 'bg-[#0052FF] text-white shadow-xs'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'
+              }`}
+            >
+              <span>{lang.flag}</span>
+              <span>{lang.nativeName}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   if (variant === 'mobile') {
     return (
