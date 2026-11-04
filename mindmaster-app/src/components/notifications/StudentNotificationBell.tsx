@@ -62,12 +62,12 @@ export default function StudentNotificationBell() {
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center transition relative cursor-pointer active:scale-95"
+        className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition relative cursor-pointer active:scale-95"
         title="In-App Notifications"
       >
-        <Bell className="w-5 h-5 text-slate-700" />
+        <Bell className="w-5 h-5 text-slate-700 dark:text-slate-300" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white font-extrabold text-[10px] flex items-center justify-center ring-2 ring-white shadow-xs animate-pulse">
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white font-extrabold text-[10px] flex items-center justify-center ring-2 ring-white dark:ring-slate-900 shadow-xs animate-pulse">
             {unreadCount}
           </span>
         )}
@@ -75,17 +75,17 @@ export default function StudentNotificationBell() {
 
       {/* Floating Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-3xl border border-[#E4E8F8] shadow-2xl z-50 overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-2xl z-50 overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150">
           {/* Header */}
-          <div className="p-4 bg-gradient-to-b from-[#FAFBFD] to-white border-b border-[#E4E8F8] flex items-center justify-between">
+          <div className="p-4 bg-gradient-to-b from-[#FAFBFD] to-white dark:from-slate-900 dark:to-slate-900/90 border-b border-[#E4E8F8] dark:border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm text-[#0E1B3D]">Notifications</span>
+              <span className="font-extrabold text-sm text-[#0E1B3D] dark:text-white">Notifications</span>
               {unreadCount > 0 ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#EEF4FF] text-[#0B57D0]">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#EEF4FF] dark:bg-blue-950/60 text-[#0B57D0] dark:text-blue-400">
                   {unreadCount} new
                 </span>
               ) : (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                   All caught up
                 </span>
               )}
@@ -94,7 +94,7 @@ export default function StudentNotificationBell() {
             {unreadCount > 0 && (
               <button
                 onClick={() => markAllNotificationsAsRead()}
-                className="text-[11px] font-bold text-[#0B57D0] hover:underline flex items-center gap-1 cursor-pointer"
+                className="text-[11px] font-bold text-[#0B57D0] dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
                 <span>Mark all read</span>
@@ -103,10 +103,10 @@ export default function StudentNotificationBell() {
           </div>
 
           {/* List Container */}
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-[#E4E8F8]/60">
+          <div className="max-h-[380px] overflow-y-auto divide-y divide-[#E4E8F8]/60 dark:divide-slate-800">
             {notifications.length === 0 ? (
-              <div className="text-center py-10 px-4 text-xs text-[#8A94A6]">
-                <Bell className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <div className="text-center py-10 px-4 text-xs text-[#8A94A6] dark:text-slate-400">
+                <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
                 No in-app notifications yet.
               </div>
             ) : (
@@ -118,8 +118,8 @@ export default function StudentNotificationBell() {
                   <div
                     key={notif.id}
                     onClick={() => handleItemClick(notif)}
-                    className={`p-3.5 hover:bg-[#F8FAFF] transition cursor-pointer flex flex-col gap-1.5 relative ${
-                      isUnread ? "bg-[#F5F8FF]/60" : "bg-white"
+                    className={`p-3.5 hover:bg-[#F8FAFF] dark:hover:bg-slate-800/60 transition cursor-pointer flex flex-col gap-1.5 relative ${
+                      isUnread ? "bg-[#F5F8FF]/60 dark:bg-blue-950/20" : "bg-white dark:bg-slate-900"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -127,16 +127,16 @@ export default function StudentNotificationBell() {
                         <span className="text-sm">
                           {isRenewal ? "⏳" : notif.type === "reminder" ? "🧠" : "📢"}
                         </span>
-                        <h4 className="text-xs font-bold text-[#0E1B3D] leading-tight line-clamp-1">
+                        <h4 className="text-xs font-bold text-[#0E1B3D] dark:text-slate-100 leading-tight line-clamp-1">
                           {notif.title}
                         </h4>
                       </div>
                       {isUnread && (
-                        <span className="w-2 h-2 rounded-full bg-[#0B57D0] shrink-0 mt-1" />
+                        <span className="w-2 h-2 rounded-full bg-[#0B57D0] dark:bg-blue-400 shrink-0 mt-1" />
                       )}
                     </div>
 
-                    <p className="text-[11px] text-[#5A6478] leading-relaxed pl-5">
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 leading-relaxed pl-5">
                       {notif.body}
                     </p>
 
@@ -145,7 +145,7 @@ export default function StudentNotificationBell() {
                       <div className="pl-5 pt-1 flex items-center gap-2 flex-wrap">
                         <button
                           onClick={(e) => handleCopyCoupon(notif.couponCode!, e)}
-                          className="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 cursor-pointer transition shadow-xs"
+                          className="px-2.5 py-1 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 cursor-pointer transition shadow-xs"
                         >
                           <Tag className="w-3 h-3" />
                           <span>{copiedCoupon === notif.couponCode ? "Copied!" : `Code: ${notif.couponCode}`}</span>
@@ -154,7 +154,7 @@ export default function StudentNotificationBell() {
                           <Link
                             href={notif.actionUrl}
                             onClick={() => setIsOpen(false)}
-                            className="px-2.5 py-1 bg-[#0B57D0] text-white hover:bg-[#0842A0] rounded-lg text-[10px] font-bold flex items-center gap-1 transition shadow-xs"
+                            className="px-2.5 py-1 bg-[#0B57D0] hover:bg-[#0842A0] text-white rounded-lg text-[10px] font-bold flex items-center gap-1 transition shadow-xs"
                           >
                             <span>Apply & Renew</span>
                             <ArrowRight className="w-2.5 h-2.5" />
@@ -163,7 +163,7 @@ export default function StudentNotificationBell() {
                       </div>
                     )}
 
-                    <div className="pl-5 pt-1 flex items-center justify-between text-[10px] text-[#8A94A6]">
+                    <div className="pl-5 pt-1 flex items-center justify-between text-[10px] text-[#8A94A6] dark:text-slate-500">
                       <span>{notif.createdAt}</span>
                       {notif.courseCode && (
                         <span className="font-mono font-semibold">{notif.courseCode}</span>
@@ -176,11 +176,11 @@ export default function StudentNotificationBell() {
           </div>
 
           {/* Footer View All Link */}
-          <div className="p-3 bg-[#FAFBFD] border-t border-[#E4E8F8] text-center">
+          <div className="p-3 bg-[#FAFBFD] dark:bg-slate-900 border-t border-[#E4E8F8] dark:border-slate-800 text-center">
             <Link
               href="/notifications"
               onClick={() => setIsOpen(false)}
-              className="text-xs font-bold text-[#0B57D0] hover:text-[#0842A0] inline-flex items-center gap-1.5"
+              className="text-xs font-bold text-[#0B57D0] dark:text-blue-400 hover:underline inline-flex items-center gap-1.5"
             >
               <span>View All In-App Notifications</span>
               <ExternalLink className="w-3 h-3" />

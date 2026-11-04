@@ -21,13 +21,13 @@ import { normalizePhone } from "@/lib/phoneUtils";
 function OnboardingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const phoneParam = searchParams.get("phone") || "9823456789";
+  const phoneParam = searchParams.get("phone") || "";
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState(phoneParam);
   const [village, setVillage] = useState("");
   const [taluka, setTaluka] = useState("");
-  const [district, setDistrict] = useState("Pune"); // Default: Pune
+  const [district, setDistrict] = useState("Satara");
   const [schoolName, setSchoolName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");

@@ -12,19 +12,22 @@ import {
   HelpCircle
 } from "lucide-react";
 import { getUnreadCountForStudent } from "@/lib/messageStore";
-
-const NAV_ITEMS = [
-  { href: "/home", altHref: "/", label: "Home", icon: Home },
-  { href: "/my-courses", label: "My Courses", icon: PlaySquare },
-  { href: "/notes", label: "Study Vault (PDFs)", icon: FileText },
-  { href: "/certificate", label: "Certificates", icon: Award },
-  { href: "/profile", label: "Settings & Support", icon: Settings, hasUnread: true },
-];
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function SidebarNav() {
   const pathname = usePathname();
+  const { currentLanguage } = useLanguage();
+  const isMarathi = currentLanguage === "mr";
   const [unreadCount, setUnreadCount] = useState(0);
   const [studentName, setStudentName] = useState("Student");
+
+  const navItems = [
+    { href: "/home", altHref: "/", label: isMarathi ? "मुख्यपृष्ठ" : "Home", icon: Home },
+    { href: "/my-courses", label: isMarathi ? "माझे कोर्सेस" : "My Courses", icon: PlaySquare },
+    { href: "/notes", label: isMarathi ? "अभ्यास वॉल्ट (PDFs)" : "Study Vault (PDFs)", icon: FileText },
+    { href: "/certificate", label: isMarathi ? "प्रमाणपत्रे" : "Certificates", icon: Award },
+    { href: "/profile", label: isMarathi ? "सेटिंग्ज आणि मदत" : "Settings & Support", icon: Settings, hasUnread: true },
+  ];
 
   useEffect(() => {
     const update = () => {
@@ -74,7 +77,7 @@ export default function SidebarNav() {
 
         {/* Core Navigation Items */}
         <nav className="flex-1 py-6 flex flex-col gap-1.5 px-2.5">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive =
               pathname === item.href ||

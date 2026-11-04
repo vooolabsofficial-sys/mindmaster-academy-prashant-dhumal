@@ -5,18 +5,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, PlaySquare, FileText, Award, Settings } from "lucide-react";
 import { getUnreadCountForStudent } from "@/lib/messageStore";
-
-const MOBILE_NAV_ITEMS = [
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/my-courses", label: "Courses", icon: PlaySquare },
-  { href: "/notes", label: "Vault", icon: FileText },
-  { href: "/certificate", label: "Certificates", icon: Award },
-  { href: "/profile", label: "Settings", icon: Settings, hasUnread: true },
-];
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { currentLanguage } = useLanguage();
+  const isMarathi = currentLanguage === "mr";
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const mobileNavItems = [
+    { href: "/home", label: isMarathi ? "मुख्य" : "Home", icon: Home },
+    { href: "/my-courses", label: isMarathi ? "कोर्सेस" : "Courses", icon: PlaySquare },
+    { href: "/notes", label: isMarathi ? "वॉल्ट" : "Vault", icon: FileText },
+    { href: "/certificate", label: isMarathi ? "प्रमाणपत्रे" : "Certificates", icon: Award },
+    { href: "/profile", label: isMarathi ? "सेटिंग्ज" : "Settings", icon: Settings, hasUnread: true },
+  ];
 
   useEffect(() => {
     const update = () => {
@@ -43,7 +46,7 @@ export default function BottomNav() {
       className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 px-2 py-1.5 shadow-lg pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] transition-colors duration-200"
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
-        {MOBILE_NAV_ITEMS.map((item) => {
+        {mobileNavItems.map((item) => {
           const Icon = item.icon;
           const isActive =
             pathname === item.href ||

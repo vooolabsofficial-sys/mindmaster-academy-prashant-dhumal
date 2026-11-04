@@ -167,32 +167,32 @@ export default function CourseDetailPage({
           {/* Left Column (2 Cols) */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             {/* 1. HERO CARD */}
-            <div className="bg-gradient-to-br from-blue-50/90 via-indigo-50/40 to-white rounded-3xl p-8 border border-blue-200/70 text-center flex flex-col items-center shadow-xs">
-              <div className="w-14 h-14 rounded-2xl bg-white shadow-2xs border border-blue-100 flex items-center justify-center text-blue-600 mb-4">
+            <div className="bg-gradient-to-br from-blue-50/90 via-indigo-50/40 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 rounded-3xl p-8 border border-blue-200/70 dark:border-slate-800 text-center flex flex-col items-center shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 shadow-2xs border border-blue-100 dark:border-slate-700 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
                 <GraduationCap className="w-7 h-7 stroke-[2]" />
               </div>
 
               <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
-                <span className="bg-white text-blue-700 border border-blue-200 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
+                <span className="bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-slate-700 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
                   {course.code}
                 </span>
                 <span className="bg-blue-600 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-xs">
                   {course.badgeText || "POPULAR"}
                 </span>
-                <span className="bg-white text-slate-600 border border-slate-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-2xs">
+                <span className="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-2xs">
                   {course.category ? course.category.toUpperCase() : "ACADEMY"}
                 </span>
               </div>
 
-              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {course.title}
               </h1>
-              <p className="text-xs md:text-sm text-slate-600 mt-2 max-w-lg leading-relaxed font-normal">
+              <p className="text-xs md:text-sm text-slate-600 dark:text-slate-300 mt-2 max-w-lg leading-relaxed font-normal">
                 {course.description}
               </p>
 
               {/* Meta Chips */}
-              <div className="mt-5 inline-flex flex-wrap items-center justify-center gap-3 text-xs text-slate-800 font-semibold bg-white px-4 py-2 rounded-full border border-slate-200 shadow-2xs">
+              <div className="mt-5 inline-flex flex-wrap items-center justify-center gap-3 text-xs text-slate-800 dark:text-slate-200 font-semibold bg-white dark:bg-slate-800 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs">
                 <span>{allCourseLessons.length} lessons</span>
                 <span>•</span>
                 <span>{course.accessMonths} months access</span>
@@ -204,21 +204,21 @@ export default function CourseDetailPage({
             {/* 2. WHAT YOU GET */}
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-extrabold text-[#0E1B3D]">What you get</h2>
-                <span className="bg-[#E8F8F2] text-[#0A8554] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white">What you get</h2>
+                <span className="bg-[#E8F8F2] dark:bg-emerald-950/40 text-[#0A8554] dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
                   Included with enrollment
                 </span>
               </div>
 
               <div className="flex flex-col gap-2.5">
                 {(course.features || []).map((feat: string, idx: number) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-white border border-[#E4E8F8] shadow-2xs flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-[#E8F1FD] text-[#0B57D0] flex items-center justify-center shrink-0 mt-0.5">
+                  <div key={idx} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-[#E4E8F8] dark:border-slate-800 shadow-2xs flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-[#E8F1FD] dark:bg-blue-950/60 text-[#0B57D0] dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-[#0E1B3D]">{feat}</h4>
-                      <p className="text-[11px] text-[#5A6478] mt-0.5 leading-relaxed">
+                      <h4 className="text-xs font-bold text-[#0E1B3D] dark:text-slate-100">{feat}</h4>
+                      <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-0.5 leading-relaxed">
                         Full comprehensive training material and exercises designed by Prashant Dhumal Sir.
                       </p>
                     </div>
@@ -231,12 +231,12 @@ export default function CourseDetailPage({
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-extrabold text-[#0E1B3D]">Syllabus & Video Lessons</h2>
-                  <p className="text-xs text-[#5A6478] mt-0.5 font-medium">
+                  <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white">Syllabus & Video Lessons</h2>
+                  <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5 font-medium">
                     {allCourseLessons.filter((l) => l.isFree).length} Free Preview Lessons • Unlock all with enrollment
                   </p>
                 </div>
-                <span className="text-xs font-bold text-[#0B57D0] bg-[#EFF6FF] px-3 py-1 rounded-full">
+                <span className="text-xs font-bold text-[#0B57D0] dark:text-blue-400 bg-[#EFF6FF] dark:bg-blue-950/40 px-3 py-1 rounded-full">
                   {allCourseLessons.length} Total Lessons
                 </span>
               </div>
@@ -244,10 +244,10 @@ export default function CourseDetailPage({
               {/* Lesson Items */}
               <div className="flex flex-col gap-2">
                 {displayedLessons.length === 0 ? (
-                  <div className="p-8 text-center bg-[#FAFAFC] border border-[#EAEFF8] rounded-2xl">
+                  <div className="p-8 text-center bg-[#FAFAFC] dark:bg-slate-900 border border-[#EAEFF8] dark:border-slate-800 rounded-2xl">
                     <FileText className="w-8 h-8 mx-auto text-slate-400 mb-2" />
-                    <p className="text-sm font-semibold text-slate-700">No Lessons Available</p>
-                    <p className="text-xs text-slate-500 mt-1">There are currently no lessons published in this course.</p>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No Lessons Available</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">There are currently no lessons published in this course.</p>
                   </div>
                 ) : (
                   displayedLessons.map((l, index) => (
@@ -255,8 +255,8 @@ export default function CourseDetailPage({
                       key={l.id}
                       className={`p-4 rounded-2xl border transition-all ${
                         l.isFree
-                          ? "bg-white border-[#C2D7FF] shadow-2xs hover:border-[#0B57D0]"
-                          : "bg-[#FAFAFC] border-[#EAEFF8] opacity-90"
+                          ? "bg-white dark:bg-slate-900 border-[#C2D7FF] dark:border-blue-900/60 shadow-2xs hover:border-[#0B57D0]"
+                          : "bg-[#FAFAFC] dark:bg-slate-900/60 border-[#EAEFF8] dark:border-slate-800 opacity-90"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-4">
@@ -264,8 +264,8 @@ export default function CourseDetailPage({
                           <div
                             className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-black text-xs ${
                               l.isFree
-                                ? "bg-[#E8F1FD] text-[#0B57D0]"
-                                : "bg-[#F1F3F9] text-[#94A3B8]"
+                                ? "bg-[#E8F1FD] dark:bg-blue-950/80 text-[#0B57D0] dark:text-blue-400"
+                                : "bg-[#F1F3F9] dark:bg-slate-800 text-[#94A3B8]"
                             }`}
                           >
                             {l.isFree ? <Play className="w-4 h-4 fill-current ml-0.5" /> : <Lock className="w-4 h-4" />}
@@ -275,11 +275,11 @@ export default function CourseDetailPage({
                               <span className="text-[11px] font-bold text-[#94A3B8] font-mono">
                                 #{String(index + 1).padStart(2, "0")}
                               </span>
-                              <h4 className="text-xs md:text-sm font-bold text-[#0E1B3D]">
+                              <h4 className="text-xs md:text-sm font-bold text-[#0E1B3D] dark:text-slate-100">
                                 {l.title.replace(/^\d+\.\s*/, "")}
                               </h4>
                             </div>
-                            <p className="text-[11px] text-[#5A6478] mt-0.5 font-normal">
+                            <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-0.5 font-normal">
                               {l.description || `${Math.round(l.durationSec / 60)} mins • Marathi & English`}
                             </p>
                           </div>
@@ -287,18 +287,18 @@ export default function CourseDetailPage({
 
                         {l.isFree ? (
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="hidden sm:inline-block text-[10px] font-extrabold uppercase tracking-wider bg-[#E8F8F2] text-[#0A8554] px-2.5 py-1 rounded-md">
+                            <span className="hidden sm:inline-block text-[10px] font-extrabold uppercase tracking-wider bg-[#E8F8F2] dark:bg-emerald-950/40 text-[#0A8554] dark:text-emerald-400 px-2.5 py-1 rounded-md">
                               Free
                             </span>
                             <Link
                               href={`/watch/${l.id}`}
-                              className="text-xs font-extrabold text-[#0B57D0] hover:text-[#0842A0] bg-[#E8F1FD] hover:bg-[#D3E3FD] px-3.5 py-1.5 rounded-full transition"
+                              className="text-xs font-extrabold text-[#0B57D0] dark:text-blue-400 hover:text-[#0842A0] bg-[#E8F1FD] dark:bg-blue-950/50 hover:bg-[#D3E3FD] px-3.5 py-1.5 rounded-full transition"
                             >
                               Preview →
                             </Link>
                           </div>
                         ) : (
-                          <span className="text-[11px] text-[#94A3B8] font-mono bg-[#F1F3F9] px-2 py-0.5 rounded-full">
+                          <span className="text-[11px] text-[#94A3B8] font-mono bg-[#F1F3F9] dark:bg-slate-800 px-2 py-0.5 rounded-full">
                             {Math.round(l.durationSec / 60)} mins
                           </span>
                         )}
@@ -313,7 +313,7 @@ export default function CourseDetailPage({
                 <button
                   type="button"
                   onClick={() => setShowAllLessons(true)}
-                  className="w-full py-2 text-center text-xs font-bold text-[#0B57D0] hover:underline flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full py-2 text-center text-xs font-bold text-[#0B57D0] dark:text-blue-400 hover:underline flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <span>Show remaining {allCourseLessons.length - 7} lessons</span>
                   <ChevronDown className="w-3.5 h-3.5" />
@@ -324,10 +324,10 @@ export default function CourseDetailPage({
 
           {/* Right Column: Sticky Pricing Card */}
           <div className="lg:sticky lg:top-20 flex flex-col gap-4">
-            <div className="bg-white rounded-3xl p-6 border-2 border-[#0B57D0]/30 shadow-[0_16px_40px_rgba(11,87,208,0.12)]">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border-2 border-[#0B57D0]/30 dark:border-blue-500/30 shadow-[0_16px_40px_rgba(11,87,208,0.12)] dark:shadow-none">
               {/* Offer Chip */}
               <div className="mb-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-[10px] font-extrabold text-amber-700 uppercase tracking-wider">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   <span>Limited Period Batch Offer</span>
                 </span>
@@ -335,17 +335,17 @@ export default function CourseDetailPage({
 
               {/* Price Row */}
               <div className="flex items-baseline gap-2 mb-1">
-                <span className="text-3xl font-black text-slate-900">₹{priceRupees.toLocaleString("en-IN")}</span>
+                <span className="text-3xl font-black text-slate-900 dark:text-white">₹{priceRupees.toLocaleString("en-IN")}</span>
                 {originalPriceRupees > priceRupees && (
                   <span className="text-sm text-slate-400 line-through">₹{originalPriceRupees.toLocaleString("en-IN")}</span>
                 )}
                 {savingsRupees > 0 && (
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
                     Save ₹{savingsRupees.toLocaleString("en-IN")}
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-500 mb-5 font-medium">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-5 font-medium">
                 One-time fee • {course.accessMonths} months unlimited access
               </p>
 
@@ -357,41 +357,41 @@ export default function CourseDetailPage({
                 Unlock Full Course →
               </Link>
 
-              <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+              <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 <span>Payments by Razorpay</span>
                 <span>•</span>
-                <span className="text-emerald-600 font-bold">100% Secure</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">100% Secure</span>
               </div>
 
               {/* Bullet Checklist */}
-              <div className="mt-5 pt-4 border-t border-[#F1F3F9] flex flex-col gap-2.5 text-xs text-[#0E1B3D] font-medium">
+              <div className="mt-5 pt-4 border-t border-[#F1F3F9] dark:border-slate-800 flex flex-col gap-2.5 text-xs text-[#0E1B3D] dark:text-slate-200 font-medium">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#0A8554] shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-[#0A8554] dark:text-emerald-400 shrink-0" />
                   <span>Instant access on Web + Android PWA</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#0A8554] shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-[#0A8554] dark:text-emerald-400 shrink-0" />
                   <span>Verified Certificate of Completion</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#0A8554] shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-[#0A8554] dark:text-emerald-400 shrink-0" />
                   <span>Full Marathi + English explanations</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#0A8554] shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-[#0A8554] dark:text-emerald-400 shrink-0" />
                   <span>Personal Notes & Digital Books included</span>
                 </div>
               </div>
 
               {/* Centre Badge */}
-              <div className="mt-5 p-3 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-[11px] text-[#5A6478] flex items-center justify-between">
-                <span className="flex items-center gap-1.5 font-bold text-[#0E1B3D]">
-                  <span className="w-2 h-2 rounded-full bg-[#0A8554]" />
+              <div className="mt-5 p-3 rounded-2xl bg-[#F5F7FF] dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 text-[11px] text-[#5A6478] dark:text-slate-400 flex items-center justify-between">
+                <span className="flex items-center gap-1.5 font-bold text-[#0E1B3D] dark:text-slate-200">
+                  <span className="w-2 h-2 rounded-full bg-[#0A8554] dark:bg-emerald-400" />
                   Official Prashant Dhumal Academy
                 </span>
-                <span className="bg-white border border-[#E4E8F8] px-2 py-0.5 rounded text-[10px] font-bold">
-                  Pune, MH
+                <span className="bg-white dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 px-2 py-0.5 rounded text-[10px] font-bold">
+                  Satara, MH
                 </span>
               </div>
             </div>

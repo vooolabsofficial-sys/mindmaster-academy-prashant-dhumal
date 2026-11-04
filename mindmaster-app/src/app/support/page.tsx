@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import AppShell from "@/components/navigation/AppShell";
 import { MessageCircle, Send, ArrowLeft, Brain } from "lucide-react";
 import {
@@ -17,11 +18,11 @@ import {
 } from "@/lib/messageStore";
 
 export default function StudentSupportPage() {
-  const [currentStudent, setCurrentStudent] = useState({
-    id: "std-01",
-    name: "Student",
-    district: "Pune",
-  });
+  const [currentStudent, setCurrentStudent] = useState<{
+    id: string;
+    name: string;
+    district: string;
+  } | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -53,24 +54,35 @@ export default function StudentSupportPage() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem("mindmaster_user_profile");
+      const savedPhone = localStorage.getItem("mindmaster_verified_phone");
       if (raw) {
         const p = JSON.parse(raw);
-        setCurrentStudent((prev) => ({
-          ...prev,
-          id: p.id || p.phone || prev.id,
-          name: p.full_name || prev.name,
-          district: p.district || prev.district,
-        }));
+        const resolvedPhone = p.phone || p.mobile_number || savedPhone || "";
+        if (p.id || resolvedPhone) {
+          setCurrentStudent({
+            id: p.id || (resolvedPhone ? `std-${resolvedPhone.replace(/\D/g, "").slice(-10)}` : ""),
+            name: p.full_name || "Student",
+            district: p.district || "Satara",
+          });
+        }
+      } else if (savedPhone) {
+        setCurrentStudent({
+          id: `std-${savedPhone.replace(/\D/g, "").slice(-10)}`,
+          name: "Student",
+          district: "Satara",
+        });
       }
     } catch {}
   }, []);
 
   const reload = async () => {
+    if (!currentStudent?.id) return;
     await fetchDbConversations();
     setConversations(getConversationsForStudent(currentStudent.id));
   };
 
   useEffect(() => {
+    if (!currentStudent?.id) return;
     reload();
     const unsubscribe = subscribeToSupportLiveUpdates(() => {
       reload();
@@ -83,7 +95,7 @@ export default function StudentSupportPage() {
       unsubscribe();
       window.removeEventListener("mma_messages_changed", reload);
     };
-  }, [currentStudent.id, activeConvId]);
+  }, [currentStudent?.id, activeConvId]);
 
   useEffect(() => {
     if (activeConvId) {
@@ -97,7 +109,7 @@ export default function StudentSupportPage() {
   }, [messages]);
 
   const handleSend = () => {
-    if (!composerText.trim() || !activeConvId) return;
+    if (!composerText.trim() || !activeConvId || !currentStudent) return;
     const text = composerText.trim();
     setComposerText("");
     const newMsg = sendMessage({
@@ -112,7 +124,7 @@ export default function StudentSupportPage() {
   };
 
   const handleNewThread = () => {
-    if (!newThreadText.trim()) return;
+    if (!newThreadText.trim() || !currentStudent) return;
     const conv = createConversation({
       studentId: currentStudent.id,
       studentName: currentStudent.name,
@@ -124,6 +136,36 @@ export default function StudentSupportPage() {
     reload();
     setActiveConvId(conv.id);
   };
+
+  if (!currentStudent) {
+    return (
+      <AppShell>
+        <div className="max-w-md mx-auto py-16 px-4 text-center flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-slate-700">
+            <MessageCircle className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            Student Support & Helpdesk
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Please sign in with your mobile number to access direct messaging with Prashant Dhumal Sir and the academic support desk.
+          </p>
+          <Link
+            href="/login?next=/support"
+            className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition"
+          >
+            Sign In to Open Tickets →
+          </Link>
+          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 w-full text-xs text-slate-500 space-y-1">
+            <p className="font-semibold text-slate-700 dark:text-slate-300">Direct Helpline:</p>
+            <p>{supportSettings.supportPhone}</p>
+            <p className="font-semibold text-slate-700 dark:text-slate-300 mt-2">Campus Desk:</p>
+            <p>{supportSettings.centreAddress}</p>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
 

@@ -14,13 +14,15 @@ import {
   Sparkles, 
   BookOpen, 
   ArrowRight,
-  Award
+  Award,
+  GraduationCap
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
 import { fetchDbCourses, fetchDbBooks, StaffCourse } from "@/lib/staffStore";
 import { createClient } from "@/lib/supabase/client";
 import { Book } from "@/lib/types";
 import { useLanguage } from "@/lib/LanguageContext";
+import { getStudentActiveEnrollments } from "@/app/actions/studentAccess";
 
 export default function StudentHomePage() {
   const { currentLanguage } = useLanguage();
@@ -28,6 +30,7 @@ export default function StudentHomePage() {
 
   const [studentName, setStudentName] = useState<string>("Student");
   const [courses, setCourses] = useState<StaffCourse[]>([]);
+  const [activePurchases, setActivePurchases] = useState<Record<string, string>>({});
   const [books, setBooks] = useState<Book[]>([]);
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
   const [freeLessons, setFreeLessons] = useState<any[]>([]);
@@ -47,13 +50,23 @@ export default function StudentHomePage() {
   };
 
   useEffect(() => {
-    // 1. Load Student Profile
+    // 1. Load Student Profile & Enrollments
+    let resolvedPhone = "";
+    let resolvedUserId = "";
     try {
       const raw = localStorage.getItem("mindmaster_user_profile");
       if (raw) {
         const p = JSON.parse(raw);
         if (p.full_name) setStudentName(p.full_name.split(" ")[0]);
+        if (p.phone || p.mobile_number) resolvedPhone = p.phone || p.mobile_number;
+        if (p.id) resolvedUserId = p.id;
       }
+    } catch {}
+
+    const localPurchases: Record<string, string> = {};
+    try {
+      const rawPurchases = localStorage.getItem("mindmaster_active_purchases");
+      if (rawPurchases) Object.assign(localPurchases, JSON.parse(rawPurchases));
     } catch {}
 
     // 2. Load Watch History
@@ -65,7 +78,7 @@ export default function StudentHomePage() {
       }
     } catch {}
 
-    // 3. Load Courses, Books, & Free Lessons
+    // 3. Load Courses, Books, Enrollments & Free Lessons
     async function loadOttData() {
       setIsLoading(true);
       try {
@@ -77,6 +90,19 @@ export default function StudentHomePage() {
         if (liveCourses) {
           setCourses(liveCourses.filter((c) => c.status !== "draft"));
         }
+
+        try {
+          const liveEnrollments = await getStudentActiveEnrollments({
+            userPhone: resolvedPhone,
+            userId: resolvedUserId,
+          });
+          if (liveEnrollments && Object.keys(liveEnrollments).length > 0) {
+            Object.assign(localPurchases, liveEnrollments);
+          }
+        } catch (liveErr) {
+          console.warn("Live enrollments query fallback:", liveErr);
+        }
+        setActivePurchases({ ...localPurchases });
         if (liveBooks) {
           setBooks(liveBooks.filter((b) => b.status !== "draft"));
         }
@@ -102,8 +128,13 @@ export default function StudentHomePage() {
     loadOttData();
   }, []);
 
+  // Active enrolled courses for the student
+  const enrolledCourses = courses.filter((c) =>
+    Boolean(activePurchases[c.id] || (c.code && activePurchases[c.code]))
+  );
+
   // Spotlight active course
-  const spotlightCourse = courses[0] || null;
+  const spotlightCourse = enrolledCourses[0] || courses[0] || null;
 
   return (
     <AppShell>
@@ -356,8 +387,8 @@ export default function StudentHomePage() {
             ref={enrolledScrollRef}
             className="flex gap-4 overflow-x-auto pb-4 scrollbar-none scroll-smooth touch-manipulation"
           >
-            {courses.length > 0 ? (
-              courses.map((course) => (
+            {enrolledCourses.length > 0 ? (
+              enrolledCourses.map((course) => (
                 <Link
                   key={course.id}
                   href={`/course/${course.id}`}
@@ -391,7 +422,7 @@ export default function StudentHomePage() {
                     <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/60 text-xs font-semibold text-slate-500 dark:text-slate-400">
                       <span>{course.accessMonths || 6} Months Access</span>
                       <span className="text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
-                        View Details
+                        Resume Study
                         <ChevronRight className="w-3.5 h-3.5" />
                       </span>
                     </div>
@@ -399,10 +430,19 @@ export default function StudentHomePage() {
                 </Link>
               ))
             ) : (
-              <div className="w-full p-8 rounded-2xl bg-white dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700/60 text-center shadow-xs">
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  No enrolled courses yet. Check the catalog below to activate your first certified masterclass.
+              <div className="w-full p-8 rounded-2xl bg-white dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700/60 text-center shadow-xs flex flex-col items-center justify-center gap-3">
+                <GraduationCap className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
+                  {isMarathi
+                    ? "अजून कोणताही कोर्स ऍक्टिव्ह नाही. खालील कॅटलॉगमधून तुमचा पहिला मास्टरक्लास निवडा."
+                    : "No active course enrollments yet. Check the certified catalog below to activate your first masterclass."}
                 </p>
+                <Link
+                  href="/courses"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs"
+                >
+                  {isMarathi ? "सर्व कोर्सेस पहा →" : "Explore All Courses →"}
+                </Link>
               </div>
             )}
           </div>

@@ -22,11 +22,17 @@ import {
 export async function resolveCourse(courseId: string) {
   try {
     const supabase = createAdminClient();
-    const { data: dbCourse } = await supabase
-      .from("courses")
-      .select("*")
-      .or(`id.eq.${courseId},code.ilike.${courseId}`)
-      .maybeSingle();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId);
+    const mappedUuid = COURSE_ID_MAP[courseId.toLowerCase()];
+    let query = supabase.from("courses").select("*");
+    if (isUuid) {
+      query = query.or(`id.eq.${courseId},code.ilike.${courseId}`);
+    } else if (mappedUuid) {
+      query = query.or(`id.eq.${mappedUuid},code.ilike.${courseId}`);
+    } else {
+      query = query.or(`code.ilike.${courseId},code.eq.${courseId.toUpperCase()}`);
+    }
+    const { data: dbCourse } = await query.maybeSingle();
 
     if (dbCourse) {
       return {

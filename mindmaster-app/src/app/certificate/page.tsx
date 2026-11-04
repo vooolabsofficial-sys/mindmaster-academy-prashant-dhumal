@@ -76,7 +76,7 @@ export default function StudentCertificatesPage() {
         baseCourses.forEach((c) => {
           const lessons = storedVideos.filter((v) => v.courseId === c.id || v.courseId === c.code);
           if (lessons.length === 0) {
-            progressMap[c.id] = 100; // If no lessons configured yet, mark completed
+            progressMap[c.id] = 0; // A course with 0 configured lessons cannot be claimed
             return;
           }
 
@@ -104,9 +104,19 @@ export default function StudentCertificatesPage() {
 
   // Claim a certificate for a 100% completed course
   const handleClaim = async (course: StaffCourse) => {
+    const phoneClean =
+      studentPhone.replace(/\D/g, "") ||
+      (typeof window !== "undefined"
+        ? (localStorage.getItem("mindmaster_verified_phone") || "").replace(/\D/g, "")
+        : "");
+
+    if (!phoneClean) {
+      toast.error("Please login or verify your mobile number in Profile before claiming your certificate.");
+      return;
+    }
+
     setIsClaiming(course.id);
     try {
-      const phoneClean = studentPhone.replace(/\D/g, "") || "9822100001";
       const res = await fetch("/api/certificates/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

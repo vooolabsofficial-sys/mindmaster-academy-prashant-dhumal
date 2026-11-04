@@ -30,6 +30,7 @@ import { normalizePhone } from "@/lib/phoneUtils";
 import { getStudentActiveEnrollments } from "@/app/actions/studentAccess";
 import { formatIST, isExpiredIST, getRemainingTimeIST } from "@/lib/istTime";
 import { useLanguage } from "@/lib/LanguageContext";
+import { toast } from "sonner";
 
 export default function MyLearningPage() {
   const { currentLanguage } = useLanguage();
@@ -45,15 +46,26 @@ export default function MyLearningPage() {
   const [isClaimingCert, setIsClaimingCert] = useState<string | null>(null);
 
   const handleClaimCertificate = async (courseTitle: string, courseId: string) => {
+    const verifiedPhone =
+      studentPhone ||
+      (typeof window !== "undefined"
+        ? localStorage.getItem("mindmaster_verified_phone") || ""
+        : "");
+
+    if (!verifiedPhone) {
+      toast.error("Please login or verify your mobile number in Profile before claiming your certificate.");
+      return;
+    }
+
     try {
       setIsClaimingCert(courseId);
       const res = await fetch("/api/certificates/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          studentId: studentPhone ? `std-${studentPhone.replace(/\D/g, "").slice(-6)}` : "std-learner",
+          studentId: `std-${verifiedPhone.replace(/\D/g, "").slice(-6)}`,
           studentName: studentName || "Verified Learner",
-          studentPhone: studentPhone || "9876500001",
+          studentPhone: verifiedPhone,
           courseId,
         }),
       });

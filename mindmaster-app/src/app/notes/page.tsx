@@ -25,9 +25,9 @@ import {
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
 import PiracyShield from "@/components/common/PiracyShield";
-import { MOCK_COURSES, MOCK_LESSONS, MOCK_BOOKS } from "@/lib/mockData";
 import { Note, Book, Course, calculateAllowedWords } from "@/lib/types";
-import { fetchDbCourses } from "@/lib/staffStore";
+import { fetchDbCourses, fetchDbBooks, getStaffBooks } from "@/lib/staffStore";
+import { getStoredVideos } from "@/lib/playlistStore";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { saveNoteOffline, getNotesOffline, deleteNoteOffline } from "@/lib/offlineStorage";
@@ -35,19 +35,20 @@ import { saveNoteOffline, getNotesOffline, deleteNoteOffline } from "@/lib/offli
 export default function NotesWorkspacePage() {
   const [activeTab, setActiveTab] = useState<"notes" | "books">("notes");
   const [notesList, setNotesList] = useState<Note[]>([]);
-  const [booksList, setBooksList] = useState<Book[]>(MOCK_BOOKS);
+  const [booksList, setBooksList] = useState<Book[]>([]);
   const [readingBook, setReadingBook] = useState<Book | null>(null);
   const [pdfZoom, setPdfZoom] = useState<number>(100);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCourseFilter, setSelectedCourseFilter] = useState("all");
   const [coursesList, setCoursesList] = useState<Course[]>([]);
+  const [lessonsList, setLessonsList] = useState<any[]>([]);
 
   // Editor State
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteTitle, setNoteTitle] = useState<string>("");
   const [noteBody, setNoteBody] = useState<string>("");
   const [selectedCourseCode, setSelectedCourseCode] = useState<string>("GENERAL");
-  const [selectedLessonId, setSelectedLessonId] = useState<string>("les-101");
+  const [selectedLessonId, setSelectedLessonId] = useState<string>("general");
   const [timestampSec, setTimestampSec] = useState<number>(0);
 
   // Autosave status
@@ -58,35 +59,87 @@ export default function NotesWorkspacePage() {
   const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialMount = useRef(true);
 
-  // Load live DB courses
+  // Load live DB courses, books, and lessons
   useEffect(() => {
-    async function loadCourses() {
+    async function loadData() {
       try {
-        const live = await fetchDbCourses();
-        setCoursesList(live || []);
-        if (live && live.length > 0) {
-          setSelectedCourseCode(live[0].code || "GENERAL");
+        const [liveCourses, liveBooks] = await Promise.all([
+          fetchDbCourses(),
+          fetchDbBooks(),
+        ]);
+        setCoursesList(liveCourses || []);
+        if (liveCourses && liveCourses.length > 0) {
+          setSelectedCourseCode(liveCourses[0].code || "GENERAL");
         } else {
           setSelectedCourseCode("GENERAL");
         }
+
+        if (liveBooks && liveBooks.length > 0) {
+          setBooksList(liveBooks);
+        } else {
+          setBooksList(getStaffBooks());
+        }
+
+        // Fetch lessons from Supabase or playlistStore
+        try {
+          const supabase = createClient();
+          const { data: dbLessons } = await supabase
+            .from("lessons")
+            .select("id, title, duration_sec, course_id, position")
+            .order("position", { ascending: true });
+
+          if (dbLessons && dbLessons.length > 0) {
+            setLessonsList(
+              dbLessons.map((l: any) => ({
+                id: l.id,
+                title: l.title,
+                durationSec: l.duration_sec || 900,
+                courseId: l.course_id,
+              }))
+            );
+          } else {
+            const localVideos = getStoredVideos();
+            setLessonsList(
+              localVideos.map((v) => ({
+                id: v.lessonId || v.id,
+                title: v.lessonTitle,
+                durationSec: v.durationSec || 900,
+                courseId: v.courseId,
+              }))
+            );
+          }
+        } catch {
+          const localVideos = getStoredVideos();
+          setLessonsList(
+            localVideos.map((v) => ({
+              id: v.lessonId || v.id,
+              title: v.lessonTitle,
+              durationSec: v.durationSec || 900,
+              courseId: v.courseId,
+            }))
+          );
+        }
       } catch {
         setCoursesList([]);
+        setBooksList(getStaffBooks());
       }
     }
-    loadCourses();
+    loadData();
   }, []);
 
   // Available lessons based on selected course
-  const currentLessons = MOCK_LESSONS.filter(
-    (l) => {
-      const course = coursesList.find((c) => c.code === selectedCourseCode);
-      return course ? l.courseId === course.id : true;
-    }
-  );
+  const currentLessons = lessonsList.filter((l) => {
+    const course = coursesList.find((c) => c.code === selectedCourseCode || c.id === selectedCourseCode);
+    return course ? (l.courseId === course.id || l.courseId === course.code) : true;
+  });
 
   // Current lesson selected in editor
-  const activeLesson = MOCK_LESSONS.find((l) => l.id === selectedLessonId) || currentLessons[0] || MOCK_LESSONS[0];
-  const maxWordsAllowed = calculateAllowedWords(activeLesson?.durationSec || 720);
+  const defaultLesson = { id: "general", title: "General Session", durationSec: 1200 };
+  const activeLesson =
+    lessonsList.find((l) => l.id === selectedLessonId) ||
+    currentLessons[0] ||
+    defaultLesson;
+  const maxWordsAllowed = calculateAllowedWords(activeLesson?.durationSec || 1200);
 
   // Calculate live word count of editor body
   const currentWordCount = noteBody.trim() ? noteBody.trim().split(/\s+/).length : 0;
@@ -231,7 +284,7 @@ export default function NotesWorkspacePage() {
       const wordsCount = words.length;
 
       const courseObj = coursesList.find((c) => c.code === selectedCourseCode);
-      const lessonObj = MOCK_LESSONS.find((l) => l.id === selectedLessonId);
+      const lessonObj = lessonsList.find((l: any) => l.id === selectedLessonId);
 
       const updatedNoteItem: Note = {
         id: targetId,
@@ -569,7 +622,7 @@ export default function NotesWorkspacePage() {
                     onChange={(e) => {
                       setSelectedCourseCode(e.target.value);
                       const course = coursesList.find((c) => c.code === e.target.value);
-                      const firstLes = MOCK_LESSONS.find((l) => course && l.courseId === course.id);
+                      const firstLes = lessonsList.find((l: any) => course && (l.courseId === course.id || l.courseId === course.code));
                       if (firstLes) setSelectedLessonId(firstLes.id);
                     }}
                     className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-500"

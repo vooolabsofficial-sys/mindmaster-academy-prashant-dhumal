@@ -63,46 +63,109 @@ function WatchLessonContent({
   );
   const staffCourses = typeof window !== "undefined" ? getStaffCourses() : [];
 
-  const lesson: Lesson | null = dynamicMatch
-    ? {
-        id: dynamicMatch.lessonId || dynamicMatch.id,
-        courseId: dynamicMatch.courseId,
-        title: dynamicMatch.lessonTitle,
-        durationSec: dynamicMatch.durationSec,
-        isFree: dynamicMatch.isFree,
-        videoType: dynamicMatch.videoType,
-        videoId: dynamicMatch.videoId,
-        position: dynamicMatch.position || 1,
-        description: dynamicMatch.description,
-        partNumber: dynamicMatch.partNumber,
-        totalParts: dynamicMatch.totalParts,
-        seriesTitle: dynamicMatch.seriesTitle,
-        likesCount: dynamicMatch.likesCount,
+  const [lesson, setLesson] = useState<Lesson | null>(() => {
+    if (!dynamicMatch) return null;
+    return {
+      id: dynamicMatch.lessonId || dynamicMatch.id,
+      courseId: dynamicMatch.courseId,
+      title: dynamicMatch.lessonTitle,
+      durationSec: dynamicMatch.durationSec,
+      isFree: dynamicMatch.isFree,
+      videoType: dynamicMatch.videoType,
+      videoId: dynamicMatch.videoId,
+      position: dynamicMatch.position || 1,
+      description: dynamicMatch.description,
+      partNumber: dynamicMatch.partNumber,
+      totalParts: dynamicMatch.totalParts,
+      seriesTitle: dynamicMatch.seriesTitle,
+      likesCount: dynamicMatch.likesCount,
+    };
+  });
+
+  const [course, setCourse] = useState<any>(() => {
+    if (!dynamicMatch) return null;
+    return staffCourses.find((c) => c.id === dynamicMatch.courseId || c.code === dynamicMatch.courseId) || null;
+  });
+
+  const [allCourseLessons, setAllCourseLessons] = useState<Lesson[]>(() => {
+    if (!dynamicMatch) return [];
+    const matchedCourse = staffCourses.find((c) => c.id === dynamicMatch.courseId || c.code === dynamicMatch.courseId);
+    if (!matchedCourse) return [];
+    return storedVideos
+      .filter((v) => v.courseId === matchedCourse.id)
+      .map((v) => ({
+        id: v.lessonId || v.id,
+        courseId: v.courseId,
+        title: v.lessonTitle,
+        durationSec: v.durationSec,
+        isFree: v.isFree,
+        videoType: v.videoType,
+        videoId: v.videoId,
+        position: v.position || 1,
+        description: v.description,
+        partNumber: v.partNumber,
+        totalParts: v.totalParts,
+        seriesTitle: v.seriesTitle,
+      }));
+  });
+
+  useEffect(() => {
+    async function fetchDbLesson() {
+      if (lesson) return;
+      try {
+        const supabase = createClient();
+        const rawLessonId = resolvedParams.lessonId;
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawLessonId);
+        let q = supabase.from("lessons").select("*, courses(*)");
+        if (isUuid) {
+          q = q.or(`id.eq.${rawLessonId},video_id.eq.${rawLessonId}`);
+        } else {
+          q = q.eq("video_id", rawLessonId);
+        }
+        const { data: lData } = await q.maybeSingle();
+        if (lData) {
+          const mapped: Lesson = {
+            id: lData.id,
+            courseId: lData.course_id,
+            title: lData.title,
+            durationSec: lData.duration_sec || 900,
+            isFree: lData.is_free,
+            videoType: lData.video_type || "youtube",
+            videoId: lData.video_id,
+            position: lData.position || 1,
+            description: lData.description,
+          };
+          setLesson(mapped);
+          if (lData.courses) {
+            setCourse(lData.courses);
+          }
+          const { data: siblings } = await supabase
+            .from("lessons")
+            .select("*")
+            .eq("course_id", lData.course_id)
+            .order("position", { ascending: true });
+          if (siblings && siblings.length > 0) {
+            setAllCourseLessons(
+              siblings.map((s: any) => ({
+                id: s.id,
+                courseId: s.course_id,
+                title: s.title,
+                durationSec: s.duration_sec || 900,
+                isFree: s.is_free,
+                videoType: s.video_type || "youtube",
+                videoId: s.video_id,
+                position: s.position || 1,
+                description: s.description,
+              }))
+            );
+          }
+        }
+      } catch (err) {
+        console.warn("Direct Supabase lesson fetch fallback error:", err);
       }
-    : null;
-
-  const course = lesson
-    ? staffCourses.find((c) => c.id === lesson.courseId || c.code === lesson.courseId) || null
-    : null;
-
-  const allCourseLessons: Lesson[] = dynamicMatch && course
-    ? storedVideos
-        .filter((v) => v.courseId === course.id)
-        .map((v) => ({
-          id: v.lessonId || v.id,
-          courseId: v.courseId,
-          title: v.lessonTitle,
-          durationSec: v.durationSec,
-          isFree: v.isFree,
-          videoType: v.videoType,
-          videoId: v.videoId,
-          position: v.position || 1,
-          description: v.description,
-          partNumber: v.partNumber,
-          totalParts: v.totalParts,
-          seriesTitle: v.seriesTitle,
-        }))
-    : [];
+    }
+    fetchDbLesson();
+  }, [resolvedParams.lessonId, lesson]);
 
   // Access Gating State
   const [hasAccess, setHasAccess] = useState<boolean>(lesson?.isFree ?? false);

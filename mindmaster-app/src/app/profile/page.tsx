@@ -70,13 +70,13 @@ export default function ProfileSettingsPage() {
   const [activeTab, setActiveTab] = useState<"profile" | "preferences" | "security" | "storage" | "tickets" | "legal">("profile");
 
   // Profile data
-  const [fullName, setFullName] = useState("Verified Student");
-  const [phone, setPhone] = useState("+91 84593 44077");
+  const [fullName, setFullName] = useState("Student");
+  const [phone, setPhone] = useState("");
   const [standard, setStandard] = useState("10th Standard / SSC");
   const [targetExam, setTargetExam] = useState("Vedic Maths & Speed Memory");
-  const [school, setSchool] = useState("Maharashtra State Board");
-  const [village, setVillage] = useState("Powai Naka");
-  const [taluka, setTaluka] = useState("Satara");
+  const [school, setSchool] = useState("");
+  const [village, setVillage] = useState("");
+  const [taluka, setTaluka] = useState("");
   const [district, setDistrict] = useState("Satara");
   const [isEditing, setIsEditing] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -88,7 +88,7 @@ export default function ProfileSettingsPage() {
 
   // Security & PIN state
   const [newPassword, setNewPassword] = useState("");
-  const [recoveryPin, setRecoveryPin] = useState("1234");
+  const [recoveryPin, setRecoveryPin] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
   const [isResettingDevice, setIsResettingDevice] = useState(false);
@@ -133,9 +133,13 @@ export default function ProfileSettingsPage() {
     try {
       await fetchDbConversations();
       const studentPhone = phone || (typeof window !== "undefined" ? localStorage.getItem("mindmaster_verified_phone") : "") || "";
-      const studentId = studentPhone ? `std-${studentPhone.replace(/\D/g, "").slice(-10)}` : "std-learner";
-      const studentTickets = getConversationsForStudent(studentPhone || studentId);
-      setTickets(studentTickets);
+      if (studentPhone) {
+        const studentId = `std-${studentPhone.replace(/\D/g, "").slice(-10)}`;
+        const studentTickets = getConversationsForStudent(studentPhone || studentId);
+        setTickets(studentTickets);
+      } else {
+        setTickets([]);
+      }
     } catch {}
   };
 

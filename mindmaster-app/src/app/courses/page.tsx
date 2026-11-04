@@ -126,7 +126,7 @@ export default function CoursesCatalogPage() {
     const cat: CatalogCourse["category"] =
       sc.category === "vedic"
         ? "Vedic Maths"
-        : sc.category === "trainer" || sc.code === "MM-02" || sc.code === "MM-06"
+        : sc.category === "trainer" || sc.code === "MM-06"
         ? "Teacher Certification"
         : sc.category === "calendar"
         ? "Calendar Technique"
