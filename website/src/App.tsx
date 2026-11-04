@@ -50,6 +50,7 @@ export const App: React.FC = () => {
             <Route path="/results" element={<Results />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/demo-hub" element={<DemoHub />} />
+            <Route path="/demo" element={<DemoHub />} />
             <Route path="/design-system" element={<DesignSystem />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -58,6 +59,7 @@ export const App: React.FC = () => {
             <Route path="/refund" element={<RefundPolicy />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/brain-games" element={<BrainGames />} />
+            <Route path="/brain-gym" element={<BrainGames />} />
             <Route path="/games" element={<BrainGames />} />
             <Route path="/play" element={<BrainGames />} />
             <Route path="/verify-certificate" element={<VerifyCertificate />} />
