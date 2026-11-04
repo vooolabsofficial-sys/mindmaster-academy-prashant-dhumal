@@ -121,15 +121,17 @@ function AdminLoginContent() {
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">
               Executive Sign In
             </h2>
-            <button
-              type="button"
-              onClick={handleFillDemoAdmin}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0052FF] dark:text-blue-400 hover:underline cursor-pointer bg-blue-50 dark:bg-blue-950/50 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-900/40"
-              title="Click to auto-fill MMA-000 Master credentials"
-            >
-              <Sparkles className="w-3 h-3" />
-              <span>Fill MMA-000</span>
-            </button>
+            {process.env.NODE_ENV !== "production" && (
+              <button
+                type="button"
+                onClick={handleFillDemoAdmin}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0052FF] dark:text-blue-400 hover:underline cursor-pointer bg-blue-50 dark:bg-blue-950/50 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-900/40"
+                title="Click to auto-fill MMA-000 Master credentials (Dev only)"
+              >
+                <Sparkles className="w-3 h-3" />
+                <span>Fill MMA-000</span>
+              </button>
+            )}
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Reserved for Founder &amp; Senior Academic Directors
