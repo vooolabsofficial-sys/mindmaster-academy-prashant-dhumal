@@ -83,6 +83,38 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/admin/:match*",
+      "destination": "https://app.mindmasteredu.in/admin/:match*",
+      "permanent": false
+    },
+    {
+      "source": "/admin",
+      "destination": "https://app.mindmasteredu.in/admin/login",
+      "permanent": false
+    },
+    {
+      "source": "/staff/:match*",
+      "destination": "https://app.mindmasteredu.in/staff/:match*",
+      "permanent": false
+    },
+    {
+      "source": "/staff",
+      "destination": "https://app.mindmasteredu.in/staff/login",
+      "permanent": false
+    },
+    {
+      "source": "/sub/:match*",
+      "destination": "https://app.mindmasteredu.in/sub/:match*",
+      "permanent": false
+    },
+    {
+      "source": "/sub",
+      "destination": "https://app.mindmasteredu.in/sub/login",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

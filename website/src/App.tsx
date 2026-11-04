@@ -27,6 +27,61 @@ const PageLoader: React.FC = () => (
   </div>
 );
 
+// Seamless redirects to app.mindmasteredu.in portals
+const AdminPortalRedirect: React.FC = () => {
+  useEffect(() => {
+    window.location.replace('https://app.mindmasteredu.in/admin/login');
+  }, []);
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
+      <div className="w-10 h-10 border-3 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mb-3" />
+      <span className="text-sm font-semibold text-slate-800">Redirecting to Admin Portal...</span>
+      <a
+        href="https://app.mindmasteredu.in/admin/login"
+        className="mt-3 text-xs text-blue-600 underline font-medium"
+      >
+        Click here if not redirected automatically
+      </a>
+    </div>
+  );
+};
+
+const StaffPortalRedirect: React.FC = () => {
+  useEffect(() => {
+    window.location.replace('https://app.mindmasteredu.in/staff/login');
+  }, []);
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
+      <div className="w-10 h-10 border-3 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mb-3" />
+      <span className="text-sm font-semibold text-slate-800">Redirecting to Staff Portal...</span>
+      <a
+        href="https://app.mindmasteredu.in/staff/login"
+        className="mt-3 text-xs text-blue-600 underline font-medium"
+      >
+        Click here if not redirected automatically
+      </a>
+    </div>
+  );
+};
+
+const StudentPortalRedirect: React.FC = () => {
+  useEffect(() => {
+    window.location.replace('https://app.mindmasteredu.in/login');
+  }, []);
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
+      <div className="w-10 h-10 border-3 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mb-3" />
+      <span className="text-sm font-semibold text-slate-800">Redirecting to Student Portal...</span>
+      <a
+        href="https://app.mindmasteredu.in/login"
+        className="mt-3 text-xs text-blue-600 underline font-medium"
+      >
+        Click here if not redirected automatically
+      </a>
+    </div>
+  );
+};
+
 // Scroll to top on route change
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -64,6 +119,20 @@ export const App: React.FC = () => {
             <Route path="/play" element={<BrainGames />} />
             <Route path="/verify-certificate" element={<VerifyCertificate />} />
             <Route path="/verify" element={<VerifyCertificate />} />
+
+            {/* Portal Redirects */}
+            <Route path="/admin" element={<AdminPortalRedirect />} />
+            <Route path="/admin/*" element={<AdminPortalRedirect />} />
+            <Route path="/staff" element={<StaffPortalRedirect />} />
+            <Route path="/staff/*" element={<StaffPortalRedirect />} />
+            <Route path="/sub" element={<StaffPortalRedirect />} />
+            <Route path="/sub/*" element={<StaffPortalRedirect />} />
+            <Route path="/student" element={<StudentPortalRedirect />} />
+            <Route path="/student/*" element={<StudentPortalRedirect />} />
+            <Route path="/login" element={<StudentPortalRedirect />} />
+
+            {/* Fallback to Home for unknown URLs */}
+            <Route path="*" element={<Home />} />
           </Routes>
         </Suspense>
       </div>

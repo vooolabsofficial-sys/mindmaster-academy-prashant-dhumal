@@ -217,7 +217,7 @@ export default function AdminReportsPage() {
         records.push({
           orderId: `MMA-REV-AGG-${idx + 1}`,
           studentName: "Cohort Student Roster",
-          phone: "+91 9999999999",
+          phone: "N/A (Aggregated)",
           courseTitle: `[${c.courseCode}] ${c.courseTitle}`,
           amount: c.revenueRupees,
           paymentMode: "Razorpay / Online",
