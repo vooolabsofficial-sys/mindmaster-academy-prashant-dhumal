@@ -472,6 +472,43 @@ HTML_CONTENT = """<!DOCTYPE html>
 
   <h2 class="chapter-title"><span class="badge">प्रकरण २</span> प्रथमच लॉगिन, तात्पुरता पासवर्ड व स्वतःचा पासवर्ड सेट करणे</h2>
 
+  <div class="alert-box alert-success" style="border-left: 5px solid #16a34a; background: #f0fdf4; padding: 14px; margin-bottom: 12px;">
+    <strong style="font-size: 13.5px; color: #166534;">🔐 सुरुवातीचे अधिकृत सब-ॲडमिन क्रेडेंशियल्स (Initial Staff Login Info):</strong>
+    <p style="margin: 4px 0 8px 0; font-size: 12px; color: #334155;">
+      शाखा समन्वयक किंवा सपोर्ट स्टाफने पहिल्यांदा खालील आयडी व पासवर्डने लॉगिन करावे:
+    </p>
+    <table class="data-table" style="margin: 0; background: #ffffff;">
+      <thead>
+        <tr>
+          <th style="width: 30%;">कर्मचारी / रोल</th>
+          <th style="width: 25%;">Staff ID / फोन</th>
+          <th style="width: 25%;">सुरुवातीचा पासवर्ड</th>
+          <th style="width: 20%;">लॉगिन लिंक</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>स्टाफ समन्वयक (Coordinator)</strong></td>
+          <td><code>MMA-001</code><br><span style="font-size: 10px; color: #64748b;">(किंवा 9876543211)</span></td>
+          <td><strong style="color: #0f172a; font-family: monospace;">Staff@2026</strong></td>
+          <td><code>/staff/login</code></td>
+        </tr>
+        <tr>
+          <td><strong>सपोर्ट एक्झिक्युटिव्ह (Sneha Patil)</strong></td>
+          <td><code>MMA-002</code><br><span style="font-size: 10px; color: #64748b;">(किंवा 9765098765)</span></td>
+          <td><strong style="color: #0f172a; font-family: monospace;">Staff@2026</strong></td>
+          <td><code>/staff/login</code></td>
+        </tr>
+        <tr>
+          <td><strong>मुख्य ॲडमिन संदर्भ (Owner)</strong></td>
+          <td><code>MMA-000</code></td>
+          <td><strong style="color: #0f172a; font-family: monospace;">Owner@2026</strong></td>
+          <td><code>/admin/login</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <div class="info-card" style="background: #f0fdf4; border-left: 4px solid #16a34a;">
     <strong style="color: #166534; font-size: 13.5px;">🔐 नवीन सब-ॲडमिनचा पहिला लॉगिन व पासवर्ड बदलण्याचा अचूक प्रवास:</strong>
     <ol class="steps-list" style="margin-top: 8px;">

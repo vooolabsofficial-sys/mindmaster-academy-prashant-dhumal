@@ -441,6 +441,49 @@ HTML_CONTENT = """<!DOCTYPE html>
     <strong>स्थानिक डेव्हलपमेंट पत्ता:</strong> <code>http://localhost:3000/admin/login</code>
   </div>
 
+  <div class="alert-box alert-success" style="border-left: 5px solid #16a34a; background: #f0fdf4; padding: 14px; margin-bottom: 14px;">
+    <strong style="font-size: 13.5px; color: #166534;">🔐 सुरुवातीचे अधिकृत सिस्टीम क्रेडेंशियल्स (Default Login Credentials):</strong>
+    <p style="margin: 4px 0 8px 0; font-size: 12px; color: #334155;">
+      सिस्टीममध्ये पहिल्यांदा प्रवेश करताना खालील आयडी व पासवर्ड वापरावेत. लॉगिन केल्यानंतर <code>/staff/change-password</code> वर जाऊन स्वतःचा गोपनीय पासवर्ड सेट करावा:
+    </p>
+    <table class="data-table" style="margin: 0; background: #ffffff;">
+      <thead>
+        <tr>
+          <th style="width: 28%;">भूमिका / रोल</th>
+          <th style="width: 24%;">Staff ID / फोन</th>
+          <th style="width: 24%;">सुरुवातीचा पासवर्ड</th>
+          <th style="width: 24%;">लॉगिन वेब लिंक</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>मुख्य ॲडमिन (प्रशांत सर - Owner)</strong></td>
+          <td><code>MMA-000</code><br><span style="font-size: 10px; color: #64748b;">(किंवा 8459344077)</span></td>
+          <td><strong style="color: #0f172a; font-family: monospace;">Owner@2026</strong></td>
+          <td><code>/admin/login</code></td>
+        </tr>
+        <tr>
+          <td><strong>तांत्रिक को-ॲडमिन (Technical)</strong></td>
+          <td><code>MMA-999</code></td>
+          <td><strong style="color: #0f172a; font-family: monospace;">Admin@2026</strong></td>
+          <td><code>/admin/login</code></td>
+        </tr>
+        <tr>
+          <td><strong>सब-ॲडमिन १ (Coordinator)</strong></td>
+          <td><code>MMA-001</code><br><span style="font-size: 10px; color: #64748b;">(किंवा 9876543211)</span></td>
+          <td><strong style="color: #0f172a; font-family: monospace;">Staff@2026</strong></td>
+          <td><code>/staff/login</code> किंवा <code>/sub/login</code></td>
+        </tr>
+        <tr>
+          <td><strong>सब-ॲडमिन २ (Support)</strong></td>
+          <td><code>MMA-002</code><br><span style="font-size: 10px; color: #64748b;">(किंवा 9765098765)</span></td>
+          <td><strong style="color: #0f172a; font-family: monospace;">Staff@2026</strong></td>
+          <td><code>/staff/login</code> किंवा <code>/sub/login</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <h3 class="section-title">१.१ लॉगिन करण्याची टप्प्याटप्प्याने पद्धत:</h3>
   <ol class="steps-list">
     <li>कोणत्याही ब्राउझरमध्ये (Google Chrome, Microsoft Edge किंवा Safari) <code>https://app.mindmasteredu.in/admin/login</code> उघडा.</li>
