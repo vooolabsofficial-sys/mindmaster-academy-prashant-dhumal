@@ -182,6 +182,16 @@ export const Footer: React.FC = () => {
                   Refund Policy
                 </Link>
               </li>
+              <li>
+                <a
+                  href={getAppUrl('/admin/login')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#0052FF] transition-colors block py-0.5 text-xs text-slate-500 font-medium"
+                >
+                  Admin &amp; Staff Portal
+                </a>
+              </li>
             </ul>
           </div>
 

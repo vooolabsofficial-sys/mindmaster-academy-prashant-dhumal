@@ -386,13 +386,13 @@ HTML_CONTENT = """<!DOCTYPE html>
       </tr>
       <tr>
         <td><strong>प्रकरण ९</strong></td>
-        <td><strong>सब-ॲडमिन स्टाफ नियंत्रण</strong> — नवीन सब-ॲडमिन, ७ अधिकार, सस्पेंड/डिलीट, Freeze All व कॅश हिशोब</td>
-        <td><code>/admin/sub-admins</code></td>
+        <td><strong>सब-ॲडमिन स्टाफ नेमणूक व नियंत्रण</strong> — नवीन सब-ॲडमिन, ७ अधिकार, प्रथम लॉगिन व पासवर्ड सेट, सस्पेंड/डिलीट, Freeze All</td>
+        <td><code>/admin/sub-admins, /staff/login</code></td>
       </tr>
       <tr>
         <td><strong>प्रकरण १०</strong></td>
-        <td><strong>सर्व बाजूंच्या तांत्रिक शक्यता (Edge Cases)</strong> — नंबर बदल, पेमेंट अडकणे, कॉम्बो कोर्सेस</td>
-        <td>Emergency Operations</td>
+        <td><strong>सर्व तांत्रिक शक्यता व विद्यार्थ्याला कोर्स दिल्यानंतरचे प्रसंग</strong> — सर्व १२ प्रत्यक्ष प्रसंग व अचूक ॲडमिन निवारण तक्ता</td>
+        <td>Emergency &amp; Troubleshooting</td>
       </tr>
       <tr>
         <td><strong>प्रकरण ११</strong></td>
@@ -720,10 +720,10 @@ HTML_CONTENT = """<!DOCTYPE html>
 
   <div class="page-break"></div>
 
-  <!-- ==================== प्रकरण ९ व १० ==================== -->
+  <!-- ==================== प्रकरण ९ ==================== -->
   <div class="page-header">
     <span class="academy">माइंडमास्टर अकॅडमी</span>
-    <span>प्रकरण ९ व १०: सब-ॲडमिन नियंत्रण व सर्व तांत्रिक शक्यता</span>
+    <span>प्रकरण ९: सब-ॲडमिन स्टाफ नेमणूक, प्रथम लॉगिन व नियंत्रण</span>
   </div>
 
   <h2 class="chapter-title"><span class="badge">प्रकरण ९</span> सब-ॲडमिन स्टाफ नेमणूक, अधिकार व नियंत्रण (`/admin/sub-admins`)</h2>
@@ -747,7 +747,21 @@ HTML_CONTENT = """<!DOCTYPE html>
     <li><strong>"Create Staff Account"</strong> दाबा आणि <strong>"Copy to WhatsApp"</strong> दाबून कर्मचाऱ्याला क्रेडेंशियल्स पाठवा.</li>
   </ol>
 
-  <h3 class="section-title">९.२ सब-ॲडमिनला कसे काढावे किंवा बंद करावे? (Remove / Deactivate):</h3>
+  <h3 class="section-title">९.२ नवीन सब-ॲडमिनने प्रथमच लॉगिन कसे करावे व स्वतःचा पासवर्ड कसा सेट करावा? (First Login Workflow):</h3>
+  <div class="info-card" style="background: #f0fdf4; border-left-color: #16a34a;">
+    <strong style="color: #166534; font-size: 13.5px;">🔐 नवीन सब-ॲडमिनचा पहिला लॉगिन व पासवर्ड बदलण्याचा अचूक प्रवास:</strong>
+    <ol class="steps-list" style="margin-top: 8px;">
+      <li><strong>क्रेडेंशियल्स मिळणे:</strong> मुख्य ॲडमिनकडून कर्मचाऱ्याला व्हॉट्सॲपवर त्याचा <strong>Staff ID</strong> (उदा. <code>MMA-002</code>) आणि <strong>तात्पुरता पासवर्ड</strong> (उदा. <code>StaffTemp#2026</code>) मिळतो.</li>
+      <li><strong>लॉगिन स्क्रीनवर जाणे:</strong> कर्मचाऱ्याने मोबाईल किंवा लॅपटॉपवर <code>https://app.mindmasteredu.in/staff/login</code> (किंवा <code>mindmasteredu.in/staff</code>) उघडावे.</li>
+      <li><strong>तात्पुरता लॉगिन:</strong> आपला Staff ID व मिळालेला तात्पुरता पासवर्ड टाकून <strong>"Sign In"</strong> दाबावे.</li>
+      <li><strong>अनिवार्य पासवर्ड रिसेट स्क्रीन:</strong> सिस्टीम तात्काळ ओळखते की हा पहिला लॉगिन आहे (<code>must_change_password: true</code>) आणि कर्मचाऱ्याला थेट <code>/staff/change-password</code> पानावर पाठवते. जुन्या पासवर्डने इतर कोणतेही पान उघडता येत नाही!</li>
+      <li><strong>नवीन पासवर्डचे नियम:</strong> कर्मचाऱ्याने सध्याचा तात्पुरता पासवर्ड टाकावा, त्यानंतर आपला नवीन स्वतःचा गोपनीय पासवर्ड टाकावा (किमान ८ अक्षरे, १ अंक आणि १ विशेष चिन्ह जसे <code>@, #, $</code>).</li>
+      <li><strong>"Save &amp; Activate Staff Account"</strong> दाबताच पासवर्ड सिस्टीममध्ये एनक्रिप्ट होऊन कायमचा सेव्ह होतो आणि सब-ॲडमिनचा डॅशबोर्ड उघडतो.</li>
+      <li><strong>दैनंदिन लॉगिन:</strong> दुसऱ्या दिवसापासून कर्मचाऱ्याने <code>/staff/login</code> वर नेहमी स्वतःच्या या नवीन पासवर्डने लॉगिन करावे. जर त्याने त्याच्या अधिकाराबाहेरील पानावर जाण्याचा प्रयत्न केला, तर सिस्टीम <strong>"403 Forbidden - Access Denied"</strong> चा स्क्रीन दाखवून सुरक्षित ठेवते.</li>
+    </ol>
+  </div>
+
+  <h3 class="section-title">९.३ सब-ॲडमिनला कसे काढावे किंवा बंद करावे? (Remove / Deactivate):</h3>
   <ul>
     <li><strong>पद्धत १: तात्पुरते सस्पेंड करणे (Suspend):</strong> कर्मचाऱ्याच्या नावापुढील पिवळे <strong>"Suspend"</strong> बटण दाबा. त्याचा ॲक्सेस १ सेकंदात ब्लॉक होईल. पुन्हा कामावर आल्यावर "Activate" करता येईल.</li>
     <li><strong>पद्धत २: कायमस्वरूपी काढून टाकणे (Permanent Delete):</strong> लाल रंगाचे <strong>"Delete"</strong> आयकॉन दाबा आणि कन्फर्म करा. त्याचे सर्व लॉगिन कायमचे नष्ट होईल.</li>
@@ -755,37 +769,88 @@ HTML_CONTENT = """<!DOCTYPE html>
     <li><strong>रोख फी जमा करणे (Cash Settlement):</strong> सब-ॲडमिनने गोळा केलेली रोख रक्कम मुख्य ॲडमिनकडे दिल्यावर <strong>"Mark Cash Settled"</strong> दाबा.</li>
   </ul>
 
-  <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 18px 0;">
+  <div class="page-break"></div>
 
-  <h2 class="chapter-title"><span class="badge">प्रकरण १०</span> सर्व बाजूंच्या तांत्रिक शक्यता व अडचणी (Edge Cases)</h2>
+  <!-- ==================== प्रकरण १० ==================== -->
+  <div class="page-header">
+    <span class="academy">माइंडमास्टर अकॅडमी</span>
+    <span>प्रकरण १०: सर्व तांत्रिक शक्यता व विद्यार्थ्याला कोर्स दिल्यानंतरचे प्रसंग</span>
+  </div>
+
+  <h2 class="chapter-title"><span class="badge">प्रकरण १०</span> सर्व बाजूंच्या तांत्रिक शक्यता व विद्यार्थ्याला कोर्स दिल्यानंतरचे सर्व १२ प्रत्यक्ष प्रसंग (Troubleshooting Matrix)</h2>
+
+  <p style="margin-bottom: 12px; font-size: 12.5px; color: #475569;">
+    अकॅडमी चालवताना विद्यार्थ्याला कोर्स दिल्यानंतर उद्भवू शकणाऱ्या सर्व प्रकारच्या अडचणी, तांत्रिक प्रसंग व ॲडमिन निवारण कृती:
+  </p>
 
   <table class="data-table">
     <thead>
       <tr>
-        <th style="width: 35%;">संभाव्य अडचण / प्रसंग</th>
-        <th style="width: 65%;">ॲडमिनने काय करावे? (निवारण कृती)</th>
+        <th style="width: 5%;">क्र.</th>
+        <th style="width: 32%;">संभाव्य प्रसंग / विद्यार्थ्याची अडचण</th>
+        <th style="width: 63%;">ॲडमिनने काय करावे? (अचूक निवारण कृती)</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><strong>१. विद्यार्थ्याचा मोबाईल नंबर बदलला</strong></td>
-        <td><code>/admin/students</code> वर जाऊन जुन्या नंबरचा कोर्स 'Revoke' करा (कारण: Mobile Changed) आणि <code>/admin/grants</code> वरून नवीन नंबरवर उरलेल्या महिन्यांचा कोर्स देऊन टाका.</td>
+        <td><strong>१</strong></td>
+        <td><strong>कोर्स दिला पण विद्यार्थ्याच्या ॲपमध्ये दिसत नाही</strong></td>
+        <td><strong>मोबाईल नंबर तपासा:</strong> <code>/admin/students</code> मध्ये विद्यार्थ्याचा नंबर तपासा. जर नंबर अगदी बरोबर असेल, तर विद्यार्थ्याला ॲपमधील <em>'My Courses'</em> पानावर वरून खाली ओढून (Pull-to-refresh) किंवा ॲप रीस्टार्ट करण्यास सांगा.</td>
       </tr>
       <tr>
-        <td><strong>२. पैसे खात्यातून कट झाले पण कोर्स चालू झाला नाही</strong></td>
-        <td>विद्यार्थ्याकडून Razorpay Payment ID (उदा. <code>pay_NxYz123</code>) घ्या. <code>/admin/reports</code> मध्ये तपासून <code>/admin/grants</code> मधून त्वरित ॲक्सेस चालू करा.</td>
+        <td><strong>२</strong></td>
+        <td><strong>व्हिडिओ प्ले करताना काळी स्क्रीन किंवा "Video Unavailable"</strong></td>
+        <td><strong>युट्यूब प्रायव्हसी तपासा:</strong> व्हिडिओ युट्यूबवर <strong>Private</strong> राहिला असल्यास हा एरर येतो. युट्यूब स्टुडिओमध्ये जाऊन तो <strong>Unlisted</strong> करा. एका सेकंदात सर्व विद्यार्थ्यांच्या ॲपमध्ये व्हिडिओ सुरू होईल.</td>
       </tr>
       <tr>
-        <td><strong>३. सब-ॲडमिनने गोळा केलेल्या रोख पैशांची चोरी टाळणे</strong></td>
-        <td>सब-ॲडमिनसाठी 'Approval Mode' ON ठेवा आणि दररोज संध्याकाळी <code>/admin/sub-admins</code> मधील Unsettled Cash टॅली करून Settle करा.</td>
+        <td><strong>३</strong></td>
+        <td><strong>१००% कोर्स पूर्ण केला पण प्रमाणपत्र (Certificate) Claim होत नाही</strong></td>
+        <td><strong>शेवटचे सेकंद शिल्लक:</strong> विद्यार्थ्याने एखादा व्हिडिओ शेवटचे २-३ सेकंद शिल्लक असताना बंद केला असल्यास प्रगती ९९% अडकते. त्याला तो व्हिडिओ १ मिनिट पुन्हा प्ले करण्यास सांगा किंवा ॲडमिन <code>/admin/students</code> मधील ड्रॉवरमधून <strong>"Mark 100% Complete"</strong> करू शकतो.</td>
       </tr>
       <tr>
-        <td><strong>४. मुख्य ॲडमिनचा स्वतःचा आयडी चुकून डिलीट होऊ शकतो का?</strong></td>
-        <td><strong>नाही!</strong> सिस्टीमच्या मूळ कोडमध्ये <code>MMA-000 (Root Admin)</code> ला कायमस्वरूपी सुरक्षित (Unsuspendable & Undeletable) ठेवले आहे.</td>
+        <td><strong>४</strong></td>
+        <td><strong>प्रमाणपत्रावर विद्यार्थ्याच्या नावात स्पेलिंगची चूक झाली</strong></td>
+        <td><strong>इन्स्टंट री-जनरेट:</strong> <code>/admin/students</code> वर जाऊन विद्यार्थ्याच्या नावापुढील <strong>'Edit'</strong> दाबा. अचूक नाव टाईप करून सेव्ह करा. जुने प्रमाणपत्र आपोआप रद्द होऊन नवीन अचूक स्पेलिंगचे PDF प्रमाणपत्र त्वरित तयार होते.</td>
       </tr>
       <tr>
-        <td><strong>५. एकाच विद्यार्थ्याला २ किंवा अधिक कोर्सेसचा कॉम्बो देणे</strong></td>
-        <td><code>/admin/grants</code> मध्ये कोर्स निवडताना एकाच वेळी 'Vedic Maths', 'Memory' आणि 'Calendar' अशा सर्व कोर्सेसवर टिक करून १ क्लिकमध्ये कॉम्बो द्या.</td>
+        <td><strong>५</strong></td>
+        <td><strong>विद्यार्थ्याने नवीन मोबाईल घेतला / "Device Lock" एरर</strong></td>
+        <td><strong>१-क्लिक DRM अनलॉक:</strong> अँटी-पायरेसीमुळे जुना फोन लॉक असतो. <code>/admin/students</code> मध्ये विद्यार्थ्याच्या नावापुढील हिरवे <strong>"Reset Device Lock"</strong> बटण दाबा. विद्यार्थी नवीन फोनमध्ये लगेच लॉगिन करू शकेल.</td>
+      </tr>
+      <tr>
+        <td><strong>६</strong></td>
+        <td><strong>एकाच घरात दोन मुले, फोन एकच आणि २ वेगवेगळे कोर्सेस हवे आहेत</strong></td>
+        <td><strong>मल्टी-कोर्स सपोर्ट:</strong> सिस्टीम एका मोबाईलवर अनेक कोर्सेसना पूर्णपणे सपोर्ट करते. <code>/admin/grants</code> वरून त्याच नंबरवर दुसरा कोर्स ॲक्टिव्हेट करा. दोघांची प्रगती व प्रमाणपत्रे वेगवेगळी राहतील.</td>
+      </tr>
+      <tr>
+        <td><strong>७</strong></td>
+        <td><strong>३ महिन्यांची मुदत संपली आणि व्हिडिओ लॉक झाले (Course Expired)</strong></td>
+        <td><strong>२ पर्याय:</strong> १) जर विद्यार्थ्याला मुदत वाढवून द्यायची असेल तर <code>/admin/grants</code> मधून <strong>"Extend Access (1 Month / 3 Months)"</strong> दाबा. २) किंवा ५०% सवलतीचे कूपन तयार करून त्याला ॲपमधून रिन्यू करण्यास सांगा.</td>
+      </tr>
+      <tr>
+        <td><strong>८</strong></td>
+        <td><strong>विद्यार्थ्याने हप्त्याने फी भरली (Partial Installment Payment)</strong></td>
+        <td><strong>बाकी फी नोंद:</strong> <code>/admin/grants</code> मध्ये ॲडमिशन देताना 'Amount Paid' मध्ये भरलेली रक्कम टाका आणि 'Pending Dues' मध्ये उर्वरित रक्कम व पुढील तारीख टाका. सिस्टीम हिशोबाची अचूक नोंद ठेवेल.</td>
+      </tr>
+      <tr>
+        <td><strong>९</strong></td>
+        <td><strong>विद्यार्थ्याला ॲडमिशन रद्द करायचे आहे / फी परतावा (Refund Request)</strong></td>
+        <td><strong>Revoke Access:</strong> <code>/admin/students</code> वर जाऊन <strong>"Revoke Course Access"</strong> दाबा. सिस्टीम अनिवार्य कारण विचारेल (उदा. <em>"पालकांची विनंती - फी रिफंड मंजूर"</em>). कारण टाकून कन्फर्म करा. Audit मध्ये कायमची नोंद होईल.</td>
+      </tr>
+      <tr>
+        <td><strong>१०</strong></td>
+        <td><strong>चुकीचा कोर्स खरेदी केला व दुसरा कोर्स हवा आहे (Course Swap)</strong></td>
+        <td><strong>कोर्स स्वॅप:</strong> विद्यार्थ्याला डिलीट करण्याची अजिबात गरज नाही! <code>/admin/grants</code> मधील <strong>"Swap Course"</strong> बटण वापरून जुना कोर्स काढून नवीन कोर्स १ सेकंदात विद्यार्थ्याला ट्रान्सफर करा.</td>
+      </tr>
+      <tr>
+        <td><strong>११</strong></td>
+        <td><strong>विद्यार्थी आपला पासवर्ड / ४-अंकी लॉगिन पिन विसरला</strong></td>
+        <td><strong>पिन रीसेट:</strong> <code>/admin/students</code> वर जाऊन विद्यार्थ्याच्या नावापुढील <strong>"Reset PIN"</strong> दाबा. त्याचा पिन डीफॉल्ट <code>1234</code> किंवा नवीन तात्पुरता पिन सेट होईल, ज्यामुळे तो तात्काळ लॉगिन करू शकेल.</td>
+      </tr>
+      <tr>
+        <td><strong>१२</strong></td>
+        <td><strong>व्हिडिओ रेकॉर्डिंग किंवा चोरी करण्याचा प्रयत्न (Anti-Piracy Detection)</strong></td>
+        <td><strong>वॉटरमार्क तपासणी:</strong> व्हिडिओवर विद्यार्थ्याचा फोन नंबर सतत हलक्या अक्षरात तरंगत असतो. जर सोशल मीडियावर चोरीचा व्हिडिओ आढळला, तर त्या नंबरवरून विद्यार्थ्याचा शोध घेऊन <code>/admin/students</code> मधून त्याला कायमचे सस्पेंड करा.</td>
       </tr>
     </tbody>
   </table>
