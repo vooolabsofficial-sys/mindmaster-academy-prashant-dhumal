@@ -92,16 +92,16 @@ export const Navbar: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <span className="font-title-lg text-sm sm:text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1">
-                MindMaster <span className="text-sky-200 font-semibold hidden sm:inline">Academy</span>
+                MindMaster <span className="text-white font-extrabold hidden sm:inline">Academy</span>
               </span>
-              <span className="text-[9px] text-white/80 font-label-caps tracking-widest hidden md:block">
+              <span className="text-[10px] text-white font-bold tracking-widest hidden md:block">
                 SATARA FLAGSHIP HQ
               </span>
             </div>
           </Link>
 
           {/* Desktop Nav Links - Floating Pill Segments */}
-          <nav className="hidden md:flex items-center gap-1 bg-white/10 p-1 rounded-full border border-white/15 backdrop-blur-md">
+          <nav className="hidden md:flex items-center gap-1 bg-white/15 p-1 rounded-full border border-white/20 backdrop-blur-md">
             {navLinks.map((link) => {
               const active = isActive(link.path);
               return (
@@ -113,7 +113,7 @@ export const Navbar: React.FC = () => {
                       ? 'bg-white text-[#0052FF] font-extrabold shadow-xs scale-105'
                       : link.isGame
                       ? 'bg-amber-400 text-slate-900 font-extrabold hover:bg-amber-300 shadow-xs ring-1 ring-amber-300/80'
-                      : 'text-white/90 hover:text-white hover:bg-white/15'
+                      : 'text-white font-bold hover:bg-white/20'
                   }`}
                 >
                   {link.isGame && (

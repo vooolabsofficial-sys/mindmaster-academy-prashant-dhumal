@@ -82,8 +82,8 @@ export const TransformationSlider: React.FC = () => {
         {/* RIGHT SIDE (After MindMaster) - Background full width */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#E6F8EE] via-[#DFF7EA]/60 to-white p-8 sm:p-10 flex flex-col justify-between">
           <div className="flex justify-end">
-            <span className="bg-[#DFF7EA] text-[#0F8A4B] font-bold px-4 py-1 rounded-full text-xs border border-[#A6E8C2] shadow-xs flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#0F8A4B]"></span>
+            <span className="bg-[#DFF7EA] text-[#065F46] font-extrabold px-4 py-1 rounded-full text-xs border border-[#A6E8C2] shadow-xs flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#065F46]"></span>
               After MindMaster Academy
             </span>
           </div>

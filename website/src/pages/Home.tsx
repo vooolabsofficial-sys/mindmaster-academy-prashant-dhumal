@@ -194,9 +194,14 @@ export const Home: React.FC = () => {
                     <img
                       alt="माइंड मास्टर ॲकॅडमी परिचय - प्रशांत धुमाळ सर"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      src="https://img.youtube.com/vi/8Nyi_FVeUNw/maxresdefault.jpg"
+                      src="/assets/images/hero_video_cover.webp"
+                      width="1000"
+                      height="500"
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/assets/images/classroom_students_group.png';
+                        (e.target as HTMLImageElement).src = 'https://img.youtube.com/vi/8Nyi_FVeUNw/maxresdefault.jpg';
                       }}
                     />
                     <div className="absolute inset-0 bg-black/25 group-hover:bg-black/40 transition-all flex items-center justify-center">
