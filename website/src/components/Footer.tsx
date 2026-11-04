@@ -166,8 +166,9 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/verify-certificate" className="text-emerald-800 hover:text-emerald-950 font-semibold transition-colors block py-0.5">
-                  Verify Certificate
+                <Link to="/verify-certificate" className="inline-flex items-center gap-1.5 text-emerald-800 hover:text-emerald-950 font-bold transition-colors py-0.5">
+                  <span className="material-symbols-outlined text-[15px] text-emerald-600">verified</span>
+                  <span>Verify Certificate &amp; Marksheet</span>
                 </Link>
               </li>
             </ul>

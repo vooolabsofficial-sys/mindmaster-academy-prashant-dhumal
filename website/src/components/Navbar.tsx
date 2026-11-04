@@ -42,7 +42,6 @@ export const Navbar: React.FC = () => {
     { name: 'Free Demo', path: '/demo', isDemo: true },
     { name: 'About', path: '/about' },
     { name: 'Results', path: '/results' },
-    { name: 'Verify', path: '/verify-certificate' },
     { name: 'Contact', path: '/contact' },
     { name: 'Brain Games', path: '/brain-games', isGame: true },
   ];
