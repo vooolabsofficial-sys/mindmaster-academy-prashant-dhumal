@@ -234,6 +234,11 @@ export const getStudentActiveEnrollmentsSchema = z.object({
   userId: optionalString,
 });
 
+export const getStudentTransactionHistorySchema = z.object({
+  userPhone: optionalString,
+  userId: optionalString,
+});
+
 export const verifyStudentBookAccessSchema = z.object({
   bookId: z.string().trim().min(1, "Book ID is required"),
   userPhone: optionalString,

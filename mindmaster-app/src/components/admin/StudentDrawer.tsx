@@ -25,6 +25,7 @@ import { StudentRecord, Course } from "@/lib/types";
 import { getStaffCourses, logStaffAction, saveStaffStudent, getStaffStudents } from "@/lib/staffStore";
 import { createGrant, fetchDbGrants, Grant } from "@/lib/grantStore";
 import { formatIST, isExpiredIST } from "@/lib/istTime";
+import { generateFeeReceiptPdf } from "@/lib/pdfGenerator";
 import { getConversationsForStudent, Conversation } from "@/lib/messageStore";
 import { toast } from "sonner";
 
@@ -41,7 +42,7 @@ export default function StudentDrawer({
   onClose,
   onStudentUpdated,
 }: StudentDrawerProps) {
-  const [activeTab, setActiveTab] = useState<"profile" | "grants" | "tickets">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "grants" | "receipts" | "tickets">("profile");
   const [courses, setCourses] = useState<Course[]>([]);
   const [studentGrants, setStudentGrants] = useState<Grant[]>([]);
   const [studentTickets, setStudentTickets] = useState<Conversation[]>([]);
@@ -235,6 +236,19 @@ export default function StudentDrawer({
               >
                 <Gift className="w-3.5 h-3.5" />
                 <span>Course Access ({student.enrolledCourseCodes?.length || 0})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("receipts")}
+                className={`flex-1 py-1.5 px-3 rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  activeTab === "receipts"
+                    ? "bg-white dark:bg-[#1E293B] text-[#2563EB] dark:text-blue-400 shadow-xs font-extrabold"
+                    : "hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Receipts & Fees</span>
               </button>
 
               <button

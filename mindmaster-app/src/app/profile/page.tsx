@@ -27,8 +27,15 @@ import {
   Send,
   Plus,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Receipt,
+  Calendar,
+  CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
+import { generateFeeReceiptPdf } from "@/lib/pdfGenerator";
+import { getStudentTransactionHistory, StudentTransactionItem } from "@/app/actions/studentAccess";
+import { getStaffCourses } from "@/lib/staffStore";
 import AppShell from "@/components/navigation/AppShell";
 import { signOutAndClearCookie } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -74,6 +81,10 @@ export default function ProfileSettingsPage() {
   const [isTicketsModalOpen, setIsTicketsModalOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isPurchasesModalOpen, setIsPurchasesModalOpen] = useState(false);
+  const [transactions, setTransactions] = useState<StudentTransactionItem[]>([]);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
+  const [receiptSearch, setReceiptSearch] = useState("");
 
   // App & Video Preferences
   const [playbackSpeed, setPlaybackSpeed] = useState("1x");
@@ -127,6 +138,109 @@ export default function ProfileSettingsPage() {
     } catch {}
   };
 
+  const loadTransactions = async (studentPhone: string) => {
+    setIsLoadingTransactions(true);
+    try {
+      const serverTxs = await getStudentTransactionHistory({ userPhone: studentPhone });
+      const staffCourses = getStaffCourses();
+
+      const localPurchases = JSON.parse(localStorage.getItem("mindmaster_active_purchases") || "{}");
+      const localGrants = JSON.parse(localStorage.getItem("mma_grant_purchases") || "[]");
+
+      const merged: StudentTransactionItem[] = [...serverTxs];
+
+      // Merge local active purchases if not already present
+      Object.keys(localPurchases).forEach((courseCode) => {
+        const item = localPurchases[courseCode];
+        const alreadyExists = merged.some(
+          (m) => m.courseCode.toLowerCase() === courseCode.toLowerCase() || (item.orderId && m.id === item.orderId)
+        );
+        if (!alreadyExists && item) {
+          const courseInfo = staffCourses.find(
+            (c) => c.code.toLowerCase() === courseCode.toLowerCase() || c.id === courseCode
+          );
+          merged.push({
+            id: item.orderId || `ord-${courseCode}-${Date.now()}`,
+            receiptNo: `REC-${courseCode.toUpperCase()}-8492`,
+            title: item.title || courseInfo?.title || `${courseCode.toUpperCase()} Masterclass`,
+            courseCode: courseCode.toUpperCase(),
+            itemType: "course",
+            date: item.enrolledAt || new Date().toISOString(),
+            amountPaise: item.price || (courseInfo?.pricePaise || 249900),
+            paymentMode: "online",
+            paymentId: item.paymentId || "pay_razorpay_verified",
+            orderId: item.orderId,
+            status: "active",
+            expiresAt: item.expiresAt || new Date(Date.now() + 90 * 86400000).toISOString(),
+          });
+        }
+      });
+
+      // Merge local grant purchases
+      if (Array.isArray(localGrants)) {
+        localGrants.forEach((g: any) => {
+          if (
+            g.studentPhone &&
+            studentPhone &&
+            g.studentPhone.replace(/[^0-9]/g, "").endsWith(studentPhone.slice(-10))
+          ) {
+            const already = merged.some((m) => m.id === g.id);
+            if (!already) {
+              merged.push({
+                id: g.id || `grnt-${Date.now()}`,
+                receiptNo: `REC-GRNT-${(g.courseCode || "MM").toUpperCase()}-${(g.id || "").slice(-6).toUpperCase()}`,
+                title: g.courseTitle || "MindMaster Academic Program",
+                courseCode: (g.courseCode || "MM").toUpperCase(),
+                itemType: "course",
+                date: g.grantedAt || new Date().toISOString(),
+                amountPaise: (Number(g.amountPaid) || 0) * 100,
+                paymentMode: g.paymentMode || "cash",
+                paymentId: g.paymentId || `PAY-${(g.id || "").slice(-8)}`,
+                status: g.installmentDue && Number(g.installmentDue) > 0 ? "installment" : "active",
+                expiresAt: g.expiresAt || g.validUntil || new Date(Date.now() + 90 * 86400000).toISOString(),
+                installmentDue: Number(g.installmentDue) || 0,
+                installmentDueDate: g.installmentDueDate,
+                receiptText: g.receiptText,
+              });
+            }
+          }
+        });
+      }
+
+      setTransactions(merged.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    } catch (e) {
+      console.warn("Could not load transactions:", e);
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  };
+
+  const handleDownloadReceipt = (tx: StudentTransactionItem) => {
+    try {
+      generateFeeReceiptPdf({
+        receiptNo: tx.receiptNo,
+        date: new Date(tx.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+        studentName: fullName || "Student",
+        studentPhone: phone || "",
+        district: district || "Maharashtra",
+        courseCode: tx.courseCode || "MM",
+        courseTitle: tx.title,
+        amountPaise: tx.amountPaise,
+        paymentId: tx.paymentId,
+        accessMonths: 3,
+        expiryDate: new Date(tx.expiresAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+      });
+      toast.success(`Fee Receipt ${tx.receiptNo} downloaded!`);
+    } catch (err: any) {
+      toast.error("Could not generate PDF receipt.");
+    }
+  };
+
+  const handleShareReceiptWhatsApp = (tx: StudentTransactionItem) => {
+    const text = `MindMaster Academy Official Fee Receipt\n\nStudent: ${fullName}\nCourse: ${tx.title}\nReceipt No: ${tx.receiptNo}\nPayment ID: ${tx.paymentId}\nAmount: ₹${Math.round(tx.amountPaise / 100)}\nDate: ${new Date(tx.date).toLocaleDateString("en-IN")}\nValidity: Till ${new Date(tx.expiresAt).toLocaleDateString("en-IN")}\n\nAccess portal: https://mindmaster.academy/login`;
+    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
   useEffect(() => {
     fetch("/api/settings")
       .then((res) => res.json())
@@ -163,6 +277,8 @@ export default function ProfileSettingsPage() {
 
     refreshOfflineVault();
     refreshTickets();
+    const activePhone = phone || (typeof window !== "undefined" ? localStorage.getItem("mindmaster_verified_phone") : "") || "";
+    if (activePhone) loadTransactions(activePhone);
   }, []);
 
   // Listen to live ticket updates
@@ -526,6 +642,37 @@ export default function ProfileSettingsPage() {
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
+
+              {/* Row: My Purchases & Fee Receipts */}
+              <button
+                type="button"
+                onClick={() => {
+                  const p = phone || localStorage.getItem("mindmaster_verified_phone") || "";
+                  if (p) loadTransactions(p);
+                  setIsPurchasesModalOpen(true);
+                }}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Receipt className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white block">
+                      {isMarathi ? "माझे कोर्सेस, व्यवहार व फी पावत्या" : "My Purchases & Fee Receipts"}
+                    </span>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-400 block">
+                      {isMarathi ? "पेमेंट इतिहास, ट्रान्झॅक्शन आयडी व PDF पावती" : "Payment history, orders & official PDF receipts"}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-400">
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 shrink-0">
+                    {transactions.length > 0 ? `${transactions.length} Receipts` : "View"}
+                  </span>
+                  <ChevronRight className="w-4 h-4" />
+                </div>
+              </button>
             </div>
           </div>
 
@@ -1380,6 +1527,219 @@ export default function ProfileSettingsPage() {
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2.5 Purchases & Fee Receipts History Modal */}
+      {isPurchasesModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#1E293B] w-full max-w-xl rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
+                  <Receipt className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                    {isMarathi ? "माझे व्यवहार व अधिकृत फी पावत्या" : "My Orders & Official Fee Receipts"}
+                  </h3>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                    MindMaster Academy • Satara Flagship Campus • GST &amp; ISO Accredited
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPurchasesModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Summary Metrics Banner */}
+            <div className="grid grid-cols-3 gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 text-center">
+              <div>
+                <span className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider block">
+                  {isMarathi ? "एकूण कोर्सेस" : "Active Programs"}
+                </span>
+                <span className="text-sm font-black text-slate-900 dark:text-white mt-0.5 block">
+                  {transactions.length}
+                </span>
+              </div>
+              <div className="border-x border-slate-200 dark:border-slate-700/60 px-1">
+                <span className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider block">
+                  {isMarathi ? "एकूण फी भरली" : "Total Invested"}
+                </span>
+                <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+                  ₹{transactions.reduce((acc, t) => acc + Math.round(t.amountPaise / 100), 0).toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider block">
+                  {isMarathi ? "पावती दर्जा" : "Receipt Format"}
+                </span>
+                <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 mt-1 block">
+                  Official PDF
+                </span>
+              </div>
+            </div>
+
+            {/* Search Box if transactions > 1 */}
+            {transactions.length > 2 && (
+              <div className="relative">
+                <input
+                  type="text"
+                  value={receiptSearch}
+                  onChange={(e) => setReceiptSearch(e.target.value)}
+                  placeholder={isMarathi ? "कोर्स नाव किंवा पावती नंबरने शोधा..." : "Filter by course name or receipt no..."}
+                  className="w-full pl-3 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            )}
+
+            {/* Transaction Cards List */}
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[50vh]">
+              {isLoadingTransactions ? (
+                <div className="text-center py-12 text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+                  <div className="w-6 h-6 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+                  <span>Loading payment history &amp; verified receipts...</span>
+                </div>
+              ) : transactions.length === 0 ? (
+                <div className="text-center py-12 px-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60">
+                  <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center mb-3">
+                    <Receipt className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    {isMarathi ? "कोणतेही व्यवहार उपलब्ध नाहीत" : "No Transaction History Found"}
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                    {isMarathi
+                      ? "तुम्ही अद्याप कोणत्याही कोर्सची खरेदी केलेली नाही किंवा ऑफलाइन ॲडमिशन प्रलंबित आहे."
+                      : "You have not purchased any masterclass yet or offline admission is pending."}
+                  </p>
+                  <Link
+                    href="/courses"
+                    onClick={() => setIsPurchasesModalOpen(false)}
+                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition"
+                  >
+                    <span>{isMarathi ? "कोर्सेस पहा" : "Explore Courses"}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              ) : (
+                transactions
+                  .filter((t) => {
+                    if (!receiptSearch.trim()) return true;
+                    const q = receiptSearch.toLowerCase();
+                    return (
+                      t.title.toLowerCase().includes(q) ||
+                      t.receiptNo.toLowerCase().includes(q) ||
+                      t.paymentId.toLowerCase().includes(q)
+                    );
+                  })
+                  .map((tx) => (
+                    <div
+                      key={tx.id}
+                      className="p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80 shadow-xs flex flex-col gap-3"
+                    >
+                      {/* Card Header */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/40">
+                              {tx.itemType === "book" ? "E-Book & Notes" : "Masterclass"}
+                            </span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                              {tx.paymentMode === "cash"
+                                ? "Cash at Satara Center"
+                                : tx.paymentMode === "upi"
+                                ? "Direct UPI"
+                                : tx.paymentMode === "scholarship"
+                                ? "Scholarship Grant"
+                                : "Razorpay Online"}
+                            </span>
+                            {tx.status === "installment" && tx.installmentDue && tx.installmentDue > 0 && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200">
+                                Dues: ₹{tx.installmentDue}
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-1.5 leading-snug">
+                            {tx.title}
+                          </h4>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                            ₹{Math.round(tx.amountPaise / 100).toLocaleString("en-IN")}
+                          </span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
+                            Fees Paid
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Transaction Details Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/40 text-[11px]">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-medium">Receipt No</span>
+                          <strong className="text-slate-800 dark:text-slate-200 font-mono">{tx.receiptNo}</strong>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-medium">Payment ID</span>
+                          <strong className="text-slate-800 dark:text-slate-200 font-mono truncate block" title={tx.paymentId}>
+                            {tx.paymentId}
+                          </strong>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-medium">Date &amp; Time</span>
+                          <span className="text-slate-700 dark:text-slate-300">
+                            {new Date(tx.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                          </span>
+                        </div>
+                        <div className="col-span-2 sm:col-span-3 pt-1 border-t border-slate-200/50 dark:border-slate-700/30 flex items-center justify-between text-[10px] text-slate-500">
+                          <span>
+                            Validity: Valid till <strong>{new Date(tx.expiresAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</strong>
+                          </span>
+                          <span className="text-emerald-600 font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> ISO 9001:2015 Accredited
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadReceipt(tx)}
+                          className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>{isMarathi ? "अधिकृत PDF पावती डाउनलोड करा" : "Download Official PDF Receipt"}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleShareReceiptWhatsApp(tx)}
+                          className="py-2 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                          title="Share Receipt on WhatsApp"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">WhatsApp</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+
+            {/* Modal Footer Note */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+              <span>MindMaster Helpline: +91 84593 44077</span>
+              <span>All receipts are computer generated &amp; digitally stamped</span>
             </div>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { COURSE_ID_MAP } from "@/lib/mockData";
 import {
   verifyStudentCourseAccessSchema,
   getStudentActiveEnrollmentsSchema,
+  getStudentTransactionHistorySchema,
   verifyStudentBookAccessSchema,
 } from "@/lib/validations";
 
@@ -325,4 +326,140 @@ export async function verifyStudentBookAccess(params: {
 
   return { hasAccess: false };
 }
+
+export interface StudentTransactionItem {
+  id: string;
+  receiptNo: string;
+  title: string;
+  courseCode: string;
+  itemType: "course" | "book";
+  date: string;
+  amountPaise: number;
+  paymentMode: "online" | "cash" | "upi" | "scholarship" | "free";
+  paymentId: string;
+  orderId?: string;
+  status: "success" | "active" | "installment" | "pending";
+  expiresAt: string;
+  installmentDue?: number;
+  installmentDueDate?: string;
+  receiptText?: string;
+}
+
+/**
+ * Server Action: getStudentTransactionHistory
+ * Fetches unified payment transaction history, orders, and fee receipts for a student
+ * across both Supabase purchases table and course_grants table.
+ */
+export async function getStudentTransactionHistory(params: {
+  userPhone?: string;
+  userId?: string;
+}): Promise<StudentTransactionItem[]> {
+  const parsed = getStudentTransactionHistorySchema.safeParse(params);
+  if (!parsed.success) return [];
+
+  const cleanPhone = normalizePhone(params.userPhone);
+  let resolvedUserId = params.userId || "";
+  const transactions: StudentTransactionItem[] = [];
+
+  try {
+    const supabase = createAdminClient();
+
+    // 1. Resolve student profile user_id from phone if missing
+    if (!resolvedUserId && cleanPhone) {
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("phone", cleanPhone)
+          .maybeSingle();
+        if (profile?.id) {
+          resolvedUserId = profile.id;
+        }
+      } catch {}
+    }
+
+    // 2. Fetch purchases from Supabase
+    if (resolvedUserId) {
+      try {
+        const { data: purchases } = await supabase
+          .from("purchases")
+          .select("*, courses(title, code), books(title, code)")
+          .eq("user_id", resolvedUserId)
+          .order("purchased_at", { ascending: false });
+
+        if (purchases && purchases.length > 0) {
+          purchases.forEach((p: any) => {
+            const courseCode = p.courses?.code || p.books?.code || "MM";
+            const title = p.courses?.title || p.books?.title || (p.item_type === "book" ? "MindMaster E-Book" : "MindMaster Masterclass");
+            const payId = p.razorpay_payment_id || `PAY-${p.id.slice(-8)}`;
+            const receiptNo = `REC-${courseCode}-${payId.slice(-6).toUpperCase()}`;
+
+            transactions.push({
+              id: p.id,
+              receiptNo,
+              title,
+              courseCode,
+              itemType: p.item_type || "course",
+              date: p.purchased_at || p.created_at || new Date().toISOString(),
+              amountPaise: Number(p.amount_paise) || 0,
+              paymentMode: "online",
+              paymentId: payId,
+              orderId: p.razorpay_order_id,
+              status: p.status === "active" || p.status === "success" ? "success" : "pending",
+              expiresAt: p.expires_at || new Date().toISOString(),
+            });
+          });
+        }
+      } catch (err: any) {
+        console.warn("Error querying purchases:", err?.message);
+      }
+    }
+
+    // 3. Fetch course grants from Supabase
+    if (cleanPhone) {
+      try {
+        const { data: grants } = await supabase
+          .from("course_grants")
+          .select("*")
+          .eq("student_phone", cleanPhone)
+          .order("granted_at", { ascending: false });
+
+        if (grants && grants.length > 0) {
+          grants.forEach((g: any) => {
+            const courseCode = g.course_code || "MM";
+            const title = g.course_title || "Academic Grant Program";
+            const payId = g.payment_id || `GRNT-${g.id.slice(-8)}`;
+            const receiptNo = `REC-GRNT-${courseCode}-${g.id.slice(-6).toUpperCase()}`;
+            const isInstallment = g.installment_due && Number(g.installment_due) > 0;
+
+            transactions.push({
+              id: g.id,
+              receiptNo,
+              title,
+              courseCode,
+              itemType: g.item_type || "course",
+              date: g.granted_at || g.created_at || new Date().toISOString(),
+              amountPaise: (Number(g.amount_paid) || 0) * 100,
+              paymentMode: g.payment_mode || "cash",
+              paymentId: payId,
+              status: isInstallment ? "installment" : "active",
+              expiresAt: g.valid_until || g.expires_at || new Date().toISOString(),
+              installmentDue: Number(g.installment_due) || 0,
+              installmentDueDate: g.installment_due_date,
+              receiptText: g.receipt_text,
+            });
+          });
+        }
+      } catch (err: any) {
+        console.warn("Error querying course_grants:", err?.message);
+      }
+    }
+  } catch (err: any) {
+    console.warn("getStudentTransactionHistory error:", err?.message);
+  }
+
+  // Sort unified transactions by date descending
+  return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
 

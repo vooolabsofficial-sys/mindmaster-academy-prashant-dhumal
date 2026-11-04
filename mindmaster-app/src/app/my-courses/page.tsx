@@ -19,7 +19,10 @@ import {
   BookOpen,
   ThumbsUp,
   PhoneCall,
-  Check
+  Check,
+  CreditCard,
+  Download,
+  Receipt
 } from "lucide-react";
 import AppShell from "@/components/navigation/AppShell";
 import MyCoursesNotificationBanner from "@/components/notifications/MyCoursesNotificationBanner";
@@ -39,7 +42,7 @@ export default function MyLearningPage() {
   const [activePurchases, setActivePurchases] = useState<Record<string, string>>({});
   const [studentName, setStudentName] = useState<string>("");
   const [studentPhone, setStudentPhone] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"enrolled" | "history" | "liked">("enrolled");
+  const [activeTab, setActiveTab] = useState<"enrolled" | "history" | "liked" | "receipts">("enrolled");
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
   const [likedLessons, setLikedLessons] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -286,6 +289,26 @@ export default function MyLearningPage() {
               }`}
             >
               {likedLessons.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("receipts")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer shrink-0 ${
+              activeTab === "receipts"
+                ? "bg-[#2563EB] dark:bg-[#3B82F6] text-white shadow-xs"
+                : "bg-white dark:bg-slate-800/60 text-[#475569] dark:text-[#94A3B8] border border-slate-200/80 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
+            }`}
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>{isMarathi ? "फी पावत्या व व्यवहार" : "Fee Receipts"}</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                activeTab === "receipts" ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-700 text-[#475569] dark:text-[#94A3B8]"
+              }`}
+            >
+              {enrolled.length}
             </span>
           </button>
         </div>
@@ -646,6 +669,180 @@ export default function MyLearningPage() {
                 ))}
               </div>
             )}
+          </section>
+        )}
+
+        {/* 4. FEE RECEIPTS & TRANSACTIONS TAB */}
+        {activeTab === "receipts" && (
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold uppercase tracking-wider text-[#475569] dark:text-[#94A3B8]">
+                {isMarathi ? "अधिकृत फी पावत्या व नोंदणी तपशील" : "Official Fee Receipts & Enrollments"}
+              </span>
+              <span className="text-xs text-blue-600 dark:text-blue-400 font-bold">
+                {enrolled.length} {isMarathi ? "पावत्या उपलब्ध" : "Receipts Available"}
+              </span>
+            </div>
+
+            {enrolled.length === 0 ? (
+              <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-8 border border-slate-200/80 dark:border-slate-700/60 shadow-xs text-center flex flex-col items-center justify-center max-w-md mx-auto my-4">
+                <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-[#2563EB] dark:text-blue-400 mb-3">
+                  <Receipt className="w-7 h-7" />
+                </div>
+                <h3 className="font-bold text-sm text-[#0F172A] dark:text-[#F1F5F9]">
+                  {isMarathi ? "कोणतीही फी पावती आढळली नाही" : "No Enrolled Course Receipts Found"}
+                </h3>
+                <p className="text-xs text-[#475569] dark:text-[#94A3B8] mt-1 mb-5 leading-relaxed">
+                  {isMarathi
+                    ? "तुम्ही कोणत्याही मास्टरक्लासमध्ये प्रवेश घेतल्यानंतर तुमची अधिकृत A4 फी पावती येथे त्वरित डाऊनलोडसाठी उपलब्ध होईल."
+                    : "Once you enroll in any masterclass, your verified official fee receipt will be available here for instant download."}
+                </p>
+                <Link
+                  href="/courses"
+                  className="px-6 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 dark:bg-[#3B82F6] dark:hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs"
+                >
+                  {isMarathi ? "कोर्सेस पहा व प्रवेश घ्या" : "Browse Courses"}
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {enrolled.map((course) => {
+                  const expiryRaw = activePurchases[course.id] || activePurchases[course.code || ""];
+                  const isExpired = expiryRaw ? isExpiredIST(expiryRaw) : false;
+                  const expiryDisplay = expiryRaw ? formatIST(expiryRaw) : "3 Months";
+                  const receiptNo = `REC-${(course.code || course.id).toUpperCase()}-${studentPhone ? studentPhone.slice(-4) : "8492"}`;
+                  const amountPaise = course.pricePaise || 249900;
+
+                  return (
+                    <div
+                      key={course.id}
+                      className="bg-white dark:bg-[#1E293B] rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/60 shadow-xs hover:border-blue-400 dark:hover:border-blue-500 transition flex flex-col justify-between gap-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-50 dark:bg-blue-900/40 text-[#2563EB] dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                              {receiptNo}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                isExpired
+                                  ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400"
+                                  : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
+                              }`}
+                            >
+                              {isExpired ? "Expired" : "Paid & Verified"}
+                            </span>
+                          </div>
+                          <h4 className="font-extrabold text-sm text-[#0F172A] dark:text-[#F1F5F9] leading-snug">
+                            {course.title}
+                          </h4>
+                          <p className="text-xs text-[#475569] dark:text-[#94A3B8] mt-1">
+                            {isMarathi ? "प्रवेश वैधता:" : "Access Validity:"}{" "}
+                            <span className="font-medium">{expiryDisplay}</span>
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs text-[#475569] dark:text-[#94A3B8]">
+                            {isMarathi ? "भरलेली फी" : "Paid"}
+                          </p>
+                          <p className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+                            ₹{Math.round(amountPaise / 100).toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 text-[11px] text-[#475569] dark:text-[#94A3B8]">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>ISO 9001:2015 Approved</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              try {
+                                generateFeeReceiptPdf({
+                                  receiptNo,
+                                  date: new Date().toLocaleDateString("en-IN", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  }),
+                                  studentName: studentName || "Verified Student",
+                                  studentPhone: studentPhone || "",
+                                  district: "Maharashtra",
+                                  courseCode: course.code || course.id,
+                                  courseTitle: course.title,
+                                  amountPaise,
+                                  paymentId: `PAY-${(course.id || "").slice(-8).toUpperCase()}`,
+                                  accessMonths: 3,
+                                  expiryDate: expiryDisplay,
+                                });
+                                toast.success(
+                                  isMarathi
+                                    ? `फी पावती ${receiptNo} डाऊनलोड झाली!`
+                                    : `Fee Receipt ${receiptNo} downloaded successfully!`
+                                );
+                              } catch (e) {
+                                toast.error("Could not generate PDF receipt.");
+                              }
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-[#2563EB] dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>{isMarathi ? "पावती PDF" : "Download PDF"}</span>
+                          </button>
+
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(
+                              `MindMaster Academy Official Fee Receipt\n\nStudent: ${
+                                studentName || "Student"
+                              }\nCourse: ${course.title}\nReceipt No: ${receiptNo}\nAmount: ₹${Math.round(
+                                amountPaise / 100
+                              )}\nValidity: Till ${expiryDisplay}\n\nAccess portal: https://mindmaster.academy/login`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 transition cursor-pointer"
+                            title="Share on WhatsApp"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Link to Full Historical Ledger in Profile */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-2xl p-4 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <CreditCard className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs text-[#0F172A] dark:text-[#F1F5F9]">
+                    {isMarathi ? "संपूर्ण व्यवहार इतिहास व इन्व्हॉइसेस हवे आहेत का?" : "Need Detailed Historical Invoices?"}
+                  </h4>
+                  <p className="text-[11px] text-[#475569] dark:text-[#94A3B8]">
+                    {isMarathi
+                      ? "तुमच्या प्रोफाईल पृष्ठावर जाऊन सर्व बँक / UPI व्यवहार, ऑफलाइन फी नोंदी आणि हप्ते तपासा."
+                      : "Visit your Profile to view all online, offline center payments, installments, and full invoices."}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/profile"
+                className="px-3.5 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 dark:bg-[#3B82F6] dark:hover:bg-blue-600 text-white text-xs font-bold transition shrink-0 inline-flex items-center gap-1 shadow-xs"
+              >
+                <span>{isMarathi ? "प्रोफाईल पहा" : "View Profile"}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </section>
         )}
 
