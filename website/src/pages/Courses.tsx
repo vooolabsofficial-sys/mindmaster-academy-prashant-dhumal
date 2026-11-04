@@ -746,7 +746,7 @@ export const Courses: React.FC = () => {
                     Enroll in App Portal →
                   </a>
                   <Link
-                    to="/contact"
+                    to="/demo"
                     className="flex-1 inline-flex items-center justify-center px-4 py-3 rounded-full bg-surface-container-lowest text-primary-container font-title-md text-xs hover:bg-surface-container transition-all text-center shadow-xs border border-surface-variant"
                   >
                     Book Free Demo

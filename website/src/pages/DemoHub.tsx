@@ -6,6 +6,7 @@ import { submitWebsiteLead } from '../config/appConfig';
 export const DemoHub: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'enquiry' | 'call'>('enquiry');
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [enquirySubmitting, setEnquirySubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -22,41 +23,88 @@ export const DemoHub: React.FC = () => {
   const [demoName, setDemoName] = useState('');
   const [demoPhone, setDemoPhone] = useState('');
   const [demoBooked, setDemoBooked] = useState(false);
+  const [demoSubmitting, setDemoSubmitting] = useState(false);
 
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
+  const getEnquiryWhatsAppUrl = () => {
+    const text = `नमस्कार प्रशांत धुमाळ सर,\nमी माइंड मास्टर अकॅडमीच्या वेबसाईटवर ॲडमिशन चौकशी नोंदवली आहे.\n\n👤 नाव: ${formData.name.trim()}\n📱 मोबाईल: ${formData.phone.trim()}\n📧 ईमेल: ${formData.email.trim() || 'नाही'}\n🎓 कोर्स: ${formData.program}\n📍 सेंटर: ${formData.location}\n📝 मेसेज: ${formData.notes || 'माहिती हवी आहे'}\n\nकृपया मला प्रवेश प्रक्रिया व बॅचेसची माहिती पाठवा. धन्यवाद!`;
+    return `https://wa.me/918459344077?text=${encodeURIComponent(text)}`;
+  };
+
+  const getDemoWhatsAppUrl = () => {
+    const attendeeMap: Record<string, string> = {
+      'grade-3-7': 'इयत्ता ३री ते ७वी (पाढे व फाउंडेशन)',
+      'grade-8-12': 'इयत्ता ८वी ते १२वी व बोर्ड परीक्षा',
+      'college-mpsc': 'कॉलेज / MPSC / पोलीस भरती',
+      'teacher': 'शिक्षक व पालक प्रशिक्षण'
+    };
+    const dateMap: Record<string, string> = {
+      'sat': 'शनिवार (Saturday)',
+      'sun': 'रविवार (Sunday - Live with Prashant Sir)',
+      'next-sun': 'पुढील रविवार (Next Sunday)'
+    };
+    const timeMap: Record<string, string> = {
+      'morning': 'सकाळी १०:०० ते ११:३० वा.',
+      'evening': 'संध्याकाळी ०४:०० ते ०५:३० वा.'
+    };
+
+    const text = `नमस्कार प्रशांत धुमाळ सर,\nमी माइंड मास्टर अकॅडमीच्या मोफत विकेंड डेमो क्लाससाठी सीट बुक केली आहे.\n\n👤 नाव: ${demoName.trim()}\n📱 मोबाईल: ${demoPhone.trim()}\n🎓 विद्यार्थी वर्ग: ${attendeeMap[attendee] || attendee}\n📅 वार/दिवस: ${dateMap[demoDate] || demoDate}\n⏰ वेळ: ${timeMap[timeSlot] || timeSlot}\n\nकृपया मला मोफत डेमो सेशनची झूम व क्लासरूम लिंक पाठवा. धन्यवाद!`;
+    return `https://wa.me/918459344077?text=${encodeURIComponent(text)}`;
+  };
+
   const handleEnquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormSubmitted(true);
-    await submitWebsiteLead({
-      name: formData.name,
-      phone: formData.phone,
-      email: formData.email,
-      courseInterest: formData.program,
-      message: `Location: ${formData.location}. Notes: ${formData.notes}`,
-      source: 'DemoHub Enquiry Tab',
-    });
-    setTimeout(() => {
-      setFormSubmitted(false);
-    }, 6000);
+    const cleanPhone = formData.phone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      alert('कृपया किमान १० अंकी वैध मोबाईल नंबर प्रविष्ट करा.');
+      return;
+    }
+    setEnquirySubmitting(true);
+    try {
+      await submitWebsiteLead({
+        name: formData.name.trim(),
+        phone: cleanPhone,
+        email: formData.email,
+        courseInterest: formData.program,
+        message: `Location: ${formData.location}. Notes: ${formData.notes}`,
+        source: 'DemoHub Enquiry Tab',
+      });
+      const waUrl = getEnquiryWhatsAppUrl();
+      window.open(waUrl, '_blank');
+      setFormSubmitted(true);
+    } catch {
+      setFormSubmitted(true);
+    } finally {
+      setEnquirySubmitting(false);
+    }
   };
 
   const handleDemoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setDemoBooked(true);
-    await submitWebsiteLead({
-      name: demoName,
-      phone: demoPhone,
-      courseInterest: `Free Demo: ${attendee} (${demoDate}, ${timeSlot})`,
-      message: `Weekend demo booking for ${attendee} on ${demoDate} (${timeSlot})`,
-      source: 'DemoHub Weekend Booking',
-    });
-    setTimeout(() => {
-      setDemoBooked(false);
-      setDemoName('');
-      setDemoPhone('');
-    }, 6000);
+    const cleanPhone = demoPhone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      alert('कृपया किमान १० अंकी वैध मोबाईल नंबर प्रविष्ट करा.');
+      return;
+    }
+    setDemoSubmitting(true);
+    try {
+      await submitWebsiteLead({
+        name: demoName.trim(),
+        phone: cleanPhone,
+        courseInterest: `Free Demo: ${attendee} (${demoDate}, ${timeSlot})`,
+        message: `Weekend demo booking for ${attendee} on ${demoDate} (${timeSlot})`,
+        source: 'DemoHub Weekend Booking',
+      });
+      const waUrl = getDemoWhatsAppUrl();
+      window.open(waUrl, '_blank');
+      setDemoBooked(true);
+    } catch {
+      setDemoBooked(true);
+    } finally {
+      setDemoSubmitting(false);
+    }
   };
 
   const faqs = [
@@ -268,26 +316,36 @@ export const DemoHub: React.FC = () => {
 
                 {/* Form Submitted Success Toast */}
                 {formSubmitted ? (
-                  <div className="my-6 p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 animate-fadeIn">
-                    <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-emerald-600 text-4xl">check_circle</span>
+                  <div className="my-6 p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 animate-fadeIn space-y-4 text-center sm:text-left">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3.5">
+                      <span className="material-symbols-outlined text-emerald-600 text-5xl shrink-0">check_circle</span>
                       <div>
-                        <h4 className="font-bold text-base text-emerald-900">Academic Enquiry Received!</h4>
-                        <p className="text-xs text-emerald-800 mt-0.5">
-                          Our senior counsellor will ring {formData.phone || 'your phone'} within 2 working hours with the syllabus kit and batch schedules.
+                        <h4 className="font-bold text-lg text-emerald-900">चौकशी ॲडमिनकडे नोंदवली गेली!</h4>
+                        <p className="text-xs sm:text-sm text-emerald-800 mt-0.5">
+                          आपली चौकशी ॲडमिन डेस्ककडे सेव्ह झाली आहे. आमचे वरिष्ठ कौन्सिलर {formData.phone || 'आपल्या नंबरवर'} संपर्क साधतील.
                         </p>
                       </div>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-emerald-200/60 flex items-center justify-between">
-                      <span className="text-xs text-emerald-700">Need immediate confirmation?</span>
+                    <div className="pt-3 border-t border-emerald-200/80 flex flex-col sm:flex-row items-center justify-between gap-3">
                       <a
-                        href={`https://wa.me/918459344077?text=Hi%2C%20I%20just%20submitted%20an%20admissions%20enquiry%20for%20${formData.name}`}
+                        href={getEnquiryWhatsAppUrl()}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:underline"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer"
                       >
-                        Ping on WhatsApp →
+                        <span className="material-symbols-outlined text-base">chat</span>
+                        <span>व्हॉट्सॲपवर थेट बोला →</span>
                       </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormSubmitted(false);
+                          setFormData({ name: '', phone: '', email: '', location: 'satara-hq', program: 'mm-03', notes: '' });
+                        }}
+                        className="text-xs text-emerald-800 hover:text-emerald-950 underline font-medium cursor-pointer"
+                      >
+                        दुसरी चौकशी नोंदवा
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -412,11 +470,21 @@ export const DemoHub: React.FC = () => {
 
                     <div className="pt-2">
                       <button
-                        className="w-full h-13 rounded-2xl bg-secondary hover:bg-on-secondary-fixed-variant text-on-secondary font-title-md text-[16px] font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99]"
+                        disabled={enquirySubmitting}
+                        className="w-full h-13 rounded-2xl bg-secondary hover:bg-on-secondary-fixed-variant text-on-secondary font-title-md text-[16px] font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99] disabled:opacity-50"
                         type="submit"
                       >
-                        <span>{activeTab === 'enquiry' ? 'Submit Academic Inquiry' : 'Book Callback Slot'}</span>
-                        <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                        {enquirySubmitting ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <span>नोंदणी होत आहे...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>{activeTab === 'enquiry' ? 'Submit Academic Inquiry' : 'Book Callback Slot'}</span>
+                            <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </form>
@@ -559,13 +627,38 @@ export const DemoHub: React.FC = () => {
               </div>
 
               {demoBooked ? (
-                <div className="my-6 p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 animate-fadeIn text-center">
-                  <span className="material-symbols-outlined text-emerald-600 text-5xl mb-2">event_available</span>
-                  <h4 className="font-bold text-lg text-emerald-900">Seat Reserved Successfully!</h4>
-                  <p className="text-xs text-emerald-800 mt-1 max-w-md mx-auto">
-                    We have reserved your complimentary seat for the upcoming weekend batch ({demoDate === 'sat' ? 'Saturday' : 'Sunday'} • {timeSlot === 'morning' ? '10:00 AM' : '04:00 PM'}).
-                    Zoom invite and classroom directions have been dispatched to your WhatsApp.
-                  </p>
+                <div className="my-6 p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 animate-fadeIn text-center space-y-4">
+                  <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                    <span className="material-symbols-outlined text-4xl">event_available</span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xl text-emerald-900">सीट यशस्वीरित्या आरक्षित झाली!</h4>
+                    <p className="text-xs sm:text-sm text-emerald-800 mt-1 max-w-md mx-auto">
+                      तुमच्यासाठी आगामी विकेंड बॅच ({demoDate === 'sat' ? 'शनिवार' : 'रविवार'} • {timeSlot === 'morning' ? 'सकाळी १०:०० वा.' : 'संध्याकाळी ०४:०० वा.'}) मोफत सीट आरक्षित केली आहे. ॲडमिन डेस्ककडे नोंद झाली आहे.
+                    </p>
+                  </div>
+                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <a
+                      href={getDemoWhatsAppUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base">chat</span>
+                      <span>व्हॉट्सॲपवर क्लास लिंक मिळवा</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDemoBooked(false);
+                        setDemoName('');
+                        setDemoPhone('');
+                      }}
+                      className="w-full sm:w-auto px-5 py-3 rounded-full bg-white hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-300 transition-colors cursor-pointer"
+                    >
+                      दुसऱ्या विद्यार्थ्यासाठी नोंदणी
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleDemoSubmit}>
@@ -747,11 +840,21 @@ export const DemoHub: React.FC = () => {
                       />
                     </div>
                     <button
-                      className="w-full h-12 rounded-xl bg-secondary hover:bg-on-secondary-fixed-variant text-on-secondary font-title-md text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      disabled={demoSubmitting}
+                      className="w-full h-12 rounded-xl bg-secondary hover:bg-on-secondary-fixed-variant text-on-secondary font-title-md text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                       type="submit"
                     >
-                      <span>Reserve Free Demo Seat (₹0)</span>
-                      <span className="material-symbols-outlined text-[18px]">verified</span>
+                      {demoSubmitting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span>जागा आरक्षित होत आहे...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Reserve Free Demo Seat (₹0)</span>
+                          <span className="material-symbols-outlined text-[18px]">verified</span>
+                        </>
+                      )}
                     </button>
                     <p className="text-center text-[11px] text-on-surface-variant font-label-caps">
                       Zero spam • 100% Free • Interactive link dispatched via WhatsApp & SMS

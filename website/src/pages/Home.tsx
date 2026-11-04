@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { SEO } from '../components/SEO';
 import { TransformationSlider } from '../components/TransformationSlider';
 import { VideoModal, VideoModalProps } from '../components/VideoModal';
+import { DemoSeminarModal } from '../components/DemoSeminarModal';
 import { DottedColorfulBrain } from '../components/DottedColorfulBrain';
 import {
   getAppUrl,
@@ -16,11 +17,20 @@ import {
 } from '../config/appConfig';
 
 export const Home: React.FC = () => {
+  const location = useLocation();
   const [modalData, setModalData] = useState<VideoModalProps | null>(null);
   const [liveDbCourses, setLiveDbCourses] = useState<LiveDbCourse[]>([]);
   const [cms, setCms] = useState<WebsiteCmsData>(DEFAULT_WEBSITE_CMS);
   const [showPromoPopup, setShowPromoPopup] = useState(false);
   const [isIntroVideoPlaying, setIsIntroVideoPlaying] = useState(false);
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('demo') === '1' || params.get('seminar') === '1') {
+      setIsDemoModalOpen(true);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     let timer: any = null;
@@ -50,7 +60,7 @@ export const Home: React.FC = () => {
     <main className="w-full pt-24 sm:pt-28 bg-background min-h-screen">
       <SEO
         title="MindMaster Academy | Prashant Dhumal — Memory & Vedic Maths Training"
-        description="MindMaster Academy Pune — Premier cognitive training by Prashant Dhumal Sir. Master Photographic Memory, Superfast Vedic Maths, 500-Year Calendar Tricks & Teacher Training."
+        description="MindMaster Academy Satara — Premier cognitive training by Prashant Dhumal Sir. Master Photographic Memory, Superfast Vedic Maths, 500-Year Calendar Tricks & Teacher Training."
         keywords="MindMaster Academy, Prashant Dhumal, Memory Training Satara, Vedic Maths Maharashtra, Superfast Calendar Satara, Taluka Satara, Dist Satara, Police Bharti Memory"
         schema={{
           "@type": "WebPage",
@@ -125,14 +135,15 @@ export const Home: React.FC = () => {
                 <span>Watch Orientation Video</span>
               </button>
 
-              {/* Free Demo Hub */}
-              <Link
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-slate-700 font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-2xs hover:bg-slate-50 hover:text-[#0052FF] transition-all border border-slate-200"
-                to="/demo"
+              {/* Free Demo Seminar Registration Button */}
+              <button
+                type="button"
+                onClick={() => setIsDemoModalOpen(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-md transition-all cursor-pointer ring-2 ring-emerald-400/30"
               >
-                <span className="material-symbols-outlined text-lg text-slate-500">school</span>
-                <span>Free Demo Hub</span>
-              </Link>
+                <span className="material-symbols-outlined text-lg">event_available</span>
+                <span>मोफत सेमिनार नोंदणी (Free Demo)</span>
+              </button>
 
               {/* Clean Student Portal Login */}
               <a
@@ -1132,12 +1143,13 @@ export const Home: React.FC = () => {
                 One technique, a lifetime of cognitive confidence. Join upcoming batches in Satara, Pune or Online.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link
-                  className="w-full sm:w-auto inline-flex items-center justify-center bg-white text-secondary font-title-md px-8 py-3.5 rounded-full shadow hover:bg-opacity-95 transition-all text-sm"
-                  to="/contact"
+                <button
+                  type="button"
+                  onClick={() => setIsDemoModalOpen(true)}
+                  className="w-full sm:w-auto inline-flex items-center justify-center bg-white text-secondary font-title-md px-8 py-3.5 rounded-full shadow hover:bg-opacity-95 transition-all text-sm font-bold cursor-pointer"
                 >
-                  Book a Free Demo Class
-                </Link>
+                  मोफत सेमिनार नोंदणी (Book Free Demo)
+                </button>
                 <a
                   className="w-full sm:w-auto inline-flex items-center justify-center border-2 border-white text-white font-title-md px-8 py-3.5 rounded-full hover:bg-white hover:text-secondary transition-all text-sm"
                   href="tel:+918459344077"
@@ -1210,6 +1222,9 @@ export const Home: React.FC = () => {
 
       {/* Video Modal */}
       {modalData && <VideoModal {...modalData} />}
+
+      {/* Free Demo Seminar Registration Modal */}
+      <DemoSeminarModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
     </main>
   );
 };
