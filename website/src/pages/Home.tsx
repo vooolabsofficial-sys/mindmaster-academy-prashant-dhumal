@@ -142,7 +142,7 @@ export const Home: React.FC = () => {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-title-md text-sm sm:text-base px-6 py-3.5 rounded-full shadow-md transition-all cursor-pointer ring-2 ring-emerald-400/30"
               >
                 <span className="material-symbols-outlined text-lg">event_available</span>
-                <span>मोफत सेमिनार नोंदणी (Free Demo)</span>
+                <span>Book Free Demo Class</span>
               </button>
 
               {/* Clean Student Portal Login */}
@@ -1148,7 +1148,7 @@ export const Home: React.FC = () => {
                   onClick={() => setIsDemoModalOpen(true)}
                   className="w-full sm:w-auto inline-flex items-center justify-center bg-white text-secondary font-title-md px-8 py-3.5 rounded-full shadow hover:bg-opacity-95 transition-all text-sm font-bold cursor-pointer"
                 >
-                  मोफत सेमिनार नोंदणी (Book Free Demo)
+                  Book a Free Demo Class
                 </button>
                 <a
                   className="w-full sm:w-auto inline-flex items-center justify-center border-2 border-white text-white font-title-md px-8 py-3.5 rounded-full hover:bg-white hover:text-secondary transition-all text-sm"

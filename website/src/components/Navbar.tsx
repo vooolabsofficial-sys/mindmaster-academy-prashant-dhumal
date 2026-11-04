@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getAppUrl, fetchLiveWebsiteCms, WebsiteCmsData, DEFAULT_WEBSITE_CMS } from '../config/appConfig';
 import { LoginModal } from './LoginModal';
+import { LanguageSelector } from './LanguageSelector';
 
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -137,21 +138,25 @@ export const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Right CTA Actions: Direct Student Login into App Portal */}
-          <div className="flex items-center gap-2">
+          {/* Right CTA Actions: Language Selector & Student Login */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Language Selector (Primary: English) */}
+            <LanguageSelector variant="desktop" />
+
             {/* Student Login Button -> Directly navigates to MindMaster App Login */}
             <a
               href={getAppUrl('/login')}
-              className="inline-flex items-center justify-center bg-white text-[#0052FF] hover:bg-sky-50 font-title-md text-xs sm:text-sm font-extrabold px-4 sm:px-5 py-2 rounded-full shadow-md hover:scale-105 active:scale-95 transition-all ring-2 ring-white/40 shrink-0 gap-1.5 cursor-pointer"
+              className="inline-flex items-center justify-center bg-white text-[#0052FF] hover:bg-sky-50 font-title-md text-xs sm:text-sm font-extrabold px-3 sm:px-4 py-2 rounded-full shadow-md hover:scale-105 active:scale-95 transition-all ring-2 ring-white/40 shrink-0 gap-1.5 cursor-pointer"
               title="Student Login / Web Portal"
             >
               <span className="material-symbols-outlined text-[18px]">account_circle</span>
-              <span className="whitespace-nowrap">Student Login</span>
+              <span className="whitespace-nowrap hidden sm:inline">Student Login</span>
+              <span className="whitespace-nowrap sm:hidden">Login</span>
             </a>
 
             <a
               href="tel:+918459344077"
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/20 border border-white/35 hover:bg-white/30 hidden sm:flex items-center justify-center text-white transition-all shadow-inner"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/20 border border-white/35 hover:bg-white/30 hidden lg:flex items-center justify-center text-white transition-all shadow-inner"
               title="Call Satara HQ: +91 84593 44077"
             >
               <span className="material-symbols-outlined text-[16px]">call</span>
@@ -217,6 +222,9 @@ export const Navbar: React.FC = () => {
                 <span>Student Login</span>
               </a>
             </div>
+
+            {/* Mobile Language Selector */}
+            <LanguageSelector variant="mobile" />
           </div>
         )}
       </div>

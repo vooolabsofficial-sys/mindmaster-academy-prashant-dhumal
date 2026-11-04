@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SEO } from '../components/SEO';
 import { submitWebsiteLead } from '../config/appConfig';
+import { useLanguage } from '../context/LanguageContext';
 
 export const DemoHub: React.FC = () => {
+  const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState<'enquiry' | 'call'>('enquiry');
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [enquirySubmitting, setEnquirySubmitting] = useState(false);
@@ -29,28 +31,38 @@ export const DemoHub: React.FC = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const getEnquiryWhatsAppUrl = () => {
-    const text = `नमस्कार प्रशांत धुमाळ सर,\nमी माइंड मास्टर अकॅडमीच्या वेबसाईटवर ॲडमिशन चौकशी नोंदवली आहे.\n\n👤 नाव: ${formData.name.trim()}\n📱 मोबाईल: ${formData.phone.trim()}\n📧 ईमेल: ${formData.email.trim() || 'नाही'}\n🎓 कोर्स: ${formData.program}\n📍 सेंटर: ${formData.location}\n📝 मेसेज: ${formData.notes || 'माहिती हवी आहे'}\n\nकृपया मला प्रवेश प्रक्रिया व बॅचेसची माहिती पाठवा. धन्यवाद!`;
+    let text = '';
+    if (language === 'mr') {
+      text = `नमस्कार प्रशांत धुमाळ सर,\nमी माइंड मास्टर अकॅडमीच्या वेबसाईटवर ॲडमिशन चौकशी नोंदवली आहे.\n\n👤 नाव: ${formData.name.trim()}\n📱 मोबाईल: ${formData.phone.trim()}\n📧 ईमेल: ${formData.email.trim() || 'नाही'}\n🎓 कोर्स: ${formData.program}\n📍 सेंटर: ${formData.location}\n📝 मेसेज: ${formData.notes || 'माहिती हवी आहे'}\n\nकृपया मला प्रवेश प्रक्रिया व बॅचेसची माहिती पाठवा. धन्यवाद!`;
+    } else {
+      text = `Hello Prashant Dhumal Sir,\nI have submitted an admissions inquiry on mindmasteredu.in.\n\n👤 Name: ${formData.name.trim()}\n📱 Phone: ${formData.phone.trim()}\n📧 Email: ${formData.email.trim() || 'N/A'}\n🎓 Program: ${formData.program}\n📍 Center: ${formData.location}\n📝 Notes: ${formData.notes || 'Looking for batch guidance'}\n\nPlease share admission details and schedule. Thank you!`;
+    }
     return `https://wa.me/918459344077?text=${encodeURIComponent(text)}`;
   };
 
   const getDemoWhatsAppUrl = () => {
     const attendeeMap: Record<string, string> = {
-      'grade-3-7': 'इयत्ता ३री ते ७वी (पाढे व फाउंडेशन)',
-      'grade-8-12': 'इयत्ता ८वी ते १२वी व बोर्ड परीक्षा',
-      'college-mpsc': 'कॉलेज / MPSC / पोलीस भरती',
-      'teacher': 'शिक्षक व पालक प्रशिक्षण'
+      'grade-3-7': 'Grades 3 to 7 (Foundation & Tables)',
+      'grade-8-12': 'Grades 8 to 12 & Board Exams',
+      'college-mpsc': 'College / MPSC / Police Bharti',
+      'teacher': 'Teacher & Parent Coaching'
     };
     const dateMap: Record<string, string> = {
-      'sat': 'शनिवार (Saturday)',
-      'sun': 'रविवार (Sunday - Live with Prashant Sir)',
-      'next-sun': 'पुढील रविवार (Next Sunday)'
+      'sat': 'Saturday',
+      'sun': 'Sunday (Live with Prashant Sir)',
+      'next-sun': 'Next Sunday'
     };
     const timeMap: Record<string, string> = {
-      'morning': 'सकाळी १०:०० ते ११:३० वा.',
-      'evening': 'संध्याकाळी ०४:०० ते ०५:३० वा.'
+      'morning': '10:00 AM – 11:30 AM IST',
+      'evening': '04:00 PM – 05:30 PM IST'
     };
 
-    const text = `नमस्कार प्रशांत धुमाळ सर,\nमी माइंड मास्टर अकॅडमीच्या मोफत विकेंड डेमो क्लाससाठी सीट बुक केली आहे.\n\n👤 नाव: ${demoName.trim()}\n📱 मोबाईल: ${demoPhone.trim()}\n🎓 विद्यार्थी वर्ग: ${attendeeMap[attendee] || attendee}\n📅 वार/दिवस: ${dateMap[demoDate] || demoDate}\n⏰ वेळ: ${timeMap[timeSlot] || timeSlot}\n\nकृपया मला मोफत डेमो सेशनची झूम व क्लासरूम लिंक पाठवा. धन्यवाद!`;
+    let text = '';
+    if (language === 'mr') {
+      text = `नमस्कार प्रशांत धुमाळ सर,\nमी माइंड मास्टर अकॅडमीच्या मोफत विकेंड डेमो क्लाससाठी सीट बुक केली आहे.\n\n👤 नाव: ${demoName.trim()}\n📱 मोबाईल: ${demoPhone.trim()}\n🎓 विद्यार्थी वर्ग: ${attendeeMap[attendee] || attendee}\n📅 वार/दिवस: ${dateMap[demoDate] || demoDate}\n⏰ वेळ: ${timeMap[timeSlot] || timeSlot}\n\nकृपया मला मोफत डेमो सेशनची झूम व क्लासरूम लिंक पाठवा. धन्यवाद!`;
+    } else {
+      text = `Hello Prashant Dhumal Sir,\nI have reserved a complimentary seat for the upcoming weekend demo seminar.\n\n👤 Name: ${demoName.trim()}\n📱 Phone: ${demoPhone.trim()}\n🎓 Category: ${attendeeMap[attendee] || attendee}\n📅 Day: ${dateMap[demoDate] || demoDate}\n⏰ Time Slot: ${timeMap[timeSlot] || timeSlot}\n\nPlease share the Zoom link and classroom pass. Thank you!`;
+    }
     return `https://wa.me/918459344077?text=${encodeURIComponent(text)}`;
   };
 
@@ -320,9 +332,13 @@ export const DemoHub: React.FC = () => {
                     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3.5">
                       <span className="material-symbols-outlined text-emerald-600 text-5xl shrink-0">check_circle</span>
                       <div>
-                        <h4 className="font-bold text-lg text-emerald-900">चौकशी ॲडमिनकडे नोंदवली गेली!</h4>
+                        <h4 className="font-bold text-lg text-emerald-900">
+                          {language === 'mr' ? 'चौकशी ॲडमिनकडे नोंदवली गेली!' : 'Inquiry Saved to Admin Desk!'}
+                        </h4>
                         <p className="text-xs sm:text-sm text-emerald-800 mt-0.5">
-                          आपली चौकशी ॲडमिन डेस्ककडे सेव्ह झाली आहे. आमचे वरिष्ठ कौन्सिलर {formData.phone || 'आपल्या नंबरवर'} संपर्क साधतील.
+                          {language === 'mr'
+                            ? `आपली चौकशी ॲडमिन डेस्ककडे सेव्ह झाली आहे. आमचे वरिष्ठ कौन्सिलर ${formData.phone || 'आपल्या नंबरवर'} संपर्क साधतील.`
+                            : `Your inquiry has been logged with the admissions team. A senior academic counselor will ring ${formData.phone || 'your phone'} shortly.`}
                         </p>
                       </div>
                     </div>
@@ -334,7 +350,7 @@ export const DemoHub: React.FC = () => {
                         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-base">chat</span>
-                        <span>व्हॉट्सॲपवर थेट बोला →</span>
+                        <span>{language === 'mr' ? 'व्हॉट्सॲपवर थेट बोला →' : 'Connect on WhatsApp →'}</span>
                       </a>
                       <button
                         type="button"
@@ -344,7 +360,7 @@ export const DemoHub: React.FC = () => {
                         }}
                         className="text-xs text-emerald-800 hover:text-emerald-950 underline font-medium cursor-pointer"
                       >
-                        दुसरी चौकशी नोंदवा
+                        {language === 'mr' ? 'दुसरी चौकशी नोंदवा' : 'Submit Another Inquiry'}
                       </button>
                     </div>
                   </div>
@@ -632,9 +648,13 @@ export const DemoHub: React.FC = () => {
                     <span className="material-symbols-outlined text-4xl">event_available</span>
                   </div>
                   <div>
-                    <h4 className="font-bold text-xl text-emerald-900">सीट यशस्वीरित्या आरक्षित झाली!</h4>
+                    <h4 className="font-bold text-xl text-emerald-900">
+                      {language === 'mr' ? 'सीट यशस्वीरित्या आरक्षित झाली!' : 'Demo Seat Reserved Successfully!'}
+                    </h4>
                     <p className="text-xs sm:text-sm text-emerald-800 mt-1 max-w-md mx-auto">
-                      तुमच्यासाठी आगामी विकेंड बॅच ({demoDate === 'sat' ? 'शनिवार' : 'रविवार'} • {timeSlot === 'morning' ? 'सकाळी १०:०० वा.' : 'संध्याकाळी ०४:०० वा.'}) मोफत सीट आरक्षित केली आहे. ॲडमिन डेस्ककडे नोंद झाली आहे.
+                      {language === 'mr'
+                        ? `तुमच्यासाठी आगामी विकेंड बॅच (${demoDate === 'sat' ? 'शनिवार' : 'रविवार'} • ${timeSlot === 'morning' ? 'सकाळी १०:०० वा.' : 'संध्याकाळी ०४:०० वा.'}) मोफत सीट आरक्षित केली आहे. ॲडमिन डेस्ककडे नोंद झाली आहे.`
+                        : `We have reserved your complimentary seat for the upcoming weekend batch (${demoDate === 'sat' ? 'Saturday' : 'Sunday'} • ${timeSlot === 'morning' ? '10:00 AM' : '04:00 PM'}). Logged with the Admin Desk.`}
                     </p>
                   </div>
                   <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -645,7 +665,7 @@ export const DemoHub: React.FC = () => {
                       className="w-full sm:w-auto px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-base">chat</span>
-                      <span>व्हॉट्सॲपवर क्लास लिंक मिळवा</span>
+                      <span>{language === 'mr' ? 'व्हॉट्सॲपवर क्लास लिंक मिळवा' : 'Receive Class Pass on WhatsApp'}</span>
                     </a>
                     <button
                       type="button"
@@ -656,7 +676,7 @@ export const DemoHub: React.FC = () => {
                       }}
                       className="w-full sm:w-auto px-5 py-3 rounded-full bg-white hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-300 transition-colors cursor-pointer"
                     >
-                      दुसऱ्या विद्यार्थ्यासाठी नोंदणी
+                      {language === 'mr' ? 'दुसऱ्या विद्यार्थ्यासाठी नोंदणी' : 'Register Another Student'}
                     </button>
                   </div>
                 </div>
