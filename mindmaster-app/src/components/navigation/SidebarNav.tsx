@@ -8,8 +8,7 @@ import {
   PlaySquare, 
   FileText, 
   Award, 
-  Settings, 
-  HelpCircle
+  Settings 
 } from "lucide-react";
 import { getUnreadCountForStudent } from "@/lib/messageStore";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -24,9 +23,9 @@ export default function SidebarNav() {
   const navItems = [
     { href: "/home", altHref: "/", label: isMarathi ? "मुख्यपृष्ठ" : "Home", icon: Home },
     { href: "/my-courses", label: isMarathi ? "माझे कोर्सेस" : "My Courses", icon: PlaySquare },
-    { href: "/notes", label: isMarathi ? "अभ्यास वॉल्ट (PDFs)" : "Study Vault (PDFs)", icon: FileText },
+    { href: "/notes", label: isMarathi ? "अभ्यास वॉल्ट" : "Study Vault", icon: FileText },
     { href: "/certificate", label: isMarathi ? "प्रमाणपत्रे" : "Certificates", icon: Award },
-    { href: "/profile", label: isMarathi ? "सेटिंग्ज आणि मदत" : "Settings & Support", icon: Settings, hasUnread: true },
+    { href: "/profile", label: isMarathi ? "सेटिंग्ज" : "Settings", icon: Settings, hasUnread: true },
   ];
 
   useEffect(() => {
@@ -118,23 +117,11 @@ export default function SidebarNav() {
           })}
         </nav>
 
-        {/* Bottom Utility & Student Profile Badge */}
-        <div className="p-3 border-t border-slate-200/70 dark:border-slate-800 shrink-0 flex flex-col gap-2 bg-slate-50/50 dark:bg-slate-900/40">
-          <Link
-            href="/help"
-            className="flex items-center h-10 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all cursor-pointer"
-          >
-            <div className="w-6 h-6 flex items-center justify-center shrink-0">
-              <HelpCircle className="w-4 h-4 text-slate-500 dark:text-slate-400 stroke-[1.8]" />
-            </div>
-            <span className="ml-3 text-xs tracking-wide whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-all duration-200 delay-75">
-              How to Use Guide
-            </span>
-          </Link>
-
+        {/* Bottom Left: Quick Settings & Student Identity */}
+        <div className="p-3 border-t border-slate-200/70 dark:border-slate-800 shrink-0 flex flex-col gap-1.5 bg-slate-50/50 dark:bg-slate-900/40">
           <Link
             href="/profile"
-            className="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all cursor-pointer"
+            className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all cursor-pointer group/bottomSetting"
           >
             <div className="relative w-8 h-8 rounded-full bg-[#2563EB] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
               {studentName[0] || "S"}
@@ -144,8 +131,9 @@ export default function SidebarNav() {
               <span className="text-xs font-bold text-slate-900 dark:text-white block leading-none truncate max-w-[130px]">
                 {studentName}
               </span>
-              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block">
-                Active Member
+              <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold mt-1 flex items-center gap-1">
+                <Settings className="w-3 h-3 inline" />
+                {isMarathi ? "सेटिंग्ज उघडा" : "Open Settings"}
               </span>
             </div>
           </Link>

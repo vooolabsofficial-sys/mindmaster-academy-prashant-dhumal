@@ -161,7 +161,7 @@ export default function StudentHomePage() {
               </span>
               <span className="text-slate-300 dark:text-slate-600">•</span>
               <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                BILINGUAL (EN + मराठी)
+                BILINGUAL (ENGLISH + MARATHI)
               </span>
             </div>
 
@@ -206,7 +206,7 @@ export default function StudentHomePage() {
                 className="px-4 py-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-[#2563EB] dark:text-blue-400 font-bold text-xs sm:text-sm border border-blue-200 dark:border-blue-800/60 transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-current ml-0.5" />
-                <span>{isMarathi ? "अकादमी परिचय व्हिडिओ" : "Orientation Video"}</span>
+                <span>{isMarathi ? "अकादमी परिचय व्हिडिओ" : "Academy Orientation Video"}</span>
               </button>
             </div>
           </div>
