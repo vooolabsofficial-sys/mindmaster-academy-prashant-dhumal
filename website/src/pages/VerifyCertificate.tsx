@@ -22,64 +22,6 @@ export interface VerifiedCertificate {
   completion_percentage?: number;
 }
 
-// Fallback embedded ledger for instant instant test verification
-const SAMPLE_CERTIFICATES: Record<string, VerifiedCertificate> = {
-  'MMA-RVK-6789-VM26-K8X2': {
-    id: 'cert-rohan',
-    certificate_no: 'MMA-RVK-6789-VM26-K8X2',
-    student_name: 'Rohan Vinayak Kulkarni',
-    student_phone_masked: '+91 98220 *****',
-    course_title: 'Superfast Vedic Mathematics Mastery (स्पीड व मॅजिक वैदिक गणित)',
-    course_code: 'MMA-01',
-    category: 'Vedic Mathematics & Speed Arithmetic',
-    issued_at_ist: '15-Oct-2026 11:30 AM IST',
-    grade: 'Grade A+ (Distinction - 96%)',
-    roll_no: 'MM-SAT-2026-0842',
-    completion_percentage: 100,
-    signatory_name: 'Prashant Dhumal Sir',
-    signatory_title: 'Founder & International Memory Coach',
-    academy_name: 'MindMaster Academy',
-    centres: 'Satara Flagship Campus HQ, Maharashtra',
-    status: 'active',
-  },
-  'MMA-PD-4077-MM26-9A1F': {
-    id: 'cert-pooja',
-    certificate_no: 'MMA-PD-4077-MM26-9A1F',
-    student_name: 'Pooja Santosh Deshmukh',
-    student_phone_masked: '+91 84593 *****',
-    course_title: 'Photographic Memory & Rapid Recall System (फोटोग्राफिक मेमरी)',
-    course_code: 'MMA-02',
-    category: 'Cognitive Memory & Board/MPSC Exam Recall',
-    issued_at_ist: '20-Oct-2026 04:15 PM IST',
-    grade: 'Grade A+ (MPSC State Rank Holder)',
-    roll_no: 'MM-SAT-2026-0112',
-    completion_percentage: 100,
-    signatory_name: 'Prashant Dhumal Sir',
-    signatory_title: 'Founder & International Memory Coach',
-    academy_name: 'MindMaster Academy',
-    centres: 'Satara Flagship Campus HQ, Maharashtra',
-    status: 'active',
-  },
-  'MMA-SS-1234-CL26-7B3E': {
-    id: 'cert-sanket',
-    certificate_no: 'MMA-SS-1234-CL26-7B3E',
-    student_name: 'Sanket Ramesh Shinde',
-    student_phone_masked: '+91 98221 *****',
-    course_title: '500-Year Superfast Calendar Mental Algorithm (५०० वर्षांचे कॅलेंडर)',
-    course_code: 'MMA-03',
-    category: 'Mental Calendar Calculation Mastery',
-    issued_at_ist: '25-Oct-2026 02:00 PM IST',
-    grade: 'Grade A (Speed Champion - Under 2 Seconds)',
-    roll_no: 'MM-SAT-2026-0567',
-    completion_percentage: 100,
-    signatory_name: 'Prashant Dhumal Sir',
-    signatory_title: 'Founder & International Memory Coach',
-    academy_name: 'MindMaster Academy',
-    centres: 'Satara Flagship Campus HQ, Maharashtra',
-    status: 'active',
-  },
-};
-
 export const VerifyCertificate: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryCert = searchParams.get('cert') || searchParams.get('no') || '';
@@ -114,9 +56,6 @@ export const VerifyCertificate: React.FC = () => {
 
       if (res.ok && data.success && data.certificate) {
         setCertData(data.certificate);
-      } else if (SAMPLE_CERTIFICATES[target]) {
-        // Fallback to sample ledger if server offline
-        setCertData(SAMPLE_CERTIFICATES[target]);
       } else {
         setErrorMsg(
           data.error ||
@@ -124,12 +63,7 @@ export const VerifyCertificate: React.FC = () => {
         );
       }
     } catch {
-      // Local fallback
-      if (SAMPLE_CERTIFICATES[target]) {
-        setCertData(SAMPLE_CERTIFICATES[target]);
-      } else {
-        setErrorMsg('Could not verify with server. Please verify your connection or check serial number.');
-      }
+      setErrorMsg('Could not verify with server. Please verify your connection or check serial number.');
     } finally {
       setIsLoading(false);
     }
@@ -202,7 +136,7 @@ export const VerifyCertificate: React.FC = () => {
             Authenticate Certificate &amp; Marksheet
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
-            Verify official course completion certificates, grades, and speed arithmetic credentials issued by <strong>Prashant Dhumal Sir</strong>. Enter the unique serial number printed on the certificate or test with a sample below.
+            Verify official course completion certificates, grades, and speed arithmetic credentials issued by <strong>Prashant Dhumal Sir</strong>. Enter the unique serial number printed on your certificate or scan the QR code to verify.
           </p>
         </div>
 
@@ -245,45 +179,6 @@ export const VerifyCertificate: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Quick 1-Click Sample Testing Buttons */}
-          <div className="mt-4 pt-3.5 border-t border-slate-100">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
-              Try Instant Sample Certificates:
-            </span>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setSerialInput('MMA-RVK-6789-VM26-K8X2');
-                  handleVerify('MMA-RVK-6789-VM26-K8X2');
-                }}
-                className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#0052FF] text-[11px] font-bold border border-blue-200 transition-colors cursor-pointer"
-              >
-                🎓 Vedic Maths (Rohan Kulkarni)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSerialInput('MMA-PD-4077-MM26-9A1F');
-                  handleVerify('MMA-PD-4077-MM26-9A1F');
-                }}
-                className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-200 transition-colors cursor-pointer"
-              >
-                🏆 MPSC Merit (Pooja Deshmukh)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSerialInput('MMA-SS-1234-CL26-7B3E');
-                  handleVerify('MMA-SS-1234-CL26-7B3E');
-                }}
-                className="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 text-[11px] font-bold border border-purple-200 transition-colors cursor-pointer"
-              >
-                ⚡ 500-Yr Calendar (Sanket Shinde)
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Authenticated Result Display */}
@@ -469,19 +364,6 @@ export const VerifyCertificate: React.FC = () => {
               <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto mt-1 leading-relaxed">
                 {errorMsg}
               </p>
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setSerialInput('MMA-RVK-6789-VM26-K8X2');
-                  handleVerify('MMA-RVK-6789-VM26-K8X2');
-                }}
-                className="text-xs font-bold text-[#0052FF] hover:underline cursor-pointer"
-              >
-                Click here to test with a verified sample certificate →
-              </button>
             </div>
           </div>
         )}

@@ -1132,49 +1132,6 @@ export const Home: React.FC = () => {
           </section>
         )}
 
-        {/* Big Official Certificate & Marksheet Verification Portal Banner */}
-        <section className="w-full px-gutter-mobile lg:px-gutter-desktop py-8" id="verify-credentials">
-          <div className="max-w-6xl mx-auto rounded-3xl bg-gradient-to-r from-[#0E1B3D] via-[#162752] to-[#0E1B3D] text-white p-8 md:p-12 shadow-2xl border border-white/15 relative overflow-hidden">
-            <div className="absolute -right-16 -bottom-16 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
-              <div className="text-center lg:text-left max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-3 border border-emerald-500/30">
-                  <span className="material-symbols-outlined text-[16px]">verified</span>
-                  <span>Official Cryptographic Credential Verification</span>
-                </div>
-                <h2 className="font-heading-bold text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
-                  Student Certificate &amp; Marksheet Verification
-                </h2>
-                <p className="text-slate-300 text-xs sm:text-sm mt-2.5 leading-relaxed">
-                  Authenticate digital course completion certificates and merit marksheets issued by <strong>Prashant Dhumal Sir</strong>. Built for instant verification by schools, colleges, employers, and parents.
-                </p>
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mt-4 text-[11px] text-slate-300 font-medium">
-                  <span className="flex items-center gap-1.5 text-emerald-300">
-                    <span className="material-symbols-outlined text-base">check_circle</span> Instant QR Code Scan
-                  </span>
-                  <span className="flex items-center gap-1.5 text-emerald-300">
-                    <span className="material-symbols-outlined text-base">check_circle</span> ISO 9001:2015 Registered Ledger
-                  </span>
-                  <span className="flex items-center gap-1.5 text-emerald-300">
-                    <span className="material-symbols-outlined text-base">check_circle</span> Download &amp; Print Official PDF
-                  </span>
-                </div>
-              </div>
-
-              {/* Big Action Button */}
-              <div className="shrink-0 w-full sm:w-auto">
-                <Link
-                  to="/verify-certificate"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-title-md text-sm sm:text-base font-extrabold shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer ring-4 ring-emerald-400/25"
-                >
-                  <span className="material-symbols-outlined text-xl">verified_user</span>
-                  <span>Verify Certificate &amp; Marksheet →</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* CTA Section */}
         <section className="w-full px-gutter-mobile lg:px-gutter-desktop py-12">
           <div className="max-w-6xl mx-auto rounded-3xl bg-secondary text-white p-8 md:p-14 relative overflow-hidden text-center shadow-xl">
@@ -1193,6 +1150,13 @@ export const Home: React.FC = () => {
                 >
                   Book a Free Demo Class
                 </button>
+                <Link
+                  to="/verify-certificate"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-title-md px-7 py-3.5 rounded-full shadow-md hover:scale-105 active:scale-95 transition-all text-sm font-bold cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">verified</span>
+                  <span>Verify Certificate</span>
+                </Link>
                 <a
                   className="w-full sm:w-auto inline-flex items-center justify-center border-2 border-white text-white font-title-md px-8 py-3.5 rounded-full hover:bg-white hover:text-secondary transition-all text-sm"
                   href="tel:+918459344077"
