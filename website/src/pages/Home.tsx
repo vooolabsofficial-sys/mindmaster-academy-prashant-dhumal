@@ -467,8 +467,12 @@ export const Home: React.FC = () => {
                 <div className="absolute -inset-4 bg-gradient-to-tr from-blue-600/20 via-secondary/15 to-amber-500/15 rounded-3xl blur-2xl transform -rotate-1 pointer-events-none" />
                 <div className="relative rounded-3xl overflow-hidden border-2 border-slate-200/90 shadow-2xl bg-slate-900 group">
                   <img
-                    src="/assets/images/prashant_dhumal_executive_portrait.png"
+                    src="/assets/images/prashant_dhumal_executive_portrait.webp"
                     alt="Prashant Dhumal Sir — Founder & Memory Master, MindMaster Academy"
+                    width="480"
+                    height="600"
+                    loading="lazy"
+                    decoding="async"
                     className="w-full aspect-[4/5] object-cover object-top group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
@@ -567,8 +571,12 @@ export const Home: React.FC = () => {
               <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group">
                 <div className="relative h-64 sm:h-72 w-full overflow-hidden">
                   <img
-                    src="/assets/images/classroom_memory_drills.png"
+                    src="/assets/images/classroom_memory_drills.webp"
                     alt="State Level Memory & Speed Calculation Masterclass celebration at MindMaster Academy"
+                    width="800"
+                    height="448"
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
@@ -653,8 +661,12 @@ export const Home: React.FC = () => {
               <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all group">
                 <div className="relative h-64 sm:h-72 w-full overflow-hidden">
                   <img
-                    src="/assets/images/mpsc_merit_topper.jpg"
+                    src="/assets/images/mpsc_merit_topper.webp"
                     alt="MPSC and State Scholarship Merit Rankers trained by Prashant Dhumal Sir"
+                    width="800"
+                    height="448"
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />

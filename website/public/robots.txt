@@ -20,5 +20,6 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
-# XML Sitemap
+# XML Sitemap & AI Agent Map
 Sitemap: https://mindmasteredu.in/sitemap.xml
+Agentmap: https://mindmasteredu.in/.well-known/ard.json

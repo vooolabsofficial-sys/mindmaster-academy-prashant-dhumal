@@ -56,22 +56,27 @@ export interface LiveDbCourse {
   accessMonths?: number;
 }
 
-// Fetch live courses from student app API / Supabase sync
-export const fetchLiveCoursesFromApp = async (): Promise<LiveDbCourse[]> => {
-  try {
-    const res = await fetch(`${getAppUrl("/api/courses")}?t=${Date.now()}`, {
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (data && Array.isArray(data.courses)) {
-      return data.courses.filter((c: any) => c.status === "live");
+let _coursesPromise: Promise<LiveDbCourse[]> | null = null;
+export const fetchLiveCoursesFromApp = (): Promise<LiveDbCourse[]> => {
+  if (_coursesPromise) return _coursesPromise;
+
+  _coursesPromise = (async () => {
+    try {
+      const res = await fetch(`${getAppUrl("/api/courses")}?t=${Date.now()}`, {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      if (data && Array.isArray(data.courses)) {
+        return data.courses.filter((c: any) => c.status === "live");
+      }
+      return [];
+    } catch {
+      return [];
     }
-    return [];
-  } catch {
-    return [];
-  }
+  })();
+
+  return _coursesPromise;
 };
 
 export const getWhatsAppPreBookUrl = (courseTitle: string = "MindMaster Academy Courses"): string => {
@@ -407,41 +412,47 @@ export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
   },
 };
 
-export const fetchLiveWebsiteCms = async (): Promise<WebsiteCmsData> => {
-  try {
-    const res = await fetch(`${getAppUrl("/api/website-cms")}?t=${Date.now()}`, {
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json && json.success && json.data) {
-        if (typeof window !== "undefined") {
-          try {
-            localStorage.setItem("mma_website_cms_cache", JSON.stringify(json.data));
-          } catch {}
-        }
-        return json.data;
-      }
-    }
-  } catch {}
+let _cmsPromise: Promise<WebsiteCmsData> | null = null;
+export const fetchLiveWebsiteCms = (): Promise<WebsiteCmsData> => {
+  if (_cmsPromise) return _cmsPromise;
 
-  // Fallback to client cache or default English CMS
-  if (typeof window !== "undefined") {
+  _cmsPromise = (async () => {
     try {
-      const cached = localStorage.getItem("mma_website_cms_cache");
-      if (cached) {
-        // If cached data contains outdated mentor names, purge stale cache immediately
-        if (cached.includes("Sagar") || cached.includes("sagar")) {
-          localStorage.removeItem("mma_website_cms_cache");
-        } else {
-          return JSON.parse(cached);
+      const res = await fetch(`${getAppUrl("/api/website-cms")}?t=${Date.now()}`, {
+        headers: { Accept: "application/json" },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.success && json.data) {
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("mma_website_cms_cache", JSON.stringify(json.data));
+            } catch {}
+          }
+          return json.data;
         }
       }
     } catch {}
-  }
 
-  return DEFAULT_WEBSITE_CMS;
+    // Fallback to client cache or default English CMS
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("mma_website_cms_cache");
+        if (cached) {
+          // If cached data contains outdated mentor names, purge stale cache immediately
+          if (cached.includes("Sagar") || cached.includes("sagar")) {
+            localStorage.removeItem("mma_website_cms_cache");
+          } else {
+            return JSON.parse(cached);
+          }
+        }
+      } catch {}
+    }
+
+    return DEFAULT_WEBSITE_CMS;
+  })();
+
+  return _cmsPromise;
 };
 
 export const submitWebsiteLead = async (lead: {

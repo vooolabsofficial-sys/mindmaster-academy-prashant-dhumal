@@ -1,0 +1,29 @@
+{
+  "specVersion": "1.0",
+  "entries": [
+    {
+      "identifier": "urn:air:mindmasteredu.in:tools:courses",
+      "displayName": "MindMaster Academic Programs & Courses",
+      "type": "application/json",
+      "url": "https://mindmasteredu.in/courses"
+    },
+    {
+      "identifier": "urn:air:mindmasteredu.in:tools:verification",
+      "displayName": "MindMaster Student Certificate Verification",
+      "type": "application/json",
+      "url": "https://mindmasteredu.in/verify-certificate"
+    },
+    {
+      "identifier": "urn:air:mindmasteredu.in:tools:demo",
+      "displayName": "MindMaster Free Demo Hub",
+      "type": "application/json",
+      "url": "https://mindmasteredu.in/demo"
+    },
+    {
+      "identifier": "urn:air:mindmasteredu.in:resources:llms-txt",
+      "displayName": "MindMaster LLM Documentation",
+      "type": "text/markdown",
+      "url": "https://mindmasteredu.in/llms.txt"
+    }
+  ]
+}
