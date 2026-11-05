@@ -20,7 +20,7 @@ import {
   exportCouponsMasterToExcel,
 } from "@/lib/excelExporter";
 import { toast } from "sonner";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import SubmitButton from "@/components/ui/SubmitButton";
 import Spinner from "@/components/ui/Spinner";
@@ -108,6 +108,9 @@ export default function CouponManagerPage() {
     setFormUsageLimit(100);
     setFormIsActive(true);
     setIsDrawerOpen(true);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   // Open Edit Modal
@@ -152,6 +155,9 @@ export default function CouponManagerPage() {
     setFormUsageLimit(cpn.usage_limit || cpn.maxTotalUses || 100);
     setFormIsActive(cpn.is_active !== undefined ? cpn.is_active : cpn.status !== "disabled" && cpn.status !== "paused");
     setIsDrawerOpen(true);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const toggleCourseSelect = (courseId: string) => {
@@ -470,8 +476,548 @@ export default function CouponManagerPage() {
     <PermissionGuard permission="coupons.manage">
       <AdminShell>
         <div className="space-y-6">
-          {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-xs">
+          {isDrawerOpen ? (
+            /* ========================================================= */
+            /* IN-PAGE DEDICATED COUPON STUDIO WORKSPACE */
+            /* ========================================================= */
+            <div className="space-y-6 animate-fadeIn">
+              {/* Studio Header Card */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-[#E4E8F8] dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <button
+                    type="button"
+                    onClick={() => !isSaving && setIsDrawerOpen(false)}
+                    className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl transition shadow-xs cursor-pointer"
+                    title="यादीकडे परत जा"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">🎟️</span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#0B57D0] dark:text-blue-400 font-mono text-xs font-black">
+                        {formCode.trim().toUpperCase() || "NEW_COUPON"}
+                      </span>
+                      <span className="text-xs text-slate-400 font-semibold">• {editingCoupon ? "कूपन संपादन मोड" : "नवीन कूपन निर्मिती"}</span>
+                    </div>
+                    <h1 className="text-2xl font-black text-[#0E1B3D] dark:text-white font-heading">
+                      {editingCoupon ? `कूपन संपादन स्टुडिओ: ${editingCoupon.code}` : "कूपन निर्मिती स्टुडिओ (Create New Coupon)"}
+                    </h1>
+                    <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
+                      कूपन कोड, सवलत मूल्य, मर्यादा, वैधता तारीख आणि लागू कोर्सेस निवडून सक्रिय करा.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition cursor-pointer"
+                  >
+                    रद्द करा (Cancel)
+                  </button>
+                  <SubmitButton
+                    type="button"
+                    onClick={() => {
+                      const form = document.getElementById("coupon-drawer-form") as HTMLFormElement;
+                      if (form) form.requestSubmit();
+                    }}
+                    loading={isSaving}
+                    loadingText="कूपन सेव्ह करत आहे..."
+                    disabled={!formCode.trim()}
+                    className="px-6 py-2.5 rounded-xl text-xs font-black shadow-md cursor-pointer"
+                  >
+                    <span>{editingCoupon ? "बदल सेव्ह करा (Save)" : "कूपन सक्रिय करा (Activate Coupon →)"}</span>
+                  </SubmitButton>
+                </div>
+              </div>
+
+              {/* ⚡ 1-CLICK MARATHI COUPON TEMPLATES */}
+              <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/80 rounded-3xl border border-blue-200/80 dark:border-slate-700 space-y-3 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <span className="text-xs font-extrabold text-[#0B57D0] dark:text-blue-400 flex items-center gap-2">
+                    <span className="text-base">⚡</span>
+                    <span>रेडीमेड १-क्लिक कूपन टेम्पलेट्स (1-Click Instant Templates):</span>
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">एका क्लिकवर कोड, सवलत आणि तपशील भरा</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {[
+                    { code: "POLICE20", disc: "20", type: "percentage", desc: "पोलीस भरती विशेष २०% सवलत", tag: "⚡ पोलीस भरती २०%" },
+                    { code: "GUDHI50", disc: "50", type: "percentage", desc: "गुढीपाडवा विशेष ५०% सवलत", tag: "🚩 गुढीपाडवा ५०%" },
+                    { code: "FLAT500", disc: "500", type: "flat", desc: "थेट ₹५०० ची विशेष सूट", tag: "💰 ₹५०० थेट सूट" },
+                    { code: "SEMINAR2026", disc: "30", type: "percentage", desc: "सातारा व पुणे सेमिनार ३०% सवलत", tag: "🏢 सेमिनार ३०%" },
+                  ].map((tmpl, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setFormCode(tmpl.code);
+                        setFormValue(Number(tmpl.disc));
+                        setFormDiscountType(tmpl.type as any);
+                        setFormDesc(tmpl.desc);
+                        setFormAppliesAll(true);
+                        setFormIsPublicChip(true);
+                        toast.success(`🎉 "${tmpl.code}" टेम्पलेट भरले!`);
+                      }}
+                      className="p-3 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 rounded-2xl text-left transition cursor-pointer shadow-2xs hover:border-[#0B57D0]"
+                    >
+                      <p className="font-mono font-black text-sm text-[#0B57D0] dark:text-blue-400">{tmpl.code}</p>
+                      <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mt-1">{tmpl.tag}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Form Body - 2 Column Responsive Workspace */}
+              <form onSubmit={handleSaveCoupon} id="coupon-drawer-form" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Left Column (6 cols): Code, Description, Restrictions, Promoter */}
+                  <div className="lg:col-span-6 space-y-6">
+                    {/* Code & Active Card */}
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
+                      <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                        <span>🏷️</span>
+                        <span>कूपन कोड व स्थिती (Coupon Identity)</span>
+                      </h3>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center justify-between">
+                            <span>कूपन कोड (Coupon Code) *</span>
+                            {formCode.trim().length >= 3 && (
+                              <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> मान्य कोड
+                              </span>
+                            )}
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              required
+                              value={formCode}
+                              onChange={(e) => setFormCode(e.target.value.toUpperCase())}
+                              placeholder="उदा. DIWALI50, MINDMASTER100"
+                              className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-mono font-black text-[#0B57D0] dark:text-blue-400 uppercase tracking-wider focus:outline-none transition-all ${
+                                formCode.trim().length >= 3
+                                  ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                                  : "bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 focus:ring-2 focus:ring-[#0B57D0]"
+                              }`}
+                            />
+                            {formCode.trim().length >= 3 && (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Active Toggle Switch */}
+                        <div className="p-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl flex items-center justify-between">
+                          <div>
+                            <p className="text-[11px] font-bold text-[#0E1B3D] dark:text-white">स्थिती (Status)</p>
+                            <p className="text-[9px] text-[#5A6478] dark:text-slate-400">{formIsActive ? "Active (सक्रिय)" : "Paused (थांबवले)"}</p>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formIsActive}
+                              onChange={(e) => setFormIsActive(e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div>
+                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                          कूपन मोहीम वर्णन (Campaign Description)
+                        </label>
+                        <input
+                          type="text"
+                          value={formDesc}
+                          onChange={(e) => setFormDesc(e.target.value)}
+                          placeholder="उदा. गुढीपाडवा विशेष ५०% सवलत किंवा सातारा सेमिनार"
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                        />
+                      </div>
+
+                      {/* School Restriction */}
+                      <div>
+                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                          शाळेचे नाव (ऐच्छिक - फक्त त्या शाळेतील विद्यार्थ्यांसाठी)
+                        </label>
+                        <input
+                          type="text"
+                          value={formSchool}
+                          onChange={(e) => setFormSchool(e.target.value)}
+                          placeholder="उदा. अभिनव विद्यालय / आदर्श हायस्कूल"
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs text-[#0E1B3D] dark:text-white placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                        />
+                        <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">
+                          {formSchool.trim()
+                            ? `हा कूपन फक्त "${formSchool.trim()}" शाळेतील विद्यार्थ्यांसाठी लागू होईल.`
+                            : "रिकामे ठेवल्यास सर्व शाळांमधील विद्यार्थ्यांना लागू होईल."}
+                        </p>
+                      </div>
+
+                      {/* Student Mobile Lock & Promoter Attribution */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                            🎯 विद्यार्थी मोबाईल लॉक (ऐच्छिक)
+                          </label>
+                          <input
+                            type="tel"
+                            maxLength={10}
+                            value={formAssignedPhone}
+                            onChange={(e) => setFormAssignedPhone(e.target.value.replace(/\D/g, ""))}
+                            placeholder="उदा. 9822012345"
+                            className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-mono font-bold text-[#0E1B3D] dark:text-white placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          />
+                          <p className="text-[10px] text-[#5A6478] dark:text-slate-400 mt-1">
+                            {formAssignedPhone.trim()
+                              ? `फक्त +91 ${formAssignedPhone.trim()} हाच विद्यार्थी वापरू शकेल.`
+                              : "रिकामे = कोणताही विद्यार्थी वापरू शकेल."}
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                            🤝 सब-ॲडमिन संदर्भ (Promoter)
+                          </label>
+                          <select
+                            value={formPromoterStaffId}
+                            onChange={(e) => setFormPromoterStaffId(e.target.value)}
+                            className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          >
+                            <option value="">None (अकादमी थेट ऑफर)</option>
+                            {staffList
+                              .filter((s) => s.role !== "main_admin")
+                              .map((s) => (
+                                <option key={s.id} value={s.id}>
+                                  {s.staffId || s.id} • {s.name} {s.district ? `(${s.district})` : ""}
+                                </option>
+                              ))}
+                          </select>
+                          <p className="text-[10px] text-[#5A6478] dark:text-slate-400 mt-1">
+                            या कूपनचे ॲट्रिब्युशन विशिष्ट स्टाफ सदस्याशी लिंक करा.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Public 1-Click Chip Toggle */}
+                      <div className="p-3 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl flex items-center justify-between text-xs">
+                        <div>
+                          <p className="font-bold text-[#0E1B3D] dark:text-white flex items-center gap-1.5">
+                            <span>👁️</span> Public /checkout १-क्लिक चिप
+                          </p>
+                          <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-0.5">
+                            {formIsPublicChip
+                              ? "चेकआउट पानावर विद्यार्थ्यांना आपोआप '🏷️ टॅप करा व सूट मिळवा' म्हणून दिसेल."
+                              : "चेकआउट यादीतून लपवलेला गुप्त प्रोमो कोड (फक्त कोड टाकल्यावर चालेल)."}
+                          </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formIsPublicChip}
+                            onChange={(e) => setFormIsPublicChip(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0B57D0]"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column (6 cols): Scope, Discount %, Quotas, Live Preview */}
+                  <div className="lg:col-span-6 space-y-6">
+                    {/* Scope Card */}
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
+                      <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                        <span>🎯</span>
+                        <span>लागू होणारे कोर्सेस व पुस्तके (Scope)</span>
+                      </h3>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-[#0E1B3D] dark:text-slate-200">
+                            {formAppliesAll ? "सर्व कोर्सेस व पुस्तकांसाठी लागू (Site-wide)" : "फक्त निवडक कोर्सेस/पुस्तकांसाठी"}
+                          </p>
+                          <p className="text-[11px] text-[#5A6478] dark:text-slate-400">
+                            {formAppliesAll ? "विद्यार्थी कोणत्याही कोर्सवर वापरू शकतात." : "फक्त खाली निवडलेल्या आयटम्सवरच कूपन चालेल."}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-[#0E1B3D] dark:text-slate-200">
+                            {formAppliesAll ? "All Items" : "Selected"}
+                          </span>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formAppliesAll}
+                              onChange={(e) => setFormAppliesAll(e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0B57D0]"></div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Multi-item selectors if applies_all is false */}
+                      {!formAppliesAll && (
+                        <div className="pt-3 border-t border-[#E4E8F8] dark:border-slate-700 space-y-4">
+                          {/* Course Selection */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="font-bold text-[#0E1B3D] dark:text-white">1. विशिष्ट कोर्सेस निवडा:</span>
+                              <span className="text-[#0B57D0] font-semibold">{formSelectedCourses.length} कोर्सेस निवडले</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1 bg-[#F5F7FF] dark:bg-slate-800 rounded-2xl">
+                              {courses.map((course) => {
+                                const isSelected = formSelectedCourses.includes(course.id) || formSelectedCourses.includes(course.code);
+                                return (
+                                  <button
+                                    type="button"
+                                    key={course.id}
+                                    onClick={() => toggleCourseSelect(course.id)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                                      isSelected
+                                        ? "bg-[#EEF4FF] dark:bg-blue-950 border-[#0B57D0] text-[#0B57D0] dark:text-blue-400 shadow-2xs font-bold"
+                                        : "bg-white dark:bg-slate-700 border-[#E4E8F8] dark:border-slate-600 text-[#5A6478] dark:text-slate-300 hover:border-slate-300"
+                                    }`}
+                                  >
+                                    <span>{isSelected ? "✓" : "+"}</span>
+                                    <span className="font-mono text-[11px] font-bold">{course.code}</span>
+                                    <span className="text-[11px] max-w-[140px] truncate">{course.title}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Paid Books Selection */}
+                          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="font-bold text-[#0E1B3D] dark:text-white">2. विशिष्ट पुस्तके निवडा:</span>
+                              <span className="text-purple-600 font-semibold">{formSelectedBooks.length} पुस्तके निवडली</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1 bg-[#F5F7FF] dark:bg-slate-800 rounded-2xl">
+                              {books.filter((b) => !b.isFree && (b.pricePaise || 0) > 0).map((book) => {
+                                const isSelected = formSelectedBooks.includes(book.id) || Boolean(book.code && formSelectedBooks.includes(book.code));
+                                return (
+                                  <button
+                                    type="button"
+                                    key={book.id}
+                                    onClick={() => toggleBookSelect(book.id)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                                      isSelected
+                                        ? "bg-purple-50 dark:bg-purple-950/40 border-purple-600 text-purple-700 dark:text-purple-300 shadow-2xs font-bold"
+                                        : "bg-white dark:bg-slate-700 border-[#E4E8F8] dark:border-slate-600 text-[#5A6478] dark:text-slate-300 hover:border-slate-300"
+                                    }`}
+                                  >
+                                    <span>{isSelected ? "✓" : "+"}</span>
+                                    <span className="font-mono text-[11px] font-bold">{book.code || "BK"}</span>
+                                    <span className="text-[11px] max-w-[140px] truncate">{book.title}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Discount & Limits Card */}
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
+                      <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                        <span>💰</span>
+                        <span>सवलत प्रकार, मूल्य आणि मर्यादा (Discount & Limits)</span>
+                      </h3>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Discount Type Segmented Control */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
+                            सवलत प्रकार:
+                          </label>
+                          <div className="flex bg-[#F5F7FF] dark:bg-slate-800 p-1 rounded-xl border border-[#E4E8F8] dark:border-slate-700">
+                            <button
+                              type="button"
+                              onClick={() => setFormDiscountType("percentage")}
+                              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                formDiscountType === "percentage"
+                                  ? "bg-[#0B57D0] text-white shadow-2xs"
+                                  : "text-[#5A6478] dark:text-slate-400 hover:text-[#0E1B3D]"
+                              }`}
+                            >
+                              % Percentage
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormDiscountType("flat")}
+                              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                formDiscountType === "flat"
+                                  ? "bg-[#0B57D0] text-white shadow-2xs"
+                                  : "text-[#5A6478] dark:text-slate-400 hover:text-[#0E1B3D]"
+                              }`}
+                            >
+                              ₹ Flat Amount
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Value Input */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
+                            सवलत मूल्य ({formDiscountType === "percentage" ? "%" : "₹"}):
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#8A94A6]">
+                              {formDiscountType === "percentage" ? "%" : "₹"}
+                            </span>
+                            <input
+                              type="number"
+                              required
+                              min="1"
+                              max={formDiscountType === "percentage" ? 100 : 50000}
+                              value={formValue}
+                              onChange={(e) => setFormValue(Number(e.target.value))}
+                              className="w-full pl-8 pr-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-black text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Validity Window (Dates) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
+                            सुरुवात तारीख:
+                          </label>
+                          <input
+                            type="date"
+                            required
+                            value={formStartsAt}
+                            onChange={(e) => setFormStartsAt(e.target.value)}
+                            className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
+                            समाप्ती तारीख:
+                          </label>
+                          <input
+                            type="date"
+                            required
+                            value={formEndsAt}
+                            onChange={(e) => setFormEndsAt(e.target.value)}
+                            className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Usage Quota & Per-User Limit */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
+                            एकूण विद्यार्थी कोटा (Total Quota):
+                          </label>
+                          <input
+                            type="number"
+                            required
+                            min="1"
+                            value={formUsageLimit}
+                            onChange={(e) => setFormUsageLimit(Number(e.target.value))}
+                            className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-black text-[#0E1B3D] dark:text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
+                            प्रति विद्यार्थी मर्यादा:
+                          </label>
+                          <div className="flex bg-[#F5F7FF] dark:bg-slate-800 p-1 rounded-xl border border-[#E4E8F8] dark:border-slate-700">
+                            <button
+                              type="button"
+                              onClick={() => setFormPerUserUsage("once")}
+                              className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                formPerUserUsage === "once"
+                                  ? "bg-violet-600 text-white shadow-2xs"
+                                  : "text-[#5A6478] dark:text-slate-400"
+                              }`}
+                            >
+                              🔒 १ वेळा (1x)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormPerUserUsage("multiple")}
+                              className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                formPerUserUsage === "multiple"
+                                  ? "bg-indigo-600 text-white shadow-2xs"
+                                  : "text-[#5A6478] dark:text-slate-400"
+                              }`}
+                            >
+                              🔄 Multiple
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* LIVE PREVIEW ROW */}
+                      <div className="p-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-slate-800 dark:to-slate-800/60 border border-blue-200 dark:border-slate-700 rounded-2xl space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono font-black text-xs tracking-wider text-[#0B57D0] dark:text-blue-400 px-2.5 py-1 bg-white dark:bg-slate-900 border border-blue-200 dark:border-slate-700 rounded-md">
+                            {formCode.trim().toUpperCase() || "CODE_PREVIEW"}
+                          </span>
+                          <span className="text-xs font-black text-[#0E1B3D] dark:text-white">
+                            {formDiscountType === "percentage" ? `${formValue}% OFF` : `₹${formValue} OFF`}
+                          </span>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-[#E4E8F8] dark:border-slate-800 flex items-center justify-between text-[11px]">
+                          <span className="text-[#5A6478] dark:text-slate-400">उदा. ₹९९९ च्या कोर्सवर:</span>
+                          <span className="font-black text-[#0B57D0] dark:text-blue-400">
+                            {formDiscountType === "percentage"
+                              ? `बचत: ₹${Math.round((999 * formValue) / 100)} → विद्यार्थी भरतील: ₹${Math.max(1, 999 - Math.round((999 * formValue) / 100))}`
+                              : `बचत: ₹${Math.min(999, formValue)} → विद्यार्थी भरतील: ₹${Math.max(1, 999 - formValue)}`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Sticky Action Bar */}
+                <div className="sticky bottom-4 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl flex items-center justify-between">
+                  <button
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition cursor-pointer"
+                  >
+                    ← कूपन यादीकडे परत जा (Back to List)
+                  </button>
+
+                  <SubmitButton
+                    type="submit"
+                    loading={isSaving}
+                    loadingText="कूपन सेव्ह करत आहे..."
+                    disabled={!formCode.trim()}
+                    className="px-7 py-3 rounded-xl text-xs font-black shadow-md cursor-pointer"
+                  >
+                    <span>{editingCoupon ? "बदल सेव्ह करा (Save Changes)" : "कूपन सक्रिय करा (Activate Coupon →)"}</span>
+                  </SubmitButton>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <>
+              {/* Header Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-xs">
             <div>
               <div className="flex items-center gap-2.5">
                 <span className="text-2xl">🎟️</span>
@@ -885,591 +1431,9 @@ export default function CouponManagerPage() {
             )}
           </div>
 
-          {/* ========================================================= */}
-          {/* SLIDE-OVER DRAWER FORM (CREATE / EDIT) */}
-          {/* ========================================================= */}
-          {isDrawerOpen && (
-            <div className="fixed inset-0 z-50 overflow-hidden animate-in fade-in duration-200">
-              {/* Backdrop */}
-              <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
-                onClick={() => setIsDrawerOpen(false)}
-              />
+        </>
+      )}
 
-              <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex">
-                <div className="w-screen max-w-xl bg-white dark:bg-slate-900 shadow-2xl flex flex-col justify-between overflow-y-auto border-l dark:border-slate-800">
-                  {/* Drawer Header */}
-                  <div className="p-6 border-b border-[#E4E8F8] dark:border-slate-800 flex items-center justify-between bg-[#FAFBFD] dark:bg-slate-800/80">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">🎟️</span>
-                        <h2 className="text-lg font-black text-[#0E1B3D] dark:text-white">
-                          {editingCoupon ? `Edit Coupon: ${editingCoupon.code}` : "Create New Coupon Code"}
-                        </h2>
-                      </div>
-                      <p className="text-xs text-[#5A6478] mt-0.5">
-                        Set coupon code, student quota limit, validity dates, and course scope to activate.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setIsDrawerOpen(false)}
-                      className="w-8 h-8 rounded-full bg-white border border-[#E4E8F8] flex items-center justify-center text-sm text-[#5A6478] hover:bg-slate-100 cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Drawer Form Body */}
-                  <form onSubmit={handleSaveCoupon} id="coupon-drawer-form" className="p-6 space-y-5 flex-1">
-                    {/* ⚡ 1-CLICK MARATHI COUPON TEMPLATES */}
-                    <div className="p-3.5 bg-blue-50/60 dark:bg-slate-800/80 rounded-2xl border border-blue-200/80 dark:border-slate-700 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-extrabold text-[#0B57D0] dark:text-blue-400 flex items-center gap-1.5">
-                          <span>⚡ रेडीमेड १-क्लिक कूपन टेम्पलेट्स:</span>
-                        </span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400">एका क्लिकवर कोड व सूट भरा</span>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {[
-                          { code: "POLICE20", disc: "20", type: "percentage", desc: "पोलीस भरती विशेष २०% सवलत", tag: "⚡ पोलीस भरती" },
-                          { code: "GUDHI50", disc: "50", type: "percentage", desc: "गुढीपाडवा विशेष ५०% सवलत", tag: "🚩 गुढीपाडवा" },
-                          { code: "FLAT500", disc: "500", type: "flat", desc: "थेट ₹५०० ची विशेष सूट", tag: "💰 ₹५०० सूट" },
-                          { code: "SEMINAR2026", disc: "30", type: "percentage", desc: "सातारा व पुणे सेमिनार ३०% सवलत", tag: "🏢 सेमिनार" },
-                        ].map((tmpl, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              setFormCode(tmpl.code);
-                              setFormValue(Number(tmpl.disc));
-                              setFormDiscountType(tmpl.type as any);
-                              setFormDesc(tmpl.desc);
-                              setFormAppliesAll(true);
-                              setFormIsPublicChip(true);
-                              toast.success(`🎉 "${tmpl.code}" टेम्पलेट भरले!`);
-                            }}
-                            className="p-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-left transition cursor-pointer shadow-2xs"
-                          >
-                            <p className="font-mono font-black text-xs text-[#0B57D0] dark:text-blue-400">{tmpl.code}</p>
-                            <p className="text-[10px] font-bold text-slate-600 dark:text-slate-300 mt-0.5">{tmpl.tag}</p>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    {/* 1. Code & Active Toggle */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-                      <div className="sm:col-span-2">
-                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1 flex items-center justify-between">
-                          <span>Coupon Code *</span>
-                          {formCode.trim().length >= 3 && (
-                            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Valid Code
-                            </span>
-                          )}
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            required
-                            value={formCode}
-                            onChange={(e) => setFormCode(e.target.value.toUpperCase())}
-                            placeholder="e.g. DIWALI50, MINDMASTER100"
-                            className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-mono font-black text-[#0B57D0] uppercase tracking-wider focus:outline-none transition-all ${
-                              formCode.trim().length >= 3
-                                ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
-                                : "bg-[#F5F7FF] border border-[#E4E8F8] focus:ring-2 focus:ring-[#0B57D0]"
-                            }`}
-                          />
-                          {formCode.trim().length >= 3 && (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Active Toggle Switch */}
-                      <div className="p-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl flex items-center justify-between">
-                        <div>
-                          <p className="text-[11px] font-bold text-[#0E1B3D]">Status</p>
-                          <p className="text-[9px] text-[#5A6478]">{formIsActive ? "Active" : "Paused"}</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formIsActive}
-                            onChange={(e) => setFormIsActive(e.target.checked)}
-                            className="sr-only peer"
-                          />
-                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                      <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                        Campaign Description
-                      </label>
-                      <input
-                        type="text"
-                        value={formDesc}
-                        onChange={(e) => setFormDesc(e.target.value)}
-                        placeholder="e.g. Diwali Special 50% discount or Satara Seminar Offer"
-                        className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                      />
-                    </div>
-
-                    {/* School Name (Optional) */}
-                    <div>
-                      <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                        School Name (Optional restriction, blank = open to all)
-                      </label>
-                      <input
-                        type="text"
-                        value={formSchool}
-                        onChange={(e) => setFormSchool(e.target.value)}
-                        placeholder="e.g. Abhinav Vidyalaya / Adarsh High School"
-                        className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                      />
-                      <p className="text-[11px] text-[#5A6478] mt-1">
-                        {formSchool.trim()
-                          ? `This coupon will only apply to students from "${formSchool.trim()}".`
-                          : "Leaving this blank allows students from all schools to use it."}
-                      </p>
-                    </div>
-
-                    {/* Student Mobile Lock & Promoter Attribution */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                          🎯 Student Mobile Lock (Optional)
-                        </label>
-                        <input
-                          type="tel"
-                          maxLength={10}
-                          value={formAssignedPhone}
-                          onChange={(e) => setFormAssignedPhone(e.target.value.replace(/\D/g, ""))}
-                          placeholder="e.g. 9822012345"
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-mono font-bold text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                        />
-                        <p className="text-[10px] text-[#5A6478] mt-1">
-                          {formAssignedPhone.trim()
-                            ? `Only mobile +91 ${formAssignedPhone.trim()} can redeem.`
-                            : "Blank = any student can redeem."}
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                          🤝 Sub-Admin Promoter / Referral
-                        </label>
-                        <select
-                          value={formPromoterStaffId}
-                          onChange={(e) => setFormPromoterStaffId(e.target.value)}
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                        >
-                          <option value="">None (Academy Direct Offer)</option>
-                          {staffList
-                            .filter((s) => s.role !== "main_admin")
-                            .map((s) => (
-                              <option key={s.id} value={s.id}>
-                                {s.staffId || s.id} • {s.name} {s.district ? `(${s.district})` : ""}
-                              </option>
-                            ))}
-                        </select>
-                        <p className="text-[10px] text-[#5A6478] mt-1">
-                          Attribute coupon redemptions to a specific staff promoter.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Public 1-Click Chip Toggle on /checkout */}
-                    <div className="p-3 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl flex items-center justify-between text-xs">
-                      <div>
-                        <p className="font-bold text-[#0E1B3D] flex items-center gap-1.5">
-                          <span>👁️</span> Public /checkout 1-Click Chip
-                        </p>
-                        <p className="text-[11px] text-[#5A6478] mt-0.5">
-                          {formIsPublicChip
-                            ? "Visible as clickable '🏷️ Tap to Apply' chip on checkout page."
-                            : "Hidden from public checkout list (Secret VIP promo code)."}
-                        </p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formIsPublicChip}
-                          onChange={(e) => setFormIsPublicChip(e.target.checked)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0B57D0]"></div>
-                      </label>
-                    </div>
-
-                    {/* 2. Course & Books Applicability Scope */}
-                    <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <label className="block text-xs font-bold text-[#0E1B3D]">
-                            🎯 Applicable Catalog Items (Courses &amp; Books) *
-                          </label>
-                          <p className="text-[11px] text-[#5A6478]">
-                            {formAppliesAll ? "Applicable to All Courses & Paid Books (Site-wide)" : "Applicable to Specific Selected Items only"}
-                          </p>
-                        </div>
-
-                        {/* Applies All Toggle */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-[#0E1B3D]">
-                            {formAppliesAll ? "All Items" : "Selected"}
-                          </span>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={formAppliesAll}
-                              onChange={(e) => setFormAppliesAll(e.target.checked)}
-                              className="sr-only peer"
-                            />
-                            <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0B57D0]"></div>
-                          </label>
-                        </div>
-                      </div>
-
-                      {/* Multi-item selectors if applies_all is false */}
-                      {!formAppliesAll && (
-                        <div className="pt-3 border-t border-[#E4E8F8] space-y-4">
-                          {/* Course Selection */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span className="font-bold text-[#0E1B3D] dark:text-white">1. Select Specific Courses:</span>
-                              <span className="text-[#0B57D0] font-semibold">
-                                {formSelectedCourses.length} courses selected
-                              </span>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
-                              {courses.map((course) => {
-                                const isSelected =
-                                  formSelectedCourses.includes(course.id) ||
-                                  formSelectedCourses.includes(course.code);
-                                return (
-                                  <button
-                                    type="button"
-                                    key={course.id}
-                                    onClick={() => toggleCourseSelect(course.id)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
-                                      isSelected
-                                        ? "bg-[#EEF4FF] border-[#0B57D0] text-[#0B57D0] shadow-2xs font-bold"
-                                        : "bg-white border-[#E4E8F8] text-[#5A6478] hover:border-slate-300"
-                                    }`}
-                                  >
-                                    <span>{isSelected ? "✓" : "+"}</span>
-                                    <span className="font-mono text-[11px] font-bold">{course.code}</span>
-                                    <span className="text-[11px] max-w-[140px] truncate">{course.title}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Paid Books Selection */}
-                          <div className="space-y-2 pt-2 border-t border-slate-200">
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span className="font-bold text-[#0E1B3D] dark:text-white">2. Select Specific Paid Books:</span>
-                              <span className="text-purple-600 font-semibold">
-                                {formSelectedBooks.length} books selected
-                              </span>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
-                              {books.filter((b) => !b.isFree && (b.pricePaise || 0) > 0).map((book) => {
-                                const isSelected =
-                                  formSelectedBooks.includes(book.id) ||
-                                  Boolean(book.code && formSelectedBooks.includes(book.code));
-                                return (
-                                  <button
-                                    type="button"
-                                    key={book.id}
-                                    onClick={() => toggleBookSelect(book.id)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
-                                      isSelected
-                                        ? "bg-purple-50 border-purple-600 text-purple-700 shadow-2xs font-bold"
-                                        : "bg-white border-[#E4E8F8] text-[#5A6478] hover:border-slate-300"
-                                    }`}
-                                  >
-                                    <span>{isSelected ? "✓" : "+"}</span>
-                                    <span className="font-mono text-[11px] font-bold">{book.code || "BK"}</span>
-                                    <span className="text-[11px] max-w-[140px] truncate">{book.title}</span>
-                                    <span className="text-[10px] text-slate-400 font-bold">₹{Math.round((book.pricePaise || 0) / 100)}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 3. Percent / Flat Segmented + Value & Min Order */}
-                    <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl space-y-3">
-                      <label className="block text-xs font-bold text-[#0E1B3D]">
-                        💰 Discount Type & Amount *
-                      </label>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Segmented Control: Percent vs Flat */}
-                        <div className="flex bg-white p-1 rounded-xl border border-[#E4E8F8]">
-                          <button
-                            type="button"
-                            onClick={() => setFormDiscountType("percentage")}
-                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                              formDiscountType === "percentage"
-                                ? "bg-[#0B57D0] text-white shadow-2xs"
-                                : "text-[#5A6478] hover:text-[#0E1B3D]"
-                            }`}
-                          >
-                            % Percentage
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setFormDiscountType("flat")}
-                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                              formDiscountType === "flat"
-                                ? "bg-[#0B57D0] text-white shadow-2xs"
-                                : "text-[#5A6478] hover:text-[#0E1B3D]"
-                            }`}
-                          >
-                            ₹ Flat Amount
-                          </button>
-                        </div>
-
-                        {/* Value Input */}
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#8A94A6]">
-                            {formDiscountType === "percentage" ? "%" : "₹"}
-                          </span>
-                          <input
-                            type="number"
-                            required
-                            min="1"
-                            max={formDiscountType === "percentage" ? 100 : 50000}
-                            value={formValue}
-                            onChange={(e) => setFormValue(Number(e.target.value))}
-                            className="w-full pl-8 pr-3 py-2 bg-white border border-[#E4E8F8] rounded-xl text-xs font-black text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Min Order Value */}
-                      <div className="pt-2 border-t border-[#E4E8F8] flex items-center justify-between gap-3">
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#0E1B3D]">
-                            Minimum Order Value (₹):
-                          </label>
-                          <p className="text-[10px] text-[#5A6478]">
-                            Coupon will not apply if course price is less than this value.
-                          </p>
-                        </div>
-                        <div className="relative w-28">
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#8A94A6]">₹</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={formMinOrder}
-                            onChange={(e) => setFormMinOrder(Number(e.target.value))}
-                            className="w-full pl-7 pr-3 py-1.5 bg-white border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D]"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 4. Validity Window (Start Date to End Date) */}
-                    <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl space-y-3">
-                      <label className="block text-xs font-bold text-[#0E1B3D]">
-                        ⏳ Validity Window (Starting to Expiring Date) *
-                      </label>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#5A6478] mb-1">
-                            Starting Date:
-                          </label>
-                          <input
-                            type="date"
-                            required
-                            value={formStartsAt}
-                            onChange={(e) => setFormStartsAt(e.target.value)}
-                            className="w-full px-3 py-2 bg-white border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D]"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#5A6478] mb-1">
-                            Expiring Date:
-                          </label>
-                          <input
-                            type="date"
-                            required
-                            value={formEndsAt}
-                            onChange={(e) => setFormEndsAt(e.target.value)}
-                            className="w-full px-3 py-2 bg-white border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D]"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-[#5A6478]">
-                        ⚡ Coupon will automatically expire once the end date passes.
-                      </p>
-                    </div>
-
-                    {/* 5. Total Usage Limit & Per-User Limit */}
-                    <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl space-y-3">
-                      <label className="block text-xs font-bold text-[#0E1B3D]">
-                        👥 Usage Limits *
-                      </label>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#5A6478] mb-1">
-                            Total Uses Quota:
-                          </label>
-                          <input
-                            type="number"
-                            required
-                            min="1"
-                            value={formUsageLimit}
-                            onChange={(e) => setFormUsageLimit(Number(e.target.value))}
-                            className="w-full px-3 py-2 bg-white border border-[#E4E8F8] rounded-xl text-xs font-black text-[#0E1B3D]"
-                          />
-                          <p className="text-[10px] text-[#5A6478] mt-1">
-                            e.g. 100 students. Automatically disables once 100 redemptions are reached.
-                          </p>
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#5A6478] mb-1">
-                            Per Student Limit:
-                          </label>
-                          <div className="flex bg-white p-1 rounded-xl border border-[#E4E8F8]">
-                            <button
-                              type="button"
-                              onClick={() => setFormPerUserUsage("once")}
-                              className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
-                                formPerUserUsage === "once"
-                                  ? "bg-violet-600 text-white shadow-2xs"
-                                  : "text-[#5A6478]"
-                              }`}
-                            >
-                              🔒 Once (1x)
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFormPerUserUsage("multiple")}
-                              className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
-                                formPerUserUsage === "multiple"
-                                  ? "bg-indigo-600 text-white shadow-2xs"
-                                  : "text-[#5A6478]"
-                              }`}
-                            >
-                              🔄 Multiple
-                            </button>
-                          </div>
-                          <p className="text-[10px] text-[#5A6478] mt-1">
-                            Recommended 1x so the same student cannot reuse it multiple times.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 6. LIVE PREVIEW ROW */}
-                    <div className="pt-4 border-t border-[#E4E8F8]">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-[#8A94A6]">
-                          ✨ Live Preview
-                        </span>
-                        <span className="text-[10px] text-[#5A6478]">
-                          (How this coupon will appear in the student app)
-                        </span>
-                      </div>
-
-                      <div className="p-4 bg-gradient-to-r from-[#F9FAFF] to-white border border-[#D0E2FF] rounded-2xl shadow-2xs space-y-2">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono font-black text-xs tracking-wider text-[#0B57D0] px-2.5 py-1 bg-[#EEF4FF] border border-[#D0E2FF] rounded-md shadow-2xs">
-                              {formCode.trim().toUpperCase() || "CODE_PREVIEW"}
-                            </span>
-                            {formSchool.trim() && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                                🏫 {formSchool.trim()}
-                              </span>
-                            )}
-                            {formAssignedPhone.trim() && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
-                                🎯 {formAssignedPhone.trim()}
-                              </span>
-                            )}
-                            {formPromoterStaffId && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
-                                🤝 Promoter Linked
-                              </span>
-                            )}
-                            <span className="text-xs font-black text-[#0E1B3D]">
-                              {formDiscountType === "percentage" ? `${formValue}% OFF` : `₹${formValue} OFF`}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {formIsPublicChip ? (
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                👁️ Public Chip
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                🔒 Secret Code
-                              </span>
-                            )}
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-violet-50 text-violet-700 border border-violet-200">
-                              {formPerUserUsage === "once" ? "👤 Once per student" : "👥 Multiple uses"}
-                            </span>
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              ● {formUsageLimit} student quota
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Sample calculation preview */}
-                        <div className="mt-2 bg-white p-2.5 rounded-xl border border-[#E4E8F8] flex items-center justify-between text-[11px]">
-                          <span className="text-[#5A6478]">Sample breakdown on ₹999 course:</span>
-                          <span className="font-black text-[#0B57D0]">
-                            {formDiscountType === "percentage"
-                              ? `Savings: ₹${Math.round((999 * formValue) / 100)} → Student pays: ₹${Math.max(1, 999 - Math.round((999 * formValue) / 100))}`
-                              : `Savings: ₹${Math.min(999, formValue)} → Student pays: ₹${Math.max(1, 999 - formValue)}`}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Drawer Actions */}
-                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E4E8F8]">
-                      <button
-                        type="button"
-                        onClick={() => setIsDrawerOpen(false)}
-                        className="px-5 py-2.5 rounded-full border border-[#E4E8F8] text-xs font-bold text-[#5A6478] hover:bg-[#F5F7FF] cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                      <SubmitButton
-                        type="submit"
-                        loading={isSaving}
-                        loadingText="Saving Coupon..."
-                        disabled={!formCode.trim()}
-                        className="px-6 py-2.5 rounded-full text-xs"
-                      >
-                        <span>{editingCoupon ? "Save Changes" : "Activate Coupon →"}</span>
-                      </SubmitButton>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ========================================================= */}
           {/* REDEMPTIONS MODAL (Real-time student track record) */}

@@ -1372,15 +1372,14 @@ export default function StudentFinderPage() {
           {/* 360 STUDENT TELEMETRICS DRAWER */}
           {/* ========================================================= */}
           {drawerStudent && (
-            <div className="fixed inset-0 z-50 overflow-hidden animate-fadeIn">
+            <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fadeIn">
               {/* Backdrop */}
               <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+                className="fixed inset-0"
                 onClick={() => setDrawerStudent(null)}
               />
 
-              <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex">
-                <div className="w-screen max-w-2xl bg-white shadow-2xl flex flex-col justify-between overflow-y-auto">
+              <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] overflow-y-auto z-10">
                   {/* Drawer Header */}
                   <div className="p-6 border-b border-[#E4E8F8] flex items-center justify-between bg-[#FAFBFD]">
                     <div className="flex items-center gap-3">
@@ -1870,7 +1869,6 @@ export default function StudentFinderPage() {
                     </button>
                   </div>
                 </div>
-              </div>
             </div>
           )}
 

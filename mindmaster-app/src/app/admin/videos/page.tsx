@@ -24,6 +24,7 @@ import {
   getStoredVideos,
 } from "@/lib/playlistStore";
 import {
+  ArrowLeft,
   Play,
   Plus,
   Search,
@@ -152,6 +153,9 @@ export default function VideoManagerPage() {
     setFetchTitleError(null);
     setFetchTitleSuccess(null);
     setIsDrawerOpen(true);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   // Open Drawer for Edit
@@ -167,6 +171,9 @@ export default function VideoManagerPage() {
     setFetchTitleError(null);
     setFetchTitleSuccess(null);
     setIsDrawerOpen(true);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   // Auto-Fetch Title & Details from YouTube URL
@@ -366,8 +373,288 @@ export default function VideoManagerPage() {
     <PermissionGuard permission="videos.manage">
       <AdminShell>
         <div className="space-y-6 font-sans">
-          {/* Header Banner */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
+          {isDrawerOpen ? (
+            /* ========================================================= */
+            /* IN-PAGE DEDICATED VIDEO STUDIO WORKSPACE */
+            /* ========================================================= */
+            <div className="space-y-6 animate-fadeIn">
+              {/* Studio Header Card */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-[#E4E8F8] dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <button
+                    type="button"
+                    onClick={() => !isSaving && setIsDrawerOpen(false)}
+                    className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl transition shadow-xs cursor-pointer"
+                    title="यादीकडे परत जा"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">🎬</span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 font-mono text-xs font-black">
+                        {editingVideo ? (editingVideo.videoId || "EDIT_VIDEO") : "NEW_LESSON"}
+                      </span>
+                      <span className="text-xs text-slate-400 font-semibold">• {editingVideo ? "व्हिडिओ संपादन मोड" : "नवीन व्हिडिओ निर्मिती"}</span>
+                    </div>
+                    <h1 className="text-2xl font-black text-[#0E1B3D] dark:text-white font-heading">
+                      {editingVideo ? "व्हिडिओ संपादन स्टुडिओ (Edit Video Studio)" : "नवीन व्हिडिओ निर्मिती स्टुडिओ (Add Video Studio)"}
+                    </h1>
+                    <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
+                      YouTube लिंक टाका, नाव मिळवा आणि थेट डेटाबेसवर व्हिडिओ सेव्ह करा.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition cursor-pointer"
+                  >
+                    रद्द करा (Cancel)
+                  </button>
+                  <SubmitButton
+                    type="button"
+                    onClick={() => {
+                      const form = document.getElementById("video-studio-form") as HTMLFormElement;
+                      if (form) form.requestSubmit();
+                    }}
+                    loading={isSaving}
+                    loadingText="व्हिडिओ सेव्ह करत आहे..."
+                    className="px-6 py-2.5 rounded-xl text-xs font-black shadow-md cursor-pointer"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>व्हिडिओ सेव्ह करा (Save Video)</span>
+                    </span>
+                  </SubmitButton>
+                </div>
+              </div>
+
+              {/* Form Body - 2 Column Responsive Workspace */}
+              <form onSubmit={handleSaveVideo} id="video-studio-form" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Left Column (7 cols): Course, YouTube URL & Auto-fetch, Lesson Title */}
+                  <div className="lg:col-span-7 space-y-6">
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-5">
+                      <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                        <span>🎯</span>
+                        <span>कोर्स व YouTube लिंक (Course & YouTube Link)</span>
+                      </h3>
+
+                      {/* 1. Target Course Selector */}
+                      <div>
+                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5 text-xs">
+                          अभ्यासक्रम निवडा (Target Course) *
+                        </label>
+                        <select
+                          required
+                          value={selectedCourseId}
+                          onChange={(e) => setSelectedCourseId(e.target.value)}
+                          className="w-full px-4 py-3 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:border-[#0B57D0]"
+                        >
+                          {courses.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.code} - {c.titleMr || c.title}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* 2. YouTube Link & Auto-Fetch Button */}
+                      <div className="p-5 bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-2xl space-y-3">
+                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 flex items-center gap-2 text-xs">
+                          <YoutubeIcon className="w-5 h-5 text-red-600" />
+                          <span>YouTube Video URL किंवा Video ID *</span>
+                        </label>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                          <input
+                            type="text"
+                            required
+                            value={videoLink}
+                            onChange={(e) => {
+                              setVideoLink(e.target.value);
+                              setFetchTitleError(null);
+                            }}
+                            placeholder="उदा. https://youtu.be/dQw4w9WgXcQ किंवा dQw4w9WgXcQ"
+                            className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs dark:text-white focus:outline-none focus:border-red-500 font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleFetchYouTubeTitle}
+                            disabled={isFetchingTitle || !videoLink.trim()}
+                            className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-xs transition flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                          >
+                            {isFetchingTitle ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-3.5 h-3.5" />
+                            )}
+                            <span>नाव मिळवा (Fetch)</span>
+                          </button>
+                        </div>
+
+                        {fetchTitleError && (
+                          <div className="text-xs text-red-700 dark:text-red-300 font-semibold flex items-center gap-1.5 p-2 bg-red-100 dark:bg-red-900/40 rounded-xl">
+                            <AlertCircle className="w-4 h-4 shrink-0" />
+                            <span>{fetchTitleError}</span>
+                          </div>
+                        )}
+
+                        {fetchTitleSuccess && (
+                          <div className="text-xs text-emerald-700 dark:text-emerald-300 font-semibold flex items-center gap-1.5 p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl">
+                            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                            <span>{fetchTitleSuccess}</span>
+                          </div>
+                        )}
+
+                        {extractYouTubeVideoId(videoLink) && (
+                          <div className="pt-2 flex items-center gap-3">
+                            <div className="relative w-28 h-16 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0 bg-slate-900">
+                              <Image
+                                src={`https://img.youtube.com/vi/${extractYouTubeVideoId(videoLink)}/mqdefault.jpg`}
+                                alt="Video preview"
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="text-[11px] text-slate-600 dark:text-slate-300">
+                              <p className="font-bold text-[#0E1B3D] dark:text-white">YouTube Preview सापडला</p>
+                              <p className="font-mono text-slate-400">ID: {extractYouTubeVideoId(videoLink)}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 3. Lesson Title */}
+                      <div>
+                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5 text-xs">
+                          लेक्चरचे नाव (Lesson Title) *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={lessonTitle}
+                          onChange={(e) => setLessonTitle(e.target.value)}
+                          placeholder="उदा. ०१. ५०० वर्षांचे कॅलेंडर तंत्र डेमो व सराव"
+                          className="w-full px-4 py-3 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:border-[#0B57D0]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column (5 cols): Order, Duration, Preview Switch, Notes */}
+                  <div className="lg:col-span-5 space-y-6">
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-5">
+                      <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                        <span>⚙️</span>
+                        <span>लेक्चर सेटिंग्ज (Lesson Settings)</span>
+                      </h3>
+
+                      {/* 4. Position & Duration */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 text-xs">
+                            अनुक्रमांक (Position / Order) *
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            required
+                            value={lessonPosition}
+                            onChange={(e) => setLessonPosition(Number(e.target.value))}
+                            className="w-full px-4 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 text-xs">
+                            कालावधी (Minutes) *
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            required
+                            value={durationMinutes}
+                            onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                            className="w-full px-4 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* 5. Free Preview Toggle */}
+                      <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl flex items-center justify-between">
+                        <div>
+                          <span className="font-bold text-emerald-950 dark:text-emerald-300 block text-xs">
+                            मोफत डेमो लेक्चर (Free Demo Preview)
+                          </span>
+                          <span className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                            हा व्हिडिओ विनाखरेदी विद्यार्थ्यांना पाहता येईल का?
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsFreePreview(!isFreePreview)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                            isFreePreview ? "bg-emerald-600" : "bg-slate-300 dark:bg-slate-700"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              isFreePreview ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* 6. Optional Description */}
+                      <div>
+                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 text-xs">
+                          लेक्चर नोट्स किंवा वर्णन (Description / Notes)
+                        </label>
+                        <textarea
+                          value={lessonDescription}
+                          onChange={(e) => setLessonDescription(e.target.value)}
+                          placeholder="या लेक्चरबद्दल महत्त्वाची माहिती किंवा नोट्स..."
+                          rows={4}
+                          className="w-full px-4 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 text-[#0E1B3D] dark:text-white rounded-xl text-xs focus:outline-none resize-y"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Sticky Action Bar */}
+                <div className="sticky bottom-4 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl flex items-center justify-between">
+                  <button
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition cursor-pointer"
+                  >
+                    ← व्हिडिओ यादीकडे परत जा (Back to List)
+                  </button>
+
+                  <SubmitButton
+                    type="submit"
+                    loading={isSaving}
+                    loadingText="व्हिडिओ सेव्ह करत आहे..."
+                    className="px-7 py-3 rounded-xl text-xs font-black shadow-md cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>व्हिडिओ सेव्ह करा (Save Video)</span>
+                    </span>
+                  </SubmitButton>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <>
+              {/* Header Banner */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50">
@@ -605,218 +892,9 @@ export default function VideoManagerPage() {
             )}
           </div>
 
-          {/* ========================================================= */}
-          {/* SIMPLIFIED SLIDE-OVER DRAWER FORM */}
-          {/* ========================================================= */}
-          {isDrawerOpen && (
-            <div className="fixed inset-0 z-50 overflow-hidden">
-              <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
-                onClick={() => !isSaving && setIsDrawerOpen(false)}
-              />
+        </>
+      )}
 
-              <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex">
-                <div className="w-screen max-w-lg bg-white dark:bg-slate-900 shadow-2xl flex flex-col justify-between border-l dark:border-slate-800">
-                  {/* Drawer Header */}
-                  <div className="p-6 bg-[#0E1B3D] text-white flex items-center justify-between shrink-0">
-                    <div>
-                      <h2 className="text-lg font-bold font-heading">
-                        {editingVideo ? "व्हिडिओ संपादित करा (Edit Video)" : "नवीन व्हिडिओ जोडा (Add Video)"}
-                      </h2>
-                      <p className="text-xs text-blue-200 mt-0.5">
-                        YouTube लिंक टाका आणि एका क्लिकवर व्हिडिओ सेव्ह करा.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => !isSaving && setIsDrawerOpen(false)}
-                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center font-bold text-sm"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Drawer Form Body */}
-                  <form onSubmit={handleSaveVideo} className="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
-                    {/* 1. Target Course Selector */}
-                    <div>
-                      <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                        अभ्यासक्रम निवडा (Target Course) *
-                      </label>
-                      <select
-                        required
-                        value={selectedCourseId}
-                        onChange={(e) => setSelectedCourseId(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:border-[#0B57D0]"
-                      >
-                        {courses.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.code} - {c.titleMr || c.title}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* 2. YouTube Link & Auto-Fetch Button */}
-                    <div className="p-4 bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-2xl space-y-2">
-                      <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 flex items-center gap-1.5">
-                        <YoutubeIcon className="w-4 h-4 text-red-600" />
-                        <span>YouTube Video URL किंवा Video ID *</span>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          required
-                          value={videoLink}
-                          onChange={(e) => {
-                            setVideoLink(e.target.value);
-                            setFetchTitleError(null);
-                          }}
-                          placeholder="उदा. https://youtu.be/dQw4w9WgXcQ किंवा dQw4w9WgXcQ"
-                          className="flex-1 px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs dark:text-white focus:outline-none focus:border-red-500 font-mono"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleFetchYouTubeTitle}
-                          disabled={isFetchingTitle || !videoLink.trim()}
-                          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-xs transition flex items-center gap-1 shrink-0"
-                        >
-                          {isFetchingTitle ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Sparkles className="w-3.5 h-3.5" />
-                          )}
-                          <span>नाव मिळवा (Fetch)</span>
-                        </button>
-                      </div>
-
-                      {fetchTitleError && (
-                        <div className="text-[11px] text-red-700 font-semibold flex items-center gap-1">
-                          <AlertCircle className="w-3.5 h-3.5" />
-                          <span>{fetchTitleError}</span>
-                        </div>
-                      )}
-
-                      {fetchTitleSuccess && (
-                        <div className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>{fetchTitleSuccess}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 3. Lesson Title */}
-                    <div>
-                      <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                        लेक्चरचे नाव (Lesson Title) *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={lessonTitle}
-                        onChange={(e) => setLessonTitle(e.target.value)}
-                        placeholder="उदा. ०१. ५०० वर्षांचे कॅलेंडर तंत्र डेमो व सराव"
-                        className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
-                      />
-                    </div>
-
-                    {/* 4. Position & Duration */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                          अनुक्रमांक (Position / Order) *
-                        </label>
-                        <input
-                          type="number"
-                          min={1}
-                          required
-                          value={lessonPosition}
-                          onChange={(e) => setLessonPosition(Number(e.target.value))}
-                          className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                          कालावधी (Minutes) *
-                        </label>
-                        <input
-                          type="number"
-                          min={1}
-                          required
-                          value={durationMinutes}
-                          onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                          className="w-full px-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    {/* 5. Free Preview Toggle */}
-                    <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl flex items-center justify-between">
-                      <div>
-                        <span className="font-bold text-emerald-950 dark:text-emerald-300 block text-xs">
-                          मोफत डेमो लेक्चर (Free Demo Preview)
-                        </span>
-                        <span className="text-[11px] text-emerald-700 dark:text-emerald-400">
-                          हा व्हिडिओ खरेदी न केलेल्या विद्यार्थ्यांनाही पाहता येईल का?
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setIsFreePreview(!isFreePreview)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          isFreePreview ? "bg-emerald-600" : "bg-slate-300"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            isFreePreview ? "translate-x-6" : "translate-x-1"
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* 6. Optional Description */}
-                    <div>
-                      <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                        लेक्चर नोट्स किंवा वर्णन (Description / Notes)
-                      </label>
-                      <textarea
-                        value={lessonDescription}
-                        onChange={(e) => setLessonDescription(e.target.value)}
-                        placeholder="या लेक्चरबद्दल महत्त्वाची माहिती..."
-                        rows={3}
-                        className="w-full px-4 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 text-[#0E1B3D] dark:text-white rounded-xl text-xs focus:outline-none resize-none"
-                      />
-                    </div>
-
-                    {/* Submit Actions */}
-                    <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-200 dark:border-slate-800">
-                      <button
-                        type="button"
-                        disabled={isSaving}
-                        onClick={() => setIsDrawerOpen(false)}
-                        className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition"
-                      >
-                        रद्द करा (Cancel)
-                      </button>
-
-                      <SubmitButton
-                        type="submit"
-                        loading={isSaving}
-                        loadingText="सेव्ह करत आहे... (Saving Video)"
-                        className="px-6 py-2.5 rounded-xl text-xs"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>व्हिडिओ सेव्ह करा (Save Video)</span>
-                        </span>
-                      </SubmitButton>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Move to Recycle Bin Confirmation Modal */}
           {deleteModalVideo && (

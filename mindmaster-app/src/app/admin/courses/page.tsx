@@ -24,6 +24,7 @@ import {
   ExtendedVideoRow,
 } from "@/lib/playlistStore";
 import {
+  ArrowLeft,
   Play,
   Plus,
   Search,
@@ -590,8 +591,541 @@ export default function CourseManagerPage() {
     <PermissionGuard permission="courses.manage">
       <AdminShell>
         <div className="space-y-6 font-sans">
-          {/* Header Banner */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
+          {isDrawerOpen ? (
+            /* ========================================================= */
+            /* IN-PAGE DEDICATED COURSE STUDIO WORKSPACE (No Slide Drawer) */
+            /* ========================================================= */
+            <div className="space-y-6 animate-fadeIn">
+              {/* Studio Header Card */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-[#E4E8F8] dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <button
+                    type="button"
+                    onClick={() => !isSaving && setIsDrawerOpen(false)}
+                    className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl transition shadow-xs"
+                    title="यादीकडे परत जा"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#0B57D0] dark:text-blue-400 font-mono text-xs font-black">
+                        {formCode}
+                      </span>
+                      <span className="text-xs text-slate-400 font-semibold">• {editingCourse ? "कोर्स संपादन मोड" : "नवीन कोर्स निर्मिती"}</span>
+                    </div>
+                    <h1 className="text-2xl font-black text-[#0E1B3D] dark:text-white font-heading">
+                      {editingCourse ? "कोर्स संपादन स्टुडिओ (Edit Course Studio)" : "नवीन कोर्स निर्मिती स्टुडिओ (Create Course Studio)"}
+                    </h1>
+                    <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
+                      YouTube प्लेलिस्ट/व्हिडिओ लिंक द्वारे थेट डेटा ऑटो-इम्पोर्ट करा किंवा खालील तपशील भरून लाइव्ह सेव्ह करा.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition"
+                  >
+                    रद्द करा (Cancel)
+                  </button>
+                  <SubmitButton
+                    type="button"
+                    onClick={() => {
+                      const form = document.getElementById("course-studio-form") as HTMLFormElement;
+                      if (form) form.requestSubmit();
+                    }}
+                    loading={isSaving}
+                    loadingText="सेव्ह करत आहे..."
+                    className="px-6 py-2.5 rounded-xl text-xs font-black shadow-md"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>कोर्स सेव्ह करा (Save Course)</span>
+                    </span>
+                  </SubmitButton>
+                </div>
+              </div>
+
+              {/* Studio Form */}
+              <form id="course-studio-form" onSubmit={handleSaveCourse} className="space-y-6">
+                {/* 1. YOUTUBE IMPORT BOX (Direct Link & Auto-Fetch) */}
+                <div className="p-6 bg-gradient-to-br from-red-50 via-slate-50 to-blue-50 dark:from-red-950/20 dark:via-slate-900 dark:to-blue-950/20 border-2 border-red-200/70 dark:border-red-900/40 rounded-3xl space-y-4 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <label className="font-extrabold text-sm sm:text-base text-[#0E1B3D] dark:text-white flex items-center gap-2">
+                      <YoutubeIcon className="w-5 h-5 text-red-600" />
+                      <span>YouTube वरून थेट कोर्स भरा (Instant YouTube Import)</span>
+                    </label>
+                    <span className="text-[11px] font-extrabold text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/50 px-3 py-1 rounded-full w-fit">
+                      ⚡ Playlist किंवा Single Video Link
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-4xl">
+                    YouTube Playlist किंवा Single Video ची लिंक पेस्ट करा. कोर्सचे नाव, वर्णन, HD थंबनेल आणि सर्व लेक्चर्स एका सेकंदात आपोआप भरले जातील!
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
+                    <input
+                      type="text"
+                      value={youtubeInputUrl}
+                      onChange={(e) => {
+                        setYoutubeInputUrl(e.target.value);
+                        setYtFetchError(null);
+                      }}
+                      placeholder="https://www.youtube.com/playlist?list=... किंवा https://youtu.be/..."
+                      className="flex-1 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl text-xs font-medium text-slate-800 dark:text-white focus:outline-none focus:border-red-500 shadow-2xs font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleFetchFromYouTube}
+                      disabled={isFetchingYt || !youtubeInputUrl.trim()}
+                      className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition shrink-0"
+                    >
+                      {isFetchingYt ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>शोधत आहे...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          <span>माहिती मिळवा (Fetch)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {ytFetchError && (
+                    <div className="p-3.5 bg-red-100 dark:bg-red-950/50 border border-red-300 dark:border-red-800 rounded-2xl text-red-800 dark:text-red-200 text-xs flex items-center gap-2 font-semibold">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{ytFetchError}</span>
+                    </div>
+                  )}
+
+                  {ytFetchSuccess && (
+                    <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 rounded-2xl text-emerald-800 dark:text-emerald-200 text-xs flex items-center gap-2 font-semibold">
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                      <span>{ytFetchSuccess}</span>
+                    </div>
+                  )}
+
+                  {/* Display Fetched Playlist Videos Preview */}
+                  {fetchedPlaylistVideos.length > 0 && (
+                    <div className="pt-3 space-y-2.5 border-t border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <span>सापडलेले लेक्चर्स ({fetchedPlaylistVideos.filter((v) => v.selected).length}/{fetchedPlaylistVideos.length} निवडले):</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">पहिले लेक्चर मोफत डेमो म्हणून सेट करू शकता</span>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-750 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-2.5 space-y-1.5">
+                        {fetchedPlaylistVideos.map((v, idx) => (
+                          <div
+                            key={v.videoId + idx}
+                            className={`flex items-center justify-between gap-3 p-2.5 rounded-xl text-xs transition ${
+                              v.selected ? "bg-slate-50 dark:bg-slate-750" : "opacity-40"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={v.selected}
+                                onChange={() => handleTogglePlaylistItemSelect(idx)}
+                                className="w-4 h-4 rounded accent-red-600 cursor-pointer"
+                              />
+                              <span className="font-mono text-[11px] text-slate-400">#{idx + 1}</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200 truncate">{v.title}</span>
+                              <span className="text-[11px] text-slate-400 shrink-0">({v.durationFormatted})</span>
+                            </div>
+
+                            <label className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 cursor-pointer shrink-0">
+                              <input
+                                type="checkbox"
+                                checked={v.isFree}
+                                onChange={() => handleTogglePlaylistItemFree(idx)}
+                                className="w-3.5 h-3.5 rounded accent-emerald-600"
+                              />
+                              <span>Free Demo</span>
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2-Column Responsive Workspace Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Left Column (7 cols): Primary Details */}
+                  <div className="lg:col-span-7 space-y-6">
+                    {/* Basic Info Card */}
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
+                      <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                        <span>📝</span>
+                        <span>प्राथमिक तपशील (Core Details)</span>
+                      </h3>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center gap-1 text-xs">
+                            <Lock className="w-3 h-3 text-slate-400" />
+                            <span>Course Code (Auto)</span>
+                          </label>
+                          <input
+                            type="text"
+                            readOnly
+                            value={formCode}
+                            className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl font-mono text-xs font-extrabold text-[#0B57D0] cursor-not-allowed"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="font-bold text-[#0E1B3D] dark:text-slate-200 flex items-center gap-1 text-xs">
+                              <Tag className="w-3 h-3 text-purple-600" />
+                              <span>लक्ष्य प्रवर्ग (Target Category) *</span>
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setIsCategoryModalOpen(true)}
+                              className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline"
+                            >
+                              <Edit2 className="w-2.5 h-2.5" />
+                              <span>प्रवर्गे व्यवस्थापन (+ / Edit)</span>
+                            </button>
+                          </div>
+                          <select
+                            value={targetCategoryKey}
+                            onChange={(e) => setTargetCategoryKey(e.target.value)}
+                            className="w-full px-3 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:border-[#0B57D0]"
+                          >
+                            {(categories.length > 0 ? categories : TARGET_CATEGORY_OPTIONS).map((cat) => (
+                              <option key={cat.key} value={cat.key}>
+                                {cat.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Course Titles */}
+                      <div className="space-y-3 pt-1">
+                        <div>
+                          <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center justify-between text-xs">
+                            <span>कोर्सचे नाव (Course Title in Marathi / Regional) *</span>
+                            {formTitleMr.trim().length >= 3 && (
+                              <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> मान्य
+                              </span>
+                            )}
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              required
+                              value={formTitleMr}
+                              onChange={(e) => setFormTitleMr(e.target.value)}
+                              placeholder="उदा. महाराष्ट्र पोलीस भरती १००% परिपूर्ण तयारी किंवा ५०० वर्षांचे कॅलेंडर"
+                              className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none transition-all ${
+                                formTitleMr.trim().length >= 3
+                                  ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                                  : "bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 focus:border-[#0B57D0]"
+                              }`}
+                            />
+                            {formTitleMr.trim().length >= 3 && (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center justify-between text-xs">
+                            <span>Course Title (English) *</span>
+                            {formTitle.trim().length >= 3 && (
+                              <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Valid
+                              </span>
+                            )}
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              required
+                              value={formTitle}
+                              onChange={(e) => setFormTitle(e.target.value)}
+                              placeholder="e.g. Memory Science & Vedic Maths Mastery"
+                              className={`w-full px-3.5 py-2.5 rounded-xl text-xs text-[#0E1B3D] dark:text-white focus:outline-none transition-all ${
+                                formTitle.trim().length >= 3
+                                  ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                                  : "bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 focus:border-[#0B57D0]"
+                              }`}
+                            />
+                            {formTitle.trim().length >= 3 && (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Course Description */}
+                      <div>
+                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 text-xs">
+                          कोर्सचे सविस्तर वर्णन (Course Description)
+                        </label>
+                        <textarea
+                          value={formDescription}
+                          onChange={(e) => setFormDescription(e.target.value)}
+                          placeholder="विद्यार्थी या कोर्समध्ये काय शिकणार आहेत, अभ्यासक्रमाचे वैशिष्ट्ये काय आहेत..."
+                          rows={4}
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 text-[#0E1B3D] dark:text-white rounded-xl text-xs focus:outline-none focus:border-[#0B57D0] resize-y"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column (5 cols): Commercials, Validity, Thumbnail, Status */}
+                  <div className="lg:col-span-5 space-y-6">
+                    {/* Pricing Card */}
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <span className="font-bold text-[#0E1B3D] dark:text-slate-200 block text-xs">
+                            💰 कोर्स फी व सवलत (Pricing & Fee)
+                          </span>
+                          <span className="text-[11px] text-[#5A6478] dark:text-slate-400">
+                            {isFree ? "विद्यार्थ्यांसाठी पूर्णपणे मोफत (₹0)" : `विद्यार्थी भरतील: ₹${formPrice} (मूळ: ₹${formOriginalPrice})`}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsFree(!isFree)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            isFree ? "bg-emerald-500" : "bg-blue-600"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              isFree ? "translate-x-1" : "translate-x-6"
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {!isFree && (
+                        <div className="grid grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 text-xs">
+                              Selling Price (₹) *
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={formPrice}
+                              onChange={(e) => setFormPrice(Number(e.target.value))}
+                              className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl font-bold text-xs text-[#0E1B3D] dark:text-white focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 text-xs">
+                              Original MRP (₹)
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={formOriginalPrice}
+                              onChange={(e) => setFormOriginalPrice(Number(e.target.value))}
+                              className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl font-bold text-xs text-[#0E1B3D] dark:text-white focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Validity Card */}
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-amber-200 dark:border-amber-900/50 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-amber-100 dark:border-amber-900/30">
+                        <span className="font-extrabold text-[#0E1B3D] dark:text-white flex items-center gap-1.5 text-xs">
+                          <Clock className="w-4 h-4 text-amber-600" />
+                          <span>कोर्स वैधता (Validity)</span>
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-extrabold text-[11px] border border-amber-300">
+                          {getEffectiveValidity().label}
+                        </span>
+                      </div>
+
+                      {/* Mode Chips */}
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {[
+                          { key: "preset", label: "जलद पर्याय (Presets)" },
+                          { key: "custom_days", label: "दिवस (Days)" },
+                          { key: "custom_months", label: "महिने (Months)" },
+                          { key: "fixed_date", label: "परीक्षेची तारीख (Fixed)" },
+                        ].map((m) => (
+                          <button
+                            key={m.key}
+                            type="button"
+                            onClick={() => setValidityMode(m.key as any)}
+                            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition ${
+                              validityMode === m.key
+                                ? "bg-amber-600 text-white shadow-sm"
+                                : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-amber-400"
+                            }`}
+                          >
+                            {m.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Preset Buttons */}
+                      {validityMode === "preset" && (
+                        <div className="grid grid-cols-2 gap-2 pt-2">
+                          {VALIDITY_PRESETS.map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => setSelectedPresetId(p.id)}
+                              className={`p-2 rounded-xl text-center font-bold text-xs border transition ${
+                                selectedPresetId === p.id
+                                  ? "bg-amber-600 text-white border-amber-600 shadow-sm"
+                                  : "bg-[#F5F7FF] dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-amber-200/60 dark:border-amber-900/40 hover:border-amber-400"
+                              }`}
+                            >
+                              {p.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Custom Days Input */}
+                      {validityMode === "custom_days" && (
+                        <div className="pt-2 flex items-center gap-3">
+                          <label className="font-bold text-slate-700 dark:text-slate-300 text-xs">दिवसांची संख्या:</label>
+                          <input
+                            type="number"
+                            min={1}
+                            value={customDays}
+                            onChange={(e) => setCustomDays(Number(e.target.value))}
+                            className="w-32 px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-amber-300 rounded-xl font-bold text-xs text-amber-900 dark:text-amber-200 focus:outline-none"
+                          />
+                          <span className="text-slate-500 font-semibold text-xs">दिवस (Days)</span>
+                        </div>
+                      )}
+
+                      {/* Custom Months Input */}
+                      {validityMode === "custom_months" && (
+                        <div className="pt-2 flex items-center gap-3">
+                          <label className="font-bold text-slate-700 dark:text-slate-300 text-xs">महिन्यांची संख्या:</label>
+                          <input
+                            type="number"
+                            min={1}
+                            value={customMonths}
+                            onChange={(e) => setCustomMonths(Number(e.target.value))}
+                            className="w-32 px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-amber-300 rounded-xl font-bold text-xs text-amber-900 dark:text-amber-200 focus:outline-none"
+                          />
+                          <span className="text-slate-500 font-semibold text-xs">महिने (Months)</span>
+                        </div>
+                      )}
+
+                      {/* Fixed Expiry Date */}
+                      {validityMode === "fixed_date" && (
+                        <div className="pt-2 flex items-center gap-3">
+                          <label className="font-bold text-slate-700 dark:text-slate-300 text-xs">अंतिम तारीख:</label>
+                          <input
+                            type="date"
+                            value={fixedExpiryDate}
+                            onChange={(e) => setFixedExpiryDate(e.target.value)}
+                            className="px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-amber-300 rounded-xl font-bold text-xs text-amber-900 dark:text-amber-200 focus:outline-none"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* HD Thumbnail Card */}
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-3">
+                      <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 text-xs">
+                        🖼️ HD Thumbnail Image URL
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-24 h-16 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0 bg-slate-900">
+                          {formThumbnail ? (
+                            <Image src={formThumbnail} alt="Thumbnail" fill className="object-cover" />
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-slate-500 font-bold text-[10px]">
+                              No Photo
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          value={formThumbnail}
+                          onChange={(e) => setFormThumbnail(e.target.value)}
+                          placeholder="https://i.ytimg.com/vi/... किंवा इमेज लिंक"
+                          className="flex-1 px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 text-[#0E1B3D] dark:text-white rounded-xl text-xs focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Course Status Card */}
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-3">
+                      <span className="font-bold text-[#0E1B3D] dark:text-slate-200 block text-xs">
+                        🚀 प्रसिद्धी स्थिती (Course Status)
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {[
+                          { key: "live", label: "Live", desc: "विद्यार्थ्यांना लगेच उपलब्ध" },
+                          { key: "upcoming", label: "Upcoming", desc: "Coming Soon बॅज" },
+                          { key: "draft", label: "Draft", desc: "फक्त ॲडमिनसाठी" },
+                        ].map((st) => (
+                          <button
+                            key={st.key}
+                            type="button"
+                            onClick={() => setFormStatus(st.key as any)}
+                            className={`p-2.5 rounded-xl text-center border font-bold text-xs transition ${
+                              formStatus === st.key
+                                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                                : "bg-[#F5F7FF] dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300"
+                            }`}
+                          >
+                            <div>{st.label}</div>
+                            <div className="text-[10px] font-normal opacity-80 mt-0.5">{st.desc}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Sticky Action Bar */}
+                <div className="sticky bottom-4 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl flex items-center justify-between">
+                  <button
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition"
+                  >
+                    ← यादीकडे परत जा (Back to List)
+                  </button>
+
+                  <SubmitButton
+                    type="submit"
+                    loading={isSaving}
+                    loadingText="सेव्ह करत आहे... (Saving to Supabase)"
+                    className="px-7 py-3 rounded-xl text-xs font-black shadow-md"
+                  >
+                    <span className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>कोर्स सेव्ह करा (Save to Supabase)</span>
+                    </span>
+                  </SubmitButton>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <>
+              {/* Header Banner */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-[#0B57D0] border border-blue-200">
@@ -844,505 +1378,10 @@ export default function CourseManagerPage() {
               </div>
             )}
           </div>
+        </>
+      )}
 
-          {/* ========================================================= */}
-          {/* SLIDE-OVER DRAWER FORM */}
-          {/* ========================================================= */}
-          {isDrawerOpen && (
-            <div className="fixed inset-0 z-50 overflow-hidden">
-              <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
-                onClick={() => !isSaving && setIsDrawerOpen(false)}
-              />
-
-              <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-                <div className="w-screen max-w-2xl bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-l dark:border-slate-800">
-                  {/* Drawer Header */}
-                  <div className="p-6 bg-[#0E1B3D] text-white flex items-center justify-between shrink-0">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-mono text-[10px] font-extrabold">
-                          {formCode}
-                        </span>
-                        <h3 className="font-extrabold text-lg font-heading">
-                          {editingCourse ? "कोर्स संपादित करा (Edit Course)" : "नवीन कोर्स तयार करा (New Course)"}
-                        </h3>
-                      </div>
-                      <p className="text-xs text-blue-200 mt-1">
-                        YouTube द्वारे थेट डेटा भरा किंवा खालील माहिती भरा.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => !isSaving && setIsDrawerOpen(false)}
-                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center font-bold text-sm transition"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Drawer Body Form */}
-                  <form onSubmit={handleSaveCourse} className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
-                    {/* ---------------------------------------------------------------- */}
-                    {/* 1. YOUTUBE IMPORT BOX (Direct Link & Auto-Fetch) */}
-                    {/* ---------------------------------------------------------------- */}
-                    <div className="p-5 bg-gradient-to-br from-red-50 via-slate-50 to-blue-50 dark:from-red-950/20 dark:via-slate-900 dark:to-blue-950/20 border-2 border-red-200/70 dark:border-red-900/40 rounded-2xl space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="font-extrabold text-sm text-[#0E1B3D] dark:text-white flex items-center gap-2">
-                          <YoutubeIcon className="w-5 h-5 text-red-600" />
-                          <span>YouTube वरून थेट कोर्स भरा (Instant YouTube Import)</span>
-                        </label>
-                        <span className="text-[10px] font-extrabold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
-                          Playlist किंवा Video Link
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                        YouTube Playlist किंवा Single Video ची लिंक पेस्ट करा. कोर्सचे नाव, वर्णन, HD थंबनेल आणि सर्व लेक्चर्स एका सेकंदात आपोआप भरले जातील!
-                      </p>
-
-                      <div className="flex items-center gap-2 pt-1">
-                        <input
-                          type="text"
-                          value={youtubeInputUrl}
-                          onChange={(e) => {
-                            setYoutubeInputUrl(e.target.value);
-                            setYtFetchError(null);
-                          }}
-                          placeholder="https://www.youtube.com/playlist?list=... किंवा https://youtu.be/..."
-                          className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white focus:outline-none focus:border-red-500 shadow-2xs"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleFetchFromYouTube}
-                          disabled={isFetchingYt || !youtubeInputUrl.trim()}
-                          className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition"
-                        >
-                          {isFetchingYt ? (
-                            <>
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              <span>शोधत आहे...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="w-3.5 h-3.5" />
-                              <span>माहिती मिळवा (Fetch)</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      {ytFetchError && (
-                        <div className="p-3 bg-red-100 border border-red-300 rounded-xl text-red-800 text-[11px] flex items-center gap-2 font-semibold">
-                          <AlertCircle className="w-4 h-4 shrink-0" />
-                          <span>{ytFetchError}</span>
-                        </div>
-                      )}
-
-                      {ytFetchSuccess && (
-                        <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-800 text-[11px] flex items-center gap-2 font-semibold">
-                          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-                          <span>{ytFetchSuccess}</span>
-                        </div>
-                      )}
-
-                      {/* Display Fetched Playlist Videos Preview */}
-                      {fetchedPlaylistVideos.length > 0 && (
-                        <div className="pt-2 space-y-2 border-t border-slate-200">
-                          <div className="flex items-center justify-between text-[11px] font-bold text-slate-700">
-                            <span>सापडलेले लेक्चर्स ({fetchedPlaylistVideos.filter((v) => v.selected).length}/{fetchedPlaylistVideos.length} निवडले):</span>
-                            <span className="text-[10px] text-slate-500">पहिले लेक्चर मोफत डेमो म्हणून सेट करा</span>
-                          </div>
-                          <div className="max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 space-y-1.5">
-                            {fetchedPlaylistVideos.map((v, idx) => (
-                              <div
-                                key={v.videoId + idx}
-                                className={`flex items-center justify-between gap-3 p-2 rounded-lg text-xs transition ${
-                                  v.selected ? "bg-slate-50" : "opacity-40"
-                                }`}
-                              >
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                  <input
-                                    type="checkbox"
-                                    checked={v.selected}
-                                    onChange={() => handleTogglePlaylistItemSelect(idx)}
-                                    className="w-4 h-4 rounded accent-red-600 cursor-pointer"
-                                  />
-                                  <span className="font-mono text-[10px] text-slate-400">#{idx + 1}</span>
-                                  <span className="font-bold text-slate-800 dark:text-slate-200 truncate">{v.title}</span>
-                                  <span className="text-[10px] text-slate-400 shrink-0">({v.durationFormatted})</span>
-                                </div>
-
-                                <label className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200 cursor-pointer shrink-0">
-                                  <input
-                                    type="checkbox"
-                                    checked={v.isFree}
-                                    onChange={() => handleTogglePlaylistItemFree(idx)}
-                                    className="w-3.5 h-3.5 rounded accent-emerald-600"
-                                  />
-                                  <span>Free Demo</span>
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* ---------------------------------------------------------------- */}
-                    {/* 2. AUTO-GENERATED COURSE CODE & TARGET CATEGORY */}
-                    {/* ---------------------------------------------------------------- */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center gap-1">
-                          <Lock className="w-3 h-3 text-slate-400" />
-                          <span>Course Code (Auto)</span>
-                        </label>
-                        <input
-                          type="text"
-                          readOnly
-                          value={formCode}
-                          className="w-full px-3 py-2.5 bg-slate-100 border border-[#E4E8F8] rounded-xl font-mono text-xs font-extrabold text-[#0B57D0] cursor-not-allowed"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="font-bold text-[#0E1B3D] dark:text-slate-200 flex items-center gap-1">
-                            <Tag className="w-3 h-3 text-purple-600" />
-                            <span>लक्ष्य प्रवर्ग (Target Category) *</span>
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => setIsCategoryModalOpen(true)}
-                            className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline"
-                          >
-                            <Edit2 className="w-2.5 h-2.5" />
-                            <span>प्रवर्गे मॅनेज / नवीन (+ / Edit)</span>
-                          </button>
-                        </div>
-                        <select
-                          value={targetCategoryKey}
-                          onChange={(e) => setTargetCategoryKey(e.target.value)}
-                          className="w-full px-3 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:border-[#0B57D0]"
-                        >
-                          {(categories.length > 0 ? categories : TARGET_CATEGORY_OPTIONS).map((cat) => (
-                            <option key={cat.key} value={cat.key}>
-                              {cat.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* ---------------------------------------------------------------- */}
-                    {/* 3. COURSE TITLES (Regional / Marathi & English) */}
-                    {/* ---------------------------------------------------------------- */}
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center justify-between">
-                          <span>कोर्सचे नाव (Course Title in Marathi / Regional) *</span>
-                          {formTitleMr.trim().length >= 3 && (
-                            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-500" /> मान्य
-                            </span>
-                          )}
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            required
-                            value={formTitleMr}
-                            onChange={(e) => setFormTitleMr(e.target.value)}
-                            placeholder="उदा. महाराष्ट्र पोलीस भरती १००% परिपूर्ण तयारी किंवा ५०० वर्षांचे कॅलेंडर"
-                            className={`w-full px-3 py-2.5 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none transition-all ${
-                              formTitleMr.trim().length >= 3
-                                ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
-                                : "bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 dark:text-white focus:border-[#0B57D0]"
-                            }`}
-                          />
-                          {formTitleMr.trim().length >= 3 && (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block font-bold text-[#0E1B3D] mb-1 flex items-center justify-between">
-                          <span>Course Title (English) *</span>
-                          {formTitle.trim().length >= 3 && (
-                            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Valid
-                            </span>
-                          )}
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            required
-                            value={formTitle}
-                            onChange={(e) => setFormTitle(e.target.value)}
-                            placeholder="e.g. Memory Science &amp; Vedic Maths Mastery"
-                            className={`w-full px-3 py-2.5 rounded-xl text-xs text-[#0E1B3D] focus:outline-none transition-all ${
-                              formTitle.trim().length >= 3
-                                ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
-                                : "bg-[#F5F7FF] border border-[#E4E8F8] focus:border-[#0B57D0]"
-                            }`}
-                          />
-                          {formTitle.trim().length >= 3 && (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* ---------------------------------------------------------------- */}
-                    {/* 4. DESCRIPTION & HD THUMBNAIL */}
-                    {/* ---------------------------------------------------------------- */}
-                    <div>
-                      <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">कोर्सचे वर्णन (Course Description)</label>
-                      <textarea
-                        value={formDescription}
-                        onChange={(e) => setFormDescription(e.target.value)}
-                        placeholder="विद्यार्थी या कोर्समध्ये काय शिकणार आहेत..."
-                        rows={3}
-                        className="w-full px-3 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 text-[#0E1B3D] dark:text-white rounded-xl text-xs focus:outline-none focus:border-[#0B57D0] resize-none"
-                      />
-                    </div>
-
-                    {/* HD Thumbnail Input with Live Preview */}
-                    <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-2">
-                      <label className="block font-bold text-[#0E1B3D] dark:text-slate-200">HD Thumbnail Image URL</label>
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-20 h-14 rounded-xl overflow-hidden border border-slate-300 shrink-0 bg-slate-900">
-                          {formThumbnail ? (
-                            <Image src={formThumbnail} alt="Thumbnail" fill className="object-cover" />
-                          ) : (
-                            <div className="flex items-center justify-center h-full text-slate-500 font-bold text-[10px]">
-                              No Photo
-                            </div>
-                          )}
-                        </div>
-                        <input
-                          type="text"
-                          value={formThumbnail}
-                          onChange={(e) => setFormThumbnail(e.target.value)}
-                          placeholder="https://i.ytimg.com/vi/... किंवा इमेज लिंक"
-                          className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 text-[#0E1B3D] dark:text-white rounded-xl text-xs focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    {/* ---------------------------------------------------------------- */}
-                    {/* 5. PRICING & FREE MASTERCLASS TOGGLE */}
-                    {/* ---------------------------------------------------------------- */}
-                    <div className="p-4 bg-[#F5F7FF] dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="font-bold text-[#0E1B3D] dark:text-slate-200 block text-xs">कोर्स फी व सवलत (Pricing & Fee)</span>
-                          <span className="text-[11px] text-[#5A6478]">
-                            {isFree ? "हा कोर्स विद्यार्थ्यांसाठी पूर्णपणे मोफत आहे (₹0)" : `विद्यार्थी भरतील: ₹${formPrice} (मूळ किंमत: ₹${formOriginalPrice})`}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setIsFree(!isFree)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            isFree ? "bg-emerald-500" : "bg-blue-600"
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              isFree ? "translate-x-1" : "translate-x-6"
-                            }`}
-                          />
-                        </button>
-                      </div>
-
-                      {!isFree && (
-                        <div className="grid grid-cols-2 gap-3 pt-1">
-                          <div>
-                            <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">Selling Price (₹) *</label>
-                            <input
-                              type="number"
-                              min={0}
-                              value={formPrice}
-                              onChange={(e) => setFormPrice(Number(e.target.value))}
-                              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl font-bold text-xs text-[#0E1B3D] dark:text-white focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">Original Price (₹)</label>
-                            <input
-                              type="number"
-                              min={0}
-                              value={formOriginalPrice}
-                              onChange={(e) => setFormOriginalPrice(Number(e.target.value))}
-                              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl font-bold text-xs text-[#0E1B3D] dark:text-white focus:outline-none"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* ---------------------------------------------------------------- */}
-                    {/* 6. FULL COURSE VALIDITY CUSTOMIZATION (Days, Months, Date, Lifetime) */}
-                    {/* ---------------------------------------------------------------- */}
-                    <div className="p-4 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-900/50 rounded-2xl space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-[#0E1B3D] dark:text-white flex items-center gap-1.5 text-xs">
-                          <Clock className="w-4 h-4 text-amber-600" />
-                          <span>कोर्स वैधता (Full Validity Customization)</span>
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-extrabold text-[11px] border border-amber-300">
-                          {getEffectiveValidity().label}
-                        </span>
-                      </div>
-
-                      {/* Mode Chips */}
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {[
-                          { key: "preset", label: "जलद पर्याय (Quick Presets)" },
-                          { key: "custom_days", label: "कस्टम दिवस (Days)" },
-                          { key: "custom_months", label: "कस्टम महिने (Months)" },
-                          { key: "fixed_date", label: "परीक्षेची तारीख (Fixed Date)" },
-                        ].map((m) => (
-                          <button
-                            key={m.key}
-                            type="button"
-                            onClick={() => setValidityMode(m.key as any)}
-                            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition ${
-                              validityMode === m.key
-                                ? "bg-amber-600 text-white shadow-sm"
-                                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-amber-200 dark:border-amber-900/50 hover:border-amber-400"
-                            }`}
-                          >
-                            {m.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Preset Buttons */}
-                      {validityMode === "preset" && (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
-                          {VALIDITY_PRESETS.map((p) => (
-                            <button
-                              key={p.id}
-                              type="button"
-                              onClick={() => setSelectedPresetId(p.id)}
-                              className={`p-2 rounded-xl text-center font-bold text-xs border transition ${
-                                selectedPresetId === p.id
-                                  ? "bg-amber-600 text-white border-amber-600 shadow-sm"
-                                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-amber-200 dark:border-amber-900/50 hover:border-amber-400"
-                              }`}
-                            >
-                              {p.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Custom Days Input */}
-                      {validityMode === "custom_days" && (
-                        <div className="pt-2 flex items-center gap-3">
-                          <label className="font-bold text-slate-700 text-xs">दिवसांची संख्या:</label>
-                          <input
-                            type="number"
-                            min={1}
-                            value={customDays}
-                            onChange={(e) => setCustomDays(Number(e.target.value))}
-                            className="w-32 px-3 py-2 bg-white border border-amber-300 rounded-xl font-bold text-xs text-amber-900 focus:outline-none"
-                          />
-                          <span className="text-slate-500 font-semibold text-xs">दिवस (Days)</span>
-                        </div>
-                      )}
-
-                      {/* Custom Months Input */}
-                      {validityMode === "custom_months" && (
-                        <div className="pt-2 flex items-center gap-3">
-                          <label className="font-bold text-slate-700 text-xs">महिन्यांची संख्या:</label>
-                          <input
-                            type="number"
-                            min={1}
-                            value={customMonths}
-                            onChange={(e) => setCustomMonths(Number(e.target.value))}
-                            className="w-32 px-3 py-2 bg-white border border-amber-300 rounded-xl font-bold text-xs text-amber-900 focus:outline-none"
-                          />
-                          <span className="text-slate-500 font-semibold text-xs">महिने (Months)</span>
-                        </div>
-                      )}
-
-                      {/* Fixed Expiry Date */}
-                      {validityMode === "fixed_date" && (
-                        <div className="pt-2 flex items-center gap-3">
-                          <label className="font-bold text-slate-700 text-xs">अंतिम तारीख निवडा:</label>
-                          <input
-                            type="date"
-                            value={fixedExpiryDate}
-                            onChange={(e) => setFixedExpiryDate(e.target.value)}
-                            className="px-3 py-2 bg-white border border-amber-300 rounded-xl font-bold text-xs text-amber-900 focus:outline-none"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* ---------------------------------------------------------------- */}
-                    {/* 7. COURSE STATUS SELECTOR */}
-                    {/* ---------------------------------------------------------------- */}
-                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                      <span className="font-bold text-[#0E1B3D] dark:text-slate-200 block text-xs">कोर्स प्रसिद्धी स्थिती (Course Status)</span>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        {[
-                          { key: "live", label: "Live", desc: "विद्यार्थ्यांना लगेच उपलब्ध" },
-                          { key: "upcoming", label: "Upcoming", desc: "Coming Soon बॅज" },
-                          { key: "draft", label: "Draft", desc: "फक्त ॲडमिनसाठी" },
-                        ].map((st) => (
-                          <button
-                            key={st.key}
-                            type="button"
-                            onClick={() => setFormStatus(st.key as any)}
-                            className={`p-2.5 rounded-xl text-center border font-bold text-xs transition ${
-                              formStatus === st.key
-                                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300"
-                            }`}
-                          >
-                            <div>{st.label}</div>
-                            <div className="text-[10px] font-normal opacity-80 mt-0.5">{st.desc}</div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Submit Buttons */}
-                    <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-200 dark:border-slate-800">
-                      <button
-                        type="button"
-                        disabled={isSaving}
-                        onClick={() => setIsDrawerOpen(false)}
-                        className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition"
-                      >
-                        रद्द करा (Cancel)
-                      </button>
-
-                      <SubmitButton
-                        type="submit"
-                        loading={isSaving}
-                        loadingText="सेव्ह करत आहे... (Saving to Supabase)"
-                        className="px-6 py-2.5 rounded-xl text-xs"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>कोर्स सेव्ह करा (Save to Supabase)</span>
-                        </span>
-                      </SubmitButton>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Move to Recycle Bin Confirmation Modal */}
+      {/* Move to Recycle Bin Confirmation Modal */}
           {deleteModalCourse && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
               <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-amber-200 dark:border-amber-900/50 space-y-4">

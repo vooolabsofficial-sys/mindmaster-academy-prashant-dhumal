@@ -19,6 +19,7 @@ import {
 } from "@/lib/staffStore";
 import { getSubAdminCashSettlements, settleSubAdminCash, SubAdminCashSummary } from "@/lib/grantStore";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 
 const MAHARASHTRA_DISTRICTS = [
   "Pune",
@@ -199,6 +200,9 @@ export default function SubAdminManagerPage() {
     setFormPermissions(["messages.manage", "students.view"]);
     setFormMustReset(true);
     setIsDrawerOpen(true);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleOpenEdit = (staff: StaffUser) => {
@@ -212,6 +216,9 @@ export default function SubAdminManagerPage() {
     setFormPermissions(staff.permissions);
     setFormMustReset(staff.mustChangePassword || false);
     setIsDrawerOpen(true);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const togglePermission = (perm: StaffPermission) => {
@@ -406,8 +413,340 @@ export default function SubAdminManagerPage() {
     <PermissionGuard adminOnly={true}>
       <AdminShell>
         <div className="space-y-6">
-          {/* Header Bar with Counter Chip x / max_sub_admins */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
+          {isDrawerOpen ? (
+            /* ========================================================= */
+            /* IN-PAGE DEDICATED SUB-ADMIN PROVISIONING WORKSPACE */
+            /* ========================================================= */
+            <div className="space-y-6 animate-fadeIn">
+              {/* Workspace Header Card */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-[#E4E8F8] dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl transition shadow-xs cursor-pointer"
+                    title="यादीकडे परत जा"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">👥</span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#0B57D0] dark:text-blue-400 font-mono text-xs font-black">
+                        {editingStaff ? (editingStaff.staffId || editingStaff.id) : getNextStaffId()}
+                      </span>
+                      <span className="text-xs text-slate-400 font-semibold">• {editingStaff ? "कर्मचारी संपादन मोड" : "नवीन नोंदणी"}</span>
+                    </div>
+                    <h1 className="text-2xl font-black text-[#0E1B3D] dark:text-white font-heading">
+                      {editingStaff ? `Edit Sub-Admin: ${editingStaff.staffId || editingStaff.name}` : "नवीन सब-ॲडमिन नोंदणी स्टुडिओ (Provision Sub-Admin)"}
+                    </h1>
+                    <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
+                      {editingStaff
+                        ? "Modify account contact info and assign granular permissions"
+                        : `Generates ${getNextStaffId()} with temporary credentials and auto password reset`}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition cursor-pointer"
+                  >
+                    रद्द करा (Cancel)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const form = document.getElementById("subadmin-drawer-form") as HTMLFormElement;
+                      if (form) form.requestSubmit();
+                    }}
+                    className="px-6 py-2.5 rounded-xl bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer"
+                  >
+                    {editingStaff ? "बदल सेव्ह करा (Save Changes)" : "सब-ॲडमिन नोंदवा (Provision Sub-Admin →)"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Body - 2 Column Responsive Workspace */}
+              <form onSubmit={handleSaveSubAdmin} id="subadmin-drawer-form" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Left Column (6 cols): Identity, Contact, District, Maker-Checker */}
+                  <div className="lg:col-span-6 space-y-6">
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
+                      <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                        <span>👤</span>
+                        <span>ओळख व संपर्क तपशील (Identity & Contact)</span>
+                      </h3>
+
+                      {/* Next Staff ID Banner for new additions */}
+                      {!editingStaff && (
+                        <div className="p-3.5 bg-[#EEF4FF] dark:bg-blue-950/40 border border-[#D0E2FF] dark:border-blue-900/50 rounded-2xl flex items-center justify-between text-xs">
+                          <div>
+                            <p className="font-bold text-[#0B57D0] dark:text-blue-300">Assigned Staff ID</p>
+                            <p className="text-[11px] text-[#5A6478] dark:text-slate-400">Sequential ID auto-generated for MMA staff directory</p>
+                          </div>
+                          <span className="font-mono font-black text-sm text-[#0B57D0] dark:text-blue-300 px-3 py-1 bg-white dark:bg-slate-900 rounded-xl border border-[#D0E2FF] dark:border-blue-800">
+                            {getNextStaffId()}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Name */}
+                      <div>
+                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                          पूर्ण नाव (Full Name) *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formName}
+                          onChange={(e) => setFormName(e.target.value)}
+                          placeholder="उदा. आनंद सातपुते (Anand Satpute)"
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                        />
+                      </div>
+
+                      {/* Phone & Email */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                            मोबाईल नंबर (OTP लॉगिनसाठी) *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={formPhone}
+                            onChange={(e) => setFormPhone(e.target.value)}
+                            placeholder="+91 98..."
+                            className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                            ईमेल (Work Email)
+                          </label>
+                          <input
+                            type="email"
+                            value={formEmail}
+                            onChange={(e) => setFormEmail(e.target.value)}
+                            placeholder="उदा. anand@mindmasteredu.in"
+                            className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* District & Centre / Branch */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                            📍 नियुक्त जिल्हा (District) *
+                          </label>
+                          <select
+                            value={formDistrict}
+                            onChange={(e) => setFormDistrict(e.target.value)}
+                            className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          >
+                            {MAHARASHTRA_DISTRICTS.map((d) => (
+                              <option key={d} value={d}>
+                                {d}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                            🏢 शाखा / सेंटरचे नाव (Branch / Centre)
+                          </label>
+                          <input
+                            type="text"
+                            value={formCentre}
+                            onChange={(e) => setFormCentre(e.target.value)}
+                            placeholder="उदा. स्वारगेट सेंटर / मुख्य शाखा"
+                            className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Maker-Checker Admission Governance Toggle */}
+                      <div className="p-3.5 bg-[#EEF4FF] dark:bg-blue-950/30 border border-[#D0E2FF] dark:border-blue-900/50 rounded-2xl flex items-center justify-between text-xs">
+                        <div>
+                          <p className="font-bold text-[#0B57D0] dark:text-blue-300 flex items-center gap-1.5">
+                            <span>⏳</span> Maker-Checker अप्रूव्हल मोड
+                          </p>
+                          <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-0.5">
+                            {formApprovalMode
+                              ? "Approval Mode: या सब-ॲडमिनने नोंदवलेले ऑफलाइन प्रवेश प्रशांत सरांच्या मंजुरीनंतरच सक्रिय होतील."
+                              : "Direct Mode: ऑफलाइन प्रवेश नोंदवताच विद्यार्थ्याला कोर्स लगेच सुरू होईल."}
+                          </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formApprovalMode}
+                            onChange={(e) => setFormApprovalMode(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0B57D0]"></div>
+                        </label>
+                      </div>
+
+                      {/* Force Password Change Option */}
+                      <div className="p-3.5 bg-[#FAFBFD] dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl flex items-center justify-between text-xs">
+                        <div>
+                          <p className="font-bold text-[#0E1B3D] dark:text-white">पहिल्या लॉगिनला पासवर्ड बदलणे सक्तीचे करा</p>
+                          <p className="text-[11px] text-[#5A6478] dark:text-slate-400">
+                            कर्मचाऱ्याला लॉगिन केल्यावर लगेच नवीन पासवर्ड सेट करावा लागेल.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={formMustReset}
+                          onChange={(e) => setFormMustReset(e.target.checked)}
+                          className="rounded text-[#0B57D0] focus:ring-[#0B57D0] h-4 w-4"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column (6 cols): Granular Permissions Matrix */}
+                  <div className="lg:col-span-6 space-y-6">
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200">
+                          🔑 परवानग्या निवडा ({formPermissions.length} / {ALL_PERMISSIONS.length}) *
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (formPermissions.length === ALL_PERMISSIONS.length) {
+                              setFormPermissions([]);
+                            } else {
+                              setFormPermissions(ALL_PERMISSIONS.map((p) => p.key));
+                            }
+                          }}
+                          className="text-[11px] font-bold text-[#0B57D0] dark:text-blue-400 hover:underline cursor-pointer"
+                        >
+                          {formPermissions.length === ALL_PERMISSIONS.length ? "सर्व काढा (Deselect All)" : "सर्व निवडा (Select All)"}
+                        </button>
+                      </div>
+
+                      {/* 1-Click Role Presets */}
+                      <div className="p-3 bg-blue-50/60 dark:bg-slate-800/80 rounded-2xl border border-blue-200/80 dark:border-slate-700 space-y-2">
+                        <span className="text-[11px] font-extrabold text-[#0B57D0] dark:text-blue-400 flex items-center gap-1.5">
+                          <span>⚡ १-क्लिक रोल प्रीसेट्स (Quick Role Presets):</span>
+                        </span>
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormPermissions(["messages.manage", "students.view", "students.call"]);
+                              toast.success("वरिष्ठ समुपदेशक (Counselor) परवानग्या लागू!");
+                            }}
+                            className="p-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-[10px] font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer"
+                          >
+                            📞 समुपदेशक
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormPermissions(["students.view", "students.manage", "messages.manage", "coupons.view"]);
+                              toast.success("शाखा व्यवस्थापक (Branch Manager) परवानग्या लागू!");
+                            }}
+                            className="p-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-[10px] font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer"
+                          >
+                            🏢 शाखा व्यवस्थापक
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormPermissions(["students.manage", "coupons.view", "students.view"]);
+                              toast.success("प्रवेश कक्ष (Admission Desk) परवानग्या लागू!");
+                            }}
+                            className="p-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-[10px] font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer"
+                          >
+                            📝 प्रवेश कक्ष
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Permission Items List */}
+                      <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+                        {ALL_PERMISSIONS.map((p) => {
+                          const isChecked = formPermissions.includes(p.key);
+                          return (
+                            <div
+                              key={p.key}
+                              onClick={() => togglePermission(p.key)}
+                              className={`p-3 rounded-2xl border transition-all flex items-start gap-3 cursor-pointer ${
+                                isChecked
+                                  ? "bg-white dark:bg-slate-800 border-[#0B57D0] dark:border-blue-500 shadow-xs"
+                                  : "bg-[#F5F7FF] dark:bg-slate-800/50 border-[#E4E8F8] dark:border-slate-700 hover:bg-white dark:hover:bg-slate-750"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {}}
+                                className="mt-0.5 rounded text-[#0B57D0] focus:ring-[#0B57D0] h-4 w-4"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-bold text-[#0E1B3D] dark:text-white text-xs flex items-center gap-1.5 truncate">
+                                    <span>{p.icon}</span>
+                                    <span className="truncate">{p.label}</span>
+                                  </span>
+                                  <span className="font-mono text-[9px] text-[#0B57D0] dark:text-blue-400 bg-[#EEF4FF] dark:bg-blue-950/60 px-2 py-0.5 rounded-md font-semibold shrink-0">
+                                    {p.key}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-0.5">
+                                  {p.desc}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Strict Admin Security Notice */}
+                      <div className="p-3.5 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 rounded-2xl text-[11px] text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                        <span className="text-sm">🔒</span>
+                        <div>
+                          <p className="font-bold">Strict Main Admin Security Locks:</p>
+                          <p className="text-[10px] text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">
+                            Master Settings, Sub-Admin management, System Audit Trail, Financial/Watch Telemetry Reports, and Deletion actions cannot be assigned to Sub-Admins. They are permanently locked to Main Admin (Prashant Sir).
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Sticky Action Bar */}
+                <div className="sticky bottom-4 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition cursor-pointer"
+                  >
+                    ← कर्मचारी यादीकडे परत जा (Back to Roster)
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="px-7 py-3 rounded-xl bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-black shadow-md hover:shadow-lg transition-all cursor-pointer"
+                  >
+                    {editingStaff ? "बदल सेव्ह करा (Save Changes)" : "सब-ॲडमिन नोंदवा (Provision Sub-Admin →)"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <>
+              {/* Header Bar with Counter Chip x / max_sub_admins */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-2xl font-extrabold text-[#0E1B3D] dark:text-white font-heading tracking-tight">
@@ -913,264 +1252,9 @@ export default function SubAdminManagerPage() {
             </div>
           </div>
 
-          {/* ========================================================= */}
-          {/* SLIDE-OVER DRAWER FORM */}
-          {/* ========================================================= */}
-          {isDrawerOpen && (
-            <div className="fixed inset-0 z-50 overflow-hidden animate-fadeIn">
-              {/* Backdrop */}
-              <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
-                onClick={() => setIsDrawerOpen(false)}
-              />
+        </>
+      )}
 
-              <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex">
-                <div className="w-screen max-w-xl bg-white dark:bg-slate-900 shadow-2xl flex flex-col justify-between overflow-y-auto border-l dark:border-slate-800">
-                  {/* Drawer Header */}
-                  <div className="p-6 border-b border-[#E4E8F8] dark:border-slate-800 flex items-center justify-between bg-[#FAFBFD] dark:bg-slate-800/80">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">👥</span>
-                        <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
-                          {editingStaff ? `Edit Sub-Admin: ${editingStaff.staffId || editingStaff.name}` : "Provision New Sub-Admin"}
-                        </h2>
-                      </div>
-                      <p className="text-xs text-[#5A6478] mt-0.5">
-                        {editingStaff
-                          ? "Modify account contact info and assign granular permissions"
-                          : `Generates ${getNextStaffId()} with temporary credentials and auto password reset`}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setIsDrawerOpen(false)}
-                      className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 flex items-center justify-center text-sm text-[#5A6478] dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Drawer Form Body */}
-                  <form onSubmit={handleSaveSubAdmin} id="subadmin-drawer-form" className="p-6 space-y-5 flex-1">
-                    {/* Next Staff ID Banner for new additions */}
-                    {!editingStaff && (
-                      <div className="p-3 bg-[#EEF4FF] border border-[#D0E2FF] rounded-2xl flex items-center justify-between text-xs">
-                        <div>
-                          <p className="font-bold text-[#0B57D0]">Assigned Staff ID</p>
-                          <p className="text-[11px] text-[#5A6478]">Sequential ID auto-generated for MMA staff directory</p>
-                        </div>
-                        <span className="font-mono font-black text-sm text-[#0B57D0] px-3 py-1 bg-white rounded-xl border border-[#D0E2FF]">
-                          {getNextStaffId()}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Name */}
-                    <div>
-                      <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                        Full Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formName}
-                        onChange={(e) => setFormName(e.target.value)}
-                        placeholder="e.g. Anand Satpute"
-                        className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                      />
-                    </div>
-
-                    {/* Phone & Email */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                          Phone Number (OTP Verification) *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={formPhone}
-                          onChange={(e) => setFormPhone(e.target.value)}
-                          placeholder="+91 98..."
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                          Work Email
-                        </label>
-                        <input
-                          type="email"
-                          value={formEmail}
-                          onChange={(e) => setFormEmail(e.target.value)}
-                          placeholder="e.g. anand@mindmasteredu.in"
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                        />
-                      </div>
-                    </div>
-
-                    {/* District & Centre / Branch */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                          📍 Assigned District *
-                        </label>
-                        <select
-                          value={formDistrict}
-                          onChange={(e) => setFormDistrict(e.target.value)}
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                        >
-                          {MAHARASHTRA_DISTRICTS.map((d) => (
-                            <option key={d} value={d}>
-                              {d}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                          🏢 Centre / Branch Name
-                        </label>
-                        <input
-                          type="text"
-                          value={formCentre}
-                          onChange={(e) => setFormCentre(e.target.value)}
-                          placeholder="e.g. Swargate Centre / Main Branch"
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Maker-Checker Admission Governance Toggle */}
-                    <div className="p-3.5 bg-[#EEF4FF] dark:bg-blue-950/30 border border-[#D0E2FF] dark:border-blue-900/50 rounded-2xl flex items-center justify-between text-xs">
-                      <div>
-                        <p className="font-bold text-[#0B57D0] flex items-center gap-1.5">
-                          <span>⏳</span> Maker-Checker Approval Mode
-                        </p>
-                        <p className="text-[11px] text-[#5A6478] mt-0.5">
-                          {formApprovalMode
-                            ? "Approval Mode: Offline admissions by this sub-admin require Prashant Sir's approval before activating."
-                            : "Direct Mode: Offline admissions activate student course access immediately."}
-                        </p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formApprovalMode}
-                          onChange={(e) => setFormApprovalMode(e.target.checked)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0B57D0]"></div>
-                      </label>
-                    </div>
-
-                    {/* Permissions Checkboxes */}
-                    <div className="p-4 bg-[#F5F7FF] dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200">
-                          🔑 Permission Checkboxes ({formPermissions.length} selected) *
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (formPermissions.length === ALL_PERMISSIONS.length) {
-                              setFormPermissions([]);
-                            } else {
-                              setFormPermissions(ALL_PERMISSIONS.map((p) => p.key));
-                            }
-                          }}
-                          className="text-[11px] font-bold text-[#0B57D0] hover:underline"
-                        >
-                          {formPermissions.length === ALL_PERMISSIONS.length ? "Deselect All" : "Select All"}
-                        </button>
-                      </div>
-
-                      <div className="space-y-2">
-                        {ALL_PERMISSIONS.map((p) => {
-                          const isChecked = formPermissions.includes(p.key);
-                          return (
-                            <div
-                              key={p.key}
-                              onClick={() => togglePermission(p.key)}
-                              className={`p-3 rounded-xl border transition-all flex items-start gap-3 cursor-pointer ${
-                                isChecked
-                                  ? "bg-white dark:bg-slate-800 border-[#0B57D0] dark:border-blue-500 shadow-xs"
-                                  : "bg-white/60 dark:bg-slate-800 border-[#E4E8F8] dark:border-slate-700 hover:bg-white dark:hover:bg-slate-750"
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={() => {}}
-                                className="mt-0.5 rounded text-[#0B57D0] focus:ring-[#0B57D0] h-4 w-4"
-                              />
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-bold text-[#0E1B3D] dark:text-white text-xs flex items-center gap-1.5">
-                                    <span>{p.icon}</span>
-                                    <span>{p.label}</span>
-                                  </span>
-                                  <span className="font-mono text-[10px] text-[#0B57D0] bg-[#EEF4FF] px-2 py-0.5 rounded-md font-semibold">
-                                    {p.key}
-                                  </span>
-                                </div>
-                                <p className="text-[11px] text-[#5A6478] mt-0.5">
-                                  {p.desc}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Strict Admin Security Notice */}
-                      <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
-                        <span className="text-sm">🔒</span>
-                        <div>
-                          <p className="font-bold">Strict Main Admin Security Locks:</p>
-                          <p className="text-[10px] text-amber-800 mt-0.5 leading-relaxed">
-                            Master Settings, Sub-Admin management, System Audit Trail, Financial/Watch Telemetry Reports, and Deletion actions cannot be assigned to Sub-Admins. They are permanently locked to Main Admin (Prashant Sir).
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Force Password Change Option */}
-                    <div className="p-3.5 bg-[#FAFBFD] dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl flex items-center justify-between text-xs">
-                      <div>
-                        <p className="font-bold text-[#0E1B3D] dark:text-white">Force Password Change on Next Login</p>
-                        <p className="text-[11px] text-[#5A6478]">
-                          Staff will be mandated to set an Argon2id password before accessing dashboard.
-                        </p>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={formMustReset}
-                        onChange={(e) => setFormMustReset(e.target.checked)}
-                        className="rounded text-[#0B57D0] focus:ring-[#0B57D0] h-4 w-4"
-                      />
-                    </div>
-
-                    {/* Drawer Actions */}
-                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E4E8F8] dark:border-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => setIsDrawerOpen(false)}
-                        className="px-5 py-2.5 rounded-full border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold text-[#5A6478] dark:text-slate-300 hover:bg-[#F5F7FF] dark:hover:bg-slate-800 cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-6 py-2.5 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer"
-                      >
-                        {editingStaff ? "Save Sub-Admin Changes" : "Provision Sub-Admin →"}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ========================================================= */}
           {/* CREDENTIALS GENERATED MODAL (SHOWN ONCE ON CREATE) */}
