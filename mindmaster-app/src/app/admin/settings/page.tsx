@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
 import {
@@ -251,11 +252,11 @@ export default function AdminSettingsPage() {
   const handleStaffPasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword) {
-      alert("Please enter current password.");
+      toast.error("Please enter current password.");
       return;
     }
     if (!newAdminPassword || newAdminPassword.length < 6) {
-      alert("New password must be at least 6 characters.");
+      toast.error("New password must be at least 6 characters.");
       return;
     }
     setIsChangingPassword(true);
@@ -271,11 +272,11 @@ export default function AdminSettingsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update staff password.");
-      alert("Admin password updated successfully with Argon2id encryption!");
+      toast.success("Admin password updated successfully with Argon2id encryption!");
       setCurrentPassword("");
       setNewAdminPassword("");
     } catch (err: any) {
-      alert(err.message || "Failed to update password");
+      toast.error(err.message || "Failed to update password");
     } finally {
       setIsChangingPassword(false);
     }
@@ -297,7 +298,7 @@ export default function AdminSettingsPage() {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert("Failed to export full system backup. Ensure you have active admin authority.");
+      toast.error("Failed to export full system backup. Ensure you have active admin authority.");
     } finally {
       setIsExportingBackup(false);
     }

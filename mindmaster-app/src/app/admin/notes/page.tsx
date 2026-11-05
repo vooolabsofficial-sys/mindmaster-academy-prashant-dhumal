@@ -892,9 +892,9 @@ export default function DigitalBooksManagerPage() {
                   )}
 
                   {/* 4. PDF FILE UPLOAD & DIRECT URL */}
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
                     <div className="flex items-center justify-between">
-                      <label className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <label className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                         <FileText className="w-4 h-4 text-[#0B57D0]" />
                         <span>PDF Book File (.pdf) *</span>
                       </label>
@@ -981,9 +981,9 @@ export default function DigitalBooksManagerPage() {
                   </div>
 
                   {/* 5. COVER THUMBNAIL UPLOAD & DIRECT URL */}
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
                     <div className="flex items-center justify-between">
-                      <label className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <label className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                         <ImageIcon className="w-4 h-4 text-purple-600" />
                         <span>Book Cover Thumbnail (.png, .jpg, .webp)</span>
                       </label>
@@ -1114,9 +1114,9 @@ export default function DigitalBooksManagerPage() {
                   </div>
 
                   {/* 7. PUBLISH STATUS TOGGLE */}
-                  <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                     <div>
-                      <p className="font-bold text-slate-800 text-xs">Publish Status</p>
+                      <p className="font-bold text-slate-800 dark:text-slate-200 text-xs">Publish Status</p>
                       <p className="text-[11px] text-slate-500">Live पुस्तके लगेच विद्यार्थ्यांना उपलब्ध होतात.</p>
                     </div>
 

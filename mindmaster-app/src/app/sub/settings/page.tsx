@@ -370,14 +370,14 @@ export default function SubAdminSettingsPage() {
         </div>
 
         {/* Card 4: Change Password & Session Security */}
-        <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-3 border-b border-[#E4E8F8] pb-4">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-5">
+          <div className="flex items-center gap-3 border-b border-[#E4E8F8] dark:border-slate-800 pb-4">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center">
               <KeyRound className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-[#0E1B3D]">Change Password & Session Security</h2>
-              <p className="text-xs text-[#5A6478]">
+              <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white">Change Password & Session Security</h2>
+              <p className="text-xs text-[#5A6478] dark:text-slate-400">
                 Keep your staff operator terminal secure with an Argon2-encrypted password.
               </p>
             </div>

@@ -432,25 +432,25 @@ export default function SubAdminMessagesPage() {
         {/* Resolve Ticket Modal */}
         {showResolveModal && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/50 text-emerald-600 flex items-center justify-center shrink-0">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold text-slate-900">Resolve Support Ticket</h3>
-                  <p className="text-xs text-slate-500">Provide an optional resolution reply sent to the student.</p>
+                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Resolve Support Ticket</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Provide an optional resolution reply sent to the student.</p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Resolution Note / Reply</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Resolution Note / Reply</label>
                 <textarea
                   rows={3}
                   value={resolutionNoteInput}
                   onChange={(e) => setResolutionNoteInput(e.target.value)}
                   placeholder="e.g. Issue resolved. Follow-up complete."
-                  className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600"
+                  className="w-full text-xs p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-blue-600 text-slate-900 dark:text-white placeholder:text-slate-400"
                 />
               </div>
 
@@ -458,7 +458,7 @@ export default function SubAdminMessagesPage() {
                 <button
                   type="button"
                   onClick={() => setShowResolveModal(false)}
-                  className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   Cancel
                 </button>

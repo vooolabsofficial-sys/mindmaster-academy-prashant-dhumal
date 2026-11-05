@@ -23,6 +23,7 @@ import {
   Clock,
   Sparkles,
   ExternalLink,
+  HelpCircle,
 } from "lucide-react";
 import { StaffUser, hasStaffPermission, StaffPermission, StudentRecord } from "@/lib/types";
 import {
@@ -192,10 +193,8 @@ export default function AdminTopbar() {
     { label: "Dashboard", href: "/sub", icon: <Brain className="w-4 h-4" /> },
     { label: "Students & Grants", href: "/sub/students", icon: <User className="w-4 h-4" />, permission: "students.view" },
     { label: "Support Desk", href: "/sub/messages", icon: <Brain className="w-4 h-4" />, badge: msgUnread > 0 ? `${msgUnread}` : undefined, permission: "messages.manage" },
-    { label: "Courses & Videos", href: "/admin/courses", icon: <Brain className="w-4 h-4" />, permission: "courses.manage" },
-    { label: "PDF Books", href: "/admin/notes", icon: <Brain className="w-4 h-4" />, permission: "notes.books.manage" },
-    { label: "Coupons", href: "/admin/coupons", icon: <Brain className="w-4 h-4" />, permission: "coupons.manage" },
     { label: "My Activity", href: "/sub/activity", icon: <Clock className="w-4 h-4" /> },
+    { label: "SOP Guide", href: "/admin/guide", icon: <HelpCircle className="w-4 h-4" />, badge: "SOP" },
   ];
 
   const rawItems = isSubAdmin ? subNavItems : adminNavItems;

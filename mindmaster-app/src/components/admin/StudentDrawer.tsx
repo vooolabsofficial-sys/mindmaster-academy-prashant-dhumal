@@ -581,7 +581,7 @@ export default function StudentDrawer({
                         </p>
                         <div className="flex justify-end pt-1">
                           <a
-                            href="/admin/messages"
+                            href={typeof window !== "undefined" && window.location.pathname.startsWith("/sub") ? "/sub/messages" : "/admin/messages"}
                             className="text-[11px] font-bold text-[#2563EB] dark:text-blue-400 hover:underline flex items-center gap-1"
                           >
                             <span>Open in Desk</span>

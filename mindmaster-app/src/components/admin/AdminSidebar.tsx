@@ -154,9 +154,6 @@ export default function AdminSidebar() {
         badge: msgUnread > 0 ? `${msgUnread}` : undefined,
         permission: "messages.manage",
       },
-      { label: "Courses & Videos", href: "/admin/courses", icon: <BookOpen className="w-4 h-4" />, permission: "courses.manage" },
-      { label: "PDF Books", href: "/admin/notes", icon: <FileText className="w-4 h-4" />, permission: "notes.books.manage" },
-      { label: "Coupons", href: "/admin/coupons", icon: <Tag className="w-4 h-4" />, permission: "coupons.manage" },
       { label: "My Activity", href: "/sub/activity", icon: <Activity className="w-4 h-4" /> },
       { label: "SOP Guide", href: "/admin/guide", icon: <HelpCircle className="w-4 h-4" />, badge: "SOP" },
     ];

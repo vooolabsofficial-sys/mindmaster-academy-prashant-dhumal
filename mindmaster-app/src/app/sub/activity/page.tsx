@@ -149,9 +149,9 @@ export default function SubActivityPage() {
         </div>
 
         {/* Activity Timeline */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Clock className="w-4 h-4 text-blue-600" />
               <span>Your Activity History ({displayedLogs.length})</span>
             </h2>
@@ -160,10 +160,10 @@ export default function SubActivityPage() {
 
           {displayedLogs.length === 0 ? (
             <div className="text-center py-16 px-4">
-              <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center mx-auto mb-3">
                 <FileText className="w-6 h-6" />
               </div>
-              <p className="text-sm font-bold text-slate-900">No activity recorded</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">No activity recorded</p>
               <p className="text-xs text-slate-500 mt-1">
                 Your admissions, grants, and logins will automatically be immutably recorded here.
               </p>

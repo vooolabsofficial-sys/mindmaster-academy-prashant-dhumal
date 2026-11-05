@@ -375,6 +375,10 @@ export async function middleware(req: NextRequest | Request) {
     // D. /admin/* route enforcement
     if (isAdminRoute) {
       if (staffSession.role !== "main_admin") {
+        // Safe operational documentation accessible to all authorized academy staff
+        if (pathname.startsWith("/admin/guide")) {
+          return NextResponse.next();
+        }
         return NextResponse.rewrite(
           new URL("/forbidden?reason=main_admin_required", req.url),
           { status: 403 }

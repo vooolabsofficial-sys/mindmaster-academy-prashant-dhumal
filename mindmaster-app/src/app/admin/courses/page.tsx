@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import AdminShell from "@/components/admin/AdminShell";
@@ -380,7 +381,7 @@ export default function CourseManagerPage() {
   const handleSaveCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim()) {
-      alert("कृपया कोर्सचे नाव प्रविष्ट करा.");
+      toast.error("कृपया कोर्सचे नाव प्रविष्ट करा.");
       return;
     }
 
@@ -487,7 +488,7 @@ export default function CourseManagerPage() {
       await reloadFromSupabase();
     } catch (saveErr: any) {
       console.error("Save course error:", saveErr);
-      alert(`कोर्स सेव्ह करताना त्रुटी आली: ${saveErr.message}`);
+      toast.error(`कोर्स सेव्ह करताना त्रुटी आली: ${saveErr.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -497,7 +498,7 @@ export default function CourseManagerPage() {
   const handleConfirmDelete = async () => {
     if (!deleteModalCourse) return;
     if (staff.role !== "main_admin") {
-      alert("Unauthorized: Course deletion is strictly reserved for Main Admin.");
+      toast.error("Unauthorized: Course deletion is strictly reserved for Main Admin.");
       setDeleteModalCourse(null);
       return;
     }
@@ -537,7 +538,7 @@ export default function CourseManagerPage() {
         setUndoToast((prev) => (prev?.id === binItem.id ? null : prev));
       }, 8000);
     } catch (err: any) {
-      alert(`कोर्स हटवताना त्रुटी आली: ${err.message}`);
+      toast.error(`कोर्स हटवताना त्रुटी आली: ${err.message}`);
     } finally {
       setIsDeleting(false);
     }
@@ -966,7 +967,7 @@ export default function CourseManagerPage() {
                                     className="w-4 h-4 rounded accent-red-600 cursor-pointer"
                                   />
                                   <span className="font-mono text-[10px] text-slate-400">#{idx + 1}</span>
-                                  <span className="font-bold text-slate-800 truncate">{v.title}</span>
+                                  <span className="font-bold text-slate-800 dark:text-slate-200 truncate">{v.title}</span>
                                   <span className="text-[10px] text-slate-400 shrink-0">({v.durationFormatted})</span>
                                 </div>
 

@@ -7,17 +7,13 @@ import {
   MessageSquare, 
   GraduationCap, 
   Activity, 
-  Gift, 
-  BookOpen, 
-  Video, 
-  FileText, 
-  Tag, 
   Clock, 
   ArrowRight, 
   ShieldCheck, 
   Lock,
   Layers,
-  Sparkles
+  Sparkles,
+  HelpCircle
 } from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
 import { getCurrentStaff, getAuditLogs, getStaffStudents } from "@/lib/staffStore";
@@ -70,11 +66,6 @@ export default function SubAdminRootPage() {
 
   const hasStudentPerm = hasStaffPermission(staff, "students.view");
   const hasMsgPerm = hasStaffPermission(staff, "messages.manage");
-  const hasGrantPerm = hasStaffPermission(staff, "freegrant.manage");
-  const hasCoursePerm = hasStaffPermission(staff, "courses.manage");
-  const hasVideoPerm = hasStaffPermission(staff, "videos.manage");
-  const hasBookPerm = hasStaffPermission(staff, "notes.books.manage");
-  const hasCouponPerm = hasStaffPermission(staff, "coupons.manage");
 
   return (
     <AdminShell>
@@ -249,8 +240,8 @@ export default function SubAdminRootPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-            {/* 1. Student Finder Launcher */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+            {/* 1. Student Finder & Grants Launcher */}
             {hasStudentPerm && (
               <Link
                 href="/sub/students"
@@ -261,7 +252,7 @@ export default function SubAdminRootPage() {
                 </div>
                 <div>
                   <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#0052FF]">
-                    Student Finder &amp; 360° Profile
+                    Student Finder &amp; Grants
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Look up students, offline admissions &amp; access validity
@@ -281,7 +272,7 @@ export default function SubAdminRootPage() {
                 </div>
                 <div>
                   <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#0052FF]">
-                    Student Support Messages
+                    Student Support Desk
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Direct two-pane messaging and student assistance
@@ -290,107 +281,7 @@ export default function SubAdminRootPage() {
               </Link>
             )}
 
-            {/* 3. Offline Grants Launcher */}
-            {hasGrantPerm && (
-              <Link
-                href="/sub/grants"
-                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-emerald-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/50 flex items-center justify-center text-emerald-600 shadow-xs group-hover:scale-105 transition-transform">
-                  <Gift className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600">
-                    Offline Admissions &amp; Grants
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Grant offline Cash / UPI course and book access
-                  </p>
-                </div>
-              </Link>
-            )}
-
-            {/* 4. Courses Launcher */}
-            {hasCoursePerm && (
-              <Link
-                href="/admin/courses"
-                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-blue-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50 flex items-center justify-center text-blue-600 shadow-xs group-hover:scale-105 transition-transform">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600">
-                    Courses Manager
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Create and edit academy courses and validity
-                  </p>
-                </div>
-              </Link>
-            )}
-
-            {/* 5. Videos Launcher */}
-            {hasVideoPerm && (
-              <Link
-                href="/admin/videos"
-                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-red-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 shadow-xs group-hover:scale-105 transition-transform">
-                  <Video className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-red-600">
-                    YouTube Videos &amp; Playlists
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Manage lecture videos, free previews &amp; playlists
-                  </p>
-                </div>
-              </Link>
-            )}
-
-            {/* 6. Digital Books Launcher */}
-            {hasBookPerm && (
-              <Link
-                href="/admin/notes"
-                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-purple-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-900/50 flex items-center justify-center text-purple-600 shadow-xs group-hover:scale-105 transition-transform">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-purple-600">
-                    Digital Books Manager
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Upload and manage PDF books and access
-                  </p>
-                </div>
-              </Link>
-            )}
-
-            {/* 7. Coupons Launcher */}
-            {hasCouponPerm && (
-              <Link
-                href="/admin/coupons"
-                className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-amber-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900/50 flex items-center justify-center text-amber-600 shadow-xs group-hover:scale-105 transition-transform">
-                  <Tag className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-600">
-                    Discount Coupons
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Create and manage promo discount coupon codes
-                  </p>
-                </div>
-              </Link>
-            )}
-
-            {/* 8. My Activity Launcher */}
+            {/* 3. My Activity Launcher */}
             <Link
               href="/sub/activity"
               className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-emerald-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
@@ -404,6 +295,24 @@ export default function SubAdminRootPage() {
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   Personal audit trail and chronological actions
+                </p>
+              </div>
+            </Link>
+
+            {/* 4. SOP Guide Launcher */}
+            <Link
+              href="/admin/guide"
+              className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-amber-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900/50 flex items-center justify-center text-amber-600 shadow-xs group-hover:scale-105 transition-transform">
+                <HelpCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-600">
+                  SOP Guide
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Standard operating procedures for customer care &amp; calls
                 </p>
               </div>
             </Link>

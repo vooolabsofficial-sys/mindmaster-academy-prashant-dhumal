@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
 import { getCurrentStaff } from "@/lib/staffStore";
 import { StaffUser } from "@/lib/types";
@@ -1775,7 +1776,7 @@ export default function WebsiteCmsPage() {
                 type="button"
                 onClick={() => {
                   if (!editingTopper.name) {
-                    alert("Please enter student name");
+                    toast.error("Please enter student name");
                     return;
                   }
                   const existingIndex = cmsData.toppers.findIndex((t) => t.id === editingTopper.id);
@@ -1899,7 +1900,7 @@ export default function WebsiteCmsPage() {
                 type="button"
                 onClick={() => {
                   if (!editingFaculty.name) {
-                    alert("Please enter faculty name");
+                    toast.error("Please enter faculty name");
                     return;
                   }
                   const existingIndex = cmsData.faculty.findIndex((f) => f.id === editingFaculty.id);
@@ -2041,7 +2042,7 @@ export default function WebsiteCmsPage() {
                 type="button"
                 onClick={() => {
                   if (!editingCentre.name) {
-                    alert("Please enter branch name");
+                    toast.error("Please enter branch name");
                     return;
                   }
                   const existingIndex = cmsData.centres.findIndex((c) => c.id === editingCentre.id);
@@ -2127,7 +2128,7 @@ export default function WebsiteCmsPage() {
                 type="button"
                 onClick={() => {
                   if (!editingFaq.question || !editingFaq.answer) {
-                    alert("Please provide both question and answer");
+                    toast.error("Please provide both question and answer");
                     return;
                   }
                   const existingIndex = cmsData.faqs.findIndex((f) => f.id === editingFaq.id);

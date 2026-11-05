@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
 import { StaffUser, StaffPermission, AuditLogEntry } from "@/lib/types";
@@ -155,7 +156,7 @@ export default function SubAdminManagerPage() {
 
   const handleOpenAdd = () => {
     if (quotaReached) {
-      alert(`Provisioning limit reached (${maxSubAdmins} sub-admins). Upgrade limit in Platform Settings.`);
+      toast.warning(`Provisioning limit reached (${maxSubAdmins} sub-admins). Upgrade limit in Platform Settings.`);
       return;
     }
     setEditingStaff(null);

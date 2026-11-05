@@ -423,7 +423,7 @@ export default function AdminGuidePage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6 pb-20 select-none text-slate-800 font-sans">
+      <div className="space-y-6 pb-20 select-none text-slate-800 dark:text-slate-100 font-sans">
         
         {/* Top Header & Breadcrumb */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -433,11 +433,11 @@ export default function AdminGuidePage() {
                 Admin Console
               </Link>
               <span>/</span>
-              <span className="text-slate-800 font-extrabold">
+              <span className="text-slate-800 dark:text-slate-200 font-extrabold">
                 {isMarathi ? "मदत व कार्यपद्धती मार्गदर्शिका (SOP)" : "Help & Operational SOP Guide"}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
               <span>
                 {isMarathi
                   ? "कर्मचारी व सब-ॲडमिन कार्यपद्धती (SOP Manual)"
@@ -496,12 +496,12 @@ export default function AdminGuidePage() {
               <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full shadow-2xs">
                 ● Active Protocol • 2026 Edition
               </span>
-              <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-                Role: <strong className="text-slate-800 uppercase">{staff.role}</strong>
+              <span className="text-[11px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-2.5 py-1 rounded-full">
+                Role: <strong className="text-slate-800 dark:text-slate-200 uppercase">{staff.role}</strong>
               </span>
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
               {isMarathi
                 ? "विद्यार्थी सेवा, डिव्हाइस रीसेट व कोर्स ग्रँट्स कार्यपद्धती"
                 : "Student Care, Single-Device Verification & Course Grants SOP"}
@@ -514,17 +514,17 @@ export default function AdminGuidePage() {
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-xs">
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
                 <span className="text-[10px] font-black uppercase text-blue-600 block">Tickets SLA</span>
-                <span className="font-extrabold text-slate-900">&lt; 24h Turnaround</span>
+                <span className="font-extrabold text-slate-900 dark:text-white">&lt; 24h Turnaround</span>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
                 <span className="text-[10px] font-black uppercase text-emerald-600 block">Device Reset</span>
-                <span className="font-extrabold text-slate-900">Phone Verification</span>
+                <span className="font-extrabold text-slate-900 dark:text-white">Phone Verification</span>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 col-span-2 sm:col-span-1">
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 col-span-2 sm:col-span-1">
                 <span className="text-[10px] font-black uppercase text-purple-600 block">Audit Trail</span>
-                <span className="font-extrabold text-slate-900">100% Traceable</span>
+                <span className="font-extrabold text-slate-900 dark:text-white">100% Traceable</span>
               </div>
             </div>
           </div>
@@ -618,7 +618,7 @@ export default function AdminGuidePage() {
 
                   {/* Title & Description */}
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug">
                       {isMarathi ? sop.titleMr : sop.titleEn}
                     </h3>
                     <p className="text-xs text-slate-600 mt-1 leading-relaxed">

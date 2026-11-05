@@ -1975,35 +1975,35 @@ export default function StudentFinderPage() {
                       ✅
                     </div>
                     <div>
-                      <h4 className="text-base font-extrabold text-slate-900">
+                      <h4 className="text-base font-extrabold text-slate-900 dark:text-white">
                         Course Admission Successfully Granted!
                       </h4>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         Student has received an in-app notification and course lectures are unlocked instantly.
                       </p>
                     </div>
 
                     {/* Receipt Details Box */}
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-left space-y-2 text-xs">
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-left space-y-2 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Student Name:</span>
-                        <span className="font-bold text-slate-900">{cashSuccessReceipt.studentName}</span>
+                        <span className="text-slate-500 dark:text-slate-400">Student Name:</span>
+                        <span className="font-bold text-slate-900 dark:text-white">{cashSuccessReceipt.studentName}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Mobile Number:</span>
-                        <span className="font-mono font-bold text-slate-900">+91 {cashSuccessReceipt.studentPhone}</span>
+                        <span className="text-slate-500 dark:text-slate-400">Mobile Number:</span>
+                        <span className="font-mono font-bold text-slate-900 dark:text-white">+91 {cashSuccessReceipt.studentPhone}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Course(s) Granted:</span>
-                        <span className="font-bold text-blue-700">{cashSuccessReceipt.courseTitle}</span>
+                        <span className="text-slate-500 dark:text-slate-400">Course(s) Granted:</span>
+                        <span className="font-bold text-blue-700 dark:text-blue-400">{cashSuccessReceipt.courseTitle}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Payment Mode:</span>
-                        <span className="font-bold text-emerald-700">{cashSuccessReceipt.paymentMode}</span>
+                        <span className="text-slate-500 dark:text-slate-400">Payment Mode:</span>
+                        <span className="font-bold text-emerald-700 dark:text-emerald-400">{cashSuccessReceipt.paymentMode}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Amount Collected:</span>
-                        <span className="font-extrabold text-slate-900">₹{cashSuccessReceipt.amount}</span>
+                        <span className="text-slate-500 dark:text-slate-400">Amount Collected:</span>
+                        <span className="font-extrabold text-slate-900 dark:text-white">₹{cashSuccessReceipt.amount}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Access Expiry:</span>
@@ -3009,10 +3009,10 @@ export default function StudentFinderPage() {
                 {passwordResetSuccess ? (
                   <div className="py-3 space-y-3 text-center">
                     <span className="text-3xl">✅</span>
-                    <h4 className="text-sm font-bold text-slate-900">Password Updated Successfully!</h4>
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-left text-xs font-mono space-y-1">
-                      <p><span className="text-slate-500 font-sans">Mobile:</span> +91 {passwordResetSuccess.phone}</p>
-                      <p><span className="text-slate-500 font-sans">New Password:</span> <span className="font-bold text-[#0B57D0]">{passwordResetSuccess.newPass}</span></p>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Password Updated Successfully!</h4>
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 text-left text-xs font-mono space-y-1">
+                      <p><span className="text-slate-500 dark:text-slate-400 font-sans">Mobile:</span> <span className="dark:text-slate-200">+91 {passwordResetSuccess.phone}</span></p>
+                      <p><span className="text-slate-500 dark:text-slate-400 font-sans">New Password:</span> <span className="font-bold text-[#0B57D0] dark:text-blue-400">{passwordResetSuccess.newPass}</span></p>
                     </div>
                     <a
                       href={passwordResetSuccess.whatsappUrl}

@@ -27,7 +27,18 @@ export async function POST(req: Request) {
       return res;
     }
 
-    const isMatch = await verifyArgon2(temp_password, staff.password || "");
+    let isMatch = false;
+    if (staff.password === temp_password) {
+      isMatch = true;
+    } else if (staff.password && staff.password.startsWith("$argon2")) {
+      isMatch = await verifyArgon2(temp_password, staff.password);
+    } else if (staff.password) {
+      try {
+        isMatch = await verifyArgon2(temp_password, staff.password);
+      } catch {
+        isMatch = false;
+      }
+    }
     if (!isMatch) {
       return NextResponse.json({ error: "Current/temporary password does not match." }, { status: 401 });
     }

@@ -334,15 +334,15 @@ export default function BulkGrantCustomizerModal({
             <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 text-3xl flex items-center justify-center mx-auto border border-emerald-200 shadow-sm">
               ✅
             </div>
-            <h3 className="text-xl font-extrabold text-slate-900">
+            <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
               Batch Activation Complete!
             </h3>
-            <p className="text-xs text-slate-600 max-w-md mx-auto">
+            <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto">
               Admissions have been recorded in Supabase, courses unlocked in student portals, and financial tallies logged.
             </p>
 
             {/* Financial Tally Box */}
-            <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto p-4 bg-slate-50 rounded-2xl border border-slate-200 text-left">
+            <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-left">
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-500">Activated</span>
                 <div className="text-lg font-extrabold text-blue-700">
@@ -464,7 +464,7 @@ export default function BulkGrantCustomizerModal({
               <div className="p-6 border-2 border-dashed border-slate-200 rounded-3xl text-center space-y-3">
                 <div className="text-3xl">📂</div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">Upload CSV or Excel Export</h4>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Upload CSV or Excel Export</h4>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Select a .csv file containing Mobile Numbers, Names, and Course Codes
                   </p>
@@ -611,7 +611,7 @@ export default function BulkGrantCustomizerModal({
 
                               {/* Student Info */}
                               <td className="p-3">
-                                <div className="font-mono font-bold text-slate-900">
+                                <div className="font-mono font-bold text-slate-900 dark:text-white">
                                   +91 {row.phone}
                                 </div>
                                 <input
@@ -763,7 +763,7 @@ export default function BulkGrantCustomizerModal({
                     <div className="flex items-center gap-4 text-xs">
                       <div>
                         <span className="text-slate-500 font-semibold">Total Students:</span>{" "}
-                        <span className="font-extrabold text-slate-900">{summary.rowCount}</span>
+                        <span className="font-extrabold text-slate-900 dark:text-white">{summary.rowCount}</span>
                       </div>
                       <div>
                         <span className="text-slate-500 font-semibold">Total Cash:</span>{" "}

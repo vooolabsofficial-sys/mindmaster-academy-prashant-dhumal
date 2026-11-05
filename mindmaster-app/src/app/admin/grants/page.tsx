@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
 import { Course, StaffUser, StudentRecord, Book } from "@/lib/types";
@@ -148,7 +149,7 @@ export default function GrantsManagerPage() {
       setTimeout(() => setActionFeedback(null), 3500);
       loadData();
     } catch (e: any) {
-      alert(e?.message || "Failed to approve grant.");
+      toast.error(e?.message || "Failed to approve grant.");
     }
   };
 
@@ -166,7 +167,7 @@ export default function GrantsManagerPage() {
       setTimeout(() => setActionFeedback(null), 3500);
       loadData();
     } catch (e: any) {
-      alert(e?.message || "Failed to reject grant.");
+      toast.error(e?.message || "Failed to reject grant.");
     }
   };
 
@@ -184,7 +185,7 @@ export default function GrantsManagerPage() {
       });
 
       if (!res.success) {
-        alert(res.error || "Failed to update pending grant.");
+        toast.error(res.error || "Failed to update pending grant.");
         setIsSavingEdit(false);
         return;
       }
@@ -194,7 +195,7 @@ export default function GrantsManagerPage() {
       setTimeout(() => setActionFeedback(null), 3500);
       await loadData();
     } catch (err: any) {
-      alert(err?.message || "Failed to customize pending grant.");
+      toast.error(err?.message || "Failed to customize pending grant.");
     } finally {
       setIsSavingEdit(false);
     }
@@ -208,7 +209,7 @@ export default function GrantsManagerPage() {
       setTimeout(() => setActionFeedback(null), 3500);
       loadData();
     } catch (e: any) {
-      alert(e?.message || "Failed to settle cash.");
+      toast.error(e?.message || "Failed to settle cash.");
     }
   };
 
@@ -219,7 +220,7 @@ export default function GrantsManagerPage() {
       setTimeout(() => setActionFeedback(null), 3500);
       loadData();
     } catch (e: any) {
-      alert(e?.message || "Failed to settle grant.");
+      toast.error(e?.message || "Failed to settle grant.");
     }
   };
 
@@ -308,7 +309,7 @@ export default function GrantsManagerPage() {
     const rawPhone = grant.student_phone || grant.studentPhone || grant.scope_value || grant.scopeValue || "";
     const cleanPhone = rawPhone.replace(/\D/g, "").slice(-10);
     if (!cleanPhone || cleanPhone.length !== 10) {
-      alert("Invalid student phone number on grant.");
+      toast.error("Invalid student phone number on grant.");
       return;
     }
 

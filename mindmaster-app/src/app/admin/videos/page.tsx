@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
 import Link from "next/link";
 import AdminShell from "@/components/admin/AdminShell";
@@ -219,7 +220,7 @@ export default function VideoManagerPage() {
   const handleSaveVideo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!lessonTitle.trim() || !videoLink.trim() || !selectedCourseId) {
-      alert("कृपया व्हिडिओचे नाव, YouTube लिंक, आणि अभ्यासक्रम (Course) निवडा.");
+      toast.error("कृपया व्हिडिओचे नाव, YouTube लिंक, आणि अभ्यासक्रम (Course) निवडा.");
       return;
     }
 
@@ -264,7 +265,7 @@ export default function VideoManagerPage() {
       await reloadFromSupabase();
     } catch (err: any) {
       console.error("Save video error:", err);
-      alert(`व्हिडिओ सेव्ह करताना त्रुटी आली: ${err.message}`);
+      toast.error(`व्हिडिओ सेव्ह करताना त्रुटी आली: ${err.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -274,7 +275,7 @@ export default function VideoManagerPage() {
   const handleConfirmDelete = async () => {
     if (!deleteModalVideo) return;
     if (staff.role !== "main_admin") {
-      alert("Unauthorized: Video deletion is strictly reserved for Main Admin.");
+      toast.error("Unauthorized: Video deletion is strictly reserved for Main Admin.");
       setDeleteModalVideo(null);
       return;
     }
@@ -316,7 +317,7 @@ export default function VideoManagerPage() {
         setUndoToast((prev) => (prev?.id === binItem.id ? null : prev));
       }, 8000);
     } catch (err: any) {
-      alert(`व्हिडिओ हटवताना त्रुटी आली: ${err.message}`);
+      toast.error(`व्हिडिओ हटवताना त्रुटी आली: ${err.message}`);
     } finally {
       setIsDeleting(false);
     }

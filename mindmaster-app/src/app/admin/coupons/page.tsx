@@ -1559,7 +1559,7 @@ export default function CouponManagerPage() {
                       </div>
 
                       {/* Students List Table */}
-                      <div className="overflow-y-auto flex-1 border border-[#E4E8F8] rounded-2xl">
+                      <div className="overflow-x-auto overflow-y-auto flex-1 border border-[#E4E8F8] rounded-2xl">
                         {filteredStudents.length === 0 ? (
                           <div className="py-12 text-center text-[#5A6478] space-y-1">
                             <span className="text-3xl block">📋</span>
