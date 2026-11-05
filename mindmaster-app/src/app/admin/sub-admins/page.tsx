@@ -293,7 +293,8 @@ export default function SubAdminManagerPage() {
 
   const handleCopyCredentials = () => {
     if (!createdCredentials) return;
-    const text = `MindMaster Academy Staff Login Credentials:\nStaff ID: ${createdCredentials.staffId}\nFull Name: ${createdCredentials.name}\nTemporary Password: ${createdCredentials.tempPassword}\nPortal: http://localhost:3001/staff/login\n\nNote: You will be required to change your password on first login.`;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const text = `MindMaster Academy Staff Login Credentials:\nStaff ID: ${createdCredentials.staffId}\nFull Name: ${createdCredentials.name}\nTemporary Password: ${createdCredentials.tempPassword}\nPortal: ${origin}/staff/login\n\nNote: You will be required to change your password on first login.`;
     navigator.clipboard.writeText(text);
     setCopiedNotification(true);
     setTimeout(() => setCopiedNotification(false), 3000);
@@ -376,10 +377,10 @@ export default function SubAdminManagerPage() {
       <AdminShell>
         <div className="space-y-6">
           {/* Header Bar with Counter Chip x / max_sub_admins */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-2xl font-extrabold text-[#0E1B3D] font-heading tracking-tight">
+                <h1 className="text-2xl font-extrabold text-[#0E1B3D] dark:text-white font-heading tracking-tight">
                   Sub-Admin Manager
                 </h1>
                 <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
@@ -387,12 +388,12 @@ export default function SubAdminManagerPage() {
                 </span>
 
                 {/* Counter Chip: x / max_sub_admins from settings */}
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#EEF4FF] border border-[#D0E2FF] rounded-full text-xs font-bold text-[#0B57D0]">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#EEF4FF] dark:bg-blue-950/40 border border-[#D0E2FF] dark:border-blue-800 rounded-full text-xs font-bold text-[#0B57D0] dark:text-blue-300">
                   <span className="text-xs">👥</span>
                   <span>{subAdminCount} / {maxSubAdmins} Sub-Admins Provisioned</span>
                 </div>
               </div>
-              <p className="text-xs text-[#5A6478] mt-1.5">
+              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1.5">
                 Scale 50-60+ centre heads &amp; sub-admins, configure district assignment, Maker-Checker admissions, and track physical cash settlements.
               </p>
             </div>
@@ -402,7 +403,7 @@ export default function SubAdminManagerPage() {
               <button
                 type="button"
                 onClick={handleFreezeAll}
-                className="px-3.5 py-2 rounded-full text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                className="px-3.5 py-2 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 title="Emergency Freeze: Immediately suspend all Sub-Admins and kill active sessions"
               >
                 <span>❄️</span> Freeze All
@@ -410,7 +411,7 @@ export default function SubAdminManagerPage() {
               <button
                 type="button"
                 onClick={handleUnfreezeAll}
-                className="px-3.5 py-2 rounded-full text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                className="px-3.5 py-2 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 title="Bulk Unfreeze: Re-activate all Sub-Admin accounts"
               >
                 <span>▶️</span> Unfreeze All
@@ -441,7 +442,7 @@ export default function SubAdminManagerPage() {
           )}
 
           {/* Filters Bar: Search + District + Status + Permission Chips */}
-          <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               {/* Search Bar */}
               <div className="relative w-full md:w-80">
@@ -453,7 +454,7 @@ export default function SubAdminManagerPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search name, MMA ID, phone, district, centre..."
-                  className="w-full pl-9 pr-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-full text-xs text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0] transition-all"
+                  className="w-full pl-9 pr-4 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-full text-xs text-[#0E1B3D] dark:text-white placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0] transition-all"
                 />
                 {searchQuery && (
                   <button
@@ -470,7 +471,7 @@ export default function SubAdminManagerPage() {
                 <select
                   value={districtFilter}
                   onChange={(e) => setDistrictFilter(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-full text-xs font-bold text-[#0E1B3D] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-full text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none"
                 >
                   <option value="all">📍 All Districts ({MAHARASHTRA_DISTRICTS.length})</option>
                   {MAHARASHTRA_DISTRICTS.map((d) => (
@@ -503,7 +504,7 @@ export default function SubAdminManagerPage() {
                       className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                         isActive
                           ? "bg-[#0E1B3D] text-white shadow-xs"
-                          : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0B57D0] border border-[#E4E8F8]"
+                          : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-300 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0B57D0] border border-[#E4E8F8] dark:border-slate-700"
                       }`}
                     >
                       {chip.label}
@@ -514,7 +515,7 @@ export default function SubAdminManagerPage() {
             </div>
 
             {/* Permission Chips Row */}
-            <div className="flex items-center gap-2 flex-wrap pt-3 border-t border-[#E4E8F8]">
+            <div className="flex items-center gap-2 flex-wrap pt-3 border-t border-[#E4E8F8] dark:border-slate-800">
               <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mr-1">
                 Permission:
               </span>
@@ -523,7 +524,7 @@ export default function SubAdminManagerPage() {
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                   permissionFilter === "all"
                     ? "bg-[#0B57D0] text-white shadow-xs"
-                    : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0B57D0] border border-[#E4E8F8]"
+                    : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-300 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0B57D0] border border-[#E4E8F8] dark:border-slate-700"
                 }`}
               >
                 All Permissions
@@ -537,7 +538,7 @@ export default function SubAdminManagerPage() {
                     className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
                       isActive
                         ? "bg-[#0B57D0] text-white shadow-xs"
-                        : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0B57D0] border border-[#E4E8F8]"
+                        : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-300 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0B57D0] border border-[#E4E8F8] dark:border-slate-700"
                     }`}
                   >
                     <span className="font-mono text-[10px]">{perm.key}</span>
@@ -548,11 +549,11 @@ export default function SubAdminManagerPage() {
           </div>
 
           {/* Sub-Admins Table */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[#E4E8F8] text-[#8A94A6] uppercase tracking-wider font-semibold">
+                  <tr className="border-b border-[#E4E8F8] dark:border-slate-800 text-[#8A94A6] dark:text-slate-400 uppercase tracking-wider font-semibold">
                     <th className="pb-3.5 pl-3">Staff ID</th>
                     <th className="pb-3.5">Staff Member &amp; Location</th>
                     <th className="pb-3.5">Assigned Permissions</th>
@@ -563,7 +564,7 @@ export default function SubAdminManagerPage() {
                     <th className="pb-3.5 text-right pr-3">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E4E8F8]">
+                <tbody className="divide-y divide-[#E4E8F8] dark:divide-slate-800">
                   {filteredStaff.map((staff) => {
                     const isRoot = staff.role === "main_admin";
                     const isSuspended = staff.status === "suspended" || staff.status === "inactive";
@@ -574,7 +575,7 @@ export default function SubAdminManagerPage() {
                     const unsettledCash = settlement ? settlement.unsettledCash : 0;
 
                     return (
-                      <tr key={staff.id} className="hover:bg-[#F9FAFF] transition-colors group">
+                      <tr key={staff.id} className="hover:bg-[#F9FAFF] dark:hover:bg-slate-800/50 transition-colors group">
                         {/* 1. Staff ID Mono Chip */}
                         <td className="py-4 pl-3">
                           <span className="font-mono font-black text-xs tracking-wider text-[#0B57D0] px-2.5 py-1 bg-[#EEF4FF] border border-[#D0E2FF] rounded-md shadow-xs whitespace-nowrap">
@@ -592,7 +593,7 @@ export default function SubAdminManagerPage() {
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <p className="font-bold text-[#0E1B3D] text-xs">
+                                <p className="font-bold text-[#0E1B3D] dark:text-white text-xs">
                                   {staff.name}
                                 </p>
                                 {isRoot && (
@@ -601,7 +602,7 @@ export default function SubAdminManagerPage() {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[#5A6478] text-[11px] mt-0.5">
+                              <p className="text-[#5A6478] dark:text-slate-400 text-[11px] mt-0.5">
                                 {staff.phone} • {staff.email}
                               </p>
                               {!isRoot && (
@@ -633,7 +634,7 @@ export default function SubAdminManagerPage() {
                               {staff.permissions.map((p) => (
                                 <span
                                   key={p}
-                                  className="px-2 py-0.5 bg-[#FAFBFD] border border-[#E4E8F8] rounded-md text-[10px] text-[#0B57D0] font-mono font-semibold"
+                                  className="px-2 py-0.5 bg-[#FAFBFD] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-md text-[10px] text-[#0B57D0] dark:text-blue-300 font-mono font-semibold"
                                 >
                                   {p}
                                 </span>
@@ -720,7 +721,7 @@ export default function SubAdminManagerPage() {
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => handleOpenEdit(staff)}
-                                className="px-3 py-1.5 bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0B57D0] border border-[#E4E8F8] rounded-xl text-[11px] font-bold transition-colors cursor-pointer"
+                                className="px-3 py-1.5 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 text-[#0B57D0] dark:text-blue-300 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-[11px] font-bold transition-colors cursor-pointer"
                               >
                                 Edit
                               </button>
@@ -749,15 +750,15 @@ export default function SubAdminManagerPage() {
           {/* ========================================================= */}
           {/* AUDIT LOG CARD BELOW WITH DROPDOWN & DATE CHIP FILTERS */}
           {/* ========================================================= */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E4E8F8]">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">📜</span>
-                  <h2 className="text-lg font-bold text-[#0E1B3D] font-heading">
+                  <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     System Audit Trail (`audit_log`)
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#F5F7FF] text-[#0E1B3D] text-[11px] font-bold border border-[#E4E8F8]">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#F5F7FF] dark:bg-slate-800 text-[#0E1B3D] dark:text-slate-200 text-[11px] font-bold border border-[#E4E8F8] dark:border-slate-700">
                     {filteredAuditLogs.length} events
                   </span>
                 </div>
@@ -785,7 +786,7 @@ export default function SubAdminManagerPage() {
                       className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                         isActive
                           ? "bg-[#0E1B3D] text-white shadow-xs"
-                          : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0B57D0] border border-[#E4E8F8]"
+                          : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-300 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0B57D0] border border-[#E4E8F8] dark:border-slate-700"
                       }`}
                     >
                       {range.label}
@@ -805,7 +806,7 @@ export default function SubAdminManagerPage() {
                 <select
                   value={auditStaffFilter}
                   onChange={(e) => setAuditStaffFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none"
+                  className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none"
                 >
                   <option value="all">All Staff Members</option>
                   {staffList.map((s) => (
@@ -824,7 +825,7 @@ export default function SubAdminManagerPage() {
                 <select
                   value={auditActionFilter}
                   onChange={(e) => setAuditActionFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none"
+                  className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none"
                 >
                   <option value="all">All Action Types</option>
                   {distinctActions.map((act) => (
@@ -850,13 +851,13 @@ export default function SubAdminManagerPage() {
                 </thead>
                 <tbody className="divide-y divide-[#E4E8F8]">
                   {filteredAuditLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-[#F9FAFF] transition-colors">
+                    <tr key={log.id} className="hover:bg-[#F9FAFF] dark:hover:bg-slate-800/50 transition-colors">
                       <td className="py-3 pl-2 font-mono text-[11px] text-[#5A6478] whitespace-nowrap">
                         {log.timestamp}
                       </td>
                       <td className="py-3">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-[#0E1B3D]">{log.staffName}</span>
+                          <span className="font-bold text-[#0E1B3D] dark:text-white">{log.staffName}</span>
                           <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
                             log.staffRole === "main_admin" ? "bg-[#0E1B3D] text-white" : "bg-blue-50 text-[#0B57D0]"
                           }`}>
@@ -869,10 +870,10 @@ export default function SubAdminManagerPage() {
                           {log.action}
                         </span>
                       </td>
-                      <td className="py-3 font-semibold text-[#0E1B3D] capitalize">
+                      <td className="py-3 font-semibold text-[#0E1B3D] dark:text-slate-200 capitalize">
                         {log.entityType}: {log.entityName}
                       </td>
-                      <td className="py-3 text-[#5A6478] text-[11px] max-w-md">
+                      <td className="py-3 text-[#5A6478] dark:text-slate-400 text-[11px] max-w-md">
                         {log.details}
                       </td>
                     </tr>
@@ -894,13 +895,13 @@ export default function SubAdminManagerPage() {
               />
 
               <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex">
-                <div className="w-screen max-w-xl bg-white shadow-2xl flex flex-col justify-between overflow-y-auto">
+                <div className="w-screen max-w-xl bg-white dark:bg-slate-900 shadow-2xl flex flex-col justify-between overflow-y-auto border-l dark:border-slate-800">
                   {/* Drawer Header */}
-                  <div className="p-6 border-b border-[#E4E8F8] flex items-center justify-between bg-[#FAFBFD]">
+                  <div className="p-6 border-b border-[#E4E8F8] dark:border-slate-800 flex items-center justify-between bg-[#FAFBFD] dark:bg-slate-800/80">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xl">👥</span>
-                        <h2 className="text-lg font-bold text-[#0E1B3D] font-heading">
+                        <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                           {editingStaff ? `Edit Sub-Admin: ${editingStaff.staffId || editingStaff.name}` : "Provision New Sub-Admin"}
                         </h2>
                       </div>
@@ -912,7 +913,7 @@ export default function SubAdminManagerPage() {
                     </div>
                     <button
                       onClick={() => setIsDrawerOpen(false)}
-                      className="w-8 h-8 rounded-full bg-white border border-[#E4E8F8] flex items-center justify-center text-sm text-[#5A6478] hover:bg-slate-100 cursor-pointer"
+                      className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 flex items-center justify-center text-sm text-[#5A6478] dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
                     >
                       ✕
                     </button>
@@ -935,7 +936,7 @@ export default function SubAdminManagerPage() {
 
                     {/* Name */}
                     <div>
-                      <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                      <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
                         Full Name *
                       </label>
                       <input
@@ -944,14 +945,14 @@ export default function SubAdminManagerPage() {
                         value={formName}
                         onChange={(e) => setFormName(e.target.value)}
                         placeholder="e.g. Anand Satpute"
-                        className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                        className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                       />
                     </div>
 
                     {/* Phone & Email */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
                           Phone Number (OTP Verification) *
                         </label>
                         <input
@@ -960,11 +961,11 @@ export default function SubAdminManagerPage() {
                           value={formPhone}
                           onChange={(e) => setFormPhone(e.target.value)}
                           placeholder="+91 98..."
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
                           Work Email
                         </label>
                         <input
@@ -972,7 +973,7 @@ export default function SubAdminManagerPage() {
                           value={formEmail}
                           onChange={(e) => setFormEmail(e.target.value)}
                           placeholder="e.g. anand@mindmasteredu.in"
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                         />
                       </div>
                     </div>
@@ -980,13 +981,13 @@ export default function SubAdminManagerPage() {
                     {/* District & Centre / Branch */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
                           📍 Assigned District *
                         </label>
                         <select
                           value={formDistrict}
                           onChange={(e) => setFormDistrict(e.target.value)}
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                         >
                           {MAHARASHTRA_DISTRICTS.map((d) => (
                             <option key={d} value={d}>
@@ -996,7 +997,7 @@ export default function SubAdminManagerPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
                           🏢 Centre / Branch Name
                         </label>
                         <input
@@ -1004,13 +1005,13 @@ export default function SubAdminManagerPage() {
                           value={formCentre}
                           onChange={(e) => setFormCentre(e.target.value)}
                           placeholder="e.g. Swargate Centre / Main Branch"
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                         />
                       </div>
                     </div>
 
                     {/* Maker-Checker Admission Governance Toggle */}
-                    <div className="p-3.5 bg-[#EEF4FF] border border-[#D0E2FF] rounded-2xl flex items-center justify-between text-xs">
+                    <div className="p-3.5 bg-[#EEF4FF] dark:bg-blue-950/30 border border-[#D0E2FF] dark:border-blue-900/50 rounded-2xl flex items-center justify-between text-xs">
                       <div>
                         <p className="font-bold text-[#0B57D0] flex items-center gap-1.5">
                           <span>⏳</span> Maker-Checker Approval Mode
@@ -1033,9 +1034,9 @@ export default function SubAdminManagerPage() {
                     </div>
 
                     {/* Permissions Checkboxes */}
-                    <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl space-y-3">
+                    <div className="p-4 bg-[#F5F7FF] dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="block text-xs font-bold text-[#0E1B3D]">
+                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200">
                           🔑 Permission Checkboxes ({formPermissions.length} selected) *
                         </label>
                         <button
@@ -1062,8 +1063,8 @@ export default function SubAdminManagerPage() {
                               onClick={() => togglePermission(p.key)}
                               className={`p-3 rounded-xl border transition-all flex items-start gap-3 cursor-pointer ${
                                 isChecked
-                                  ? "bg-white border-[#0B57D0] shadow-xs"
-                                  : "bg-white/60 border-[#E4E8F8] hover:bg-white"
+                                  ? "bg-white dark:bg-slate-800 border-[#0B57D0] dark:border-blue-500 shadow-xs"
+                                  : "bg-white/60 dark:bg-slate-800 border-[#E4E8F8] dark:border-slate-700 hover:bg-white dark:hover:bg-slate-750"
                               }`}
                             >
                               <input
@@ -1074,7 +1075,7 @@ export default function SubAdminManagerPage() {
                               />
                               <div className="flex-1">
                                 <div className="flex items-center justify-between">
-                                  <span className="font-bold text-[#0E1B3D] text-xs flex items-center gap-1.5">
+                                  <span className="font-bold text-[#0E1B3D] dark:text-white text-xs flex items-center gap-1.5">
                                     <span>{p.icon}</span>
                                     <span>{p.label}</span>
                                   </span>
@@ -1104,9 +1105,9 @@ export default function SubAdminManagerPage() {
                     </div>
 
                     {/* Force Password Change Option */}
-                    <div className="p-3.5 bg-[#FAFBFD] border border-[#E4E8F8] rounded-2xl flex items-center justify-between text-xs">
+                    <div className="p-3.5 bg-[#FAFBFD] dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl flex items-center justify-between text-xs">
                       <div>
-                        <p className="font-bold text-[#0E1B3D]">Force Password Change on Next Login</p>
+                        <p className="font-bold text-[#0E1B3D] dark:text-white">Force Password Change on Next Login</p>
                         <p className="text-[11px] text-[#5A6478]">
                           Staff will be mandated to set an Argon2id password before accessing dashboard.
                         </p>
@@ -1120,11 +1121,11 @@ export default function SubAdminManagerPage() {
                     </div>
 
                     {/* Drawer Actions */}
-                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E4E8F8]">
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E4E8F8] dark:border-slate-800">
                       <button
                         type="button"
                         onClick={() => setIsDrawerOpen(false)}
-                        className="px-5 py-2.5 rounded-full border border-[#E4E8F8] text-xs font-bold text-[#5A6478] hover:bg-[#F5F7FF] cursor-pointer"
+                        className="px-5 py-2.5 rounded-full border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold text-[#5A6478] dark:text-slate-300 hover:bg-[#F5F7FF] dark:hover:bg-slate-800 cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -1146,13 +1147,13 @@ export default function SubAdminManagerPage() {
           {/* ========================================================= */}
           {createdCredentials && (
             <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-              <div className="bg-white rounded-3xl border border-[#D0E2FF] max-w-lg w-full p-6 md:p-8 shadow-2xl space-y-5">
-                <div className="flex items-center gap-3 pb-3 border-b border-[#E4E8F8]">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#D0E2FF] dark:border-slate-800 max-w-lg w-full p-6 md:p-8 shadow-2xl space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-[#E4E8F8] dark:border-slate-800">
                   <div className="w-12 h-12 rounded-2xl bg-[#EEF4FF] text-[#0B57D0] flex items-center justify-center text-2xl font-bold">
                     🔑
                   </div>
                   <div>
-                    <h3 className="text-lg font-extrabold text-[#0E1B3D] font-heading">
+                    <h3 className="text-lg font-extrabold text-[#0E1B3D] dark:text-white font-heading">
                       Sub-Admin Provisioned Successfully
                     </h3>
                     <p className="text-xs text-[#5A6478]">
@@ -1161,7 +1162,7 @@ export default function SubAdminManagerPage() {
                   </div>
                 </div>
 
-                <div className="bg-[#FAFBFD] border border-[#E4E8F8] rounded-2xl p-4 space-y-3">
+                <div className="bg-[#FAFBFD] dark:bg-slate-800/80 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center justify-between text-xs pb-2 border-b border-slate-100">
                     <span className="text-[#5A6478] font-semibold">Staff ID:</span>
                     <span className="font-mono font-black text-[#0B57D0] bg-[#EEF4FF] px-2.5 py-1 rounded-md text-xs">
@@ -1199,7 +1200,7 @@ export default function SubAdminManagerPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-[#E4E8F8]">
+                <div className="flex items-center justify-between pt-2 border-t border-[#E4E8F8] dark:border-slate-800">
                   <button
                     onClick={handleCopyCredentials}
                     className="px-4 py-2 bg-[#EEF4FF] hover:bg-[#DDEBFF] text-[#0B57D0] rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-[#D0E2FF]"
@@ -1223,12 +1224,12 @@ export default function SubAdminManagerPage() {
           {/* ========================================================= */}
           {deleteModalStaff && (
             <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl border border-[#E4E8F8] max-w-md w-full p-6 shadow-2xl space-y-4">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 max-w-md w-full p-6 shadow-2xl space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold">
                   🗑️
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-[#0E1B3D]">
+                  <h3 className="text-lg font-bold text-[#0E1B3D] dark:text-white">
                     Permanently Remove Sub-Admin?
                   </h3>
                   <p className="text-xs text-[#5A6478] mt-1 leading-relaxed">
@@ -1237,10 +1238,10 @@ export default function SubAdminManagerPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E4E8F8]">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E4E8F8] dark:border-slate-800">
                   <button
                     onClick={() => setDeleteModalStaff(null)}
-                    className="px-4 py-2 rounded-full border border-[#E4E8F8] text-xs font-bold text-[#5A6478] hover:bg-[#F5F7FF]"
+                    className="px-4 py-2 rounded-full border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold text-[#5A6478] dark:text-slate-300 hover:bg-[#F5F7FF] dark:hover:bg-slate-800"
                   >
                     Cancel
                   </button>

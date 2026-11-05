@@ -235,10 +235,10 @@ export default function AdminReportsPage() {
       <AdminShell>
         <div className="space-y-6 pb-12">
           {/* Header Bar */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-black text-[#0E1B3D] font-heading tracking-tight">
+                <h1 className="text-2xl font-black text-[#0E1B3D] dark:text-white font-heading tracking-tight">
                   Staff Analytics Hub
                 </h1>
                 <span className="text-xs font-black px-3 py-1 rounded-full bg-[#EEF4FF] text-[#0B57D0] border border-[#D0E2FF]">
@@ -250,7 +250,7 @@ export default function AdminReportsPage() {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#5A6478] mt-1">
+              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1">
                 Server-aggregated cohort analytics: student geographic distribution, course collections, completion ratios, coupon attribution, and grant waivers.
               </p>
             </div>
@@ -263,7 +263,7 @@ export default function AdminReportsPage() {
                 <select
                   value={selectedDistrict}
                   onChange={(e) => setSelectedDistrict(e.target.value)}
-                  className="bg-[#F5F7FF] border border-[#E4E8F8] text-[#0E1B3D] text-xs font-bold rounded-2xl px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                  className="bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 text-[#0E1B3D] dark:text-white text-xs font-bold rounded-2xl px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                 >
                   {MAHARASHTRA_DISTRICTS.map((d) => (
                     <option key={d.value} value={d.value}>
@@ -274,7 +274,7 @@ export default function AdminReportsPage() {
               </div>
 
               {/* Date Range Chips */}
-              <div className="flex items-center gap-1 p-1 bg-[#F5F7FF] border border-[#E4E8F8] rounded-full">
+              <div className="flex items-center gap-1 p-1 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-full">
                 {[
                   { key: "7", label: "7 Days" },
                   { key: "30", label: "30 Days" },
@@ -288,7 +288,7 @@ export default function AdminReportsPage() {
                       className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                         isActive
                           ? "bg-[#0B57D0] text-white shadow-xs"
-                          : "text-[#5A6478] hover:text-[#0E1B3D]"
+                          : "text-[#5A6478] dark:text-slate-400 hover:text-[#0E1B3D] dark:hover:text-white"
                       }`}
                     >
                       {chip.label}
@@ -310,7 +310,7 @@ export default function AdminReportsPage() {
 
           {/* Custom Date Range Picker Bar (Shown when "custom" is active) */}
           {dateRange === "custom" && (
-            <div className="flex flex-wrap items-center gap-3 bg-[#EEF4FF] border border-[#D0E2FF] p-4 rounded-2xl animate-in fade-in duration-200">
+            <div className="flex flex-wrap items-center gap-3 bg-[#EEF4FF] dark:bg-blue-950/30 border border-[#D0E2FF] dark:border-blue-900/50 p-4 rounded-2xl animate-in fade-in duration-200">
               <span className="text-xs font-bold text-[#0B57D0]">📅 Custom Window:</span>
               <div className="flex items-center gap-2 text-xs">
                 <label className="text-[#5A6478] font-bold">From:</label>
@@ -318,7 +318,7 @@ export default function AdminReportsPage() {
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="bg-white border border-[#D0E2FF] rounded-xl px-2.5 py-1 font-mono text-xs text-[#0E1B3D] font-bold"
+                  className="bg-white dark:bg-slate-800 border border-[#D0E2FF] dark:border-slate-700 rounded-xl px-2.5 py-1 font-mono text-xs text-[#0E1B3D] dark:text-white font-bold"
                 />
               </div>
               <div className="flex items-center gap-2 text-xs">
@@ -327,7 +327,7 @@ export default function AdminReportsPage() {
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="bg-white border border-[#D0E2FF] rounded-xl px-2.5 py-1 font-mono text-xs text-[#0E1B3D] font-bold"
+                  className="bg-white dark:bg-slate-800 border border-[#D0E2FF] dark:border-slate-700 rounded-xl px-2.5 py-1 font-mono text-xs text-[#0E1B3D] dark:text-white font-bold"
                 />
               </div>
               <button
@@ -361,12 +361,12 @@ export default function AdminReportsPage() {
 
           {/* Top KPI Cards Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between text-[#8A94A6]">
                 <span className="text-[11px] font-bold uppercase tracking-wider">Gross Paid Revenue</span>
                 <span>💰</span>
               </div>
-              <p className="text-2xl font-black text-[#0E1B3D] font-heading mt-1">
+              <p className="text-2xl font-black text-[#0E1B3D] dark:text-white font-heading mt-1">
                 ₹{data.kpis.totalGrossSalesRupees.toLocaleString("en-IN")}
               </p>
               <p className="text-xs text-emerald-600 font-bold mt-1">
@@ -374,7 +374,7 @@ export default function AdminReportsPage() {
               </p>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between text-[#8A94A6]">
                 <span className="text-[11px] font-bold uppercase tracking-wider">Paid Enrollments</span>
                 <span>🎓</span>
@@ -387,7 +387,7 @@ export default function AdminReportsPage() {
               </p>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between text-[#8A94A6]">
                 <span className="text-[11px] font-bold uppercase tracking-wider">Video Completion Ratio</span>
                 <span>📈</span>
@@ -400,7 +400,7 @@ export default function AdminReportsPage() {
               </p>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between text-[#8A94A6]">
                 <span className="text-[11px] font-bold uppercase tracking-wider">Subsidized Grant Value</span>
                 <span>🎁</span>
@@ -417,23 +417,23 @@ export default function AdminReportsPage() {
           {/* ========================================================================= */}
           {/* 1. STUDENTS BY DISTRICT (profiles group by) */}
           {/* ========================================================================= */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8]">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">🗺️</span>
-                  <h2 className="text-lg font-bold text-[#0E1B3D] font-heading">
+                  <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Students by District (Profiles Group By)
                   </h2>
                 </div>
-                <p className="text-xs text-[#5A6478] mt-0.5">
+                <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
                   Geographical concentration of enrolled students across Maharashtra districts.
                 </p>
               </div>
 
               <button
                 onClick={() => handleExportCardCsv("students-by-district")}
-                className="px-4 py-2 bg-[#F5F7FF] hover:bg-[#EEF4FF] border border-[#E4E8F8] text-[#0B57D0] rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
                 <span>📥</span> Export District CSV
               </button>
@@ -443,10 +443,10 @@ export default function AdminReportsPage() {
               {data.studentsByDistrict.map((d) => (
                 <div
                   key={d.district}
-                  className="p-3.5 bg-[#F9FAFF] rounded-2xl border border-[#E4E8F8] space-y-2"
+                  className="p-3.5 bg-[#F9FAFF] dark:bg-slate-800/60 rounded-2xl border border-[#E4E8F8] dark:border-slate-700 space-y-2"
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#0E1B3D]">{d.district}</span>
+                    <span className="font-bold text-[#0E1B3D] dark:text-white">{d.district}</span>
                     <span className="font-mono font-black text-[#0B57D0]">
                       {d.count} learners ({d.percentage}%)
                     </span>
@@ -465,23 +465,23 @@ export default function AdminReportsPage() {
           {/* ========================================================================= */}
           {/* 2. COURSE SALES (purchases source payment group by course) */}
           {/* ========================================================================= */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8]">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">💳</span>
-                  <h2 className="text-lg font-bold text-[#0E1B3D] font-heading">
+                  <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Course Sales (Purchases: Source Payment)
                   </h2>
                 </div>
-                <p className="text-xs text-[#5A6478] mt-0.5">
+                <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
                   Gross revenue collections and sales volume per course from direct student payments.
                 </p>
               </div>
 
               <button
                 onClick={() => handleExportCardCsv("course-sales")}
-                className="px-4 py-2 bg-[#F5F7FF] hover:bg-[#EEF4FF] border border-[#E4E8F8] text-[#0B57D0] rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
                 <span>📥</span> Export Sales CSV
               </button>
@@ -491,14 +491,14 @@ export default function AdminReportsPage() {
               {data.courseSales.map((c) => (
                 <div
                   key={c.courseId}
-                  className="p-4 bg-white border border-[#E4E8F8] rounded-2xl hover:border-[#D0E2FF] transition-all space-y-2"
+                  className="p-4 bg-white dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl hover:border-[#D0E2FF] transition-all space-y-2"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2.5">
                       <span className="font-mono font-black px-2.5 py-1 rounded-md bg-[#EEF4FF] text-[#0B57D0] text-[11px] border border-[#D0E2FF]">
                         {c.courseCode}
                       </span>
-                      <span className="font-bold text-[#0E1B3D] text-sm">{c.courseTitle}</span>
+                      <span className="font-bold text-[#0E1B3D] dark:text-white text-sm">{c.courseTitle}</span>
                     </div>
                     <div className="flex items-center gap-4">
                       <span className="text-[#5A6478]">{c.salesCount} paid orders</span>
@@ -524,23 +524,23 @@ export default function AdminReportsPage() {
           {/* ========================================================================= */}
           {/* 3. VIDEO COMPLETION (progress completed ratio per course) */}
           {/* ========================================================================= */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8]">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">📊</span>
-                  <h2 className="text-lg font-bold text-[#0E1B3D] font-heading">
+                  <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Video Completion (Progress Completed Ratio per Course)
                   </h2>
                 </div>
-                <p className="text-xs text-[#5A6478] mt-0.5">
+                <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
                   Percentage ratio of lessons marked completed out of total video lectures across enrolled learners.
                 </p>
               </div>
 
               <button
                 onClick={() => handleExportCardCsv("video-completion")}
-                className="px-4 py-2 bg-[#F5F7FF] hover:bg-[#EEF4FF] border border-[#E4E8F8] text-[#0B57D0] rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
                 <span>📥</span> Export Completion CSV
               </button>
@@ -550,14 +550,14 @@ export default function AdminReportsPage() {
               {data.videoCompletion.map((vc) => (
                 <div
                   key={vc.courseId}
-                  className="p-4 bg-[#F9FAFF] rounded-2xl border border-[#E4E8F8] space-y-3"
+                  className="p-4 bg-[#F9FAFF] dark:bg-slate-800/60 rounded-2xl border border-[#E4E8F8] dark:border-slate-700 space-y-3"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <span className="font-mono text-[10px] font-black text-[#0B57D0] bg-[#EEF4FF] px-2 py-0.5 rounded border border-[#D0E2FF]">
                         {vc.courseCode}
                       </span>
-                      <h4 className="font-bold text-[#0E1B3D] text-xs mt-1">{vc.courseTitle}</h4>
+                      <h4 className="font-bold text-[#0E1B3D] dark:text-white text-xs mt-1">{vc.courseTitle}</h4>
                       <p className="text-[11px] text-[#5A6478] mt-0.5">
                         {vc.enrolledStudents} learners enrolled
                       </p>
@@ -590,23 +590,23 @@ export default function AdminReportsPage() {
           {/* ========================================================================= */}
           {/* 4. COUPON PERFORMANCE (redemptions joined to purchases) */}
           {/* ========================================================================= */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8]">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">🎟️</span>
-                  <h2 className="text-lg font-bold text-[#0E1B3D] font-heading">
+                  <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Coupon Performance (Redemptions Joined to Purchases)
                   </h2>
                 </div>
-                <p className="text-xs text-[#5A6478] mt-0.5">
+                <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
                   Attributed sales revenue generated through promotional coupons and discount vouchers.
                 </p>
               </div>
 
               <button
                 onClick={() => handleExportCardCsv("coupon-performance")}
-                className="px-4 py-2 bg-[#F5F7FF] hover:bg-[#EEF4FF] border border-[#E4E8F8] text-[#0B57D0] rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
                 <span>📥</span> Export Coupon CSV
               </button>
@@ -615,7 +615,7 @@ export default function AdminReportsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[#E4E8F8] text-[#8A94A6] uppercase tracking-wider font-semibold">
+                  <tr className="border-b border-[#E4E8F8] dark:border-slate-800 text-[#8A94A6] dark:text-slate-400 uppercase tracking-wider font-semibold">
                     <th className="pb-3 pl-2">Coupon Code</th>
                     <th className="pb-3">Discount Type</th>
                     <th className="pb-3">Redemptions</th>
@@ -624,11 +624,11 @@ export default function AdminReportsPage() {
                     <th className="pb-3 text-right pr-2">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E4E8F8]">
+                <tbody className="divide-y divide-[#E4E8F8] dark:divide-slate-800">
                   {data.couponPerformance
                     .slice((couponPage - 1) * 10, couponPage * 10)
                     .map((cp) => (
-                    <tr key={cp.couponId} className="hover:bg-[#F9FAFF] transition-colors">
+                    <tr key={cp.couponId} className="hover:bg-[#F9FAFF] dark:hover:bg-slate-800/50 transition-colors">
                       <td className="py-3.5 pl-2">
                         <span className="font-mono font-black text-xs text-[#0B57D0] bg-[#EEF4FF] px-2.5 py-1 rounded-md border border-[#D0E2FF]">
                           {cp.couponCode}
@@ -660,7 +660,7 @@ export default function AdminReportsPage() {
             </div>
 
             {data.couponPerformance.length > 10 && (
-              <div className="flex items-center justify-between pt-3 border-t border-[#E4E8F8] text-xs text-[#5A6478]">
+              <div className="flex items-center justify-between pt-3 border-t border-[#E4E8F8] dark:border-slate-800 text-xs text-[#5A6478] dark:text-slate-400">
                 <span>
                   Showing {(couponPage - 1) * 10 + 1}–{Math.min(couponPage * 10, data.couponPerformance.length)} of {data.couponPerformance.length} coupons
                 </span>
@@ -669,18 +669,18 @@ export default function AdminReportsPage() {
                     type="button"
                     onClick={() => setCouponPage((p) => Math.max(1, p - 1))}
                     disabled={couponPage === 1}
-                    className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] transition cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] dark:hover:bg-slate-700 transition cursor-pointer"
                   >
                     Prev
                   </button>
-                  <span className="font-bold text-[#0E1B3D]">
+                  <span className="font-bold text-[#0E1B3D] dark:text-white">
                     {couponPage} / {Math.max(1, Math.ceil(data.couponPerformance.length / 10))}
                   </span>
                   <button
                     type="button"
                     onClick={() => setCouponPage((p) => Math.min(Math.ceil(data.couponPerformance.length / 10), p + 1))}
                     disabled={couponPage >= Math.ceil(data.couponPerformance.length / 10)}
-                    className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] transition cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] dark:hover:bg-slate-700 transition cursor-pointer"
                   >
                     Next
                   </button>
@@ -692,23 +692,23 @@ export default function AdminReportsPage() {
           {/* ========================================================================= */}
           {/* 5. FREE GRANTS IMPACT (grant count, students covered, waived ₹) */}
           {/* ========================================================================= */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8]">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">🎁</span>
-                  <h2 className="text-lg font-bold text-[#0E1B3D] font-heading">
+                  <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Free Grants Impact (Grants, Students Covered, Waived ₹)
                   </h2>
                 </div>
-                <p className="text-xs text-[#5A6478] mt-0.5">
+                <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
                   Subsidized access impact across individual students, schools, talukas, and district-wide drives.
                 </p>
               </div>
 
               <button
                 onClick={() => handleExportCardCsv("free-grants-impact")}
-                className="px-4 py-2 bg-[#F5F7FF] hover:bg-[#EEF4FF] border border-[#E4E8F8] text-[#0B57D0] rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
                 <span>📥</span> Export Grants CSV
               </button>
@@ -716,7 +716,7 @@ export default function AdminReportsPage() {
 
             {/* Grant Impact Summary Tiles */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="p-4 bg-[#F9FAFF] rounded-2xl border border-[#E4E8F8]">
+              <div className="p-4 bg-[#F9FAFF] dark:bg-slate-800/60 rounded-2xl border border-[#E4E8F8] dark:border-slate-700">
                 <span className="text-[11px] font-bold text-[#8A94A6] uppercase">Active Grants</span>
                 <p className="text-xl font-black text-[#0B57D0] font-heading mt-0.5">
                   {data.freeGrantsImpact.activeGrants} Active
@@ -726,7 +726,7 @@ export default function AdminReportsPage() {
                 </p>
               </div>
 
-              <div className="p-4 bg-[#F9FAFF] rounded-2xl border border-[#E4E8F8]">
+              <div className="p-4 bg-[#F9FAFF] dark:bg-slate-800/60 rounded-2xl border border-[#E4E8F8] dark:border-slate-700">
                 <span className="text-[11px] font-bold text-[#8A94A6] uppercase">Students Covered</span>
                 <p className="text-xl font-black text-emerald-700 font-heading mt-0.5">
                   {data.freeGrantsImpact.studentsCovered} Learners
@@ -736,7 +736,7 @@ export default function AdminReportsPage() {
                 </p>
               </div>
 
-              <div className="p-4 bg-[#F9FAFF] rounded-2xl border border-[#E4E8F8]">
+              <div className="p-4 bg-[#F9FAFF] dark:bg-slate-800/60 rounded-2xl border border-[#E4E8F8] dark:border-slate-700">
                 <span className="text-[11px] font-bold text-[#8A94A6] uppercase">Total Waived Fees</span>
                 <p className="text-xl font-black text-amber-600 font-heading mt-0.5">
                   ₹{data.freeGrantsImpact.totalWaivedRupees.toLocaleString("en-IN")}
@@ -746,7 +746,7 @@ export default function AdminReportsPage() {
                 </p>
               </div>
 
-              <div className="p-4 bg-[#F9FAFF] rounded-2xl border border-[#E4E8F8]">
+              <div className="p-4 bg-[#F9FAFF] dark:bg-slate-800/60 rounded-2xl border border-[#E4E8F8] dark:border-slate-700">
                 <span className="text-[11px] font-bold text-[#8A94A6] uppercase">Active Waived Fees</span>
                 <p className="text-xl font-black text-indigo-700 font-heading mt-0.5">
                   ₹{data.freeGrantsImpact.activeWaivedRupees.toLocaleString("en-IN")}
@@ -783,23 +783,23 @@ export default function AdminReportsPage() {
           {/* ========================================================================= */}
           {/* 6. GROWTH LINE (new profiles per week) */}
           {/* ========================================================================= */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8]">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">📈</span>
-                  <h2 className="text-lg font-bold text-[#0E1B3D] font-heading">
+                  <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Growth Line (New Profiles Registered per Week)
                   </h2>
                 </div>
-                <p className="text-xs text-[#5A6478] mt-0.5">
+                <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
                   Cohort trend of student onboarding signups and cumulative network expansion.
                 </p>
               </div>
 
               <button
                 onClick={() => handleExportCardCsv("growth-line")}
-                className="px-4 py-2 bg-[#F5F7FF] hover:bg-[#EEF4FF] border border-[#E4E8F8] text-[#0B57D0] rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
                 <span>📥</span> Export Growth CSV
               </button>
@@ -809,7 +809,7 @@ export default function AdminReportsPage() {
               {data.growthLine.map((week) => (
                 <div
                   key={week.weekLabel}
-                  className="p-4 bg-[#F9FAFF] rounded-2xl border border-[#E4E8F8] flex flex-col justify-between space-y-3 hover:border-[#D0E2FF] transition-all"
+                  className="p-4 bg-[#F9FAFF] dark:bg-slate-800/60 rounded-2xl border border-[#E4E8F8] dark:border-slate-700 flex flex-col justify-between space-y-3 hover:border-[#D0E2FF] transition-all"
                 >
                   <div>
                     <span className="text-[10px] font-bold text-[#8A94A6] uppercase">
@@ -836,26 +836,26 @@ export default function AdminReportsPage() {
           {/* 7. WATCH-STATISTICS CARDS (Main Admin Only - Hidden for Sub-Admins) */}
           {/* ========================================================================= */}
           {isMainAdmin ? (
-            <div className="bg-white rounded-3xl border border-indigo-200 p-6 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8]">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-indigo-200 dark:border-slate-800 p-6 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-xl">🎬</span>
-                    <h2 className="text-lg font-bold text-[#0E1B3D] font-heading">
+                    <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                       Watch Statistics (Views & Avg Watched % per Video from Progress)
                     </h2>
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                       👑 Main Admin Exclusive
                     </span>
                   </div>
-                  <p className="text-xs text-[#5A6478] mt-0.5">
+                  <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
                     Drill-level attention diagnostics: total video impressions, student reach, average retention %, and completion rates.
                   </p>
                 </div>
 
                 <button
                   onClick={() => handleExportCardCsv("watch-statistics")}
-                  className="px-4 py-2 bg-[#F5F7FF] hover:bg-[#EEF4FF] border border-[#E4E8F8] text-[#0B57D0] rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                  className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
                 >
                   <span>📥</span> Export Watch Stats CSV
                 </button>
@@ -864,7 +864,7 @@ export default function AdminReportsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-[#E4E8F8] text-[#8A94A6] uppercase tracking-wider font-semibold">
+                    <tr className="border-b border-[#E4E8F8] dark:border-slate-800 text-[#8A94A6] dark:text-slate-400 uppercase tracking-wider font-semibold">
                       <th className="pb-3 pl-2">Lecture Name</th>
                       <th className="pb-3">Course</th>
                       <th className="pb-3">Total Views</th>
@@ -874,13 +874,13 @@ export default function AdminReportsPage() {
                       <th className="pb-3 text-right pr-2">Hours Streamed</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#E4E8F8]">
+                  <tbody className="divide-y divide-[#E4E8F8] dark:divide-slate-800">
                     {data.watchStatistics
                       .slice((watchPage - 1) * 10, watchPage * 10)
                       .map((ws) => (
-                      <tr key={ws.lessonId} className="hover:bg-[#F9FAFF] transition-colors">
+                      <tr key={ws.lessonId} className="hover:bg-[#F9FAFF] dark:hover:bg-slate-800/50 transition-colors">
                         <td className="py-3.5 pl-2">
-                          <p className="font-bold text-[#0E1B3D] text-xs">{ws.lessonTitle}</p>
+                          <p className="font-bold text-[#0E1B3D] dark:text-white text-xs">{ws.lessonTitle}</p>
                           <p className="text-[10px] text-[#8A94A6] font-mono mt-0.5">{ws.lessonId}</p>
                         </td>
                         <td className="py-3.5 text-[#5A6478] max-w-xs truncate font-medium">
@@ -918,7 +918,7 @@ export default function AdminReportsPage() {
               </div>
 
               {data.watchStatistics.length > 10 && (
-                <div className="flex items-center justify-between pt-3 border-t border-[#E4E8F8] text-xs text-[#5A6478]">
+                <div className="flex items-center justify-between pt-3 border-t border-[#E4E8F8] dark:border-slate-800 text-xs text-[#5A6478] dark:text-slate-400">
                   <span>
                     Showing {(watchPage - 1) * 10 + 1}–{Math.min(watchPage * 10, data.watchStatistics.length)} of {data.watchStatistics.length} lessons
                   </span>
@@ -927,18 +927,18 @@ export default function AdminReportsPage() {
                       type="button"
                       onClick={() => setWatchPage((p) => Math.max(1, p - 1))}
                       disabled={watchPage === 1}
-                      className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] transition cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] dark:hover:bg-slate-700 transition cursor-pointer"
                     >
                       Prev
                     </button>
-                    <span className="font-bold text-[#0E1B3D]">
+                    <span className="font-bold text-[#0E1B3D] dark:text-white">
                       {watchPage} / {Math.max(1, Math.ceil(data.watchStatistics.length / 10))}
                     </span>
                     <button
                       type="button"
                       onClick={() => setWatchPage((p) => Math.min(Math.ceil(data.watchStatistics.length / 10), p + 1))}
                       disabled={watchPage >= Math.ceil(data.watchStatistics.length / 10)}
-                      className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] transition cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg border border-[#E4E8F8] dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white font-bold disabled:opacity-40 hover:bg-[#F5F7FF] dark:hover:bg-slate-700 transition cursor-pointer"
                     >
                       Next
                     </button>

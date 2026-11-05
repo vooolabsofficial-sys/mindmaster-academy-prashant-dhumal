@@ -591,7 +591,7 @@ export default function CourseManagerPage() {
       <AdminShell>
         <div className="space-y-6 font-sans">
           {/* Header Banner */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-[#0B57D0] border border-blue-200">
@@ -599,10 +599,10 @@ export default function CourseManagerPage() {
                 </span>
                 <span className="text-xs text-slate-400 font-semibold">• {courses.length} कोर्सेस उपलब्ध</span>
               </div>
-              <h2 className="text-2xl font-extrabold text-[#0E1B3D] font-heading">
+              <h2 className="text-2xl font-extrabold text-[#0E1B3D] dark:text-white font-heading">
                 Courses &amp; Curriculum Builder
               </h2>
-              <p className="text-xs text-[#5A6478] mt-1">
+              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1">
                 YouTube व्हिडिओ किंवा प्लेलिस्ट लिंक टाकून थेट कोर्स तयार करा आणि लाइव्ह डेटाबेसवर सेव्ह करा.
               </p>
             </div>
@@ -611,7 +611,7 @@ export default function CourseManagerPage() {
               <button
                 type="button"
                 onClick={() => setIsCategoryModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-3 bg-white border border-[#CCD7E6] hover:border-[#0B57D0] hover:bg-blue-50 text-[#0E1B3D] hover:text-[#0B57D0] text-xs font-bold rounded-2xl shadow-xs transition-all shrink-0"
+                className="inline-flex items-center gap-1.5 px-4 py-3 bg-white dark:bg-slate-800 border border-[#CCD7E6] dark:border-slate-700 hover:border-[#0B57D0] hover:bg-blue-50 dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] text-xs font-bold rounded-2xl shadow-xs transition-all shrink-0"
               >
                 <Tag className="w-4 h-4 text-purple-600" />
                 <span>प्रवर्ग व्यवस्थापन (Categories)</span>
@@ -623,7 +623,7 @@ export default function CourseManagerPage() {
                 className={`inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all border shadow-xs shrink-0 ${
                   recycleCount > 0
                     ? "bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100"
-                    : "bg-white border-[#CCD7E6] text-slate-700 hover:bg-slate-50"
+                    : "bg-white dark:bg-slate-800 border-[#CCD7E6] dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
                 }`}
               >
                 <Trash2 className="w-4 h-4 text-amber-600" />
@@ -646,7 +646,7 @@ export default function CourseManagerPage() {
           </div>
 
           {/* Filters Bar */}
-          <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
               <input
@@ -654,7 +654,7 @@ export default function CourseManagerPage() {
                 placeholder="कोर्सचे नाव किंवा कोड शोधा (उदा. MM-01, पोलीस भरती, वैदिक गणित)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs pl-10 pr-4 py-3 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl focus:outline-none focus:border-[#0B57D0] text-[#0E1B3D]"
+                className="w-full text-xs pl-10 pr-4 py-3 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl focus:outline-none focus:border-[#0B57D0] text-[#0E1B3D] dark:text-white"
               />
             </div>
 
@@ -670,7 +670,7 @@ export default function CourseManagerPage() {
                     className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-all ${
                       statusFilter === st
                         ? "bg-[#0B57D0] text-white shadow-sm"
-                        : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0B57D0]"
+                        : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-400 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0B57D0]"
                     }`}
                   >
                     {st === "all" ? "सर्व (All)" : st === "live" ? "Live" : st === "scheduled" ? "Upcoming" : "Closed"}
@@ -689,7 +689,7 @@ export default function CourseManagerPage() {
                     className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-all ${
                       typeFilter === t
                         ? "bg-[#0E1B3D] text-white shadow-sm"
-                        : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0E1B3D]"
+                        : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-400 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0E1B3D] dark:hover:text-white"
                     }`}
                   >
                     {t === "all" ? "सर्व (All)" : t === "free" ? "मोफत (Free)" : "Paid"}
@@ -700,9 +700,9 @@ export default function CourseManagerPage() {
           </div>
 
           {/* Courses Grid / Cards (Clean YouTube Thumbnail Cards, No Header Tints) */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] shadow-sm overflow-hidden">
-            <div className="p-4 bg-[#FAFBFD] border-b border-[#E4E8F8] flex items-center justify-between text-xs">
-              <span className="font-bold text-[#0E1B3D]">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="p-4 bg-[#FAFBFD] dark:bg-slate-800/80 border-b border-[#E4E8F8] dark:border-slate-800 flex items-center justify-between text-xs">
+              <span className="font-bold text-[#0E1B3D] dark:text-white">
                 एकूण {filteredCourses.length} कोर्सेस उपलब्ध
               </span>
               <span className="text-[11px] text-[#8A94A6] flex items-center gap-1.5">
@@ -722,7 +722,7 @@ export default function CourseManagerPage() {
                 <div className="w-16 h-16 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center text-3xl mb-4 shadow-inner">
                   🎬
                 </div>
-                <h4 className="font-extrabold text-base text-[#0E1B3D]">
+                <h4 className="font-extrabold text-base text-[#0E1B3D] dark:text-white">
                   कोणताही कोर्स सापडला नाही (No Courses Found)
                 </h4>
                 <p className="text-xs text-[#5A6478] max-w-md mt-1 mb-5 leading-relaxed">
@@ -745,7 +745,7 @@ export default function CourseManagerPage() {
                   return (
                     <div
                       key={course.id}
-                      className="group bg-white rounded-2xl border border-[#E4E8F8] hover:border-blue-300 shadow-xs hover:shadow-md transition-all flex flex-col overflow-hidden"
+                      className="group bg-white dark:bg-slate-800/90 rounded-2xl border border-[#E4E8F8] dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 shadow-xs hover:shadow-md transition-all flex flex-col overflow-hidden"
                     >
                       {/* Course Thumbnail Image */}
                       <div className="relative w-full h-44 bg-slate-900 overflow-hidden">
@@ -793,7 +793,7 @@ export default function CourseManagerPage() {
                       {/* Card Content */}
                       <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                         <div>
-                          <h3 className="font-extrabold text-sm text-[#0E1B3D] line-clamp-1 group-hover:text-[#0B57D0] transition-colors">
+                          <h3 className="font-extrabold text-sm text-[#0E1B3D] dark:text-white line-clamp-1 group-hover:text-[#0B57D0] dark:group-hover:text-blue-400 transition-colors">
                             {course.titleMr || course.title}
                           </h3>
                           {course.titleMr && course.titleMr !== course.title && (
@@ -801,27 +801,27 @@ export default function CourseManagerPage() {
                               {course.title}
                             </p>
                           )}
-                          <p className="text-xs text-slate-500 line-clamp-2 mt-1.5 leading-relaxed">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">
                             {course.description}
                           </p>
                         </div>
 
                         {/* Meta Tags */}
-                        <div className="pt-2 border-t border-[#F0F2F9] flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                          <span className="text-slate-600 font-semibold flex items-center gap-1">
+                        <div className="pt-2 border-t border-[#F0F2F9] dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                          <span className="text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1">
                             <Video className="w-3.5 h-3.5 text-blue-600" />
                             {course.lessonsCount || 0} लेक्चर्स
                           </span>
-                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10px]">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
                             {course.badgeText || "Course"}
                           </span>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#F0F2F9]">
+                        <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#F0F2F9] dark:border-slate-700">
                           <button
                             onClick={() => handleOpenEdit(course)}
-                            className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#0B57D0] text-xs font-bold flex items-center gap-1.5 transition-colors"
+                            className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-[#0B57D0] dark:text-blue-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                             <span>Edit</span>
@@ -830,7 +830,7 @@ export default function CourseManagerPage() {
                           {isMainAdmin && (
                             <button
                               onClick={() => setDeleteModalCourse(course)}
-                              className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors"
+                              className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 flex items-center justify-center transition-colors"
                               title="Delete Course"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -856,7 +856,7 @@ export default function CourseManagerPage() {
               />
 
               <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-                <div className="w-screen max-w-2xl bg-white shadow-2xl flex flex-col">
+                <div className="w-screen max-w-2xl bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-l dark:border-slate-800">
                   {/* Drawer Header */}
                   <div className="p-6 bg-[#0E1B3D] text-white flex items-center justify-between shrink-0">
                     <div>
@@ -885,9 +885,9 @@ export default function CourseManagerPage() {
                     {/* ---------------------------------------------------------------- */}
                     {/* 1. YOUTUBE IMPORT BOX (Direct Link & Auto-Fetch) */}
                     {/* ---------------------------------------------------------------- */}
-                    <div className="p-5 bg-gradient-to-br from-red-50 via-slate-50 to-blue-50 border-2 border-red-200/70 rounded-2xl space-y-3">
+                    <div className="p-5 bg-gradient-to-br from-red-50 via-slate-50 to-blue-50 dark:from-red-950/20 dark:via-slate-900 dark:to-blue-950/20 border-2 border-red-200/70 dark:border-red-900/40 rounded-2xl space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="font-extrabold text-sm text-[#0E1B3D] flex items-center gap-2">
+                        <label className="font-extrabold text-sm text-[#0E1B3D] dark:text-white flex items-center gap-2">
                           <YoutubeIcon className="w-5 h-5 text-red-600" />
                           <span>YouTube वरून थेट कोर्स भरा (Instant YouTube Import)</span>
                         </label>
@@ -895,7 +895,7 @@ export default function CourseManagerPage() {
                           Playlist किंवा Video Link
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
                         YouTube Playlist किंवा Single Video ची लिंक पेस्ट करा. कोर्सचे नाव, वर्णन, HD थंबनेल आणि सर्व लेक्चर्स एका सेकंदात आपोआप भरले जातील!
                       </p>
 
@@ -908,7 +908,7 @@ export default function CourseManagerPage() {
                             setYtFetchError(null);
                           }}
                           placeholder="https://www.youtube.com/playlist?list=... किंवा https://youtu.be/..."
-                          className="flex-1 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-red-500 shadow-2xs"
+                          className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white focus:outline-none focus:border-red-500 shadow-2xs"
                         />
                         <button
                           type="button"
@@ -951,7 +951,7 @@ export default function CourseManagerPage() {
                             <span>सापडलेले लेक्चर्स ({fetchedPlaylistVideos.filter((v) => v.selected).length}/{fetchedPlaylistVideos.length} निवडले):</span>
                             <span className="text-[10px] text-slate-500">पहिले लेक्चर मोफत डेमो म्हणून सेट करा</span>
                           </div>
-                          <div className="max-h-52 overflow-y-auto divide-y divide-slate-100 bg-white rounded-xl border border-slate-200 p-2 space-y-1.5">
+                          <div className="max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 space-y-1.5">
                             {fetchedPlaylistVideos.map((v, idx) => (
                               <div
                                 key={v.videoId + idx}
@@ -992,7 +992,7 @@ export default function CourseManagerPage() {
                     {/* ---------------------------------------------------------------- */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
-                        <label className="block font-bold text-[#0E1B3D] mb-1 flex items-center gap-1">
+                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center gap-1">
                           <Lock className="w-3 h-3 text-slate-400" />
                           <span>Course Code (Auto)</span>
                         </label>
@@ -1006,7 +1006,7 @@ export default function CourseManagerPage() {
 
                       <div className="sm:col-span-2">
                         <div className="flex items-center justify-between mb-1">
-                          <label className="font-bold text-[#0E1B3D] flex items-center gap-1">
+                          <label className="font-bold text-[#0E1B3D] dark:text-slate-200 flex items-center gap-1">
                             <Tag className="w-3 h-3 text-purple-600" />
                             <span>लक्ष्य प्रवर्ग (Target Category) *</span>
                           </label>
@@ -1022,7 +1022,7 @@ export default function CourseManagerPage() {
                         <select
                           value={targetCategoryKey}
                           onChange={(e) => setTargetCategoryKey(e.target.value)}
-                          className="w-full px-3 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
+                          className="w-full px-3 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:border-[#0B57D0]"
                         >
                           {(categories.length > 0 ? categories : TARGET_CATEGORY_OPTIONS).map((cat) => (
                             <option key={cat.key} value={cat.key}>
@@ -1038,7 +1038,7 @@ export default function CourseManagerPage() {
                     {/* ---------------------------------------------------------------- */}
                     <div className="space-y-3">
                       <div>
-                        <label className="block font-bold text-[#0E1B3D] mb-1 flex items-center justify-between">
+                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center justify-between">
                           <span>कोर्सचे नाव (Course Title in Marathi / Regional) *</span>
                           {formTitleMr.trim().length >= 3 && (
                             <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
@@ -1056,7 +1056,7 @@ export default function CourseManagerPage() {
                             className={`w-full px-3 py-2.5 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none transition-all ${
                               formTitleMr.trim().length >= 3
                                 ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
-                                : "bg-[#F5F7FF] border border-[#E4E8F8] focus:border-[#0B57D0]"
+                                : "bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 dark:text-white focus:border-[#0B57D0]"
                             }`}
                           />
                           {formTitleMr.trim().length >= 3 && (
@@ -1098,19 +1098,19 @@ export default function CourseManagerPage() {
                     {/* 4. DESCRIPTION & HD THUMBNAIL */}
                     {/* ---------------------------------------------------------------- */}
                     <div>
-                      <label className="block font-bold text-[#0E1B3D] mb-1">कोर्सचे वर्णन (Course Description)</label>
+                      <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">कोर्सचे वर्णन (Course Description)</label>
                       <textarea
                         value={formDescription}
                         onChange={(e) => setFormDescription(e.target.value)}
                         placeholder="विद्यार्थी या कोर्समध्ये काय शिकणार आहेत..."
                         rows={3}
-                        className="w-full px-3 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs focus:outline-none focus:border-[#0B57D0] resize-none"
+                        className="w-full px-3 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 text-[#0E1B3D] dark:text-white rounded-xl text-xs focus:outline-none focus:border-[#0B57D0] resize-none"
                       />
                     </div>
 
                     {/* HD Thumbnail Input with Live Preview */}
-                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                      <label className="block font-bold text-[#0E1B3D]">HD Thumbnail Image URL</label>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-2">
+                      <label className="block font-bold text-[#0E1B3D] dark:text-slate-200">HD Thumbnail Image URL</label>
                       <div className="flex items-center gap-3">
                         <div className="relative w-20 h-14 rounded-xl overflow-hidden border border-slate-300 shrink-0 bg-slate-900">
                           {formThumbnail ? (
@@ -1126,7 +1126,7 @@ export default function CourseManagerPage() {
                           value={formThumbnail}
                           onChange={(e) => setFormThumbnail(e.target.value)}
                           placeholder="https://i.ytimg.com/vi/... किंवा इमेज लिंक"
-                          className="flex-1 px-3 py-2 bg-white border border-[#E4E8F8] rounded-xl text-xs focus:outline-none"
+                          className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 text-[#0E1B3D] dark:text-white rounded-xl text-xs focus:outline-none"
                         />
                       </div>
                     </div>
@@ -1134,10 +1134,10 @@ export default function CourseManagerPage() {
                     {/* ---------------------------------------------------------------- */}
                     {/* 5. PRICING & FREE MASTERCLASS TOGGLE */}
                     {/* ---------------------------------------------------------------- */}
-                    <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl space-y-3">
+                    <div className="p-4 bg-[#F5F7FF] dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl space-y-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="font-bold text-[#0E1B3D] block text-xs">कोर्स फी व सवलत (Pricing & Fee)</span>
+                          <span className="font-bold text-[#0E1B3D] dark:text-slate-200 block text-xs">कोर्स फी व सवलत (Pricing & Fee)</span>
                           <span className="text-[11px] text-[#5A6478]">
                             {isFree ? "हा कोर्स विद्यार्थ्यांसाठी पूर्णपणे मोफत आहे (₹0)" : `विद्यार्थी भरतील: ₹${formPrice} (मूळ किंमत: ₹${formOriginalPrice})`}
                           </span>
@@ -1160,24 +1160,24 @@ export default function CourseManagerPage() {
                       {!isFree && (
                         <div className="grid grid-cols-2 gap-3 pt-1">
                           <div>
-                            <label className="block font-bold text-[#0E1B3D] mb-1">Selling Price (₹) *</label>
+                            <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">Selling Price (₹) *</label>
                             <input
                               type="number"
                               min={0}
                               value={formPrice}
                               onChange={(e) => setFormPrice(Number(e.target.value))}
-                              className="w-full px-3 py-2 bg-white border border-[#E4E8F8] rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none"
+                              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl font-bold text-xs text-[#0E1B3D] dark:text-white focus:outline-none"
                             />
                           </div>
 
                           <div>
-                            <label className="block font-bold text-[#0E1B3D] mb-1">Original Price (₹)</label>
+                            <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">Original Price (₹)</label>
                             <input
                               type="number"
                               min={0}
                               value={formOriginalPrice}
                               onChange={(e) => setFormOriginalPrice(Number(e.target.value))}
-                              className="w-full px-3 py-2 bg-white border border-[#E4E8F8] rounded-xl font-bold text-xs text-[#0E1B3D] focus:outline-none"
+                              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl font-bold text-xs text-[#0E1B3D] dark:text-white focus:outline-none"
                             />
                           </div>
                         </div>
@@ -1187,9 +1187,9 @@ export default function CourseManagerPage() {
                     {/* ---------------------------------------------------------------- */}
                     {/* 6. FULL COURSE VALIDITY CUSTOMIZATION (Days, Months, Date, Lifetime) */}
                     {/* ---------------------------------------------------------------- */}
-                    <div className="p-4 bg-gradient-to-br from-amber-50/50 to-orange-50/50 border border-amber-200 rounded-2xl space-y-3">
+                    <div className="p-4 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-900/50 rounded-2xl space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-[#0E1B3D] flex items-center gap-1.5 text-xs">
+                        <span className="font-extrabold text-[#0E1B3D] dark:text-white flex items-center gap-1.5 text-xs">
                           <Clock className="w-4 h-4 text-amber-600" />
                           <span>कोर्स वैधता (Full Validity Customization)</span>
                         </span>
@@ -1213,7 +1213,7 @@ export default function CourseManagerPage() {
                             className={`px-3 py-1.5 rounded-xl font-bold text-xs transition ${
                               validityMode === m.key
                                 ? "bg-amber-600 text-white shadow-sm"
-                                : "bg-white text-slate-700 border border-amber-200 hover:border-amber-400"
+                                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-amber-200 dark:border-amber-900/50 hover:border-amber-400"
                             }`}
                           >
                             {m.label}
@@ -1232,7 +1232,7 @@ export default function CourseManagerPage() {
                               className={`p-2 rounded-xl text-center font-bold text-xs border transition ${
                                 selectedPresetId === p.id
                                   ? "bg-amber-600 text-white border-amber-600 shadow-sm"
-                                  : "bg-white text-slate-700 border-amber-200 hover:border-amber-400"
+                                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-amber-200 dark:border-amber-900/50 hover:border-amber-400"
                               }`}
                             >
                               {p.label}
@@ -1289,8 +1289,8 @@ export default function CourseManagerPage() {
                     {/* 7. COURSE STATUS SELECTOR */}
                     {/* ---------------------------------------------------------------- */}
                     <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                      <span className="font-bold text-[#0E1B3D] block text-xs">कोर्स प्रसिद्धी स्थिती (Course Status)</span>
-                      <div className="grid grid-cols-3 gap-2">
+                      <span className="font-bold text-[#0E1B3D] dark:text-slate-200 block text-xs">कोर्स प्रसिद्धी स्थिती (Course Status)</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {[
                           { key: "live", label: "Live", desc: "विद्यार्थ्यांना लगेच उपलब्ध" },
                           { key: "upcoming", label: "Upcoming", desc: "Coming Soon बॅज" },
@@ -1303,7 +1303,7 @@ export default function CourseManagerPage() {
                             className={`p-2.5 rounded-xl text-center border font-bold text-xs transition ${
                               formStatus === st.key
                                 ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                                : "bg-white text-slate-700 border-slate-200 hover:border-blue-300"
+                                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300"
                             }`}
                           >
                             <div>{st.label}</div>
@@ -1314,12 +1314,12 @@ export default function CourseManagerPage() {
                     </div>
 
                     {/* Submit Buttons */}
-                    <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-200">
+                    <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-200 dark:border-slate-800">
                       <button
                         type="button"
                         disabled={isSaving}
                         onClick={() => setIsDrawerOpen(false)}
-                        className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
+                        className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition"
                       >
                         रद्द करा (Cancel)
                       </button>
@@ -1345,7 +1345,7 @@ export default function CourseManagerPage() {
           {/* Move to Recycle Bin Confirmation Modal */}
           {deleteModalCourse && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-              <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-amber-200 space-y-4">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-amber-200 dark:border-amber-900/50 space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
                   <Trash2 className="w-6 h-6" />
                 </div>
@@ -1353,7 +1353,7 @@ export default function CourseManagerPage() {
                   <h4 className="font-extrabold text-base text-[#0E1B3D]">
                     हा कोर्स रीसायकल बिनमध्ये हलवायचा आहे का?
                   </h4>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                     <strong>{deleteModalCourse.titleMr || deleteModalCourse.title}</strong> ({deleteModalCourse.code}) हा कोर्स विद्यार्थ्यांसाठी लपवला जाईल आणि रीसायकल बिनमध्ये हलवला जाईल. तुम्ही तो कधीही <strong>पूर्ववत (Undo / Restore)</strong> करू शकता.
                   </p>
                 </div>
@@ -1362,7 +1362,7 @@ export default function CourseManagerPage() {
                   <button
                     disabled={isDeleting}
                     onClick={() => setDeleteModalCourse(null)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
+                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl"
                   >
                     रद्द करा (Cancel)
                   </button>

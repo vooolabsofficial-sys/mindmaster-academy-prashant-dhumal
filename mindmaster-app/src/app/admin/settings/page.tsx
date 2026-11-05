@@ -368,11 +368,11 @@ export default function AdminSettingsPage() {
           </div>
 
           {/* Phone-Style Section Segment Control */}
-          <div className="flex items-center gap-2 p-1.5 bg-[#F5F7FF] rounded-2xl border border-[#E4E8F8] overflow-x-auto text-xs font-bold text-[#5A6478]">
+          <div className="flex items-center gap-2 p-1.5 bg-[#F5F7FF] dark:bg-slate-900 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 overflow-x-auto text-xs font-bold text-[#5A6478] dark:text-slate-400">
             <button
               onClick={() => setActiveTab("branding")}
               className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
-                activeTab === "branding" ? "bg-white text-[#0B57D0] shadow-sm font-extrabold" : "hover:text-[#0E1B3D]"
+                activeTab === "branding" ? "bg-white dark:bg-slate-800 text-[#0B57D0] dark:text-blue-400 shadow-sm font-extrabold" : "hover:text-[#0E1B3D] dark:hover:text-white"
               }`}
             >
               <FileCheck className="w-4 h-4" />
@@ -381,7 +381,7 @@ export default function AdminSettingsPage() {
             <button
               onClick={() => setActiveTab("channels")}
               className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
-                activeTab === "channels" ? "bg-white text-[#0B57D0] shadow-sm font-extrabold" : "hover:text-[#0E1B3D]"
+                activeTab === "channels" ? "bg-white dark:bg-slate-800 text-[#0B57D0] dark:text-blue-400 shadow-sm font-extrabold" : "hover:text-[#0E1B3D] dark:hover:text-white"
               }`}
             >
               <Share2 className="w-4 h-4" />
@@ -390,7 +390,7 @@ export default function AdminSettingsPage() {
             <button
               onClick={() => setActiveTab("payments")}
               className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
-                activeTab === "payments" ? "bg-white text-[#0B57D0] shadow-sm font-extrabold" : "hover:text-[#0E1B3D]"
+                activeTab === "payments" ? "bg-white dark:bg-slate-800 text-[#0B57D0] dark:text-blue-400 shadow-sm font-extrabold" : "hover:text-[#0E1B3D] dark:hover:text-white"
               }`}
             >
               <CreditCard className="w-4 h-4" />
@@ -399,7 +399,7 @@ export default function AdminSettingsPage() {
             <button
               onClick={() => setActiveTab("security")}
               className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
-                activeTab === "security" ? "bg-white text-[#0B57D0] shadow-sm font-extrabold" : "hover:text-[#0E1B3D]"
+                activeTab === "security" ? "bg-white dark:bg-slate-800 text-[#0B57D0] dark:text-blue-400 shadow-sm font-extrabold" : "hover:text-[#0E1B3D] dark:hover:text-white"
               }`}
             >
               <ShieldCheck className="w-4 h-4" />
@@ -408,7 +408,7 @@ export default function AdminSettingsPage() {
             <button
               onClick={() => setActiveTab("maintenance")}
               className={`px-4 py-2 rounded-xl flex items-center gap-2 transition whitespace-nowrap ${
-                activeTab === "maintenance" ? "bg-white text-[#0B57D0] shadow-sm font-extrabold" : "hover:text-[#0E1B3D]"
+                activeTab === "maintenance" ? "bg-white dark:bg-slate-800 text-[#0B57D0] dark:text-blue-400 shadow-sm font-extrabold" : "hover:text-[#0E1B3D] dark:hover:text-white"
               }`}
             >
               <AlertTriangle className="w-4 h-4" />
@@ -422,17 +422,17 @@ export default function AdminSettingsPage() {
                 SECTION 1: ACADEMY IDENTITY & CERTIFICATE BRANDING
                ========================================================================= */}
             {activeTab === "branding" && (
-              <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-6">
-                <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-6">
+                <div className="flex items-center justify-between border-b border-[#E4E8F8] dark:border-slate-800 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0B57D0] flex items-center justify-center">
                       <Building2 className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-base font-extrabold text-[#0E1B3D]">
+                      <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white">
                         Academy Identity & Certificate Branding
                       </h2>
-                      <p className="text-xs text-[#5A6478]">
+                      <p className="text-xs text-[#5A6478] dark:text-slate-400">
                         Configures institutional details stamped on all generated PDF receipts and course completion certificates.
                       </p>
                     </div>
@@ -444,7 +444,7 @@ export default function AdminSettingsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5 flex items-center justify-between">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5 flex items-center justify-between">
                       <span>Academy Title (Legal Name)</span>
                       {academyTitle.trim().length >= 3 && (
                         <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
@@ -468,11 +468,11 @@ export default function AdminSettingsPage() {
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
                       )}
                     </div>
-                    <p className="text-[11px] text-[#5A6478] mt-1">Appears at the top of receipts and certificates.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Appears at the top of receipts and certificates.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5 flex items-center justify-between">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5 flex items-center justify-between">
                       <span>Authorized Signatory & Founder Name</span>
                       {founderName.trim().length >= 3 && (
                         <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
@@ -496,11 +496,11 @@ export default function AdminSettingsPage() {
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
                       )}
                     </div>
-                    <p className="text-[11px] text-[#5A6478] mt-1">Printed in the signature block on certificates and fee receipts.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Printed in the signature block on certificates and fee receipts.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Satara Head Office Address
                     </label>
                     <input
@@ -508,13 +508,13 @@ export default function AdminSettingsPage() {
                       value={centreAddress}
                       onChange={(e) => setCentreAddress(e.target.value)}
                       placeholder="Powai Naka, Satara, Maharashtra 415001"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Official headquarters address printed on receipts.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Official headquarters address printed on receipts.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Pune Campus Address
                     </label>
                     <input
@@ -522,13 +522,13 @@ export default function AdminSettingsPage() {
                       value={puneAddress}
                       onChange={(e) => setPuneAddress(e.target.value)}
                       placeholder="Satara, Taluka: Satara, Dist: Satara, Maharashtra 415001"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Secondary offline branch campus address.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Secondary offline branch campus address.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Official Signature Image URL
                     </label>
                     <input
@@ -536,9 +536,9 @@ export default function AdminSettingsPage() {
                       value={signatureUrl}
                       onChange={(e) => setSignatureUrl(e.target.value)}
                       placeholder="/branding/prashant_sir_signature.png"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Path or public URL to transparent PNG signature.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Path or public URL to transparent PNG signature.</p>
                   </div>
                 </div>
               </div>
@@ -548,17 +548,17 @@ export default function AdminSettingsPage() {
                 SECTION 2: GLOBAL HELPDESK & SOCIAL CHANNELS
                ========================================================================= */}
             {activeTab === "channels" && (
-              <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-6">
-                <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-6">
+                <div className="flex items-center justify-between border-b border-[#E4E8F8] dark:border-slate-800 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
                       <Share2 className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-base font-extrabold text-[#0E1B3D]">
+                      <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white">
                         Global Helpdesk & Official Social Channels
                       </h2>
-                      <p className="text-xs text-[#5A6478]">
+                      <p className="text-xs text-[#5A6478] dark:text-slate-400">
                         Dynamically synchronized across student /support, checkout guarantees, and the mobile app navigation.
                       </p>
                     </div>
@@ -570,7 +570,7 @@ export default function AdminSettingsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Primary Support Phone Number
                     </label>
                     <input
@@ -578,13 +578,13 @@ export default function AdminSettingsPage() {
                       value={supportPhone}
                       onChange={(e) => setSupportPhone(e.target.value)}
                       placeholder="+91 84593 44077"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Toll-free / official calling desk for student questions.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Toll-free / official calling desk for student questions.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Official WhatsApp Helpline Number
                     </label>
                     <input
@@ -592,13 +592,13 @@ export default function AdminSettingsPage() {
                       value={whatsappNumber}
                       onChange={(e) => setWhatsappNumber(e.target.value)}
                       placeholder="+91 84593 44077"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">1-click WhatsApp chat link used in student support.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">1-click WhatsApp chat link used in student support.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Official Support Email
                     </label>
                     <input
@@ -606,13 +606,13 @@ export default function AdminSettingsPage() {
                       value={supportEmail}
                       onChange={(e) => setSupportEmail(e.target.value)}
                       placeholder="mindmasterdhumal@gmail.com"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Email address for admissions and technical queries.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Email address for admissions and technical queries.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Support Desk Operating Hours Notice
                     </label>
                     <input
@@ -620,13 +620,13 @@ export default function AdminSettingsPage() {
                       value={supportHours}
                       onChange={(e) => setSupportHours(e.target.value)}
                       placeholder="10:00 AM – 7:00 PM IST (Mon–Sat)"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Displayed to students in the In-App Support Ticket desk.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Displayed to students in the In-App Support Ticket desk.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Sub-Admin Ticket Assignment / Routing Policy
                     </label>
                     <input
@@ -634,13 +634,13 @@ export default function AdminSettingsPage() {
                       value={ticketAssignmentNotice}
                       onChange={(e) => setTicketAssignmentNotice(e.target.value)}
                       placeholder="Tickets are routed to active Sub-Admins in Satara and Pune centers."
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Routing notice displayed on staff ticketing console.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Routing notice displayed on staff ticketing console.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       YouTube Data API v3 Key
                     </label>
                     <div className="relative">
@@ -649,7 +649,7 @@ export default function AdminSettingsPage() {
                         value={youtubeApiKey}
                         onChange={(e) => setYoutubeApiKey(e.target.value)}
                         placeholder="AIzaSy..."
-                        className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium pr-10"
+                        className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium pr-10"
                       />
                       <button
                         type="button"
@@ -659,11 +659,11 @@ export default function AdminSettingsPage() {
                         {showYoutubeKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    <p className="text-[11px] text-[#5A6478] mt-1">Used to auto-fetch video and playlist titles in Course Builder.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Used to auto-fetch video and playlist titles in Course Builder.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Official YouTube Channel Link
                     </label>
                     <input
@@ -671,12 +671,12 @@ export default function AdminSettingsPage() {
                       value={socialYoutube}
                       onChange={(e) => setSocialYoutube(e.target.value)}
                       placeholder="https://www.youtube.com/@prashantdhumalmindmaster"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Official Instagram Page Link
                     </label>
                     <input
@@ -684,12 +684,12 @@ export default function AdminSettingsPage() {
                       value={socialInstagram}
                       onChange={(e) => setSocialInstagram(e.target.value)}
                       placeholder="https://www.instagram.com/mindmaster_academy_official"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Official Telegram Channel Link
                     </label>
                     <input
@@ -697,7 +697,7 @@ export default function AdminSettingsPage() {
                       value={socialTelegram}
                       onChange={(e) => setSocialTelegram(e.target.value)}
                       placeholder="https://t.me/mindmasteracademy"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
                   </div>
                 </div>
@@ -708,17 +708,17 @@ export default function AdminSettingsPage() {
                 SECTION 3: PAYMENT GATEWAY & TAX RULES
                ========================================================================= */}
             {activeTab === "payments" && (
-              <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-6">
-                <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-6">
+                <div className="flex items-center justify-between border-b border-[#E4E8F8] dark:border-slate-800 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
                       <CreditCard className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-base font-extrabold text-[#0E1B3D]">
+                      <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white">
                         Payment Gateway & UPI Collection Rules
                       </h2>
-                      <p className="text-xs text-[#5A6478]">
+                      <p className="text-xs text-[#5A6478] dark:text-slate-400">
                         Manage Razorpay live credentials, sandbox testing mode, and student UPI fee collection receivers.
                       </p>
                     </div>
@@ -735,14 +735,14 @@ export default function AdminSettingsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="md:col-span-2 p-4 rounded-2xl bg-slate-50 border border-[#E4E8F8] flex items-center justify-between">
+                  <div className="md:col-span-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-[#0E1B3D]">Razorpay Environment Mode</p>
-                      <p className="text-[11px] text-[#5A6478]">
+                      <p className="text-xs font-bold text-[#0E1B3D] dark:text-white">Razorpay Environment Mode</p>
+                      <p className="text-[11px] text-[#5A6478] dark:text-slate-400">
                         Toggle between production live settlement mode and test sandbox mode for mock verification.
                       </p>
                     </div>
-                    <div className="flex items-center bg-white p-1 rounded-xl border border-[#E4E8F8]">
+                    <div className="flex items-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-[#E4E8F8] dark:border-slate-700">
                       <button
                         type="button"
                         onClick={() => setRazorpayMode("test")}
@@ -765,7 +765,7 @@ export default function AdminSettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Razorpay Key ID
                     </label>
                     <input
@@ -773,12 +773,12 @@ export default function AdminSettingsPage() {
                       value={razorpayKeyId}
                       onChange={(e) => setRazorpayKeyId(e.target.value)}
                       placeholder="rzp_live_..."
-                      className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Razorpay Key Secret
                     </label>
                     <div className="relative">
@@ -787,7 +787,7 @@ export default function AdminSettingsPage() {
                         value={razorpaySecret}
                         onChange={(e) => setRazorpaySecret(e.target.value)}
                         placeholder="sec_live_..."
-                        className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium pr-10"
+                        className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium pr-10"
                       />
                       <button
                         type="button"
@@ -800,7 +800,7 @@ export default function AdminSettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       UPI Support ID (VPA)
                     </label>
                     <input
@@ -808,9 +808,9 @@ export default function AdminSettingsPage() {
                       value={upiSupportId}
                       onChange={(e) => setUpiSupportId(e.target.value)}
                       placeholder="mindmaster@okaxis"
-                      className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Displayed during offline admission QR collections.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Displayed during offline admission QR collections.</p>
                   </div>
 
                   <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 flex items-center justify-between">
@@ -830,17 +830,17 @@ export default function AdminSettingsPage() {
                 SECTION 4: SECURITY, ANTI-PIRACY & SUB-ADMIN GOVERNANCE
                ========================================================================= */}
             {activeTab === "security" && (
-              <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-6">
-                <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-6">
+                <div className="flex items-center justify-between border-b border-[#E4E8F8] dark:border-slate-800 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
                       <ShieldCheck className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-base font-extrabold text-[#0E1B3D]">
+                      <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white">
                         Security, Anti-Piracy & Sub-Admin Governance
                       </h2>
-                      <p className="text-xs text-[#5A6478]">
+                      <p className="text-xs text-[#5A6478] dark:text-slate-400">
                         Guard against account sharing, video screen recording, and configure the maker-checker sub-admin admission rules.
                       </p>
                     </div>
@@ -852,15 +852,15 @@ export default function AdminSettingsPage() {
 
                 <div className="space-y-4">
                   {/* Strict Single-Device Lock */}
-                  <div className="p-4 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] flex items-center justify-between">
+                  <div className="p-4 rounded-2xl bg-[#F5F7FF] dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 flex items-center justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <Smartphone className="w-4 h-4 text-[#0B57D0]" />
-                        <h3 className="text-xs font-extrabold text-[#0E1B3D]">
+                        <h3 className="text-xs font-extrabold text-[#0E1B3D] dark:text-white">
                           Strict Single-Device Concurrent Lock
                         </h3>
                       </div>
-                      <p className="text-[11px] text-[#5A6478]">
+                      <p className="text-[11px] text-[#5A6478] dark:text-slate-400">
                         When enabled, each student can only stream from 1 phone/computer at a time. A new login immediately terminates the older active session.
                       </p>
                     </div>
@@ -876,15 +876,15 @@ export default function AdminSettingsPage() {
                   </div>
 
                   {/* Anti-Piracy Watermarking */}
-                  <div className="p-4 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] flex items-center justify-between">
+                  <div className="p-4 rounded-2xl bg-[#F5F7FF] dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 flex items-center justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <ShieldCheck className="w-4 h-4 text-[#0B57D0]" />
-                        <h3 className="text-xs font-extrabold text-[#0E1B3D]">
+                        <h3 className="text-xs font-extrabold text-[#0E1B3D] dark:text-white">
                           Dynamic Video & PDF Anti-Piracy Watermark
                         </h3>
                       </div>
-                      <p className="text-[11px] text-[#5A6478]">
+                      <p className="text-[11px] text-[#5A6478] dark:text-slate-400">
                         Overlays the student&apos;s registered phone number and timestamp randomly across videos and notes to stop illegal screen recording.
                       </p>
                     </div>
@@ -900,15 +900,15 @@ export default function AdminSettingsPage() {
                   </div>
 
                   {/* Sub-Admin Grant Maker-Checker Approval Mode */}
-                  <div className="p-4 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] flex items-center justify-between">
+                  <div className="p-4 rounded-2xl bg-[#F5F7FF] dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 flex items-center justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <KeyRound className="w-4 h-4 text-[#0B57D0]" />
-                        <h3 className="text-xs font-extrabold text-[#0E1B3D]">
+                        <h3 className="text-xs font-extrabold text-[#0E1B3D] dark:text-white">
                           Sub-Admin Admissions Maker-Checker Approval
                         </h3>
                       </div>
-                      <p className="text-[11px] text-[#5A6478]">
+                      <p className="text-[11px] text-[#5A6478] dark:text-slate-400">
                         When enabled, offline admissions granted by Sub-Admins require Main Admin 1-click verification before courses unlock for the student.
                       </p>
                     </div>
@@ -926,7 +926,7 @@ export default function AdminSettingsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-5 pt-2">
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Maximum Allowed Sub-Admins
                     </label>
                     <input
@@ -935,13 +935,13 @@ export default function AdminSettingsPage() {
                       max="100"
                       value={maxSubAdmins}
                       onChange={(e) => setMaxSubAdmins(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Enterprise capacity (supports 50-60 Sub-Admins).</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Enterprise capacity (supports 50-60 Sub-Admins).</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Default Course Validity (Months)
                     </label>
                     <input
@@ -950,13 +950,13 @@ export default function AdminSettingsPage() {
                       max="24"
                       value={defaultAccessMonths}
                       onChange={(e) => setDefaultAccessMonths(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Auto-applied when building new courses.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Auto-applied when building new courses.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Default Grant Expiry (Days)
                     </label>
                     <input
@@ -965,13 +965,13 @@ export default function AdminSettingsPage() {
                       max="365"
                       value={defaultVideoLiveDays}
                       onChange={(e) => setDefaultVideoLiveDays(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Default access duration when manually granting courses.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Default access duration when manually granting courses.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Default Coupon Validity (Days)
                     </label>
                     <input
@@ -980,23 +980,23 @@ export default function AdminSettingsPage() {
                       max="90"
                       value={defaultCouponDays}
                       onChange={(e) => setDefaultCouponDays(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">Expiry window for generated discount promo codes.</p>
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">Expiry window for generated discount promo codes.</p>
                   </div>
                 </div>
 
                 {/* Staff Console Password Change (Argon2id) */}
-                <div className="border-t border-[#E4E8F8] pt-6 space-y-4">
+                <div className="border-t border-[#E4E8F8] dark:border-slate-800 pt-6 space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
                       <KeyRound className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-xs font-extrabold text-[#0E1B3D]">
+                      <h3 className="text-xs font-extrabold text-[#0E1B3D] dark:text-white">
                         Admin Staff Console Password Update
                       </h3>
-                      <p className="text-[11px] text-[#5A6478]">
+                      <p className="text-[11px] text-[#5A6478] dark:text-slate-400">
                         Hash and update your staff console login credentials using secure Argon2id.
                       </p>
                     </div>
@@ -1004,7 +1004,7 @@ export default function AdminSettingsPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                      <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
                         Current Password
                       </label>
                       <input
@@ -1012,12 +1012,12 @@ export default function AdminSettingsPage() {
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
                         placeholder="Enter current password"
-                        className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                        className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                      <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
                         New Password (Min 6 chars)
                       </label>
                       <input
@@ -1025,7 +1025,7 @@ export default function AdminSettingsPage() {
                         value={newAdminPassword}
                         onChange={(e) => setNewAdminPassword(e.target.value)}
                         placeholder="Enter new strong password"
-                        className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                        className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                       />
                     </div>
 
@@ -1050,17 +1050,17 @@ export default function AdminSettingsPage() {
                 SECTION 5: MAINTENANCE MODE & FULL SYSTEM BACKUP
                ========================================================================= */}
             {activeTab === "maintenance" && (
-              <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm space-y-6">
-                <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm space-y-6">
+                <div className="flex items-center justify-between border-b border-[#E4E8F8] dark:border-slate-800 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
                       <AlertTriangle className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-base font-extrabold text-[#0E1B3D]">
+                      <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white">
                         Maintenance Mode & 1-Click System Backup
                       </h2>
-                      <p className="text-xs text-[#5A6478]">
+                      <p className="text-xs text-[#5A6478] dark:text-slate-400">
                         Safeguard academy records and manage scheduled server maintenance outages gracefully.
                       </p>
                     </div>
@@ -1073,7 +1073,7 @@ export default function AdminSettingsPage() {
                 </div>
 
                 <div className="space-y-5">
-                  <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200 flex items-center justify-between">
+                  <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
                     <div className="space-y-1">
                       <h3 className="text-xs font-extrabold text-amber-950">
                         Platform Maintenance Mode Toggle
@@ -1094,7 +1094,7 @@ export default function AdminSettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Custom Maintenance Message Shown to Students
                     </label>
                     <textarea
@@ -1102,17 +1102,17 @@ export default function AdminSettingsPage() {
                       value={maintenanceMessage}
                       onChange={(e) => setMaintenanceMessage(e.target.value)}
                       placeholder="MindMaster Academy is currently undergoing scheduled platform upgrades. We will be back online shortly."
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
                   </div>
 
-                  <div className="p-5 rounded-2xl bg-slate-50 border border-[#E4E8F8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-[#E4E8F8] dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <h3 className="text-xs font-extrabold text-[#0E1B3D] flex items-center gap-2">
                         <Download className="w-4 h-4 text-[#0B57D0]" />
                         <span>Institutional Disaster Recovery & Full Academy Backup</span>
                       </h3>
-                      <p className="text-[11px] text-[#5A6478] mt-1">
+                      <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">
                         Exports complete registered student accounts, course syllabi, digital books, offline grants, and discount coupons as a verified JSON file.
                       </p>
                     </div>
@@ -1120,7 +1120,7 @@ export default function AdminSettingsPage() {
                       type="button"
                       onClick={handleDownloadBackup}
                       disabled={isExportingBackup}
-                      className="px-5 py-2.5 text-xs font-bold rounded-xl bg-white border border-[#E4E8F8] hover:bg-slate-100 text-[#0B57D0] flex items-center gap-2 shadow-xs transition shrink-0 active:scale-95"
+                      className="px-5 py-2.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-[#0B57D0] dark:text-blue-400 flex items-center gap-2 shadow-xs transition shrink-0 active:scale-95"
                     >
                       {isExportingBackup ? (
                         <>
@@ -1136,17 +1136,17 @@ export default function AdminSettingsPage() {
                     </button>
                   </div>
 
-                  <div className="border-t border-[#E4E8F8] pt-4">
-                    <label className="block text-xs font-bold text-[#0E1B3D] mb-1.5">
+                  <div className="border-t border-[#E4E8F8] dark:border-slate-800 pt-4">
+                    <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1.5">
                       Retention & Expiry Notice Reminder Template
                     </label>
                     <textarea
                       rows={2}
                       value={reminderTemplate}
                       onChange={(e) => setReminderTemplate(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] bg-slate-50/50 text-[#0E1B3D] focus:outline-hidden focus:border-[#0B57D0] focus:bg-white font-medium"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E4E8F8] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-[#0E1B3D] dark:text-white focus:outline-hidden focus:border-[#0B57D0] focus:bg-white dark:focus:bg-slate-800 font-medium"
                     />
-                    <p className="text-[11px] text-[#5A6478] mt-1">
+                    <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">
                       Variables available: &#123;name&#125;, &#123;course&#125;, &#123;days&#125;, &#123;percent&#125;
                     </p>
                   </div>
@@ -1155,8 +1155,8 @@ export default function AdminSettingsPage() {
             )}
 
             {/* Bottom Floating Save Action Bar */}
-            <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-sm flex items-center justify-between">
-              <span className="text-xs text-[#5A6478]">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm flex items-center justify-between">
+              <span className="text-xs text-[#5A6478] dark:text-slate-400">
                 Changes are written to live database and backed up to disk storage.
               </span>
 

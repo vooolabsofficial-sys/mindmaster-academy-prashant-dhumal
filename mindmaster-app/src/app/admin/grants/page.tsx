@@ -424,10 +424,10 @@ export default function GrantsManagerPage() {
       <AdminShell>
         <div className="space-y-6 max-w-6xl mx-auto font-sans pb-16">
           {/* Header Banner */}
-          <div className="bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl md:text-3xl font-extrabold text-[#0E1B3D] font-heading">
+                <h1 className="text-2xl md:text-3xl font-extrabold text-[#0E1B3D] dark:text-white font-heading">
                   Free Access Grants &amp; Offline Admissions
                 </h1>
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#EBF3FE] text-[#0B57D0]">
@@ -571,33 +571,33 @@ export default function GrantsManagerPage() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#5A6478]">Active Grants</span>
                 <span className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
                   🎁
                 </span>
               </div>
-              <div className="text-2xl font-extrabold text-[#0E1B3D] mt-2 font-heading">
+              <div className="text-2xl font-extrabold text-[#0E1B3D] dark:text-white mt-2 font-heading">
                 {revenueStats.activeGrantsCount}
               </div>
               <span className="text-[11px] text-[#8A94A6]">Running currently</span>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#5A6478]">Students Covered</span>
                 <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold">
                   👥
                 </span>
               </div>
-              <div className="text-2xl font-extrabold text-[#0E1B3D] mt-2 font-heading">
+              <div className="text-2xl font-extrabold text-[#0E1B3D] dark:text-white mt-2 font-heading">
                 {revenueStats.totalStudentsCovered}
               </div>
               <span className="text-[11px] text-emerald-600 font-semibold">Active enrollments</span>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#5A6478]">Total Waived Value</span>
                 <span className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm font-bold">
@@ -610,14 +610,14 @@ export default function GrantsManagerPage() {
               <span className="text-[11px] text-[#8A94A6]">Curriculum fees sponsored</span>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#5A6478]">Revoked Grants</span>
                 <span className="w-8 h-8 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-bold">
                   🔒
                 </span>
               </div>
-              <div className="text-2xl font-extrabold text-[#0E1B3D] mt-2 font-heading">
+              <div className="text-2xl font-extrabold text-[#0E1B3D] dark:text-white mt-2 font-heading">
                 {grants.filter((g) => g.status === "revoked").length}
               </div>
               <span className="text-[11px] text-[#8A94A6]">Access terminated</span>
@@ -626,10 +626,10 @@ export default function GrantsManagerPage() {
 
           {/* SUB-ADMIN CASH VS UPI COLLECTION TALLY CARD (MAIN ADMIN ONLY) */}
           {isMainAdmin && (
-            <div className="bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-4">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E4E8F8]">
                 <div>
-                  <h2 className="text-base font-extrabold text-[#0E1B3D] flex items-center gap-2">
+                  <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white flex items-center gap-2">
                     <span>💰</span> Sub-Admin Cash vs UPI Collection Tally
                   </h2>
                   <p className="text-xs text-[#5A6478]">
@@ -638,7 +638,7 @@ export default function GrantsManagerPage() {
                 </div>
 
                 {/* Timeframe Filter Pills */}
-                <div className="flex items-center gap-1.5 bg-[#F5F7FF] p-1 rounded-full border border-[#E4E8F8] self-start sm:self-auto">
+                <div className="flex items-center gap-1.5 bg-[#F5F7FF] dark:bg-slate-800 p-1 rounded-full border border-[#E4E8F8] dark:border-slate-700 self-start sm:self-auto">
                   {(
                     [
                       { id: "today", label: "Today" },
@@ -819,7 +819,7 @@ export default function GrantsManagerPage() {
           )}
 
           {/* Filters Bar */}
-          <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="md:col-span-2">
                 <input
@@ -1513,7 +1513,7 @@ export default function GrantsManagerPage() {
                       </div>
 
                       {grantValidityMode === "preset" && (
-                        <div className="grid grid-cols-4 gap-1.5">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {[
                             { label: "7 Days Demo", days: 7, months: 0 },
                             { label: "15 Days", days: 15, months: 0 },

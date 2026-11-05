@@ -234,7 +234,7 @@ export default function WebsiteCmsPage() {
       )}
 
       {/* Header Bar */}
-      <div className="bg-white border border-[#E4E8F8] rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-[#E4E8F8] dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xl">🌐</span>
@@ -243,7 +243,7 @@ export default function WebsiteCmsPage() {
             </span>
             <span className="text-xs text-[#5A6478]">Zero Developer Dependency</span>
           </div>
-          <h1 className="text-2xl font-black text-[#0E1B3D] tracking-tight">
+          <h1 className="text-2xl font-black text-[#0E1B3D] dark:text-white tracking-tight">
             Marketing Website CMS Studio
           </h1>
           <p className="text-xs text-[#5A6478] mt-1">
@@ -254,7 +254,7 @@ export default function WebsiteCmsPage() {
         <div className="flex items-center gap-2.5 flex-wrap">
           <button
             onClick={() => setIsPreviewOpen(true)}
-            className="px-4 py-2.5 bg-white border border-[#0B57D0] text-[#0B57D0] hover:bg-[#F5F8FF] rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-2xs"
+            className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-[#0B57D0] text-[#0B57D0] dark:text-blue-400 hover:bg-[#F5F8FF] dark:hover:bg-slate-700 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-2xs"
           >
             <span>👁️</span>
             <span>Live Website Preview</span>
@@ -263,7 +263,7 @@ export default function WebsiteCmsPage() {
           <button
             onClick={handleResetDefaults}
             disabled={saving}
-            className="px-3.5 py-2.5 bg-white border border-[#D5D9EB] text-[#5A6478] hover:text-[#0E1B3D] hover:bg-[#F5F7FF] rounded-xl text-xs font-bold transition-all"
+            className="px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-[#D5D9EB] dark:border-slate-700 text-[#5A6478] dark:text-slate-300 hover:text-[#0E1B3D] dark:hover:text-white hover:bg-[#F5F7FF] dark:hover:bg-slate-700 rounded-xl text-xs font-bold transition-all"
           >
             Reset Defaults
           </button>
@@ -303,7 +303,7 @@ export default function WebsiteCmsPage() {
             className={`px-4 py-2.5 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all ${
               activeTab === tab.id
                 ? "bg-[#0B57D0] text-white shadow-xs"
-                : "bg-white text-[#5A6478] border border-[#E4E8F8] hover:bg-[#F5F7FF] hover:text-[#0E1B3D]"
+                : "bg-white dark:bg-slate-800 text-[#5A6478] dark:text-slate-300 border border-[#E4E8F8] dark:border-slate-700 hover:bg-[#F5F7FF] dark:hover:bg-slate-700 hover:text-[#0E1B3D] dark:hover:text-white"
             }`}
           >
             <span>{tab.icon}</span>
@@ -325,7 +325,7 @@ export default function WebsiteCmsPage() {
 
       {/* TAB 1: TOP ANNOUNCEMENT BAR & TICKER */}
       {activeTab === "announcement" && (
-        <div className="bg-white border border-[#E4E8F8] rounded-2xl p-6 shadow-xs space-y-6">
+        <div className="bg-white dark:bg-slate-900 border border-[#E4E8F8] dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-6">
           <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
             <div>
               <h2 className="text-base font-extrabold text-[#0E1B3D]">
@@ -459,7 +459,7 @@ export default function WebsiteCmsPage() {
 
       {/* TAB 2: HERO SECTION, BANNERS & INTRO VIDEO */}
       {activeTab === "hero" && (
-        <div className="bg-white border border-[#E4E8F8] rounded-2xl p-6 shadow-xs space-y-6">
+        <div className="bg-white dark:bg-slate-900 border border-[#E4E8F8] dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-6">
           <div className="border-b border-[#E4E8F8] pb-4">
             <h2 className="text-base font-extrabold text-[#0E1B3D]">
               Hero Section, Banners & Intro Video
@@ -1499,7 +1499,7 @@ export default function WebsiteCmsPage() {
 
       {/* TAB 8: SEO, SOCIAL LINKS & FOOTER CONTROL */}
       {activeTab === "seo_footer" && (
-        <div className="bg-white border border-[#E4E8F8] rounded-2xl p-6 shadow-xs space-y-6">
+        <div className="bg-white dark:bg-slate-900 border border-[#E4E8F8] dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-6">
           <div className="border-b border-[#E4E8F8] pb-4">
             <h2 className="text-base font-extrabold text-[#0E1B3D]">
               SEO Meta Tags, Social Channels &amp; Footer Controls
@@ -2227,7 +2227,7 @@ export default function WebsiteCmsPage() {
               }`}
             >
               <iframe
-                src="http://localhost:5173"
+                src="/"
                 title="MindMaster Website Live Preview"
                 className="w-full flex-1 border-0"
               />

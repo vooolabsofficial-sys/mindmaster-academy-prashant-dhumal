@@ -148,17 +148,17 @@ export default function AuditLogPage() {
       <AdminShell>
         <div className="space-y-6">
           {/* Header Banner */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-extrabold text-[#0E1B3D] font-heading">
+                <h1 className="text-2xl font-extrabold text-[#0E1B3D] dark:text-white font-heading">
                   Forensic Audit Trail
                 </h1>
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-red-800">
                   APPEND-ONLY • IST ACCURATE
                 </span>
               </div>
-              <p className="text-xs text-[#5A6478] mt-1">
+              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1">
                 Tamper-proof chronological log of every mutating action across admissions, cash settlements, curriculum, and security.
               </p>
             </div>
@@ -172,14 +172,14 @@ export default function AuditLogPage() {
                 <Download className="w-3.5 h-3.5" />
                 <span>Export Forensic CSV</span>
               </button>
-              <span className="px-3.5 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-bold text-[#0E1B3D]">
+              <span className="px-3.5 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white">
                 Total: {filteredLogs.length}
               </span>
             </div>
           </div>
 
           {/* Category Tabs */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-[#E4E8F8] pb-3">
+          <div className="flex flex-wrap items-center gap-2 border-b border-[#E4E8F8] dark:border-slate-800 pb-3">
             {[
               { id: "all", label: "All Categories", icon: <ClipboardList className="w-3.5 h-3.5" /> },
               { id: "admissions", label: "Admissions & Grants", icon: <GraduationCap className="w-3.5 h-3.5" /> },
@@ -197,7 +197,7 @@ export default function AuditLogPage() {
                     ? tab.id === "high_risk"
                       ? "bg-rose-600 text-white shadow-sm"
                       : "bg-[#0E1B3D] text-white shadow-sm"
-                    : "bg-white text-[#5A6478] hover:bg-[#F5F7FF] border border-[#E4E8F8]"
+                    : "bg-white dark:bg-slate-800 text-[#5A6478] dark:text-slate-300 hover:bg-[#F5F7FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700"
                 }`}
               >
                 <span>{tab.icon}</span>
@@ -207,7 +207,7 @@ export default function AuditLogPage() {
           </div>
 
           {/* Filters Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
             {/* Search */}
             <div className="relative w-full md:w-80">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8A94A6] pointer-events-none" />
@@ -216,7 +216,7 @@ export default function AuditLogPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search phone, student, staff ID, action..."
-                className="w-full pl-9 pr-4 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                className="w-full pl-9 pr-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
               />
             </div>
 
@@ -227,7 +227,7 @@ export default function AuditLogPage() {
                 <select
                   value={operatorFilter}
                   onChange={(e) => setOperatorFilter(e.target.value)}
-                  className="bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl px-3 py-1.5 text-xs font-semibold text-[#0E1B3D] focus:outline-none"
+                  className="bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none"
                 >
                   <option value="all">All Staff</option>
                   <option value="main_admin">Main Admin Only</option>
@@ -247,7 +247,7 @@ export default function AuditLogPage() {
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value as any)}
-                  className="bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl px-3 py-1.5 text-xs font-semibold text-[#0E1B3D] focus:outline-none"
+                  className="bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none"
                 >
                   <option value="all">All Time</option>
                   <option value="today">Today (IST)</option>
@@ -260,11 +260,11 @@ export default function AuditLogPage() {
           </div>
 
           {/* Audit Logs Table */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[#E4E8F8] text-[#8A94A6] uppercase tracking-wider font-semibold">
+                  <tr className="border-b border-[#E4E8F8] dark:border-slate-800 text-[#8A94A6] dark:text-slate-400 uppercase tracking-wider font-semibold">
                     <th className="pb-3 pl-2">Timestamp (IST)</th>
                     <th className="pb-3">Author & Role</th>
                     <th className="pb-3">Severity & Category</th>
@@ -274,7 +274,7 @@ export default function AuditLogPage() {
                     <th className="pb-3 text-right pr-2">Inspect</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E4E8F8]">
+                <tbody className="divide-y divide-[#E4E8F8] dark:divide-slate-800">
                   {filteredLogs.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-8 text-center text-xs text-[#8A94A6]">
@@ -286,14 +286,14 @@ export default function AuditLogPage() {
                       <tr
                         key={log.id}
                         onClick={() => setSelectedLog(log)}
-                        className="hover:bg-[#F5F7FF] cursor-pointer transition-colors"
+                        className="hover:bg-[#F5F7FF] dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
                       >
                         <td className="py-3.5 pl-2 text-[#5A6478] font-mono text-[11px] whitespace-nowrap">
                           {log.recorded_at_ist || log.timestamp}
                         </td>
 
                         <td className="py-3.5 whitespace-nowrap">
-                          <span className="font-bold text-[#0E1B3D] mr-1.5">{log.staffName}</span>
+                          <span className="font-bold text-[#0E1B3D] dark:text-white mr-1.5">{log.staffName}</span>
                           <StatusBadge
                             status={log.staffRole === "main_admin" ? "admin" : "verified"}
                             label={log.staffRole === "main_admin" ? "Admin" : "Sub-Admin"}
@@ -320,7 +320,7 @@ export default function AuditLogPage() {
                         </td>
 
                         <td className="py-3.5 whitespace-nowrap">
-                          <span className="px-2 py-0.5 bg-[#EEF4FF] text-[#0B57D0] font-mono rounded font-bold text-[10px]">
+                          <span className="px-2 py-0.5 bg-[#EEF4FF] dark:bg-blue-950/40 text-[#0B57D0] dark:text-blue-300 font-mono rounded font-bold text-[10px]">
                             {log.action}
                           </span>
                         </td>
@@ -328,7 +328,7 @@ export default function AuditLogPage() {
                         <td className="py-3.5 whitespace-nowrap">
                           {log.targetStudentName || log.targetStudentPhone ? (
                             <div>
-                              <p className="font-bold text-[#0E1B3D]">{log.targetStudentName || "Student"}</p>
+                              <p className="font-bold text-[#0E1B3D] dark:text-white">{log.targetStudentName || "Student"}</p>
                               {log.targetStudentPhone && (
                                 <p className="font-mono text-[10px] text-[#5A6478]">{log.targetStudentPhone}</p>
                               )}
@@ -358,19 +358,19 @@ export default function AuditLogPage() {
 
             {/* Pagination Controls */}
             {filteredLogs.length > 0 && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-[#E4E8F8] text-xs text-[#5A6478]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-[#E4E8F8] dark:border-slate-800 text-xs text-[#5A6478] dark:text-slate-400">
                 <div className="flex items-center gap-2">
                   <span>
                     Showing{" "}
-                    <span className="font-bold text-[#0E1B3D]">
+                    <span className="font-bold text-[#0E1B3D] dark:text-white">
                       {(currentPage - 1) * pageSize + 1}
                     </span>{" "}
                     to{" "}
-                    <span className="font-bold text-[#0E1B3D]">
+                    <span className="font-bold text-[#0E1B3D] dark:text-white">
                       {Math.min(currentPage * pageSize, filteredLogs.length)}
                     </span>{" "}
                     of{" "}
-                    <span className="font-bold text-[#0E1B3D]">
+                    <span className="font-bold text-[#0E1B3D] dark:text-white">
                       {filteredLogs.length}
                     </span>{" "}
                     events
@@ -395,7 +395,7 @@ export default function AuditLogPage() {
                     type="button"
                     onClick={() => setCurrentPage(1)}
                     disabled={currentPage === 1}
-                    className="px-2.5 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg border border-[#E4E8F8] dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] dark:hover:bg-slate-700 transition cursor-pointer"
                     title="First page"
                   >
                     «
@@ -404,7 +404,7 @@ export default function AuditLogPage() {
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg border border-[#E4E8F8] dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] dark:hover:bg-slate-700 transition cursor-pointer"
                   >
                     Prev
                   </button>
@@ -415,7 +415,7 @@ export default function AuditLogPage() {
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg border border-[#E4E8F8] dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] dark:hover:bg-slate-700 transition cursor-pointer"
                   >
                     Next
                   </button>
@@ -423,7 +423,7 @@ export default function AuditLogPage() {
                     type="button"
                     onClick={() => setCurrentPage(totalPages)}
                     disabled={currentPage === totalPages}
-                    className="px-2.5 py-1.5 rounded-lg border border-[#E4E8F8] bg-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] transition cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg border border-[#E4E8F8] dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F5F7FF] dark:hover:bg-slate-700 transition cursor-pointer"
                     title="Last page"
                   >
                     »
@@ -436,10 +436,10 @@ export default function AuditLogPage() {
           {/* Slide-over Before / After Forensic Drawer */}
           {selectedLog && (
             <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40 backdrop-blur-sm animate-fade-in">
-              <div className="w-full max-w-xl h-full bg-white shadow-2xl p-6 overflow-y-auto space-y-6">
-                <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+              <div className="w-full max-w-xl h-full bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-y-auto space-y-6 border-l dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-[#E4E8F8] dark:border-slate-800 pb-4">
                   <div>
-                    <h2 className="text-lg font-bold text-[#0E1B3D]">Forensic Event Details</h2>
+                    <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white">Forensic Event Details</h2>
                     <p className="text-xs text-[#5A6478] font-mono">Event ID: {selectedLog.id}</p>
                   </div>
                   <button
@@ -452,7 +452,7 @@ export default function AuditLogPage() {
                 </div>
 
                 {/* Core Attributes */}
-                <div className="grid grid-cols-2 gap-3 text-xs bg-[#F5F7FF] p-4 rounded-2xl">
+                <div className="grid grid-cols-2 gap-3 text-xs bg-[#F5F7FF] dark:bg-slate-800/70 p-4 rounded-2xl">
                   <div>
                     <p className="text-[#8A94A6]">Exact IST Timestamp</p>
                     <p className="font-bold text-[#0E1B3D] font-mono">{selectedLog.recorded_at_ist || selectedLog.timestamp}</p>
@@ -463,22 +463,22 @@ export default function AuditLogPage() {
                   </div>
                   <div>
                     <p className="text-[#8A94A6]">Operator</p>
-                    <p className="font-bold text-[#0E1B3D]">{selectedLog.staffName} ({selectedLog.staffId})</p>
+                    <p className="font-bold text-[#0E1B3D] dark:text-white">{selectedLog.staffName} ({selectedLog.staffId})</p>
                   </div>
                   <div>
                     <p className="text-[#8A94A6]">Operator Role</p>
-                    <p className="font-bold uppercase text-[#0E1B3D]">{selectedLog.staffRole}</p>
+                    <p className="font-bold uppercase text-[#0E1B3D] dark:text-white">{selectedLog.staffRole}</p>
                   </div>
                   {selectedLog.targetStudentPhone && (
                     <div>
                       <p className="text-[#8A94A6]">Target Student Phone</p>
-                      <p className="font-mono font-bold text-[#0E1B3D]">{selectedLog.targetStudentPhone}</p>
+                      <p className="font-mono font-bold text-[#0E1B3D] dark:text-white">{selectedLog.targetStudentPhone}</p>
                     </div>
                   )}
                   {selectedLog.targetStudentName && (
                     <div>
                       <p className="text-[#8A94A6]">Target Student Name</p>
-                      <p className="font-bold text-[#0E1B3D]">{selectedLog.targetStudentName}</p>
+                      <p className="font-bold text-[#0E1B3D] dark:text-white">{selectedLog.targetStudentName}</p>
                     </div>
                   )}
                 </div>
@@ -506,7 +506,7 @@ export default function AuditLogPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-[#F5F7FF] border border-[#E4E8F8] p-3 rounded-xl text-xs">
+                    <div className="bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 p-3 rounded-xl text-xs">
                       <p className="font-semibold text-[#0E1B3D] mb-1">Mutation Details</p>
                       <pre className="font-mono text-[11px] text-[#5A6478] overflow-x-auto whitespace-pre-wrap">
                         {selectedLog.details}
@@ -521,7 +521,7 @@ export default function AuditLogPage() {
                     <h3 className="text-xs font-bold uppercase text-[#8A94A6] tracking-wider">
                       Network & Device Telemetry
                     </h3>
-                    <div className="bg-[#F5F7FF] p-3 rounded-xl text-xs font-mono text-[#5A6478] space-y-1">
+                    <div className="bg-[#F5F7FF] dark:bg-slate-800 p-3 rounded-xl text-xs font-mono text-[#5A6478] dark:text-slate-300 space-y-1">
                       <p>IP Address: {selectedLog.meta.ip || "127.0.0.1"}</p>
                       <p>User Agent: {selectedLog.meta.userAgent || "MindMaster Staff Agent"}</p>
                       <p>Method: {selectedLog.meta.method || "MUTATION"}</p>

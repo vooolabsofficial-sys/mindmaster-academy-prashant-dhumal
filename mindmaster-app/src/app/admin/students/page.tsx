@@ -779,17 +779,17 @@ export default function StudentFinderPage() {
       <AdminShell>
         <div className="space-y-6">
           {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-extrabold text-[#0E1B3D] font-heading tracking-tight">
+                <h1 className="text-2xl font-extrabold text-[#0E1B3D] dark:text-white font-heading tracking-tight">
                   Student Finder & 360 Telemetrics
                 </h1>
                 <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-[#EEF4FF] text-[#0B57D0] border border-[#D0E2FF]">
                   students.view
                 </span>
               </div>
-              <p className="text-xs text-[#5A6478] mt-1">
+              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1">
                 Lookup enrolled learners across Maharashtra, inspect watch duration, open 360 profile, and trigger direct In-App notifications.
               </p>
             </div>
@@ -838,7 +838,7 @@ export default function StudentFinderPage() {
           </div>
 
           {/* Filters Bar: Search, District, Taluka, School, Course, Progress */}
-          <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               {/* Search Bar */}
               <div className="relative w-full md:w-80">
@@ -850,7 +850,7 @@ export default function StudentFinderPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search name, phone, school, email..."
-                  className="w-full pl-9 pr-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-full text-xs text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0] transition-all"
+                  className="w-full pl-9 pr-4 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-full text-xs text-[#0E1B3D] dark:text-white placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0] transition-all"
                 />
                 {searchQuery && (
                   <button
@@ -881,7 +881,7 @@ export default function StudentFinderPage() {
                 <select
                   value={districtFilter}
                   onChange={(e) => setDistrictFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none"
+                  className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none"
                 >
                   <option value="all">All Districts ({distinctDistricts.length})</option>
                   {distinctDistricts.map((d) => (
@@ -900,7 +900,7 @@ export default function StudentFinderPage() {
                 <select
                   value={talukaFilter}
                   onChange={(e) => setTalukaFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none"
+                  className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none"
                 >
                   <option value="all">All Talukas ({distinctTalukas.length})</option>
                   {distinctTalukas.map((t) => (
@@ -919,7 +919,7 @@ export default function StudentFinderPage() {
                 <select
                   value={schoolFilter}
                   onChange={(e) => setSchoolFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none"
+                  className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none"
                 >
                   <option value="all">All Schools ({distinctSchools.length})</option>
                   {distinctSchools.map((s) => (
@@ -938,7 +938,7 @@ export default function StudentFinderPage() {
                 <select
                   value={courseFilter}
                   onChange={(e) => setCourseFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none"
+                  className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none"
                 >
                   <option value="all">All Courses</option>
                   {courses.map((c) => (
@@ -1003,7 +1003,7 @@ export default function StudentFinderPage() {
                         className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isActive
                             ? "bg-[#0B57D0] text-white shadow-xs"
-                            : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0B57D0] border border-[#E4E8F8]"
+                            : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-300 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0B57D0] border border-[#E4E8F8] dark:border-slate-700"
                         }`}
                       >
                         {chip.label}
@@ -1016,7 +1016,7 @@ export default function StudentFinderPage() {
           </div>
 
           {/* Students Table */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm overflow-hidden">
             {isLoading ? (
               <div className="space-y-4 py-4 animate-pulse">
                 {[1, 2, 3, 4].map((i) => (
@@ -1046,7 +1046,7 @@ export default function StudentFinderPage() {
                 <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-[#E4E8F8] text-[#8A94A6] uppercase tracking-wider font-semibold">
+                    <tr className="border-b border-[#E4E8F8] dark:border-slate-800 text-[#8A94A6] dark:text-slate-400 uppercase tracking-wider font-semibold">
                       <th className="pb-3.5 pl-3 w-8">
                         <input
                           type="checkbox"
@@ -1074,7 +1074,7 @@ export default function StudentFinderPage() {
                       <th className="pb-3.5 text-right pr-3">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#E4E8F8]">
+                  <tbody className="divide-y divide-[#E4E8F8] dark:divide-slate-800">
                     {paginatedStudents.map((s) => {
                       const totalLessons = s.totalLessonsCount || 20;
                       const progressPct = Math.min(100, Math.round((s.completedLessonsCount / totalLessons) * 100));
@@ -1083,7 +1083,7 @@ export default function StudentFinderPage() {
                       return (
                         <tr
                           key={s.id}
-                          className={`hover:bg-[#F9FAFF] transition-colors group ${
+                          className={`hover:bg-[#F9FAFF] dark:hover:bg-slate-800/50 transition-colors group ${
                             isSelected ? "bg-blue-50/40" : ""
                           }`}
                         >
@@ -1111,7 +1111,7 @@ export default function StudentFinderPage() {
                                 {s.name.slice(0, 2).toUpperCase()}
                               </div>
                               <div>
-                                <p className="font-bold text-[#0E1B3D] text-xs">
+                                <p className="font-bold text-[#0E1B3D] dark:text-white text-xs">
                                   {s.name}
                                 </p>
                                 <p className="text-[#5A6478] font-mono text-[11px] mt-0.5">
@@ -1123,7 +1123,7 @@ export default function StudentFinderPage() {
 
                           {/* Region & School */}
                           <td className="py-4">
-                            <p className="font-bold text-[#0E1B3D] text-xs">
+                            <p className="font-bold text-[#0E1B3D] dark:text-white text-xs">
                               {s.district} {s.taluka ? `• ${s.taluka}` : ""}
                             </p>
                             <p className="text-[#5A6478] text-[11px] truncate max-w-xs mt-0.5">
@@ -1256,15 +1256,15 @@ export default function StudentFinderPage() {
                   <div className="flex items-center gap-2">
                     <span>
                       Showing{" "}
-                      <span className="font-bold text-[#0E1B3D]">
+                      <span className="font-bold text-[#0E1B3D] dark:text-white">
                         {(currentPage - 1) * pageSize + 1}
                       </span>{" "}
                       to{" "}
-                      <span className="font-bold text-[#0E1B3D]">
+                      <span className="font-bold text-[#0E1B3D] dark:text-white">
                         {Math.min(currentPage * pageSize, filteredStudents.length)}
                       </span>{" "}
                       of{" "}
-                      <span className="font-bold text-[#0E1B3D]">
+                      <span className="font-bold text-[#0E1B3D] dark:text-white">
                         {filteredStudents.length}
                       </span>{" "}
                       students
@@ -1606,7 +1606,7 @@ export default function StudentFinderPage() {
                               <div className="space-y-1">
                                 <div className="flex items-center justify-between text-[11px]">
                                   <span className="text-[#5A6478]">Course Completion:</span>
-                                  <span className="font-bold text-[#0E1B3D]">
+                                  <span className="font-bold text-[#0E1B3D] dark:text-white">
                                     {course.completedLessons} / {course.totalLessons} lessons ({course.progressPct}%)
                                   </span>
                                 </div>
@@ -1865,7 +1865,7 @@ export default function StudentFinderPage() {
                       <span>🔔</span> Send In-App Notification
                     </h3>
                     <p className="text-xs text-[#5A6478] mt-0.5">
-                      Target: <span className="font-bold text-[#0E1B3D]">{notifyStudent.name}</span> ({notifyStudent.phone})
+                      Target: <span className="font-bold text-[#0E1B3D] dark:text-white">{notifyStudent.name}</span> ({notifyStudent.phone})
                     </p>
                   </div>
                   <button
@@ -2333,7 +2333,7 @@ export default function StudentFinderPage() {
                         </div>
 
                         {cashValidityMode === "preset" && (
-                          <div className="grid grid-cols-4 gap-1.5">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {[
                               { label: "7 Days Demo", days: 7, months: 0 },
                               { label: "15 Days", days: 15, months: 0 },
@@ -2590,7 +2590,7 @@ export default function StudentFinderPage() {
                       <h3 className="text-base font-bold text-[#0E1B3D]">Extend Access Validity</h3>
                       <p className="text-[11px] text-[#5A6478]">
                         {extendModalItem.itemType === "course" ? "Course" : "Handbook"}:{" "}
-                        <span className="font-bold text-[#0E1B3D]">{extendModalItem.itemTitle}</span>
+                        <span className="font-bold text-[#0E1B3D] dark:text-white">{extendModalItem.itemTitle}</span>
                       </p>
                     </div>
                   </div>
@@ -2696,7 +2696,7 @@ export default function StudentFinderPage() {
                     <div>
                       <h3 className="text-base font-bold text-[#0E1B3D]">Swap Student Course</h3>
                       <p className="text-[11px] text-[#5A6478]">
-                        Current: <span className="font-bold text-[#0E1B3D]">{swapModalItem.itemTitle}</span>
+                        Current: <span className="font-bold text-[#0E1B3D] dark:text-white">{swapModalItem.itemTitle}</span>
                       </p>
                     </div>
                   </div>
@@ -2793,7 +2793,7 @@ export default function StudentFinderPage() {
                       <h3 className="text-base font-bold text-rose-800">Revoke Student Access</h3>
                       <p className="text-[11px] text-slate-500">
                         {revokeModalItem.itemType === "course" ? "Course" : "Book"}:{" "}
-                        <span className="font-bold text-[#0E1B3D]">{revokeModalItem.itemTitle}</span>
+                        <span className="font-bold text-[#0E1B3D] dark:text-white">{revokeModalItem.itemTitle}</span>
                       </p>
                     </div>
                   </div>

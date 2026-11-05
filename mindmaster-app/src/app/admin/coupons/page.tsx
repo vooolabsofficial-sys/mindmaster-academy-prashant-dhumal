@@ -471,18 +471,18 @@ export default function CouponManagerPage() {
       <AdminShell>
         <div className="space-y-6">
           {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-xs">
             <div>
               <div className="flex items-center gap-2.5">
                 <span className="text-2xl">🎟️</span>
-                <h1 className="text-2xl font-black text-[#0E1B3D] tracking-tight">
+                <h1 className="text-2xl font-black text-[#0E1B3D] dark:text-white tracking-tight">
                   Coupon & Discount Manager
                 </h1>
                 <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#EEF4FF] text-[#0B57D0] border border-[#D0E2FF]">
                   coupons.manage
                 </span>
               </div>
-              <p className="text-xs text-[#5A6478] mt-1">
+              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1">
                 Create discount coupons, link to courses, set 100 student quota, expiry dates, and track student redemptions.
               </p>
             </div>
@@ -507,15 +507,15 @@ export default function CouponManagerPage() {
 
           {/* KPI Analytics Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-            <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-2xs">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-2xs">
               <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider block">
                 Total Coupons
               </span>
-              <p className="text-2xl font-black text-[#0E1B3D] mt-1">{totalCouponsCount}</p>
+              <p className="text-2xl font-black text-[#0E1B3D] dark:text-white mt-1">{totalCouponsCount}</p>
               <span className="text-[10px] text-[#5A6478]">All codes in system</span>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-2xs">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-2xs">
               <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">
                 Live (Active)
               </span>
@@ -523,7 +523,7 @@ export default function CouponManagerPage() {
               <span className="text-[10px] text-[#5A6478]">Currently available</span>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-2xs">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-2xs">
               <span className="text-[11px] font-bold text-[#0B57D0] uppercase tracking-wider block">
                 Redemptions
               </span>
@@ -531,7 +531,7 @@ export default function CouponManagerPage() {
               <span className="text-[10px] text-[#5A6478]">Redeemed by students</span>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-2xs">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-2xs">
               <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider block">
                 Total Discount Given
               </span>
@@ -539,7 +539,7 @@ export default function CouponManagerPage() {
               <span className="text-[10px] text-[#5A6478]">Total savings given</span>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-[#E4E8F8] shadow-2xs col-span-2 sm:col-span-1">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-2xs col-span-2 sm:col-span-1">
               <span className="text-[11px] font-bold text-violet-600 uppercase tracking-wider block">
                 Attributed Revenue
               </span>
@@ -549,7 +549,7 @@ export default function CouponManagerPage() {
           </div>
 
           {/* Filters Bar: Search & Status Chips */}
-          <div className="bg-white p-5 rounded-3xl border border-[#E4E8F8] shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-xs space-y-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               {/* Search Bar */}
               <div className="relative w-full md:w-96">
@@ -561,7 +561,7 @@ export default function CouponManagerPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search coupon code, school, or campaign..."
-                  className="w-full pl-9 pr-4 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-full text-xs text-[#0E1B3D] placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0] transition-all"
+                  className="w-full pl-9 pr-4 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-full text-xs text-[#0E1B3D] dark:text-white placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0] transition-all"
                 />
                 {searchQuery && (
                   <button
@@ -605,7 +605,7 @@ export default function CouponManagerPage() {
                       className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                         isActive
                           ? "bg-[#0E1B3D] text-white shadow-xs"
-                          : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0B57D0] border border-[#E4E8F8]"
+                          : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-300 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0B57D0] border border-[#E4E8F8] dark:border-slate-700"
                       }`}
                     >
                       {chip.label}
@@ -632,7 +632,7 @@ export default function CouponManagerPage() {
                       className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                         isActive
                           ? "bg-[#0B57D0] text-white shadow-xs"
-                          : "bg-[#F5F7FF] text-[#5A6478] hover:bg-[#EEF4FF] hover:text-[#0B57D0] border border-[#E4E8F8]"
+                          : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-300 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0B57D0] border border-[#E4E8F8] dark:border-slate-700"
                       }`}
                     >
                       {chip.label}
@@ -644,7 +644,7 @@ export default function CouponManagerPage() {
           </div>
 
           {/* Coupons Master Table */}
-          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-xs overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-xs overflow-hidden">
             {coupons.length === 0 ? (
               <div className="py-16 text-center max-w-md mx-auto">
                 <div className="w-16 h-16 rounded-full bg-[#EEF4FF] border border-[#D0E2FF] flex items-center justify-center mx-auto text-3xl shadow-xs">
@@ -685,7 +685,7 @@ export default function CouponManagerPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-[#E4E8F8] text-[#8A94A6] uppercase tracking-wider font-semibold">
+                    <tr className="border-b border-[#E4E8F8] dark:border-slate-800 text-[#8A94A6] dark:text-slate-400 uppercase tracking-wider font-semibold">
                       <th className="pb-3.5 pl-3">Coupon Code & Campaign</th>
                       <th className="pb-3.5">Discount</th>
                       <th className="pb-3.5">Applicable Courses (Scope)</th>
@@ -695,7 +695,7 @@ export default function CouponManagerPage() {
                       <th className="pb-3.5 text-right pr-3">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#E4E8F8]">
+                  <tbody className="divide-y divide-[#E4E8F8] dark:divide-slate-800">
                     {filteredCoupons.map((c) => {
                       const totalUses = c.totalUsed || c.used_count || 0;
                       const maxUses = c.maxTotalUses || c.usage_limit || 100;
@@ -705,7 +705,7 @@ export default function CouponManagerPage() {
                         (c.per_user_usage || c.usageLimitPerUser || "once") === "once";
 
                       return (
-                        <tr key={c.id} className="hover:bg-[#F9FAFF] transition-colors group">
+                        <tr key={c.id} className="hover:bg-[#F9FAFF] dark:hover:bg-slate-800/50 transition-colors group">
                           {/* Code, School & Description */}
                           <td className="py-4 pl-3">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -897,13 +897,13 @@ export default function CouponManagerPage() {
               />
 
               <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex">
-                <div className="w-screen max-w-xl bg-white shadow-2xl flex flex-col justify-between overflow-y-auto">
+                <div className="w-screen max-w-xl bg-white dark:bg-slate-900 shadow-2xl flex flex-col justify-between overflow-y-auto border-l dark:border-slate-800">
                   {/* Drawer Header */}
-                  <div className="p-6 border-b border-[#E4E8F8] flex items-center justify-between bg-[#FAFBFD]">
+                  <div className="p-6 border-b border-[#E4E8F8] dark:border-slate-800 flex items-center justify-between bg-[#FAFBFD] dark:bg-slate-800/80">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xl">🎟️</span>
-                        <h2 className="text-lg font-black text-[#0E1B3D]">
+                        <h2 className="text-lg font-black text-[#0E1B3D] dark:text-white">
                           {editingCoupon ? `Edit Coupon: ${editingCoupon.code}` : "Create New Coupon Code"}
                         </h2>
                       </div>
@@ -971,7 +971,7 @@ export default function CouponManagerPage() {
 
                     {/* Description */}
                     <div>
-                      <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                      <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
                         Campaign Description
                       </label>
                       <input
@@ -985,7 +985,7 @@ export default function CouponManagerPage() {
 
                     {/* School Name (Optional) */}
                     <div>
-                      <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                      <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
                         School Name (Optional restriction, blank = open to all)
                       </label>
                       <input
@@ -1005,7 +1005,7 @@ export default function CouponManagerPage() {
                     {/* Student Mobile Lock & Promoter Attribution */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
                           🎯 Student Mobile Lock (Optional)
                         </label>
                         <input
@@ -1024,13 +1024,13 @@ export default function CouponManagerPage() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
+                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
                           🤝 Sub-Admin Promoter / Referral
                         </label>
                         <select
                           value={formPromoterStaffId}
                           onChange={(e) => setFormPromoterStaffId(e.target.value)}
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
                         >
                           <option value="">None (Academy Direct Offer)</option>
                           {staffList
@@ -1105,7 +1105,7 @@ export default function CouponManagerPage() {
                           {/* Course Selection */}
                           <div className="space-y-2">
                             <div className="flex items-center justify-between text-[11px]">
-                              <span className="font-bold text-[#0E1B3D]">1. Select Specific Courses:</span>
+                              <span className="font-bold text-[#0E1B3D] dark:text-white">1. Select Specific Courses:</span>
                               <span className="text-[#0B57D0] font-semibold">
                                 {formSelectedCourses.length} courses selected
                               </span>
@@ -1139,7 +1139,7 @@ export default function CouponManagerPage() {
                           {/* Paid Books Selection */}
                           <div className="space-y-2 pt-2 border-t border-slate-200">
                             <div className="flex items-center justify-between text-[11px]">
-                              <span className="font-bold text-[#0E1B3D]">2. Select Specific Paid Books:</span>
+                              <span className="font-bold text-[#0E1B3D] dark:text-white">2. Select Specific Paid Books:</span>
                               <span className="text-purple-600 font-semibold">
                                 {formSelectedBooks.length} books selected
                               </span>
@@ -1501,7 +1501,7 @@ export default function CouponManagerPage() {
                   return (
                     <>
                       {/* Mini KPI Bar */}
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="p-3 bg-[#F5F7FF] rounded-2xl border border-[#E4E8F8]">
                           <span className="text-[10px] font-bold text-[#8A94A6] uppercase tracking-wider block">
                             Used / Quota
