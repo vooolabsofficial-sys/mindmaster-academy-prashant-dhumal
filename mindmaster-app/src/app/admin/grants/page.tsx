@@ -203,14 +203,14 @@ export default function GrantsManagerPage() {
   };
 
   const handleSettleSubAdmin = (staffId: string) => {
-    if (!confirm(`Confirm cash handover settlement for Sub-Admin ${staffId}? This marks all collected cash as received at HQ.`)) return;
+    if (!confirm(`💵 सब-ॲडमिन (${staffId}) कडून रोख रक्कम जमा झाल्याची खात्री करा?\n\nही रक्कम सातारा/पुणे मुख्य ऑफिसमध्ये जमा म्हणून नोंदवली जाईल.`)) return;
     try {
       const amount = settleSubAdminCash(staffId);
-      setActionFeedback(`Settled ₹${amount.toLocaleString("en-IN")} cash handover successfully!`);
+      setActionFeedback(`✅ सब-ॲडमिन (${staffId}) कडून जमा झालेले ₹${amount.toLocaleString("en-IN")} यशस्वीपणे सेटल झाले!`);
       setTimeout(() => setActionFeedback(null), 3500);
       loadData();
     } catch (e: any) {
-      toast.error(e?.message || "Failed to settle cash.");
+      toast.error(e?.message || "रोख रक्कम सेटल करताना त्रुटी आली.");
     }
   };
 

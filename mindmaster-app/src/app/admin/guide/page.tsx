@@ -490,10 +490,10 @@ export default function AdminGuidePage() {
         </div>
 
         {/* Hero Visual SOP Card */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm overflow-hidden flex flex-col lg:flex-row items-center gap-8">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col lg:flex-row items-center gap-8">
           <div className="lg:w-7/12 space-y-4">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full shadow-2xs">
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/50 px-3 py-1 rounded-full shadow-2xs">
                 ● Active Protocol • 2026 Edition
               </span>
               <span className="text-[11px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-2.5 py-1 rounded-full">
@@ -507,7 +507,7 @@ export default function AdminGuidePage() {
                 : "Student Care, Single-Device Verification & Course Grants SOP"}
             </h2>
 
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               {isMarathi
                 ? "प्रशांत धुमाळ सरांच्या मार्गदर्शनाखाली सातारा व पुणे केंद्रातील कर्मचाऱ्यांनी प्रत्येक विद्यार्थ्याला तत्पर, पारदर्शक व नियमानुसार सेवा देण्यासाठी ही नियमावली तयार करण्यात आली आहे."
                 : "Standard protocols governing support desk responsiveness, one-click outbound calling, manual grant audits against physical fee receipts, and dynamic DRM security."}
@@ -515,21 +515,21 @@ export default function AdminGuidePage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-xs">
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
-                <span className="text-[10px] font-black uppercase text-blue-600 block">Tickets SLA</span>
+                <span className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 block">Tickets SLA</span>
                 <span className="font-extrabold text-slate-900 dark:text-white">&lt; 24h Turnaround</span>
               </div>
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
-                <span className="text-[10px] font-black uppercase text-emerald-600 block">Device Reset</span>
+                <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 block">Device Reset</span>
                 <span className="font-extrabold text-slate-900 dark:text-white">Phone Verification</span>
               </div>
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 col-span-2 sm:col-span-1">
-                <span className="text-[10px] font-black uppercase text-purple-600 block">Audit Trail</span>
+                <span className="text-[10px] font-black uppercase text-purple-600 dark:text-purple-400 block">Audit Trail</span>
                 <span className="font-extrabold text-slate-900 dark:text-white">100% Traceable</span>
               </div>
             </div>
           </div>
 
-          <div className="lg:w-5/12 relative w-full h-56 sm:h-72 rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-950 shrink-0">
+          <div className="lg:w-5/12 relative w-full h-56 sm:h-72 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm bg-slate-950 shrink-0">
             <Image
               src="/assets/guide/admin-sop-tickets-grants.webp"
               alt="Admin SOP Ticket Resolution & Manual Grants Illustration"
@@ -541,7 +541,7 @@ export default function AdminGuidePage() {
         </div>
 
         {/* Filter Bar & Search */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Role Filter Pills */}
           <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 text-xs font-bold">
             <button
@@ -550,7 +550,7 @@ export default function AdminGuidePage() {
               className={`px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap ${
                 roleFilter === "all"
                   ? "bg-blue-600 text-white font-black shadow-xs"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
               {isMarathi ? "सर्व SOPs (९)" : "All SOPs (9)"}
@@ -562,7 +562,7 @@ export default function AdminGuidePage() {
               className={`px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap ${
                 roleFilter === "sub_admin"
                   ? "bg-blue-600 text-white font-black shadow-xs"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
               {isMarathi ? "सब-ॲडमिन कार्यपद्धती (४)" : "Sub-Admin Core SOPs (4)"}
@@ -575,7 +575,7 @@ export default function AdminGuidePage() {
                 className={`px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap ${
                   roleFilter === "main_admin"
                     ? "bg-blue-600 text-white font-black shadow-xs"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                 }`}
               >
                 {isMarathi ? "सुपर-ॲडमिन कार्यपद्धती (५)" : "Super-Admin Console SOPs (5)"}
@@ -591,7 +591,7 @@ export default function AdminGuidePage() {
               value={sopSearch}
               onChange={(e) => setSopSearch(e.target.value)}
               placeholder={isMarathi ? "SOP शोधा..." : "Search SOPs..."}
-              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white"
+              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800"
             />
           </div>
         </div>
@@ -603,15 +603,15 @@ export default function AdminGuidePage() {
               <div
                 key={sop.id}
                 id={sop.id}
-                className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-5"
+                className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-5"
               >
                 <div className="space-y-4">
                   {/* Card Header Badge */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50 px-3 py-1 rounded-full">
                       {isMarathi ? sop.badgeMr : sop.badgeEn}
                     </span>
-                    <span className="text-xs font-mono font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                    <span className="text-xs font-mono font-black text-slate-400 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                       {sop.sopNumber}
                     </span>
                   </div>
@@ -621,19 +621,19 @@ export default function AdminGuidePage() {
                     <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug">
                       {isMarathi ? sop.titleMr : sop.titleEn}
                     </h3>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
                       {isMarathi ? sop.descMr : sop.descEn}
                     </p>
                   </div>
 
                   {/* Step-by-Step Instructions */}
-                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
                       {isMarathi ? "कार्यपद्धती टप्पे (Action Steps):" : "Execution Steps:"}
                     </span>
                     {(isMarathi ? sop.stepsMr : sop.stepsEn).map((st, idx) => (
-                      <div key={idx} className="flex items-start gap-2 text-xs text-slate-700">
-                        <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-700 font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                      <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
+                        <span className="w-4 h-4 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
                           {idx + 1}
                         </span>
                         <span className="leading-relaxed">{st}</span>
@@ -642,9 +642,9 @@ export default function AdminGuidePage() {
                   </div>
 
                   {/* Operational Security Rules */}
-                  <div className="p-3 rounded-2xl bg-amber-50/60 border border-amber-200 text-xs text-amber-900 space-y-1">
-                    <span className="font-extrabold flex items-center gap-1.5 text-amber-950 text-[11px]">
-                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                  <div className="p-3 rounded-2xl bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                    <span className="font-extrabold flex items-center gap-1.5 text-amber-950 dark:text-amber-100 text-[11px]">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                       <span>{isMarathi ? "महत्त्वाचे नियम (Mandatory Rules):" : "Compliance Rules:"}</span>
                     </span>
                     <ul className="list-disc pl-4 space-y-0.5 text-[11px]">
@@ -658,9 +658,9 @@ export default function AdminGuidePage() {
                 </div>
 
                 {/* Direct Action Link */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-400">
-                    Target: {sop.actionHref}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 font-mono">
+                    ⚡ {sop.actionHref}
                   </span>
                   <Link
                     href={sop.actionHref}

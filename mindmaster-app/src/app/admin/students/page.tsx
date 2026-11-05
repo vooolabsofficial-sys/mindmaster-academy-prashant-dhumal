@@ -686,6 +686,18 @@ export default function StudentFinderPage() {
   const searchMatchedStudents = React.useMemo(() => {
     const q = debouncedSearchQuery.trim();
     if (!q) return students;
+    const cleanPhone = q.replace(/\D/g, "").replace(/^91/, "");
+
+    // Direct phone match if user typed or pasted phone digits (+91, spaces, dashes)
+    if (cleanPhone.length >= 5) {
+      const phoneMatches = students.filter((s) =>
+        s.phone.replace(/\D/g, "").includes(cleanPhone)
+      );
+      if (phoneMatches.length > 0) {
+        return phoneMatches;
+      }
+    }
+
     const fuse = createStudentFuzzySearch(students);
     const results = fuse.search(q);
     if (results.length > 0) {
@@ -695,6 +707,7 @@ export default function StudentFinderPage() {
       (s) =>
         s.name.toLowerCase().includes(q.toLowerCase()) ||
         s.phone.includes(q) ||
+        (cleanPhone.length >= 4 && s.phone.replace(/\D/g, "").includes(cleanPhone)) ||
         s.email.toLowerCase().includes(q.toLowerCase()) ||
         (s.school && s.school.toLowerCase().includes(q.toLowerCase()))
     );
@@ -1434,8 +1447,16 @@ export default function StudentFinderPage() {
                       {(isMainAdmin || canManageGrants) && (
                         <button
                           type="button"
-                          onClick={() => handleResetSessionLock(drawerStudent)}
-                          className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `⚠️ ${drawerStudent.name} (${drawerStudent.phone}) या विद्यार्थ्याचा डिव्हाइस लॉक रिसेट करायचा आहे का?\n\nयानंतर विद्यार्थी नवीन फोनवरून लॉगिन करू शकेल.`
+                              )
+                            ) {
+                              handleResetSessionLock(drawerStudent);
+                            }
+                          }}
+                          className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
                           title="Clear active device session token"
                         >
                           <span>🔓</span> Reset Device Lock

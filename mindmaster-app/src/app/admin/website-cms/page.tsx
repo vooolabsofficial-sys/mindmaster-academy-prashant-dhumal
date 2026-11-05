@@ -2343,12 +2343,12 @@ export default function WebsiteCmsPage() {
 
             <div className="flex items-center gap-2">
               <a
-                href="http://localhost:5173"
+                href="/"
                 target="_blank"
                 rel="noreferrer"
-                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1"
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
               >
-                Open in New Tab ↗
+                नवीन टॅबमध्ये उघडा ↗
               </a>
               <button
                 type="button"
