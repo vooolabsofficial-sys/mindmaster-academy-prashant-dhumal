@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
-import { Coupon, StaffUser, CouponRedemptionRecord } from "@/lib/types";
+import LocationCascadeSelect from "@/components/ui/LocationCascadeSelect";
+import { Coupon, StaffUser, CouponRedemptionRecord, Course, Book } from "@/lib/types";
 import {
   getCurrentStaff,
   getStaffCoupons,
@@ -13,6 +14,7 @@ import {
   getStaffCourses,
   getStaffBooks,
   getStaffUsers,
+  getStaffStudents,
 } from "@/lib/staffStore";
 import { getRedemptions, getRedemptionsByCoupon } from "@/lib/couponRedemptionStore";
 import {
@@ -20,59 +22,128 @@ import {
   exportCouponsMasterToExcel,
 } from "@/lib/excelExporter";
 import { toast } from "sonner";
-import { CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react";
-import StatusBadge from "@/components/ui/StatusBadge";
-import SubmitButton from "@/components/ui/SubmitButton";
-import Spinner from "@/components/ui/Spinner";
+import {
+  Tag,
+  Plus,
+  Search,
+  Filter,
+  CheckCircle2,
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Users,
+  ShieldCheck,
+  ShieldAlert,
+  Sparkles,
+  Copy,
+  Check,
+  TrendingUp,
+  Percent,
+  Banknote,
+  DollarSign,
+  Building,
+  MapPin,
+  Smartphone,
+  GraduationCap,
+  Download,
+  Trash2,
+  Edit,
+  Eye,
+  CheckSquare,
+  Square,
+  Play,
+  RotateCcw,
+} from "lucide-react";
 
 export default function CouponManagerPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
+  const [staffList, setStaffList] = useState<StaffUser[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
+
+  // View Mode: 'list' | 'builder' | 'ledger'
+  const [viewMode, setViewMode] = useState<"list" | "builder" | "ledger">("list");
+  const [selectedCouponForLedger, setSelectedCouponForLedger] = useState<string>("all");
+
+  // Search & Filter in list mode
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [appliesFilter, setAppliesFilter] = useState<string>("all");
+  const [scopeFilter, setScopeFilter] = useState<string>("all");
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  // Slide-over Drawer State (Create & Edit)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // Delete modal state
+  const [deleteModalCoupon, setDeleteModalCoupon] = useState<Coupon | null>(null);
+
+  // ============================================================================
+  // COUPON BUILDER WORKSPACE STATE
+  // ============================================================================
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
-
-  // Form Fields
   const [formCode, setFormCode] = useState("");
   const [formDesc, setFormDesc] = useState("");
-  const [formSchool, setFormSchool] = useState("");
-  const [formAssignedPhone, setFormAssignedPhone] = useState("");
-  const [formPromoterStaffId, setFormPromoterStaffId] = useState("");
   const [formIsPublicChip, setFormIsPublicChip] = useState(true);
-  const [formDiscountType, setFormDiscountType] = useState<"percentage" | "flat">("percentage");
-  const [formValue, setFormValue] = useState(25);
-  const [formMinOrder, setFormMinOrder] = useState<number>(499);
+
+  // Discount Mechanics
+  const [formDiscountType, setFormDiscountType] = useState<"percentage" | "flat" | "fixed_price">("percentage");
+  const [formValue, setFormValue] = useState<number>(25);
+  const [formMaxDiscountCap, setFormMaxDiscountCap] = useState<number | "">(300);
+  const [formFixedPrice, setFormFixedPrice] = useState<number | "">(299);
+
+  // Targeting & Scope
+  const [formAudience, setFormAudience] = useState<"all" | "new_users_only" | "private_phone">("all");
+  const [formAssignedPhone, setFormAssignedPhone] = useState("");
   const [formAppliesAll, setFormAppliesAll] = useState(true);
   const [formSelectedCourses, setFormSelectedCourses] = useState<string[]>([]);
   const [formSelectedBooks, setFormSelectedBooks] = useState<string[]>([]);
+  const [formSchool, setFormSchool] = useState("");
+
+  // Geographic Targeting (LocationCascadeSelect)
+  const [formGeoEnabled, setFormGeoEnabled] = useState(false);
+  const [formTargetState, setFormTargetState] = useState("maharashtra");
+  const [formTargetDistrict, setFormTargetDistrict] = useState("");
+  const [formTargetTaluka, setFormTargetTaluka] = useState("");
+
+  // Anti-Abuse & Guardrails
+  const [formMinOrder, setFormMinOrder] = useState<number>(499);
   const [formPerUserUsage, setFormPerUserUsage] = useState<"once" | "multiple">("once");
+  const [formUsageLimit, setFormUsageLimit] = useState<number>(100);
+  const [formPromoterStaffId, setFormPromoterStaffId] = useState("");
+
+  // Validity
   const [formValidityType, setFormValidityType] = useState<"days" | "date_range">("date_range");
   const [formValidDays, setFormValidDays] = useState(30);
-  const [formStartsAt, setFormStartsAt] = useState("2026-10-01");
-  const [formEndsAt, setFormEndsAt] = useState("2026-11-30");
-  const [formUsageLimit, setFormUsageLimit] = useState(100);
+  const [formStartsAt, setFormStartsAt] = useState(() => new Date().toISOString().slice(0, 10));
+  const [formEndsAt, setFormEndsAt] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().slice(0, 10);
+  });
   const [formIsActive, setFormIsActive] = useState(true);
-  const [staffList, setStaffList] = useState<StaffUser[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
 
-  // Redemptions Modal State
-  const [viewingRedemptionsCoupon, setViewingRedemptionsCoupon] = useState<Coupon | null>(null);
-  const [redemptionSearch, setRedemptionSearch] = useState("");
+  // Sandbox Simulator State
+  const [sandboxCartValue, setSandboxCartValue] = useState<number>(999);
+  const [sandboxPhone, setSandboxPhone] = useState<string>("9876543210");
+  const [sandboxDistrict, setSandboxDistrict] = useState<string>("Pune");
+  const [sandboxResult, setSandboxResult] = useState<{
+    valid: boolean;
+    discountRupees: number;
+    finalPriceRupees: number;
+    reason: string;
+  } | null>(null);
 
-  // Delete Modal State
-  const [deleteModalCoupon, setDeleteModalCoupon] = useState<Coupon | null>(null);
+  // Ledger Filter State
+  const [ledgerSearch, setLedgerSearch] = useState("");
+  const [ledgerStatusFilter, setLedgerStatusFilter] = useState("all");
 
-  const courses = getStaffCourses();
-  const books = getStaffBooks();
+  const isMainAdmin = staff.role === "main_admin";
 
   const reload = () => {
     setCoupons(getStaffCoupons());
     setStaff(getCurrentStaff());
     setStaffList(getStaffUsers());
+    setCourses(getStaffCourses());
+    setBooks(getStaffBooks());
   };
 
   useEffect(() => {
@@ -81,49 +152,54 @@ export default function CouponManagerPage() {
     return () => window.removeEventListener("mma_staff_changed", reload);
   }, []);
 
-  const isMainAdmin = staff.role === "main_admin";
+  // Generate random promo code
+  const handleGenerateCode = () => {
+    const prefixes = ["PROMO", "DIWALI", "MIND", "ACADEMY", "SPECIAL", "SUPER", "MAHA"];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const num = Math.floor(10 + Math.random() * 90);
+    setFormCode(`${prefix}${num}`);
+  };
 
-  // Open Create Modal with clean defaults
+  // Open Builder for Create
   const handleOpenAdd = () => {
     setEditingCoupon(null);
     setFormCode("");
     setFormDesc("");
-    setFormSchool("");
-    setFormAssignedPhone("");
-    setFormPromoterStaffId("");
     setFormIsPublicChip(true);
     setFormDiscountType("percentage");
-    setFormValue(20);
-    setFormMinOrder(499);
+    setFormValue(25);
+    setFormMaxDiscountCap(300);
+    setFormFixedPrice(299);
+    setFormAudience("all");
+    setFormAssignedPhone("");
     setFormAppliesAll(true);
     setFormSelectedCourses([]);
     setFormSelectedBooks([]);
+    setFormSchool("");
+    setFormGeoEnabled(false);
+    setFormTargetState("maharashtra");
+    setFormTargetDistrict("");
+    setFormTargetTaluka("");
+    setFormMinOrder(499);
     setFormPerUserUsage("once");
-    setFormValidityType("date_range");
-    setFormValidDays(30);
-    const today = new Date().toISOString().slice(0, 10);
-    const sixtyDaysLater = new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10);
-    setFormStartsAt(today);
-    setFormEndsAt(sixtyDaysLater);
     setFormUsageLimit(100);
+    setFormPromoterStaffId("");
+    setFormValidityType("date_range");
+    const today = new Date().toISOString().slice(0, 10);
+    const thirtyDays = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+    setFormStartsAt(today);
+    setFormEndsAt(thirtyDays);
     setFormIsActive(true);
-    setIsDrawerOpen(true);
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setSandboxResult(null);
+    setViewMode("builder");
   };
 
-  // Open Edit Modal
+  // Open Builder for Edit
   const handleOpenEdit = (cpn: Coupon) => {
     setEditingCoupon(cpn);
     setFormCode(cpn.code);
     setFormDesc(cpn.description || "");
-    setFormSchool(cpn.school || "");
-    setFormAssignedPhone(cpn.assigned_phone || cpn.assignedPhone || "");
-    setFormPromoterStaffId(cpn.promoter_staff_id || cpn.promoterStaffId || "");
-    setFormIsPublicChip(
-      cpn.is_public_chip !== undefined ? cpn.is_public_chip : cpn.isPublicChip !== undefined ? cpn.isPublicChip : true
-    );
+    setFormIsPublicChip(cpn.is_public_chip !== undefined ? cpn.is_public_chip : true);
     setFormDiscountType(
       cpn.discountType === "percentage" || cpn.discountType === "percent" ? "percentage" : "flat"
     );
@@ -134,58 +210,161 @@ export default function CouponManagerPage() {
         ? Math.round(cpn.discountValue / 100)
         : cpn.discountValue
     );
-    setFormMinOrder(
-      cpn.minOrderValuePaise ? Math.round(cpn.minOrderValuePaise / 100) : 499
+    setFormMaxDiscountCap(
+      cpn.max_discount_paise ? Math.round(cpn.max_discount_paise / 100) : ""
     );
-    const isAll = cpn.applies_all !== undefined ? cpn.applies_all : cpn.appliesTo === "all";
-    setFormAppliesAll(isAll);
+    setFormAudience(cpn.target_audience || (cpn.assigned_phone ? "private_phone" : "all"));
+    setFormAssignedPhone(cpn.assigned_phone || cpn.assignedPhone || "");
+    setFormAppliesAll(cpn.applies_all !== undefined ? cpn.applies_all : cpn.appliesTo === "all");
     setFormSelectedCourses(cpn.selectedCourseIds || []);
     setFormSelectedBooks(cpn.selectedBookIds || []);
+    setFormSchool(cpn.school || "");
+    setFormGeoEnabled(Boolean(cpn.target_district));
+    setFormTargetState(cpn.target_state || "maharashtra");
+    setFormTargetDistrict(cpn.target_district || "");
+    setFormTargetTaluka(cpn.target_taluka || "");
+    setFormMinOrder(cpn.minOrderValuePaise ? Math.round(cpn.minOrderValuePaise / 100) : 499);
     setFormPerUserUsage(cpn.per_user_usage || cpn.usageLimitPerUser || "once");
-    setFormValidityType(
-      cpn.validityType || (cpn.starts_at || cpn.validFrom ? "date_range" : "days")
-    );
-    setFormValidDays(cpn.validDays || 30);
-    setFormStartsAt(
-      cpn.starts_at ? cpn.starts_at.slice(0, 10) : cpn.validFrom ? cpn.validFrom.slice(0, 10) : "2026-10-01"
-    );
-    setFormEndsAt(
-      cpn.ends_at ? cpn.ends_at.slice(0, 10) : cpn.validUntil ? cpn.validUntil.slice(0, 10) : "2026-11-30"
-    );
     setFormUsageLimit(cpn.usage_limit || cpn.maxTotalUses || 100);
-    setFormIsActive(cpn.is_active !== undefined ? cpn.is_active : cpn.status !== "disabled" && cpn.status !== "paused");
-    setIsDrawerOpen(true);
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setFormPromoterStaffId(cpn.promoter_staff_id || cpn.promoterStaffId || "");
+    setFormValidityType(cpn.validityType || "date_range");
+    setFormStartsAt(cpn.starts_at ? cpn.starts_at.slice(0, 10) : new Date().toISOString().slice(0, 10));
+    setFormEndsAt(cpn.ends_at ? cpn.ends_at.slice(0, 10) : new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10));
+    setFormIsActive(cpn.is_active !== undefined ? cpn.is_active : cpn.status === "active");
+    setSandboxResult(null);
+    setViewMode("builder");
   };
 
-  const toggleCourseSelect = (courseId: string) => {
-    if (formSelectedCourses.includes(courseId)) {
-      setFormSelectedCourses(formSelectedCourses.filter((id) => id !== courseId));
+  // Plain-English Human Readable Summary Generator
+  const humanReadableSummary = useMemo(() => {
+    const parts: string[] = [];
+
+    // Audience
+    if (formAudience === "new_users_only") {
+      parts.push("First-time new students only");
+    } else if (formAudience === "private_phone" && formAssignedPhone) {
+      parts.push(`Exclusive student with mobile ending in ...${formAssignedPhone.slice(-4)}`);
     } else {
-      setFormSelectedCourses([...formSelectedCourses, courseId]);
+      parts.push("All eligible students");
     }
-  };
 
-  const toggleBookSelect = (bookId: string) => {
-    if (formSelectedBooks.includes(bookId)) {
-      setFormSelectedBooks(formSelectedBooks.filter((id) => id !== bookId));
+    // Geographic
+    if (formGeoEnabled && formTargetDistrict) {
+      parts.push(`residing in ${formTargetDistrict} district${formTargetTaluka ? ` (${formTargetTaluka} taluka)` : ""}`);
+    }
+
+    // School
+    if (formSchool.trim()) {
+      parts.push(`from "${formSchool.trim()}"`);
+    }
+
+    // Items
+    if (!formAppliesAll && formSelectedCourses.length > 0) {
+      parts.push(`purchasing selected course(s) (${formSelectedCourses.length} selected)`);
     } else {
-      setFormSelectedBooks([...formSelectedBooks, bookId]);
+      parts.push("purchasing any catalog curriculum");
     }
-  };
 
-  const handleSaveCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formCode.trim()) {
-      toast.error("Please enter a coupon code.");
+    // Min Order
+    if (formMinOrder > 0) {
+      parts.push(`with a minimum cart total of ₹${formMinOrder}`);
+    }
+
+    // Discount
+    let discountStr = "";
+    if (formDiscountType === "percentage") {
+      discountStr = `will receive a ${formValue}% discount`;
+      if (formMaxDiscountCap && Number(formMaxDiscountCap) > 0) {
+        discountStr += ` (capped at maximum ₹${formMaxDiscountCap})`;
+      }
+    } else if (formDiscountType === "flat") {
+      discountStr = `will receive a flat ₹${formValue} discount`;
+    } else {
+      discountStr = `can enroll at a fixed price of ₹${formFixedPrice}`;
+    }
+
+    // Limits
+    const limitStr = `Limited to ${formPerUserUsage === "once" ? "1 redemption per student" : "multiple uses per student"} across a total quota of ${formUsageLimit} redemptions.`;
+
+    return `${parts.join(" ")} ${discountStr}. ${limitStr}`;
+  }, [
+    formAudience,
+    formAssignedPhone,
+    formGeoEnabled,
+    formTargetDistrict,
+    formTargetTaluka,
+    formSchool,
+    formAppliesAll,
+    formSelectedCourses,
+    formMinOrder,
+    formDiscountType,
+    formValue,
+    formMaxDiscountCap,
+    formFixedPrice,
+    formPerUserUsage,
+    formUsageLimit,
+  ]);
+
+  // Sandbox Voucher Simulator Run
+  const handleRunSandbox = () => {
+    // 1. Min order check
+    if (sandboxCartValue < formMinOrder) {
+      setSandboxResult({
+        valid: false,
+        discountRupees: 0,
+        finalPriceRupees: sandboxCartValue,
+        reason: `Cart total (₹${sandboxCartValue}) is less than minimum required order value (₹${formMinOrder}).`,
+      });
       return;
     }
 
-    const cleanedCode = formCode.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+    // 2. Geographic check
+    if (formGeoEnabled && formTargetDistrict) {
+      if (sandboxDistrict.toLowerCase() !== formTargetDistrict.toLowerCase()) {
+        setSandboxResult({
+          valid: false,
+          discountRupees: 0,
+          finalPriceRupees: sandboxCartValue,
+          reason: `Student district (${sandboxDistrict}) does not match coupon target district (${formTargetDistrict}).`,
+        });
+        return;
+      }
+    }
 
-    // Determine status
+    // 3. Discount calculation
+    let calculatedDiscount = 0;
+    if (formDiscountType === "percentage") {
+      calculatedDiscount = Math.round((sandboxCartValue * formValue) / 100);
+      if (formMaxDiscountCap && Number(formMaxDiscountCap) > 0) {
+        calculatedDiscount = Math.min(calculatedDiscount, Number(formMaxDiscountCap));
+      }
+    } else if (formDiscountType === "flat") {
+      calculatedDiscount = formValue;
+    } else if (formDiscountType === "fixed_price" && formFixedPrice !== "") {
+      calculatedDiscount = Math.max(0, sandboxCartValue - Number(formFixedPrice));
+    }
+
+    calculatedDiscount = Math.min(sandboxCartValue, calculatedDiscount);
+    const finalPrice = Math.max(0, sandboxCartValue - calculatedDiscount);
+
+    setSandboxResult({
+      valid: true,
+      discountRupees: calculatedDiscount,
+      finalPriceRupees: finalPrice,
+      reason: `Coupon is 100% valid! Student saves ₹${calculatedDiscount} on this order.`,
+    });
+  };
+
+  // Save Coupon
+  const handleSaveCoupon = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanCode = formCode.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+    if (!cleanCode) {
+      toast.error("Please enter a valid coupon code.");
+      return;
+    }
+
+    // Status calculation
     let status: "active" | "expired" | "scheduled" | "disabled" | "paused" = "active";
     if (!formIsActive) {
       status = "paused";
@@ -198,37 +377,30 @@ export default function CouponManagerPage() {
       else status = "active";
     }
 
-    const currentUsed = editingCoupon ? editingCoupon.totalUsed || editingCoupon.used_count || 0 : 0;
-    if (currentUsed >= Number(formUsageLimit)) {
-      status = "expired";
-    }
+    const maxCapPaise =
+      formMaxDiscountCap && Number(formMaxDiscountCap) > 0
+        ? Number(formMaxDiscountCap) * 100
+        : undefined;
 
-    const valueInPaiseOrPct =
-      formDiscountType === "percentage" ? Number(formValue) : Number(formValue) * 100;
-
-    const cleanAssignedPhone = formAssignedPhone.trim()
-      ? formAssignedPhone.trim().replace(/\D/g, "").slice(-10)
-      : undefined;
-
-    const promoterStaff = formPromoterStaffId
-      ? staffList.find((s) => s.id === formPromoterStaffId || s.staffId === formPromoterStaffId)
-      : null;
-
-    const updatedCoupon: Coupon = {
+    const couponData: Coupon = {
       id: editingCoupon ? editingCoupon.id : `cpn-${Date.now()}`,
-      code: cleanedCode,
-      description: formDesc.trim() || `${cleanedCode} Discount Coupon`,
-      school: formSchool.trim() || undefined,
-      assigned_phone: cleanAssignedPhone,
-      assignedPhone: cleanAssignedPhone,
-      promoter_staff_id: formPromoterStaffId || undefined,
-      promoterStaffId: formPromoterStaffId || undefined,
-      promoterStaffName: promoterStaff?.name || undefined,
+      code: cleanCode,
+      description: formDesc.trim() || `Special Promo ${cleanCode}`,
       is_public_chip: formIsPublicChip,
       isPublicChip: formIsPublicChip,
-      discountType: formDiscountType,
-      discountValue: valueInPaiseOrPct,
-      minOrderValuePaise: formMinOrder ? Number(formMinOrder) * 100 : undefined,
+      discountType: formDiscountType === "percentage" ? "percentage" : "flat",
+      discountValue: formDiscountType === "percentage" ? formValue : formValue * 100,
+      max_discount_paise: maxCapPaise,
+      maxDiscountPaise: maxCapPaise,
+      target_audience: formAudience,
+      targetAudience: formAudience,
+      assigned_phone: formAudience === "private_phone" ? formAssignedPhone.trim() : undefined,
+      assignedPhone: formAudience === "private_phone" ? formAssignedPhone.trim() : undefined,
+      school: formSchool.trim() || undefined,
+      target_state: formGeoEnabled ? formTargetState : undefined,
+      target_district: formGeoEnabled && formTargetDistrict ? formTargetDistrict : undefined,
+      target_taluka: formGeoEnabled && formTargetTaluka ? formTargetTaluka : undefined,
+      minOrderValuePaise: formMinOrder > 0 ? formMinOrder * 100 : undefined,
       appliesTo: formAppliesAll ? "all" : "selected",
       applies_all: formAppliesAll,
       selectedCourseIds: formAppliesAll ? [] : formSelectedCourses,
@@ -236,1441 +408,1215 @@ export default function CouponManagerPage() {
       usageLimitPerUser: formPerUserUsage,
       per_user_usage: formPerUserUsage,
       validityType: formValidityType,
-      validDays: formValidityType === "days" ? Number(formValidDays) : undefined,
-      validFrom: formValidityType === "date_range" ? formStartsAt : undefined,
-      validUntil: formValidityType === "date_range" ? formEndsAt : undefined,
-      starts_at: formValidityType === "date_range" ? `${formStartsAt}T00:00:00Z` : undefined,
-      ends_at: formValidityType === "date_range" ? `${formEndsAt}T23:59:59Z` : null,
-      maxTotalUses: Number(formUsageLimit),
-      usage_limit: Number(formUsageLimit),
-      totalUsed: currentUsed,
-      used_count: currentUsed,
+      validDays: formValidityType === "days" ? formValidDays : undefined,
+      starts_at: formValidityType === "date_range" ? `${formStartsAt}T00:00:00.000Z` : undefined,
+      ends_at: formValidityType === "date_range" ? `${formEndsAt}T23:59:59.000Z` : undefined,
+      maxTotalUses: formUsageLimit,
+      usage_limit: formUsageLimit,
+      totalUsed: editingCoupon ? editingCoupon.totalUsed || 0 : 0,
+      used_count: editingCoupon ? editingCoupon.used_count || 0 : 0,
       status,
-      is_active: formIsActive && status !== "expired",
-      createdAt: editingCoupon ? editingCoupon.createdAt : new Date().toISOString().slice(0, 10),
+      is_active: formIsActive,
+      promoter_staff_id: formPromoterStaffId || undefined,
+      promoterStaffId: formPromoterStaffId || undefined,
+      createdAt: editingCoupon ? editingCoupon.createdAt : new Date().toISOString(),
     };
 
-    saveStaffCoupon(updatedCoupon);
+    saveStaffCoupon(couponData);
+    toast.success(`Coupon campaign ${couponData.code} saved successfully!`);
     reload();
-    setIsDrawerOpen(false);
-    toast.success(
-      editingCoupon
-        ? `Coupon "${cleanedCode}" updated successfully!`
-        : `New coupon "${cleanedCode}" created successfully!`
-    );
+    setViewMode("list");
   };
 
-  // Instant Pause / Resume Toggle
-  const handleToggleStatus = (cpn: Coupon) => {
-    const updated = toggleStaffCouponStatus(cpn.id);
-    if (updated) {
-      toast.success(
-        updated.status === "active"
-          ? `Coupon "${cpn.code}" is now Active!`
-          : `Coupon "${cpn.code}" is now Paused!`
-      );
-      reload();
-    }
+  // Toggle status
+  const handleToggleStatus = (id: string) => {
+    toggleStaffCouponStatus(id);
+    reload();
   };
 
-  // 1-Click WhatsApp Promotional Announcement Share
-  const handleShareWhatsApp = (cpn: Coupon) => {
-    const discountStr =
-      cpn.discountType === "percentage" || cpn.discountType === "percent"
-        ? `${cpn.discountValue}% OFF`
-        : `₹${cpn.discountValue >= 1000 ? Math.round(cpn.discountValue / 100) : cpn.discountValue} OFF`;
-
-    const courseStr =
-      cpn.applies_all !== false && (cpn.appliesTo === "all" || !cpn.selectedCourseIds?.length)
-        ? "All Courses (Site-wide)"
-        : `${cpn.selectedCourseIds?.length || 1} Selected Courses`;
-
-    const validityStr =
-      cpn.validityType === "days"
-        ? `Next ${cpn.validDays || 30} days`
-        : `${cpn.starts_at?.slice(0, 10) || cpn.validFrom || "Start"} to ${cpn.ends_at?.slice(0, 10) || cpn.validUntil || "End"}`;
-
-    const limitStr = `Limited to first ${cpn.usage_limit || cpn.maxTotalUses || 100} students!`;
-
-    const msg = `🎓 *MindMaster Academy — Special Discount Coupon!*\n\nSpecial discount from Prashant Dhumal Sir's Academy:\n🎟️ Coupon Code: *${cpn.code}*\n💰 Discount: *${discountStr}*\n📚 Applicable Courses: *${courseStr}*\n⏳ Validity: *${validityStr}*\n👥 Limit: *${limitStr}*${
-      cpn.school ? `\n🏫 School: *${cpn.school}*` : ""
-    }\n\n👉 To enroll and apply coupon, visit:\nhttps://mindmasteredu.in/checkout?coupon=${cpn.code}`;
-
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(msg);
-      toast.success(`Coupon "${cpn.code}" WhatsApp message copied to clipboard!`);
-    }
-  };
-
+  // Delete
   const handleConfirmDelete = () => {
     if (!deleteModalCoupon) return;
-    if (!isMainAdmin) {
-      toast.error("Unauthorized: Coupon deletion is strictly reserved for Main Admin.");
-      setDeleteModalCoupon(null);
-      return;
-    }
     deleteStaffCoupon(deleteModalCoupon.id);
-    reload();
-    toast.success(`Coupon "${deleteModalCoupon.code}" deleted successfully.`);
     setDeleteModalCoupon(null);
+    toast.success(`Coupon ${deleteModalCoupon.code} deleted.`);
+    reload();
   };
 
-  // Helper for applying line
-  const getAppliesLine = (cpn: Coupon) => {
-    const appliesAll = cpn.applies_all !== undefined ? cpn.applies_all : cpn.appliesTo === "all";
-    if (appliesAll) {
-      return "All Courses (Site-wide)";
-    }
-    const ids = cpn.selectedCourseIds || [];
-    if (ids.length === 0) return "Selected Courses (None selected)";
-    const matchedTitles = courses
-      .filter((c) => ids.includes(c.id) || ids.includes(c.code))
-      .map((c) => c.title);
-    if (matchedTitles.length > 0) {
-      return `${ids.length} Courses: ${matchedTitles.join(", ")}`;
-    }
-    return `${ids.length} Selected Courses`;
+  // Copy code helper
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    toast.success(`Coupon code ${code} copied to clipboard!`);
+    setTimeout(() => setCopiedCode(null), 2500);
   };
 
-  // Helper for validity line
-  const getValidityLine = (cpn: Coupon) => {
-    if (cpn.validityType === "days" || cpn.validDays) {
-      return `${cpn.validDays || 30} days validity`;
-    }
-    const start = cpn.starts_at ? cpn.starts_at.slice(0, 10) : cpn.validFrom || "Start";
-    const end = cpn.ends_at ? cpn.ends_at.slice(0, 10) : cpn.validUntil || "End";
-    return `${start} → ${end}`;
-  };
+  // Filtered campaigns
+  const filteredCoupons = useMemo(() => {
+    return coupons.filter((c) => {
+      const q = searchQuery.toLowerCase();
+      const matchSearch =
+        !q ||
+        c.code.toLowerCase().includes(q) ||
+        c.description?.toLowerCase().includes(q) ||
+        c.school?.toLowerCase().includes(q);
 
-  // Helper for status badge using unified SVG StatusBadge
-  const getStatusBadge = (cpn: Coupon) => {
-    const totalUses = cpn.totalUsed || cpn.used_count || 0;
-    const maxUses = cpn.maxTotalUses || cpn.usage_limit || 100;
-    const isQuotaFull = totalUses >= maxUses;
+      const matchStatus = statusFilter === "all" || c.status === statusFilter;
+      const matchScope =
+        scopeFilter === "all" ||
+        (scopeFilter === "all_courses" && (c.applies_all || c.appliesTo === "all")) ||
+        (scopeFilter === "selected" && (!c.applies_all && c.appliesTo !== "all"));
 
-    if (isQuotaFull) {
-      return (
-        <StatusBadge
-          status="expired"
-          label={`Quota Full (${maxUses}/${maxUses})`}
-          size="sm"
-        />
-      );
-    }
-    if (cpn.status === "paused" || cpn.is_active === false || cpn.status === "disabled") {
-      return <StatusBadge status="paused" label="Paused" size="sm" />;
-    }
-    if (cpn.status === "scheduled") {
-      return <StatusBadge status="upcoming" label="Scheduled" size="sm" />;
-    }
-    if (cpn.status === "expired") {
-      return <StatusBadge status="expired" label="Expired" size="sm" />;
-    }
-    return <StatusBadge status="active" label="Active" size="sm" />;
-  };
-
-  // Export Master Coupons List
-  const handleExportMasterSummary = () => {
-    const rows = coupons.map((c) => {
-      const totalUses = c.totalUsed || c.used_count || 0;
-      const maxUses = c.maxTotalUses || c.usage_limit || 100;
-      const remaining = Math.max(0, maxUses - totalUses);
-      const discountStr =
-        c.discountType === "percentage" || c.discountType === "percent"
-          ? `${c.discountValue}% OFF`
-          : `₹${c.discountValue >= 1000 ? Math.round(c.discountValue / 100) : c.discountValue} OFF`;
-
-      return {
-        code: c.code,
-        description: c.description || "",
-        school: c.school || "",
-        discount: discountStr,
-        scope:
-          c.applies_all !== false && (c.appliesTo === "all" || !c.selectedCourseIds?.length)
-            ? "All Courses"
-            : `${c.selectedCourseIds?.length || 1} Courses`,
-        validity: getValidityLine(c),
-        quotaLimit: maxUses,
-        usedCount: totalUses,
-        remainingQuota: remaining,
-        status: c.status,
-      };
+      return matchSearch && matchStatus && matchScope;
     });
-    exportCouponsMasterToExcel(rows);
-    toast.success("Coupons master report downloaded in Excel!");
-  };
+  }, [coupons, searchQuery, statusFilter, scopeFilter]);
 
-  // Export Specific Coupon Redemptions
-  const handleExportCouponRedemptions = (cpn: Coupon, list: CouponRedemptionRecord[]) => {
-    const rows = list.map((r) => ({
-      couponCode: cpn.code,
-      studentName: r.studentName || "Student",
-      studentMobile: r.studentMobile || "—",
-      courseTitle: r.courseTitle || "MindMaster Course",
-      originalPrice: Math.round((r.originalPricePaise || 99900) / 100),
-      discountReceived: Math.round((r.discountPaise || 0) / 100),
-      finalPaid: Math.round((r.paidPaise || 99900) / 100),
-      redeemedAt: new Date(r.at).toLocaleString("en-IN"),
-    }));
-    exportCouponRedemptionsToExcel(rows, cpn.code);
-    toast.success(`Coupon "${cpn.code}" redemptions track record downloaded in Excel!`);
-  };
+  // Redemptions Ledger Data
+  const allRedemptions: CouponRedemptionRecord[] = useMemo(() => {
+    if (selectedCouponForLedger === "all") return getRedemptions();
+    return getRedemptionsByCoupon(selectedCouponForLedger);
+  }, [selectedCouponForLedger]);
 
-  // Global KPIs calculation
-  const allRedemptions = getRedemptions();
-  const totalCouponsCount = coupons.length;
-  const activeCouponsCount = coupons.filter(
-    (c) => c.status === "active" && c.is_active !== false
-  ).length;
-  const totalRedemptionsCount = coupons.reduce(
-    (acc, c) => acc + (c.used_count || c.totalUsed || 0),
-    0
-  );
-  const totalDiscountGivenRupees = allRedemptions.reduce(
-    (acc, r) => acc + Math.round((r.discountPaise || 0) / 100),
-    0
-  );
-  const totalRevenueAttributedRupees = allRedemptions.reduce(
-    (acc, r) => acc + Math.round((r.paidPaise || 0) / 100),
-    0
-  );
+  const filteredRedemptions = useMemo(() => {
+    return allRedemptions.filter((r) => {
+      const q = ledgerSearch.toLowerCase();
+      const matchSearch =
+        !q ||
+        r.couponCode?.toLowerCase().includes(q) ||
+        r.studentName?.toLowerCase().includes(q) ||
+        r.studentMobile?.includes(q) ||
+        r.courseTitle?.toLowerCase().includes(q);
 
-  // Filter logic
-  const filteredCoupons = coupons.filter((c) => {
-    const query = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      query === "" ||
-      c.code.toLowerCase().includes(query) ||
-      (c.description && c.description.toLowerCase().includes(query)) ||
-      (c.school && c.school.toLowerCase().includes(query));
+      const matchStatus = ledgerStatusFilter === "all" || (r.status || "success") === ledgerStatusFilter;
+      return matchSearch && matchStatus;
+    });
+  }, [allRedemptions, ledgerSearch, ledgerStatusFilter]);
 
-    // Status Filter
-    let matchesStatus = true;
-    if (statusFilter === "active") {
-      matchesStatus = c.status === "active" && c.is_active !== false;
-    } else if (statusFilter === "paused") {
-      matchesStatus = c.status === "paused" || c.is_active === false;
-    } else if (statusFilter === "quota_full") {
-      const uses = c.totalUsed || c.used_count || 0;
-      const max = c.maxTotalUses || c.usage_limit || 100;
-      matchesStatus = uses >= max;
-    } else if (statusFilter === "scheduled") {
-      matchesStatus = c.status === "scheduled";
-    } else if (statusFilter === "expired") {
-      matchesStatus = c.status === "expired";
-    }
+  // Overall KPI numbers
+  const totalRedemptionsCount = useMemo(() => {
+    return coupons.reduce((sum, c) => sum + (c.used_count || c.totalUsed || 0), 0);
+  }, [coupons]);
 
-    // Applies Filter
-    let matchesApplies = true;
-    const isAll = c.applies_all !== undefined ? c.applies_all : c.appliesTo === "all";
-    if (appliesFilter === "all_courses") {
-      matchesApplies = isAll;
-    } else if (appliesFilter === "selected_courses") {
-      matchesApplies = !isAll;
-    }
+  const totalDiscountGrantedRupees = useMemo(() => {
+    const redemptions = getRedemptions();
+    const paise = redemptions.reduce((sum, r) => sum + (r.discountPaise || 0), 0);
+    return Math.round(paise / 100);
+  }, [coupons]);
 
-    return matchesSearch && matchesStatus && matchesApplies;
-  });
+  const totalNetRevenueGeneratedRupees = useMemo(() => {
+    const redemptions = getRedemptions();
+    const paise = redemptions.reduce((sum, r) => sum + (r.paidPaise || 0), 0);
+    return Math.round(paise / 100);
+  }, [coupons]);
 
   return (
-    <PermissionGuard permission="coupons.manage">
-      <AdminShell>
+    <AdminShell currentSection="coupons">
+      <PermissionGuard requiredRole={["main_admin", "sub_admin"]}>
         <div className="space-y-6">
-          {isDrawerOpen ? (
-            /* ========================================================= */
-            /* IN-PAGE DEDICATED COUPON STUDIO WORKSPACE */
-            /* ========================================================= */
-            <div className="space-y-6 animate-fadeIn">
-              {/* Studio Header Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-[#E4E8F8] dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-start sm:items-center gap-3.5">
+
+          {/* ==================================================================== */}
+          {/* VIEW: CAMPAIGN BUILDER (INLINE 2-COLUMN WORKSPACE) */}
+          {/* ==================================================================== */}
+          {viewMode === "builder" && (
+            <div className="space-y-6">
+              {/* Header with Breadcrumb */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                <div>
                   <button
                     type="button"
-                    onClick={() => !isSaving && setIsDrawerOpen(false)}
-                    className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl transition shadow-xs cursor-pointer"
-                    title="यादीकडे परत जा"
+                    onClick={() => setViewMode("list")}
+                    className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline mb-1 cursor-pointer"
                   >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Coupons Directory
                   </button>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">🎟️</span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#0B57D0] dark:text-blue-400 font-mono text-xs font-black">
-                        {formCode.trim().toUpperCase() || "NEW_COUPON"}
-                      </span>
-                      <span className="text-xs text-slate-400 font-semibold">• {editingCoupon ? "कूपन संपादन मोड" : "नवीन कूपन निर्मिती"}</span>
-                    </div>
-                    <h1 className="text-2xl font-black text-[#0E1B3D] dark:text-white font-heading">
-                      {editingCoupon ? `कूपन संपादन स्टुडिओ: ${editingCoupon.code}` : "कूपन निर्मिती स्टुडिओ (Create New Coupon)"}
-                    </h1>
-                    <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
-                      कूपन कोड, सवलत मूल्य, मर्यादा, वैधता तारीख आणि लागू कोर्सेस निवडून सक्रिय करा.
-                    </p>
-                  </div>
+                  <h1 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Tag className="w-6 h-6 text-blue-600" />
+                    {editingCoupon ? `Edit Coupon Rules: ${editingCoupon.code}` : "Create New Coupon Campaign"}
+                  </h1>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Configure Amazon/Flipkart-grade discount rules, targeting parameters, anti-abuse limits, and live simulation.
+                  </p>
                 </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <button
-                    type="button"
-                    disabled={isSaving}
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition cursor-pointer"
-                  >
-                    रद्द करा (Cancel)
-                  </button>
-                  <SubmitButton
-                    type="button"
-                    onClick={() => {
-                      const form = document.getElementById("coupon-drawer-form") as HTMLFormElement;
-                      if (form) form.requestSubmit();
-                    }}
-                    loading={isSaving}
-                    loadingText="कूपन सेव्ह करत आहे..."
-                    disabled={!formCode.trim()}
-                    className="px-6 py-2.5 rounded-xl text-xs font-black shadow-md cursor-pointer"
-                  >
-                    <span>{editingCoupon ? "बदल सेव्ह करा (Save)" : "कूपन सक्रिय करा (Activate Coupon →)"}</span>
-                  </SubmitButton>
-                </div>
-              </div>
-
-              {/* ⚡ 1-CLICK MARATHI COUPON TEMPLATES */}
-              <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/80 rounded-3xl border border-blue-200/80 dark:border-slate-700 space-y-3 shadow-xs">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                  <span className="text-xs font-extrabold text-[#0B57D0] dark:text-blue-400 flex items-center gap-2">
-                    <span className="text-base">⚡</span>
-                    <span>रेडीमेड १-क्लिक कूपन टेम्पलेट्स (1-Click Instant Templates):</span>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                    Staff: {staff.name}
                   </span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">एका क्लिकवर कोड, सवलत आणि तपशील भरा</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {[
-                    { code: "POLICE20", disc: "20", type: "percentage", desc: "पोलीस भरती विशेष २०% सवलत", tag: "⚡ पोलीस भरती २०%" },
-                    { code: "GUDHI50", disc: "50", type: "percentage", desc: "गुढीपाडवा विशेष ५०% सवलत", tag: "🚩 गुढीपाडवा ५०%" },
-                    { code: "FLAT500", disc: "500", type: "flat", desc: "थेट ₹५०० ची विशेष सूट", tag: "💰 ₹५०० थेट सूट" },
-                    { code: "SEMINAR2026", disc: "30", type: "percentage", desc: "सातारा व पुणे सेमिनार ३०% सवलत", tag: "🏢 सेमिनार ३०%" },
-                  ].map((tmpl, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setFormCode(tmpl.code);
-                        setFormValue(Number(tmpl.disc));
-                        setFormDiscountType(tmpl.type as any);
-                        setFormDesc(tmpl.desc);
-                        setFormAppliesAll(true);
-                        setFormIsPublicChip(true);
-                        toast.success(`🎉 "${tmpl.code}" टेम्पलेट भरले!`);
-                      }}
-                      className="p-3 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 rounded-2xl text-left transition cursor-pointer shadow-2xs hover:border-[#0B57D0]"
-                    >
-                      <p className="font-mono font-black text-sm text-[#0B57D0] dark:text-blue-400">{tmpl.code}</p>
-                      <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mt-1">{tmpl.tag}</p>
-                    </button>
-                  ))}
                 </div>
               </div>
 
-              {/* Form Body - 2 Column Responsive Workspace */}
-              <form onSubmit={handleSaveCoupon} id="coupon-drawer-form" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  {/* Left Column (6 cols): Code, Description, Restrictions, Promoter */}
-                  <div className="lg:col-span-6 space-y-6">
-                    {/* Code & Active Card */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
-                      <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                        <span>🏷️</span>
-                        <span>कूपन कोड व स्थिती (Coupon Identity)</span>
-                      </h3>
+              {/* 2-Column Responsive Workspace */}
+              <form onSubmit={handleSaveCoupon} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-                        <div className="sm:col-span-2">
-                          <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center justify-between">
-                            <span>कूपन कोड (Coupon Code) *</span>
-                            {formCode.trim().length >= 3 && (
-                              <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> मान्य कोड
-                              </span>
-                            )}
-                          </label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              required
-                              value={formCode}
-                              onChange={(e) => setFormCode(e.target.value.toUpperCase())}
-                              placeholder="उदा. DIWALI50, MINDMASTER100"
-                              className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-mono font-black text-[#0B57D0] dark:text-blue-400 uppercase tracking-wider focus:outline-none transition-all ${
-                                formCode.trim().length >= 3
-                                  ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
-                                  : "bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 focus:ring-2 focus:ring-[#0B57D0]"
-                              }`}
-                            />
-                            {formCode.trim().length >= 3 && (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
-                            )}
-                          </div>
-                        </div>
+                {/* Left Column (7 cols): Campaign Rules Configuration */}
+                <div className="lg:col-span-7 space-y-5">
 
-                        {/* Active Toggle Switch */}
-                        <div className="p-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl flex items-center justify-between">
-                          <div>
-                            <p className="text-[11px] font-bold text-[#0E1B3D] dark:text-white">स्थिती (Status)</p>
-                            <p className="text-[9px] text-[#5A6478] dark:text-slate-400">{formIsActive ? "Active (सक्रिय)" : "Paused (थांबवले)"}</p>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={formIsActive}
-                              onChange={(e) => setFormIsActive(e.target.checked)}
-                              className="sr-only peer"
-                            />
-                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                  {/* Section 1: Coupon Identity */}
+                  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                    <h2 className="font-bold text-sm text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
+                      <Tag className="w-4 h-4 text-blue-600" />
+                      1. Coupon Identity & Display
+                    </h2>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            Promo Code <span className="text-red-500">*</span>
                           </label>
+                          <button
+                            type="button"
+                            onClick={handleGenerateCode}
+                            className="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            <Sparkles className="w-3 h-3" /> Auto-Generate
+                          </button>
                         </div>
+                        <input
+                          type="text"
+                          required
+                          value={formCode}
+                          onChange={(e) => setFormCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""))}
+                          placeholder="e.g. DIWALI50"
+                          className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white outline-none focus:border-blue-600"
+                        />
                       </div>
 
-                      {/* Description */}
                       <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                          कूपन मोहीम वर्णन (Campaign Description)
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Campaign Title / Description
                         </label>
                         <input
                           type="text"
                           value={formDesc}
                           onChange={(e) => setFormDesc(e.target.value)}
-                          placeholder="उदा. गुढीपाडवा विशेष ५०% सवलत किंवा सातारा सेमिनार"
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          placeholder="e.g. Satara Students Special 25% Off"
+                          className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600"
                         />
                       </div>
+                    </div>
 
-                      {/* School Restriction */}
-                      <div>
-                        <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                          शाळेचे नाव (ऐच्छिक - फक्त त्या शाळेतील विद्यार्थ्यांसाठी)
-                        </label>
+                    <div className="flex items-center gap-3 pt-1">
+                      <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
                         <input
-                          type="text"
-                          value={formSchool}
-                          onChange={(e) => setFormSchool(e.target.value)}
-                          placeholder="उदा. अभिनव विद्यालय / आदर्श हायस्कूल"
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs text-[#0E1B3D] dark:text-white placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                          type="checkbox"
+                          checked={formIsPublicChip}
+                          onChange={(e) => setFormIsPublicChip(e.target.checked)}
+                          className="rounded text-blue-600 w-4 h-4"
                         />
-                        <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-1">
-                          {formSchool.trim()
-                            ? `हा कूपन फक्त "${formSchool.trim()}" शाळेतील विद्यार्थ्यांसाठी लागू होईल.`
-                            : "रिकामे ठेवल्यास सर्व शाळांमधील विद्यार्थ्यांना लागू होईल."}
-                        </p>
+                        <span>Display as 1-Click Chip on Public Checkout Storefront</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Discount Mechanics */}
+                  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                    <h2 className="font-bold text-sm text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
+                      <Percent className="w-4 h-4 text-blue-600" />
+                      2. Discount Calculation Mechanics
+                    </h2>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: "percentage", label: "Percentage (%) Off", icon: Percent },
+                        { id: "flat", label: "Flat Amount (₹) Off", icon: Banknote },
+                        { id: "fixed_price", label: "Fixed Checkout Price", icon: Tag },
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setFormDiscountType(item.id as any)}
+                          className={`p-3 rounded-xl border text-center transition cursor-pointer ${
+                            formDiscountType === item.id
+                              ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                              : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                          }`}
+                        >
+                          <span className="text-xs font-bold block">{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {formDiscountType === "percentage" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Discount Percentage (%) <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              required
+                              value={formValue}
+                              onChange={(e) => setFormValue(Math.min(100, Math.max(1, Number(e.target.value))))}
+                              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white tabular-nums outline-none"
+                            />
+                            <span className="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400">%</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Maximum Discount Cap (₹) <span className="text-slate-400 font-normal">(Anti-Abuse)</span>
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400">₹</span>
+                            <input
+                              type="number"
+                              min={1}
+                              value={formMaxDiscountCap}
+                              onChange={(e) => setFormMaxDiscountCap(e.target.value === "" ? "" : Number(e.target.value))}
+                              placeholder="e.g. 300 (Optional max limit)"
+                              className="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white tabular-nums outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {formDiscountType === "flat" && (
+                      <div className="space-y-1 pt-1">
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Flat Discount Amount (₹) <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400">₹</span>
+                          <input
+                            type="number"
+                            min={1}
+                            required
+                            value={formValue}
+                            onChange={(e) => setFormValue(Math.max(1, Number(e.target.value)))}
+                            placeholder="e.g. 200"
+                            className="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white tabular-nums outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {formDiscountType === "fixed_price" && (
+                      <div className="space-y-1 pt-1">
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Fixed Checkout Price (₹) <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400">₹</span>
+                          <input
+                            type="number"
+                            min={0}
+                            required
+                            value={formFixedPrice}
+                            onChange={(e) => setFormFixedPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                            placeholder="e.g. 299"
+                            className="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white tabular-nums outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Section 3: Eligibility & Geographic Targeting */}
+                  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                    <h2 className="font-bold text-sm text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
+                      <Users className="w-4 h-4 text-blue-600" />
+                      3. Eligibility, Audience & Location Targeting
+                    </h2>
+
+                    {/* Audience Segment */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Target Audience:
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: "all", label: "All Students" },
+                          { id: "new_users_only", label: "New Students Only" },
+                          { id: "private_phone", label: "Private Phone" },
+                        ].map((aud) => (
+                          <button
+                            key={aud.id}
+                            type="button"
+                            onClick={() => setFormAudience(aud.id as any)}
+                            className={`py-2 px-3 rounded-xl text-xs font-bold border transition text-center cursor-pointer ${
+                              formAudience === aud.id
+                                ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                                : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                            }`}
+                          >
+                            {aud.label}
+                          </button>
+                        ))}
                       </div>
 
-                      {/* Student Mobile Lock & Promoter Attribution */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                            🎯 विद्यार्थी मोबाईल लॉक (ऐच्छिक)
+                      {formAudience === "private_phone" && (
+                        <div className="pt-2">
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Specific Student Mobile Number (10 Digits):
                           </label>
                           <input
                             type="tel"
                             maxLength={10}
                             value={formAssignedPhone}
                             onChange={(e) => setFormAssignedPhone(e.target.value.replace(/\D/g, ""))}
-                            placeholder="उदा. 9822012345"
-                            className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-mono font-bold text-[#0E1B3D] dark:text-white placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
+                            placeholder="9876543210"
+                            className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white tabular-nums outline-none"
                           />
-                          <p className="text-[10px] text-[#5A6478] dark:text-slate-400 mt-1">
-                            {formAssignedPhone.trim()
-                              ? `फक्त +91 ${formAssignedPhone.trim()} हाच विद्यार्थी वापरू शकेल.`
-                              : "रिकामे = कोणताही विद्यार्थी वापरू शकेल."}
-                          </p>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                            🤝 सब-ॲडमिन संदर्भ (Promoter)
-                          </label>
-                          <select
-                            value={formPromoterStaffId}
-                            onChange={(e) => setFormPromoterStaffId(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                          >
-                            <option value="">None (अकादमी थेट ऑफर)</option>
-                            {staffList
-                              .filter((s) => s.role !== "main_admin")
-                              .map((s) => (
-                                <option key={s.id} value={s.id}>
-                                  {s.staffId || s.id} • {s.name} {s.district ? `(${s.district})` : ""}
-                                </option>
-                              ))}
-                          </select>
-                          <p className="text-[10px] text-[#5A6478] dark:text-slate-400 mt-1">
-                            या कूपनचे ॲट्रिब्युशन विशिष्ट स्टाफ सदस्याशी लिंक करा.
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Public 1-Click Chip Toggle */}
-                      <div className="p-3 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl flex items-center justify-between text-xs">
-                        <div>
-                          <p className="font-bold text-[#0E1B3D] dark:text-white flex items-center gap-1.5">
-                            <span>👁️</span> Public /checkout १-क्लिक चिप
-                          </p>
-                          <p className="text-[11px] text-[#5A6478] dark:text-slate-400 mt-0.5">
-                            {formIsPublicChip
-                              ? "चेकआउट पानावर विद्यार्थ्यांना आपोआप '🏷️ टॅप करा व सूट मिळवा' म्हणून दिसेल."
-                              : "चेकआउट यादीतून लपवलेला गुप्त प्रोमो कोड (फक्त कोड टाकल्यावर चालेल)."}
-                          </p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formIsPublicChip}
-                            onChange={(e) => setFormIsPublicChip(e.target.checked)}
-                            className="sr-only peer"
-                          />
-                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0B57D0]"></div>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column (6 cols): Scope, Discount %, Quotas, Live Preview */}
-                  <div className="lg:col-span-6 space-y-6">
-                    {/* Scope Card */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
-                      <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                        <span>🎯</span>
-                        <span>लागू होणारे कोर्सेस व पुस्तके (Scope)</span>
-                      </h3>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs font-bold text-[#0E1B3D] dark:text-slate-200">
-                            {formAppliesAll ? "सर्व कोर्सेस व पुस्तकांसाठी लागू (Site-wide)" : "फक्त निवडक कोर्सेस/पुस्तकांसाठी"}
-                          </p>
-                          <p className="text-[11px] text-[#5A6478] dark:text-slate-400">
-                            {formAppliesAll ? "विद्यार्थी कोणत्याही कोर्सवर वापरू शकतात." : "फक्त खाली निवडलेल्या आयटम्सवरच कूपन चालेल."}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-[#0E1B3D] dark:text-slate-200">
-                            {formAppliesAll ? "All Items" : "Selected"}
-                          </span>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={formAppliesAll}
-                              onChange={(e) => setFormAppliesAll(e.target.checked)}
-                              className="sr-only peer"
-                            />
-                            <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0B57D0]"></div>
-                          </label>
-                        </div>
-                      </div>
-
-                      {/* Multi-item selectors if applies_all is false */}
-                      {!formAppliesAll && (
-                        <div className="pt-3 border-t border-[#E4E8F8] dark:border-slate-700 space-y-4">
-                          {/* Course Selection */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span className="font-bold text-[#0E1B3D] dark:text-white">1. विशिष्ट कोर्सेस निवडा:</span>
-                              <span className="text-[#0B57D0] font-semibold">{formSelectedCourses.length} कोर्सेस निवडले</span>
-                            </div>
-                            <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1 bg-[#F5F7FF] dark:bg-slate-800 rounded-2xl">
-                              {courses.map((course) => {
-                                const isSelected = formSelectedCourses.includes(course.id) || formSelectedCourses.includes(course.code);
-                                return (
-                                  <button
-                                    type="button"
-                                    key={course.id}
-                                    onClick={() => toggleCourseSelect(course.id)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
-                                      isSelected
-                                        ? "bg-[#EEF4FF] dark:bg-blue-950 border-[#0B57D0] text-[#0B57D0] dark:text-blue-400 shadow-2xs font-bold"
-                                        : "bg-white dark:bg-slate-700 border-[#E4E8F8] dark:border-slate-600 text-[#5A6478] dark:text-slate-300 hover:border-slate-300"
-                                    }`}
-                                  >
-                                    <span>{isSelected ? "✓" : "+"}</span>
-                                    <span className="font-mono text-[11px] font-bold">{course.code}</span>
-                                    <span className="text-[11px] max-w-[140px] truncate">{course.title}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Paid Books Selection */}
-                          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span className="font-bold text-[#0E1B3D] dark:text-white">2. विशिष्ट पुस्तके निवडा:</span>
-                              <span className="text-purple-600 font-semibold">{formSelectedBooks.length} पुस्तके निवडली</span>
-                            </div>
-                            <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1 bg-[#F5F7FF] dark:bg-slate-800 rounded-2xl">
-                              {books.filter((b) => !b.isFree && (b.pricePaise || 0) > 0).map((book) => {
-                                const isSelected = formSelectedBooks.includes(book.id) || Boolean(book.code && formSelectedBooks.includes(book.code));
-                                return (
-                                  <button
-                                    type="button"
-                                    key={book.id}
-                                    onClick={() => toggleBookSelect(book.id)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
-                                      isSelected
-                                        ? "bg-purple-50 dark:bg-purple-950/40 border-purple-600 text-purple-700 dark:text-purple-300 shadow-2xs font-bold"
-                                        : "bg-white dark:bg-slate-700 border-[#E4E8F8] dark:border-slate-600 text-[#5A6478] dark:text-slate-300 hover:border-slate-300"
-                                    }`}
-                                  >
-                                    <span>{isSelected ? "✓" : "+"}</span>
-                                    <span className="font-mono text-[11px] font-bold">{book.code || "BK"}</span>
-                                    <span className="text-[11px] max-w-[140px] truncate">{book.title}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
                         </div>
                       )}
                     </div>
 
-                    {/* Discount & Limits Card */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
-                      <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                        <span>💰</span>
-                        <span>सवलत प्रकार, मूल्य आणि मर्यादा (Discount & Limits)</span>
-                      </h3>
+                    {/* Geographic Targeting Toggle & Cascade */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                      <label className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formGeoEnabled}
+                          onChange={(e) => setFormGeoEnabled(e.target.checked)}
+                          className="rounded text-blue-600 w-4 h-4"
+                        />
+                        <span>Restrict Coupon to Specific Geographic Location (State / District / Taluka)</span>
+                      </label>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Discount Type Segmented Control */}
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
-                            सवलत प्रकार:
-                          </label>
-                          <div className="flex bg-[#F5F7FF] dark:bg-slate-800 p-1 rounded-xl border border-[#E4E8F8] dark:border-slate-700">
-                            <button
-                              type="button"
-                              onClick={() => setFormDiscountType("percentage")}
-                              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                formDiscountType === "percentage"
-                                  ? "bg-[#0B57D0] text-white shadow-2xs"
-                                  : "text-[#5A6478] dark:text-slate-400 hover:text-[#0E1B3D]"
-                              }`}
-                            >
-                              % Percentage
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFormDiscountType("flat")}
-                              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                formDiscountType === "flat"
-                                  ? "bg-[#0B57D0] text-white shadow-2xs"
-                                  : "text-[#5A6478] dark:text-slate-400 hover:text-[#0E1B3D]"
-                              }`}
-                            >
-                              ₹ Flat Amount
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Value Input */}
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
-                            सवलत मूल्य ({formDiscountType === "percentage" ? "%" : "₹"}):
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#8A94A6]">
-                              {formDiscountType === "percentage" ? "%" : "₹"}
-                            </span>
-                            <input
-                              type="number"
-                              required
-                              min="1"
-                              max={formDiscountType === "percentage" ? 100 : 50000}
-                              value={formValue}
-                              onChange={(e) => setFormValue(Number(e.target.value))}
-                              className="w-full pl-8 pr-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-black text-[#0E1B3D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0B57D0]"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Validity Window (Dates) */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
-                            सुरुवात तारीख:
-                          </label>
-                          <input
-                            type="date"
-                            required
-                            value={formStartsAt}
-                            onChange={(e) => setFormStartsAt(e.target.value)}
-                            className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white"
+                      {formGeoEnabled && (
+                        <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                          <LocationCascadeSelect
+                            selectedState={formTargetState}
+                            selectedDistrict={formTargetDistrict}
+                            selectedTaluka={formTargetTaluka}
+                            onStateChange={(id, name) => setFormTargetState(id)}
+                            onDistrictChange={(id, name) => setFormTargetDistrict(name)}
+                            onTalukaChange={(id, name) => setFormTargetTaluka(name)}
+                            layout="grid"
                           />
                         </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
-                            समाप्ती तारीख:
-                          </label>
-                          <input
-                            type="date"
-                            required
-                            value={formEndsAt}
-                            onChange={(e) => setFormEndsAt(e.target.value)}
-                            className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Usage Quota & Per-User Limit */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
-                            एकूण विद्यार्थी कोटा (Total Quota):
-                          </label>
-                          <input
-                            type="number"
-                            required
-                            min="1"
-                            value={formUsageLimit}
-                            onChange={(e) => setFormUsageLimit(Number(e.target.value))}
-                            className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-black text-[#0E1B3D] dark:text-white"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#5A6478] dark:text-slate-400 mb-1">
-                            प्रति विद्यार्थी मर्यादा:
-                          </label>
-                          <div className="flex bg-[#F5F7FF] dark:bg-slate-800 p-1 rounded-xl border border-[#E4E8F8] dark:border-slate-700">
-                            <button
-                              type="button"
-                              onClick={() => setFormPerUserUsage("once")}
-                              className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                                formPerUserUsage === "once"
-                                  ? "bg-violet-600 text-white shadow-2xs"
-                                  : "text-[#5A6478] dark:text-slate-400"
-                              }`}
-                            >
-                              🔒 १ वेळा (1x)
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFormPerUserUsage("multiple")}
-                              className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                                formPerUserUsage === "multiple"
-                                  ? "bg-indigo-600 text-white shadow-2xs"
-                                  : "text-[#5A6478] dark:text-slate-400"
-                              }`}
-                            >
-                              🔄 Multiple
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* LIVE PREVIEW ROW */}
-                      <div className="p-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-slate-800 dark:to-slate-800/60 border border-blue-200 dark:border-slate-700 rounded-2xl space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono font-black text-xs tracking-wider text-[#0B57D0] dark:text-blue-400 px-2.5 py-1 bg-white dark:bg-slate-900 border border-blue-200 dark:border-slate-700 rounded-md">
-                            {formCode.trim().toUpperCase() || "CODE_PREVIEW"}
-                          </span>
-                          <span className="text-xs font-black text-[#0E1B3D] dark:text-white">
-                            {formDiscountType === "percentage" ? `${formValue}% OFF` : `₹${formValue} OFF`}
-                          </span>
-                        </div>
-                        <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-[#E4E8F8] dark:border-slate-800 flex items-center justify-between text-[11px]">
-                          <span className="text-[#5A6478] dark:text-slate-400">उदा. ₹९९९ च्या कोर्सवर:</span>
-                          <span className="font-black text-[#0B57D0] dark:text-blue-400">
-                            {formDiscountType === "percentage"
-                              ? `बचत: ₹${Math.round((999 * formValue) / 100)} → विद्यार्थी भरतील: ₹${Math.max(1, 999 - Math.round((999 * formValue) / 100))}`
-                              : `बचत: ₹${Math.min(999, formValue)} → विद्यार्थी भरतील: ₹${Math.max(1, 999 - formValue)}`}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Sticky Action Bar */}
-                <div className="sticky bottom-4 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl flex items-center justify-between">
-                  <button
-                    type="button"
-                    disabled={isSaving}
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition cursor-pointer"
-                  >
-                    ← कूपन यादीकडे परत जा (Back to List)
-                  </button>
-
-                  <SubmitButton
-                    type="submit"
-                    loading={isSaving}
-                    loadingText="कूपन सेव्ह करत आहे..."
-                    disabled={!formCode.trim()}
-                    className="px-7 py-3 rounded-xl text-xs font-black shadow-md cursor-pointer"
-                  >
-                    <span>{editingCoupon ? "बदल सेव्ह करा (Save Changes)" : "कूपन सक्रिय करा (Activate Coupon →)"}</span>
-                  </SubmitButton>
-                </div>
-              </form>
-            </div>
-          ) : (
-            <>
-              {/* Header Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-xs">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <span className="text-2xl">🎟️</span>
-                <h1 className="text-2xl font-black text-[#0E1B3D] dark:text-white tracking-tight">
-                  Coupon & Discount Manager
-                </h1>
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#EEF4FF] text-[#0B57D0] border border-[#D0E2FF]">
-                  coupons.manage
-                </span>
-              </div>
-              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1">
-                Create discount coupons, link to courses, set 100 student quota, expiry dates, and track student redemptions.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 flex-wrap">
-              <button
-                onClick={handleExportMasterSummary}
-                className="px-4 py-2.5 bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0B57D0] font-bold text-xs rounded-full border border-[#D0E2FF] transition-all flex items-center gap-2 cursor-pointer shadow-xs"
-              >
-                <span>📥</span> Export Master Report (.xlsx)
-              </button>
-
-              <button
-                onClick={handleOpenAdd}
-                id="create-coupon-btn"
-                className="px-5 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-bold text-xs rounded-full shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <span className="text-base leading-none">➕</span> Create New Coupon
-              </button>
-            </div>
-          </div>
-
-          {/* KPI Analytics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-2xs">
-              <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider block">
-                Total Coupons
-              </span>
-              <p className="text-2xl font-black text-[#0E1B3D] dark:text-white mt-1">{totalCouponsCount}</p>
-              <span className="text-[10px] text-[#5A6478]">All codes in system</span>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-2xs">
-              <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">
-                Live (Active)
-              </span>
-              <p className="text-2xl font-black text-emerald-600 mt-1">{activeCouponsCount}</p>
-              <span className="text-[10px] text-[#5A6478]">Currently available</span>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-2xs">
-              <span className="text-[11px] font-bold text-[#0B57D0] uppercase tracking-wider block">
-                Redemptions
-              </span>
-              <p className="text-2xl font-black text-[#0B57D0] mt-1">{totalRedemptionsCount}</p>
-              <span className="text-[10px] text-[#5A6478]">Redeemed by students</span>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-2xs">
-              <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider block">
-                Total Discount Given
-              </span>
-              <p className="text-2xl font-black text-amber-600 mt-1">₹{totalDiscountGivenRupees.toLocaleString("en-IN")}</p>
-              <span className="text-[10px] text-[#5A6478]">Total savings given</span>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-2xs col-span-2 sm:col-span-1">
-              <span className="text-[11px] font-bold text-violet-600 uppercase tracking-wider block">
-                Attributed Revenue
-              </span>
-              <p className="text-2xl font-black text-violet-600 mt-1">₹{totalRevenueAttributedRupees.toLocaleString("en-IN")}</p>
-              <span className="text-[10px] text-[#5A6478]">Fee received with coupons</span>
-            </div>
-          </div>
-
-          {/* Filters Bar: Search & Status Chips */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-xs space-y-4">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              {/* Search Bar */}
-              <div className="relative w-full md:w-96">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#8A94A6]">
-                  🔍
-                </span>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search coupon code, school, or campaign..."
-                  className="w-full pl-9 pr-4 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-full text-xs text-[#0E1B3D] dark:text-white placeholder-[#8A94A6] focus:outline-none focus:ring-2 focus:ring-[#0B57D0] transition-all"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8A94A6] hover:text-[#0E1B3D]"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-
-              {/* Counts Badge */}
-              <div className="text-xs font-semibold text-[#5A6478] flex items-center gap-2 self-start md:self-auto">
-                <span>Showing:</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#F5F7FF] text-[#0E1B3D] font-bold border border-[#E4E8F8]">
-                  {filteredCoupons.length} / {coupons.length} coupons
-                </span>
-              </div>
-            </div>
-
-            {/* Filter Chips Rows */}
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pt-3 border-t border-[#E4E8F8]">
-              {/* Status Chips */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mr-1">
-                  Status:
-                </span>
-                {[
-                  { key: "all", label: "All" },
-                  { key: "active", label: "🟢 Active" },
-                  { key: "paused", label: "⏸️ Paused" },
-                  { key: "quota_full", label: "🔴 Quota Full" },
-                  { key: "scheduled", label: "⏳ Scheduled" },
-                  { key: "expired", label: "⌛ Expired" },
-                ].map((chip) => {
-                  const isActive = statusFilter === chip.key;
-                  return (
-                    <button
-                      key={chip.key}
-                      onClick={() => setStatusFilter(chip.key)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                        isActive
-                          ? "bg-[#0E1B3D] text-white shadow-xs"
-                          : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-300 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0B57D0] border border-[#E4E8F8] dark:border-slate-700"
-                      }`}
-                    >
-                      {chip.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Applies Chips */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mr-1">
-                  Scope:
-                </span>
-                {[
-                  { key: "all", label: "All Scopes" },
-                  { key: "all_courses", label: "🌐 All Courses" },
-                  { key: "selected_courses", label: "🎯 Selected Courses" },
-                ].map((chip) => {
-                  const isActive = appliesFilter === chip.key;
-                  return (
-                    <button
-                      key={chip.key}
-                      onClick={() => setAppliesFilter(chip.key)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                        isActive
-                          ? "bg-[#0B57D0] text-white shadow-xs"
-                          : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-300 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0B57D0] border border-[#E4E8F8] dark:border-slate-700"
-                      }`}
-                    >
-                      {chip.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Coupons Master Table */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-xs overflow-hidden">
-            {coupons.length === 0 ? (
-              <div className="py-16 text-center max-w-md mx-auto">
-                <div className="w-16 h-16 rounded-full bg-[#EEF4FF] border border-[#D0E2FF] flex items-center justify-center mx-auto text-3xl shadow-xs">
-                  🎟️
-                </div>
-                <h3 className="text-base font-black text-[#0E1B3D] mt-3">
-                  No Coupons Available (Clean Slate)
-                </h3>
-                <p className="text-xs text-[#5A6478] mt-1.5 leading-relaxed">
-                  All old and mock coupons have been removed. Live coupons created by admins will appear here.
-                </p>
-                <button
-                  onClick={handleOpenAdd}
-                  className="mt-5 px-5 py-2.5 bg-[#0B57D0] hover:bg-[#0842A0] text-white font-bold text-xs rounded-full shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
-                >
-                  <span>➕</span> Create First Coupon
-                </button>
-              </div>
-            ) : filteredCoupons.length === 0 ? (
-              <div className="py-14 text-center">
-                <span className="text-4xl">🔍</span>
-                <h3 className="text-base font-bold text-[#0E1B3D] mt-2">No coupons found matching search</h3>
-                <p className="text-xs text-[#5A6478] mt-1">
-                  Change search query or reset filters.
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setStatusFilter("all");
-                    setAppliesFilter("all");
-                  }}
-                  className="mt-4 px-4 py-1.5 bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0B57D0] border border-[#E4E8F8] rounded-full text-xs font-bold transition-colors cursor-pointer"
-                >
-                  Reset Filters
-                </button>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#E4E8F8] dark:border-slate-800 text-[#8A94A6] dark:text-slate-400 uppercase tracking-wider font-semibold">
-                      <th className="pb-3.5 pl-3">Coupon Code & Campaign</th>
-                      <th className="pb-3.5">Discount</th>
-                      <th className="pb-3.5">Applicable Courses (Scope)</th>
-                      <th className="pb-3.5">Validity Dates</th>
-                      <th className="pb-3.5">Usage / Limit (Quota)</th>
-                      <th className="pb-3.5">Status</th>
-                      <th className="pb-3.5 text-right pr-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E4E8F8] dark:divide-slate-800">
-                    {filteredCoupons.map((c) => {
-                      const totalUses = c.totalUsed || c.used_count || 0;
-                      const maxUses = c.maxTotalUses || c.usage_limit || 100;
-                      const usagePercent = Math.min(100, Math.round((totalUses / maxUses) * 100));
-                      const remaining = Math.max(0, maxUses - totalUses);
-                      const isPerUserOnce =
-                        (c.per_user_usage || c.usageLimitPerUser || "once") === "once";
-
-                      return (
-                        <tr key={c.id} className="hover:bg-[#F9FAFF] dark:hover:bg-slate-800/50 transition-colors group">
-                          {/* Code, School & Description */}
-                          <td className="py-4 pl-3">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-mono font-black text-xs tracking-wider text-[#0B57D0] px-2.5 py-1 bg-[#EEF4FF] border border-[#D0E2FF] rounded-md shadow-2xs">
-                                {c.code}
-                              </span>
-                              {c.school && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                                  🏫 {c.school}
-                                </span>
-                              )}
-                              {isPerUserOnce && (
-                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-violet-50 text-violet-700 border border-violet-200">
-                                  👤 1x per student
-                                </span>
-                              )}
-                              {c.assigned_phone && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
-                                  🎯 {c.assigned_phone}
-                                </span>
-                              )}
-                              {(c.promoter_staff_id || c.promoterStaffName) && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
-                                  🤝 Promoter: {c.promoterStaffName || c.promoter_staff_id}
-                                </span>
-                              )}
-                              {c.is_public_chip === false ? (
-                                <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                                  🔒 Secret Code
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                  👁️ Public Chip
-                                </span>
-                              )}
-                            </div>
-                            {c.description && (
-                              <p className="text-[#5A6478] text-[11px] mt-1 max-w-xs line-clamp-1 font-medium">
-                                {c.description}
-                              </p>
-                            )}
-                          </td>
-
-                          {/* Discount Value */}
-                          <td className="py-4 font-black text-[#0E1B3D]">
-                            <div className="space-y-0.5">
-                              <span className="text-[#0E1B3D] text-xs font-black">
-                                {c.discountType === "percentage" || c.discountType === "percent"
-                                  ? `${c.discountValue}% OFF`
-                                  : `₹${c.discountValue >= 1000 ? Math.round(c.discountValue / 100) : c.discountValue} OFF`}
-                              </span>
-                              {c.minOrderValuePaise && (
-                                <p className="text-[10px] text-[#8A94A6] font-medium">
-                                  Min order ₹{Math.round(c.minOrderValuePaise / 100)}
-                                </p>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Applies Line */}
-                          <td className="py-4 text-[#5A6478] max-w-xs">
-                            <div className="flex items-center gap-1.5">
-                              {c.applies_all !== false &&
-                              (c.appliesTo === "all" || !c.selectedCourseIds?.length) ? (
-                                <span className="inline-flex items-center gap-1 text-[#0E1B3D] font-semibold text-[11px]">
-                                  <span className="text-xs">🌐</span> All Courses
-                                </span>
-                              ) : (
-                                <span
-                                  className="inline-flex items-center gap-1 text-[#0B57D0] font-semibold text-[11px] line-clamp-1"
-                                  title={getAppliesLine(c)}
-                                >
-                                  <span className="text-xs">🎯</span> {getAppliesLine(c)}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Validity Dates */}
-                          <td className="py-4 text-[#5A6478] text-[11px] whitespace-nowrap">
-                            <span className="font-semibold text-[#0E1B3D] bg-[#F5F7FF] px-2.5 py-1 rounded-md border border-[#E4E8F8]">
-                              {getValidityLine(c)}
-                            </span>
-                          </td>
-
-                          {/* Usage & Quota Bar */}
-                          <td className="py-4">
-                            <div className="w-32 space-y-1">
-                              <div className="flex items-center justify-between text-[10px] font-bold">
-                                <span className="text-[#0E1B3D] font-black">{totalUses} used</span>
-                                <span className="text-[#8A94A6]">/ {maxUses} limit</span>
-                              </div>
-                              <div className="w-full bg-[#E4E8F8] h-2 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full transition-all ${
-                                    usagePercent >= 100
-                                      ? "bg-rose-600"
-                                      : usagePercent >= 80
-                                      ? "bg-amber-500"
-                                      : "bg-[#0B57D0]"
-                                  }`}
-                                  style={{ width: `${usagePercent}%` }}
-                                />
-                              </div>
-                              <p className="text-[10px] text-[#5A6478] font-medium">
-                                {remaining === 0 ? "🔴 Quota Full" : `⚡ ${remaining} remaining`}
-                              </p>
-                            </div>
-                          </td>
-
-                          {/* Status & Instant Pause Switch */}
-                          <td className="py-4 whitespace-nowrap">
-                            <div className="space-y-1.5">
-                              <div>{getStatusBadge(c)}</div>
-                              <button
-                                onClick={() => handleToggleStatus(c)}
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
-                                  c.status === "active" && c.is_active !== false
-                                    ? "bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200"
-                                    : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200"
-                                }`}
-                              >
-                                {c.status === "active" && c.is_active !== false
-                                  ? "⏸️ Pause"
-                                  : "▶️ Resume"}
-                              </button>
-                            </div>
-                          </td>
-
-                          {/* Actions: View Students, WhatsApp, Edit, Delete */}
-                          <td className="py-4 text-right pr-3 whitespace-nowrap">
-                            <div className="flex items-center justify-end gap-1.5">
-                              {/* View Redemptions */}
-                              <button
-                                onClick={() => setViewingRedemptionsCoupon(c)}
-                                className="px-2.5 py-1.5 bg-[#EEF4FF] hover:bg-[#D0E2FF] text-[#0B57D0] border border-[#D0E2FF] rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-                                title="View list of students who used this coupon"
-                              >
-                                <span>👥</span> Students ({totalUses})
-                              </button>
-
-                              {/* WhatsApp Share */}
-                              <button
-                                onClick={() => handleShareWhatsApp(c)}
-                                className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-                                title="Copy WhatsApp message"
-                              >
-                                <span>💬</span> Share
-                              </button>
-
-                              {/* Edit */}
-                              <button
-                                onClick={() => handleOpenEdit(c)}
-                                className="px-2.5 py-1.5 bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0E1B3D] border border-[#E4E8F8] rounded-xl text-[11px] font-bold transition-colors cursor-pointer"
-                              >
-                                ✏️ Edit
-                              </button>
-
-                              {/* Delete (Admin Only) */}
-                              {isMainAdmin && (
-                                <button
-                                  onClick={() => setDeleteModalCoupon(c)}
-                                  className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-[11px] font-bold transition-colors cursor-pointer"
-                                  title="Delete coupon permanently"
-                                >
-                                  🗑️
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-        </>
-      )}
-
-
-          {/* ========================================================= */}
-          {/* REDEMPTIONS MODAL (Real-time student track record) */}
-          {/* ========================================================= */}
-          {viewingRedemptionsCoupon && (
-            <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-              <div className="bg-white rounded-3xl border border-[#E4E8F8] max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-4 border-b border-[#E4E8F8] pb-4">
-                  <div>
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      <span className="font-mono font-black text-sm px-3 py-1 bg-[#EEF4FF] text-[#0B57D0] border border-[#D0E2FF] rounded-lg">
-                        {viewingRedemptionsCoupon.code}
-                      </span>
-                      <h3 className="text-base font-black text-[#0E1B3D]">
-                        Student Redemptions Log
-                      </h3>
-                      {viewingRedemptionsCoupon.school && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                          🏫 {viewingRedemptionsCoupon.school}
-                        </span>
                       )}
                     </div>
-                    <p className="text-xs text-[#5A6478] mt-1">
-                      {viewingRedemptionsCoupon.description || "Real-time records of all students who redeemed this coupon code."}
-                    </p>
-                  </div>
 
-                  <button
-                    onClick={() => {
-                      setViewingRedemptionsCoupon(null);
-                      setRedemptionSearch("");
-                    }}
-                    className="w-8 h-8 rounded-full bg-[#F5F7FF] border border-[#E4E8F8] flex items-center justify-center text-sm text-[#5A6478] hover:bg-slate-200 cursor-pointer shrink-0"
-                  >
-                    ✕
-                  </button>
-                </div>
+                    {/* School Restriction */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        School / College Restriction (Optional):
+                      </label>
+                      <input
+                        type="text"
+                        value={formSchool}
+                        onChange={(e) => setFormSchool(e.target.value)}
+                        placeholder="Leave blank for all schools, or enter exact school name"
+                        className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none"
+                      />
+                    </div>
 
-                {/* Redemption Stats & Search */}
-                {(() => {
-                  const studentRedemptions = getRedemptionsByCoupon(viewingRedemptionsCoupon.code);
-                  const totalUsedCount = viewingRedemptionsCoupon.totalUsed || viewingRedemptionsCoupon.used_count || studentRedemptions.length;
-                  const quotaLimit = viewingRedemptionsCoupon.maxTotalUses || viewingRedemptionsCoupon.usage_limit || 100;
-                  const totalSavingsGiven = studentRedemptions.reduce(
-                    (acc, r) => acc + Math.round((r.discountPaise || 0) / 100),
-                    0
-                  );
-                  const totalFeePaid = studentRedemptions.reduce(
-                    (acc, r) => acc + Math.round((r.paidPaise || 0) / 100),
-                    0
-                  );
-
-                  const filteredStudents = studentRedemptions.filter((r) => {
-                    const q = redemptionSearch.toLowerCase().trim();
-                    if (!q) return true;
-                    return (
-                      (r.studentName && r.studentName.toLowerCase().includes(q)) ||
-                      (r.studentMobile && r.studentMobile.includes(q)) ||
-                      (r.courseTitle && r.courseTitle.toLowerCase().includes(q))
-                    );
-                  });
-
-                  return (
-                    <>
-                      {/* Mini KPI Bar */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="p-3 bg-[#F5F7FF] rounded-2xl border border-[#E4E8F8]">
-                          <span className="text-[10px] font-bold text-[#8A94A6] uppercase tracking-wider block">
-                            Used / Quota
-                          </span>
-                          <p className="text-lg font-black text-[#0E1B3D] mt-0.5">
-                            {totalUsedCount} / {quotaLimit}
-                          </p>
-                          <span className="text-[10px] text-[#5A6478]">
-                            {Math.max(0, quotaLimit - totalUsedCount)} quota remaining
-                          </span>
-                        </div>
-
-                        <div className="p-3 bg-amber-50/60 rounded-2xl border border-amber-200">
-                          <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">
-                            Total Discount Given
-                          </span>
-                          <p className="text-lg font-black text-amber-800 mt-0.5">
-                            ₹{totalSavingsGiven.toLocaleString("en-IN")}
-                          </p>
-                          <span className="text-[10px] text-amber-600">Total savings provided</span>
-                        </div>
-
-                        <div className="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-200">
-                          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
-                            Fee Collected
-                          </span>
-                          <p className="text-lg font-black text-emerald-800 mt-0.5">
-                            ₹{totalFeePaid.toLocaleString("en-IN")}
-                          </p>
-                          <span className="text-[10px] text-emerald-600">Academy revenue earned</span>
-                        </div>
-                      </div>
-
-                      {/* Search & Export Buttons */}
-                      <div className="flex items-center justify-between gap-3 pt-1">
-                        <div className="relative flex-1">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#8A94A6]">
-                            🔍
-                          </span>
-                          <input
-                            type="text"
-                            value={redemptionSearch}
-                            onChange={(e) => setRedemptionSearch(e.target.value)}
-                            placeholder="Search student name or mobile..."
-                            className="w-full pl-8 pr-3 py-1.5 bg-[#F5F7FF] border border-[#E4E8F8] rounded-xl text-xs text-[#0E1B3D]"
-                          />
-                        </div>
-
+                    {/* Curriculum Scope */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Curriculum Scope:
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
                         <button
-                          onClick={() => handleExportCouponRedemptions(viewingRedemptionsCoupon, studentRedemptions)}
-                          className="px-4 py-2 bg-[#0B57D0] hover:bg-[#0842A0] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+                          type="button"
+                          onClick={() => setFormAppliesAll(true)}
+                          className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                            formAppliesAll
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                          }`}
                         >
-                          <span>📥</span> Download Excel (.xlsx)
+                          All Courses & Books
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormAppliesAll(false)}
+                          className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                            !formAppliesAll
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                          }`}
+                        >
+                          Selected Courses Only
                         </button>
                       </div>
 
-                      {/* Students List Table */}
-                      <div className="overflow-x-auto overflow-y-auto flex-1 border border-[#E4E8F8] rounded-2xl">
-                        {filteredStudents.length === 0 ? (
-                          <div className="py-12 text-center text-[#5A6478] space-y-1">
-                            <span className="text-3xl block">📋</span>
-                            <p className="text-xs font-bold text-[#0E1B3D]">
-                              No student has used this coupon yet.
-                            </p>
-                            <p className="text-[11px] text-[#8A94A6]">
-                              Records will automatically appear here as soon as a student applies this coupon during checkout.
-                            </p>
-                          </div>
-                        ) : (
-                          <table className="w-full text-left text-xs border-collapse">
-                            <thead className="bg-[#FAFBFD] sticky top-0 border-b border-[#E4E8F8] text-[#8A94A6] uppercase text-[10px]">
-                              <tr>
-                                <th className="p-3">#</th>
-                                <th className="p-3">Student Name</th>
-                                <th className="p-3">Mobile</th>
-                                <th className="p-3">Purchased Course</th>
-                                <th className="p-3">Discount (₹)</th>
-                                <th className="p-3">Paid Fee (₹)</th>
-                                <th className="p-3 text-right">Date & Time</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-[#E4E8F8]">
-                              {filteredStudents.map((r, idx) => (
-                                <tr key={r.id} className="hover:bg-[#F9FAFF] transition-colors">
-                                  <td className="p-3 text-[#8A94A6] font-semibold">{idx + 1}</td>
-                                  <td className="p-3 font-bold text-[#0E1B3D]">
-                                    {r.studentName || "Student"}
-                                  </td>
-                                  <td className="p-3 font-mono text-[11px] text-[#5A6478]">
-                                    {r.studentMobile || "—"}
-                                  </td>
-                                  <td className="p-3 text-[#0E1B3D] max-w-[180px] truncate">
-                                    {r.courseTitle || "MindMaster Course"}
-                                  </td>
-                                  <td className="p-3 font-bold text-amber-700">
-                                    ₹{Math.round((r.discountPaise || 0) / 100)}
-                                  </td>
-                                  <td className="p-3 font-black text-emerald-700">
-                                    ₹{Math.round((r.paidPaise || 0) / 100)}
-                                  </td>
-                                  <td className="p-3 text-right text-[11px] text-[#8A94A6] whitespace-nowrap">
-                                    {new Date(r.at).toLocaleDateString("en-IN", {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    })}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        )}
-                      </div>
-                    </>
-                  );
-                })()}
+                      {!formAppliesAll && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pt-2">
+                          {courses.map((course) => {
+                            const isSelected = formSelectedCourses.includes(course.id);
+                            return (
+                              <div
+                                key={course.id}
+                                onClick={() => {
+                                  if (isSelected) setFormSelectedCourses(formSelectedCourses.filter((id) => id !== course.id));
+                                  else setFormSelectedCourses([...formSelectedCourses, course.id]);
+                                }}
+                                className={`p-2 rounded-lg border text-xs font-semibold flex items-center gap-2 cursor-pointer transition select-none ${
+                                  isSelected
+                                    ? "bg-blue-50 dark:bg-blue-950 border-blue-500 text-blue-900 dark:text-blue-100"
+                                    : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                                }`}
+                              >
+                                {isSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-slate-400" />}
+                                <span className="truncate">{course.title}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-                {/* Modal Footer */}
-                <div className="flex items-center justify-end pt-2 border-t border-[#E4E8F8]">
+                  {/* Section 4: Anti-Abuse & Guardrails */}
+                  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                    <h2 className="font-bold text-sm text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-blue-600" />
+                      4. Anti-Abuse Guardrails & Limits
+                    </h2>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Min Cart Order Value (₹)
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={formMinOrder}
+                          onChange={(e) => setFormMinOrder(Math.max(0, Number(e.target.value)))}
+                          placeholder="499"
+                          className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white tabular-nums outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Total Usage Quota (Global Cap)
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={formUsageLimit}
+                          onChange={(e) => setFormUsageLimit(Math.max(1, Number(e.target.value)))}
+                          placeholder="100"
+                          className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white tabular-nums outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Per-Student Usage Limit
+                        </label>
+                        <select
+                          value={formPerUserUsage}
+                          onChange={(e) => setFormPerUserUsage(e.target.value as any)}
+                          className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
+                        >
+                          <option value="once">1 Use Per Student (Recommended)</option>
+                          <option value="multiple">Unlimited Repeat Uses</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Validity Window */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Starts At (Date)
+                          </label>
+                          <input
+                            type="date"
+                            value={formStartsAt}
+                            onChange={(e) => setFormStartsAt(e.target.value)}
+                            className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Ends At (Date)
+                          </label>
+                          <input
+                            type="date"
+                            value={formEndsAt}
+                            onChange={(e) => setFormEndsAt(e.target.value)}
+                            className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Active Status Toggle */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                          Campaign Active Status
+                        </span>
+                        <span className="text-[11px] text-slate-500">
+                          Inactive or paused coupons cannot be redeemed at checkout.
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formIsActive}
+                          onChange={(e) => setFormIsActive(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600" />
+                      </label>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Right Column (5 cols): Live Human-Readable Rule Preview & Sandbox Simulator */}
+                <div className="lg:col-span-5 sticky top-20 space-y-4">
+
+                  {/* Human-Readable Rule Preview Card */}
+                  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-amber-500" />
+                        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                          Live Plain-English Rule Preview
+                        </h3>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-xs font-extrabold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 uppercase">
+                        {formCode || "CODE"}
+                      </span>
+                    </div>
+
+                    <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 bg-blue-50/50 dark:bg-blue-950/20 p-3.5 rounded-xl border border-blue-200/60 dark:border-blue-800/60 font-medium">
+                      {humanReadableSummary}
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400 pt-1">
+                      <div>
+                        <span>Validity Window:</span>
+                        <p className="font-bold text-slate-900 dark:text-white">{formStartsAt} to {formEndsAt}</p>
+                      </div>
+                      <div>
+                        <span>Storefront Chip:</span>
+                        <p className="font-bold text-slate-900 dark:text-white">{formIsPublicChip ? "Visible" : "Hidden / Private"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Interactive Sandbox Simulator */}
+                  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Play className="w-4 h-4 text-emerald-600" />
+                        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                          Sandbox Voucher Simulator
+                        </h3>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-400">Pre-Publish Test</span>
+                    </div>
+
+                    <div className="space-y-2.5 text-xs">
+                      <div>
+                        <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                          Test Order Cart Value (₹):
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={sandboxCartValue}
+                          onChange={(e) => setSandboxCartValue(Math.max(1, Number(e.target.value)))}
+                          className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white tabular-nums outline-none"
+                        />
+                      </div>
+
+                      {formGeoEnabled && (
+                        <div>
+                          <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                            Simulated Student District:
+                          </label>
+                          <input
+                            type="text"
+                            value={sandboxDistrict}
+                            onChange={(e) => setSandboxDistrict(e.target.value)}
+                            placeholder="Pune"
+                            className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
+                          />
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleRunSandbox}
+                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Play className="w-3.5 h-3.5" />
+                        Simulate Voucher Redemption
+                      </button>
+
+                      {sandboxResult && (
+                        <div className={`p-3 rounded-xl border text-xs space-y-1.5 ${
+                          sandboxResult.valid
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200"
+                            : "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200"
+                        }`}>
+                          <div className="flex items-center gap-1.5 font-bold">
+                            {sandboxResult.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <AlertCircle className="w-4 h-4 text-red-600" />}
+                            <span>{sandboxResult.reason}</span>
+                          </div>
+                          {sandboxResult.valid && (
+                            <div className="pt-1 border-t border-emerald-200 dark:border-emerald-800 flex justify-between font-extrabold">
+                              <span>Final Price to Pay:</span>
+                              <span className="tabular-nums">₹{sandboxResult.finalPriceRupees} (Saved ₹{sandboxResult.discountRupees})</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Primary Save Action Button */}
+                  <div className="space-y-2 pt-2">
+                    <button
+                      type="submit"
+                      className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Check className="w-4 h-4" />
+                      Save & Publish Campaign Rules
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("list")}
+                      className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition text-center"
+                    >
+                      Cancel & Return
+                    </button>
+                  </div>
+
+                </div>
+
+              </form>
+            </div>
+          )}
+
+          {/* ==================================================================== */}
+          {/* VIEW: REDEMPTION AUDIT LEDGER (INLINE WORKSPACE) */}
+          {/* ==================================================================== */}
+          {viewMode === "ledger" && (
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                <div>
                   <button
-                    onClick={() => {
-                      setViewingRedemptionsCoupon(null);
-                      setRedemptionSearch("");
-                    }}
-                    className="px-5 py-2 rounded-full bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#0E1B3D] font-bold text-xs border border-[#E4E8F8] cursor-pointer"
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                    className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline mb-1 cursor-pointer"
                   >
-                    Close
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Campaigns Directory
                   </button>
+                  <h1 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                    <TrendingUp className="w-6 h-6 text-blue-600" />
+                    Live Coupon Redemption Audit Ledger
+                  </h1>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Real-time transactional audit trail of every student discount applied, coupon locks, and order revenue.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      exportCouponRedemptionsToExcel(
+                        filteredRedemptions.map((r) => ({
+                          couponCode: r.couponCode,
+                          studentName: r.studentName || "Anonymous Student",
+                          studentMobile: r.studentMobile || "N/A",
+                          courseTitle: r.courseTitle || r.bookTitle || "Curriculum",
+                          originalPrice: Math.round((r.originalPricePaise || 0) / 100),
+                          discountReceived: Math.round((r.discountPaise || 0) / 100),
+                          finalPaid: Math.round((r.paidPaise || 0) / 100),
+                          redeemedAt: r.at || new Date().toISOString(),
+                        })),
+                        selectedCouponForLedger
+                      );
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Ledger (.xlsx)
+                  </button>
+                </div>
+              </div>
+
+              {/* Ledger Filter Toolbar */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      value={ledgerSearch}
+                      onChange={(e) => setLedgerSearch(e.target.value)}
+                      placeholder="Search student, mobile, coupon..."
+                      className="pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none w-64"
+                    />
+                  </div>
+
+                  <select
+                    value={selectedCouponForLedger}
+                    onChange={(e) => setSelectedCouponForLedger(e.target.value)}
+                    className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
+                  >
+                    <option value="all">All Coupon Codes ({coupons.length})</option>
+                    {coupons.map((c) => (
+                      <option key={c.id} value={c.code}>
+                        {c.code} ({c.totalUsed || c.used_count || 0} uses)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <span className="text-xs font-bold text-slate-500">
+                  Total Records: {filteredRedemptions.length}
+                </span>
+              </div>
+
+              {/* Ledger Data Table */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold">
+                        <th className="py-3 px-4">Coupon Code</th>
+                        <th className="py-3 px-4">Student & Mobile</th>
+                        <th className="py-3 px-4">Curriculum Enrolled</th>
+                        <th className="py-3 px-4">List Price (₹)</th>
+                        <th className="py-3 px-4">Discount Given (₹)</th>
+                        <th className="py-3 px-4">Final Paid (₹)</th>
+                        <th className="py-3 px-4">Timestamp (IST)</th>
+                        <th className="py-3 px-4">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {filteredRedemptions.map((record) => (
+                        <tr key={record.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                          <td className="py-3 px-4">
+                            <span className="font-extrabold text-blue-600 dark:text-blue-400 font-mono tracking-wider">
+                              {record.couponCode}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="font-bold text-slate-900 dark:text-white">
+                              {record.studentName || "Student"}
+                            </p>
+                            <span className="text-[11px] text-slate-500 tabular-nums">
+                              {record.studentMobile || record.userId}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                            {record.courseTitle || record.bookTitle || "Curriculum Item"}
+                          </td>
+                          <td className="py-3 px-4 font-bold text-slate-600 dark:text-slate-400 tabular-nums">
+                            ₹{Math.round((record.originalPricePaise || 0) / 100)}
+                          </td>
+                          <td className="py-3 px-4 font-bold text-emerald-600 tabular-nums">
+                            - ₹{Math.round((record.discountPaise || 0) / 100)}
+                          </td>
+                          <td className="py-3 px-4 font-black text-slate-900 dark:text-white tabular-nums">
+                            ₹{Math.round((record.paidPaise || 0) / 100)}
+                          </td>
+                          <td className="py-3 px-4 text-slate-500 tabular-nums">
+                            {record.at ? record.at.slice(0, 19).replace("T", " ") : "Just now"}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+                              Redeemed
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+
+                      {filteredRedemptions.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="py-10 text-center text-slate-400">
+                            No coupon redemptions recorded yet for this criteria.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ========================================================= */}
-          {/* DELETE CONFIRMATION MODAL (ADMIN-ONLY) */}
-          {/* ========================================================= */}
-          {deleteModalCoupon && (
-            <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl border border-[#E4E8F8] max-w-md w-full p-6 shadow-2xl space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold">
-                  🗑️
-                </div>
+          {/* ==================================================================== */}
+          {/* VIEW: CAMPAIGNS DIRECTORY (MAIN WORKSPACE) */}
+          {/* ==================================================================== */}
+          {viewMode === "list" && (
+            <div className="space-y-6">
+
+              {/* Action Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-[#0E1B3D]">
-                    Delete Coupon Code Permanently?
-                  </h3>
-                  <p className="text-xs text-[#5A6478] mt-1 leading-relaxed">
-                    You are deleting <span className="font-mono font-bold text-[#0E1B3D]">"{deleteModalCoupon.code}"</span>. This action is reserved for main administrators and will be recorded in system audit logs.
+                  <h1 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <Tag className="w-7 h-7 text-blue-600" />
+                    Coupon & Promotional Campaign Engine
+                  </h1>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Create targeted discount vouchers, location-locked offers, and audit student redemptions.
                   </p>
                 </div>
-
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E4E8F8]">
+                <div className="flex items-center gap-2.5">
                   <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCouponForLedger("all");
+                      setViewMode("ledger");
+                    }}
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl font-bold text-xs flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <TrendingUp className="w-4 h-4 text-blue-600" />
+                    Redemption Ledger
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOpenAdd}
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-extrabold text-xs shadow-md flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create New Coupon
+                  </button>
+                </div>
+              </div>
+
+              {/* KPI Summary Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                  <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+                    <span>Active Campaigns</span>
+                    <Tag className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                    {coupons.filter((c) => c.status === "active").length}
+                  </div>
+                  <span className="text-[10px] text-emerald-600 font-bold">Of {coupons.length} Total Campaigns</span>
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                  <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+                    <span>Total Redemptions</span>
+                    <Users className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                    {totalRedemptionsCount}
+                  </div>
+                  <span className="text-[10px] text-slate-400">Orders Benefitted</span>
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                  <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+                    <span>Total Discounts Given</span>
+                    <Percent className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="text-2xl font-black text-emerald-600 tabular-nums">
+                    ₹{totalDiscountGrantedRupees.toLocaleString("en-IN")}
+                  </div>
+                  <span className="text-[10px] text-slate-400">Student Savings</span>
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                  <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+                    <span>Net Order Revenue</span>
+                    <Banknote className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <div className="text-2xl font-black text-blue-600 tabular-nums">
+                    ₹{totalNetRevenueGeneratedRupees.toLocaleString("en-IN")}
+                  </div>
+                  <span className="text-[10px] text-slate-400">Coupon Driven Sales</span>
+                </div>
+              </div>
+
+              {/* Filter Toolbar */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search coupon code or school..."
+                      className="pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none w-64 focus:border-blue-600"
+                    />
+                  </div>
+
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="paused">Paused</option>
+                    <option value="expired">Expired</option>
+                    <option value="scheduled">Scheduled</option>
+                  </select>
+
+                  <select
+                    value={scopeFilter}
+                    onChange={(e) => setScopeFilter(e.target.value)}
+                    className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
+                  >
+                    <option value="all">All Curriculum Scopes</option>
+                    <option value="all_courses">Store-Wide (All Courses)</option>
+                    <option value="selected">Targeted Batches Only</option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportCouponsMasterToExcel(
+                      filteredCoupons.map((c) => ({
+                        code: c.code,
+                        description: c.description || "",
+                        school: c.school || "",
+                        discount: c.discountType === "percentage" ? `${c.discountValue}%` : `₹${Math.round(c.discountValue / 100)}`,
+                        scope: c.applies_all ? "All Courses" : `${c.selectedCourseIds?.length || 0} Courses`,
+                        validity: c.ends_at ? c.ends_at.slice(0, 10) : "Open",
+                        quotaLimit: c.usage_limit || c.maxTotalUses || 0,
+                        usedCount: c.used_count || c.totalUsed || 0,
+                        remainingQuota: (c.usage_limit || c.maxTotalUses || 0) - (c.used_count || c.totalUsed || 0),
+                        status: c.status,
+                      }))
+                    );
+                  }}
+                  className="px-3 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Master
+                </button>
+              </div>
+
+              {/* Coupons Data Table */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold">
+                        <th className="py-3 px-4">Coupon Code & Description</th>
+                        <th className="py-3 px-4">Discount Value</th>
+                        <th className="py-3 px-4">Targeting & Scope</th>
+                        <th className="py-3 px-4">Usage Quota</th>
+                        <th className="py-3 px-4">Validity Window</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {filteredCoupons.map((coupon) => {
+                        const used = coupon.used_count || coupon.totalUsed || 0;
+                        const limit = coupon.usage_limit || coupon.maxTotalUses || 100;
+                        const pct = Math.min(100, Math.round((used / limit) * 100));
+
+                        return (
+                          <tr key={coupon.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                            {/* Code Column */}
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <span className="font-extrabold text-sm text-slate-900 dark:text-white font-mono tracking-wider">
+                                  {coupon.code}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyCode(coupon.code)}
+                                  className="text-slate-400 hover:text-blue-600 cursor-pointer"
+                                  title="Copy Code"
+                                >
+                                  {copiedCode === coupon.code ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                              <p className="text-[11px] text-slate-500 mt-0.5">{coupon.description}</p>
+                            </td>
+
+                            {/* Discount Value */}
+                            <td className="py-3 px-4">
+                              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200">
+                                {coupon.discountType === "percentage" || coupon.discountType === "percent"
+                                  ? `${coupon.discountValue}% OFF`
+                                  : `₹${coupon.discountValue >= 1000 ? Math.round(coupon.discountValue / 100) : coupon.discountValue} FLAT`}
+                              </span>
+                              {coupon.max_discount_paise && (
+                                <span className="text-[10px] text-slate-400 block mt-0.5">
+                                  Cap: ₹{Math.round(coupon.max_discount_paise / 100)}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Targeting & Scope */}
+                            <td className="py-3 px-4">
+                              <div className="flex flex-wrap gap-1">
+                                {coupon.target_district && (
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                    📍 {coupon.target_district}
+                                  </span>
+                                )}
+                                {coupon.school && (
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-800 border border-indigo-200">
+                                    🏫 {coupon.school}
+                                  </span>
+                                )}
+                                {coupon.applies_all ? (
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                    All Courses
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-blue-50 text-blue-800 border border-blue-200">
+                                    {coupon.selectedCourseIds?.length || 0} Courses
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Usage Quota */}
+                            <td className="py-3 px-4">
+                              <div className="w-28 space-y-1">
+                                <div className="flex justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
+                                  <span>{used} / {limit}</span>
+                                  <span>{pct}%</span>
+                                </div>
+                                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full transition-all ${
+                                      pct >= 100 ? "bg-red-500" : pct >= 80 ? "bg-amber-500" : "bg-blue-600"
+                                    }`}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Validity Window */}
+                            <td className="py-3 px-4">
+                              <p className="font-semibold text-slate-800 dark:text-slate-200 tabular-nums">
+                                {coupon.ends_at ? coupon.ends_at.slice(0, 10) : coupon.validUntil ? coupon.validUntil.slice(0, 10) : "Open"}
+                              </p>
+                              <span className="text-[10px] text-slate-400">
+                                Starts: {coupon.starts_at ? coupon.starts_at.slice(0, 10) : "Immediate"}
+                              </span>
+                            </td>
+
+                            {/* Status */}
+                            <td className="py-3 px-4">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleStatus(coupon.id)}
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition uppercase ${
+                                  coupon.status === "active"
+                                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
+                                    : coupon.status === "paused"
+                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                                    : "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200"
+                                }`}
+                              >
+                                {coupon.status}
+                              </button>
+                            </td>
+
+                            {/* Row Actions */}
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedCouponForLedger(coupon.code);
+                                    setViewMode("ledger");
+                                  }}
+                                  title="View Redemptions"
+                                  className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 text-blue-600 transition cursor-pointer"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEdit(coupon)}
+                                  title="Edit Campaign Rules"
+                                  className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition cursor-pointer"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteModalCoupon(coupon)}
+                                  title="Delete Coupon"
+                                  className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950 hover:bg-red-100 text-red-600 transition cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                      {filteredCoupons.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="py-10 text-center text-slate-400">
+                            No coupon campaigns matched your filter criteria.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ==================================================================== */}
+          {/* IN-PAGE DELETE CONFIRMATION MODAL */}
+          {/* ==================================================================== */}
+          {deleteModalCoupon && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-slate-900 max-w-sm w-full p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
+                <div className="flex items-center gap-2 text-red-600 font-bold text-base">
+                  <Trash2 className="w-5 h-5" />
+                  <h3>Delete Coupon Campaign</h3>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Are you sure you want to permanently delete coupon{" "}
+                  <strong className="text-slate-900 dark:text-white font-mono">{deleteModalCoupon.code}</strong>? Students will no longer be able to redeem this code.
+                </p>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
                     onClick={() => setDeleteModalCoupon(null)}
-                    className="px-4 py-2 rounded-full border border-[#E4E8F8] text-xs font-bold text-[#5A6478] hover:bg-[#F5F7FF] cursor-pointer"
+                    className="px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
                   >
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={handleConfirmDelete}
-                    className="px-5 py-2 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                    className="px-4 py-1.5 text-xs font-extrabold bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-xs"
                   >
-                    Yes, Delete Coupon
+                    Confirm Delete
                   </button>
                 </div>
               </div>
             </div>
           )}
+
         </div>
-      </AdminShell>
-    </PermissionGuard>
+      </PermissionGuard>
+    </AdminShell>
   );
 }

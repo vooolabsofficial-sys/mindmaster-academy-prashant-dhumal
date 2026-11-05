@@ -426,6 +426,10 @@ export async function validateCoupon(
         let discountAmountPaise = 0;
         if (isPercent) {
           discountAmountPaise = Math.round((itemPricePaise * coupon.value) / 100);
+          const maxCap = coupon.max_discount_paise || coupon.maxDiscountPaise;
+          if (maxCap && maxCap > 0) {
+            discountAmountPaise = Math.min(discountAmountPaise, maxCap);
+          }
         } else {
           discountAmountPaise = coupon.value < 1000 ? coupon.value * 100 : coupon.value;
         }
@@ -554,6 +558,10 @@ export async function validateCoupon(
     let discountPaise = 0;
     if (isPercent) {
       discountPaise = Math.round((itemPricePaise * mockCoupon.discountValue) / 100);
+      const maxCap = mockCoupon.max_discount_paise || mockCoupon.maxDiscountPaise;
+      if (maxCap && maxCap > 0) {
+        discountPaise = Math.min(discountPaise, maxCap);
+      }
     } else {
       discountPaise =
         mockCoupon.discountValue < 1000

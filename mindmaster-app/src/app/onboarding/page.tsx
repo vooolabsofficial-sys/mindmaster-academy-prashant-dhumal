@@ -15,6 +15,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { MAHARASHTRA_DISTRICTS } from "@/lib/constants";
+import { getTalukasByDistrict } from "@/lib/locations";
 import { createClient, getCookieDomain } from "@/lib/supabase/client";
 import { normalizePhone } from "@/lib/phoneUtils";
 
@@ -268,34 +269,48 @@ function OnboardingForm() {
               </div>
             </div>
 
-            {/* Field 4: Taluka */}
+            {/* Field 4: District Dropdown of Maharashtra */}
             <div>
               <label className="text-xs font-bold text-[#0E1B3D] block mb-1.5">
-                4. Taluka <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Haveli / Shirur"
-                value={taluka}
-                onChange={(e) => setTaluka(e.target.value)}
-                required
-                className="w-full px-4 py-2.5 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-xs font-semibold text-[#0E1B3D] placeholder-[#94A3B8] focus:outline-none focus:border-[#0B57D0]"
-              />
-            </div>
-
-            {/* Field 5: District Dropdown of Maharashtra */}
-            <div className="sm:col-span-2">
-              <label className="text-xs font-bold text-[#0E1B3D] block mb-1.5">
-                5. District (Maharashtra) <span className="text-red-500">*</span>
+                4. District (Maharashtra) <span className="text-red-500">*</span>
               </label>
               <select
                 value={district}
-                onChange={(e) => setDistrict(e.target.value)}
+                onChange={(e) => {
+                  const newDist = e.target.value;
+                  setDistrict(newDist);
+                  const availableTalukas = getTalukasByDistrict(newDist);
+                  if (availableTalukas.length > 0) {
+                    setTaluka(availableTalukas[0].name);
+                  } else {
+                    setTaluka("");
+                  }
+                }}
                 className="w-full px-4 py-2.5 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-xs font-bold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0] cursor-pointer"
               >
                 {MAHARASHTRA_DISTRICTS.map((dist) => (
                   <option key={dist} value={dist}>
                     {dist}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Field 5: Taluka (Dependent Dropdown) */}
+            <div>
+              <label className="text-xs font-bold text-[#0E1B3D] block mb-1.5">
+                5. Taluka / Tehsil <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={taluka}
+                onChange={(e) => setTaluka(e.target.value)}
+                required
+                className="w-full px-4 py-2.5 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8] text-xs font-bold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0] cursor-pointer"
+              >
+                <option value="">-- Select Taluka --</option>
+                {getTalukasByDistrict(district).map((t) => (
+                  <option key={t.id} value={t.name}>
+                    {t.name} {t.nameMr ? `(${t.nameMr})` : ""}
                   </option>
                 ))}
               </select>

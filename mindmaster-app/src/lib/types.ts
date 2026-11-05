@@ -221,6 +221,13 @@ export interface Coupon {
   isPublicChip?: boolean;
   discountType: "percentage" | "flat" | "percent";
   discountValue: number; // percentage (e.g. 25) or paise (e.g. 50000 = ₹500)
+  max_discount_paise?: number; // maximum discount cap in paise (e.g. 50000 = ₹500 max cap on percent discount)
+  maxDiscountPaise?: number;
+  target_state?: string;
+  target_district?: string;
+  target_taluka?: string;
+  target_audience?: "all" | "new_users_only" | "private_phone";
+  targetAudience?: "all" | "new_users_only" | "private_phone";
   minOrderValuePaise?: number; // minimum course price required in paise (e.g. 99900 = ₹999)
   appliesTo: "all" | "selected";
   applies_all?: boolean;
@@ -259,6 +266,10 @@ export interface CouponRedemptionRecord {
   originalPricePaise?: number;
   discountPaise?: number;
   paidPaise?: number;
+  studentDistrict?: string;
+  studentTaluka?: string;
+  school?: string;
+  status?: "success" | "blocked";
 }
 
 export interface LessonWatchStat {

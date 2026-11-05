@@ -56,6 +56,10 @@ export async function atomicRedeemCoupon(params: {
     originalPricePaise?: number;
     discountPaise?: number;
     paidPaise?: number;
+    studentDistrict?: string;
+    studentTaluka?: string;
+    school?: string;
+    status?: "success" | "blocked";
   };
 }): Promise<{ success: boolean; error?: string; redemption?: CouponRedemptionRecord }> {
   return withCouponLock(params.couponCode, async () => {
@@ -124,6 +128,10 @@ export function recordCouponRedemption(
     originalPricePaise?: number;
     discountPaise?: number;
     paidPaise?: number;
+    studentDistrict?: string;
+    studentTaluka?: string;
+    school?: string;
+    status?: "success" | "blocked";
   }
 ): CouponRedemptionRecord {
   const record: CouponRedemptionRecord = {
@@ -141,6 +149,10 @@ export function recordCouponRedemption(
     originalPricePaise: details?.originalPricePaise,
     discountPaise: details?.discountPaise,
     paidPaise: details?.paidPaise,
+    studentDistrict: details?.studentDistrict,
+    studentTaluka: details?.studentTaluka,
+    school: details?.school,
+    status: details?.status || "success",
     at: new Date().toISOString(),
   };
 
