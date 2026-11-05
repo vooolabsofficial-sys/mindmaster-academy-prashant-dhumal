@@ -18,30 +18,46 @@ function extractYouTubeInfo(urlOrId: string): { type: "playlist" | "video"; id: 
 
   try {
     const parsed = new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
+    const pathname = parsed.pathname;
+    const vParam = parsed.searchParams.get("v");
     const listParam = parsed.searchParams.get("list");
-    if (listParam) {
+
+    // Case 1: Explicit Playlist URL (/playlist?list=PL...)
+    if (pathname.includes("/playlist") && listParam) {
       return { type: "playlist", id: listParam };
     }
-    const vParam = parsed.searchParams.get("v");
-    if (vParam) {
+
+    // Case 2: Standard watch URL (/watch?v=...)
+    if (vParam && /^[a-zA-Z0-9_-]{11}$/.test(vParam)) {
       return { type: "video", id: vParam };
     }
+
+    // Case 3: youtu.be short link
     if (parsed.hostname.includes("youtu.be")) {
-      const vId = parsed.pathname.slice(1).split("/")[0].split("?")[0];
-      if (vId) return { type: "video", id: vId };
+      const vId = pathname.slice(1).split("/")[0].split("?")[0];
+      if (vId && /^[a-zA-Z0-9_-]{11}$/.test(vId)) return { type: "video", id: vId };
     }
-    if (parsed.pathname.includes("/shorts/")) {
-      const vId = parsed.pathname.split("/shorts/")[1]?.split("/")[0]?.split("?")[0];
-      if (vId) return { type: "video", id: vId };
+
+    // Case 4: Shorts URL (/shorts/...)
+    if (pathname.includes("/shorts/")) {
+      const vId = pathname.split("/shorts/")[1]?.split("/")[0]?.split("?")[0];
+      if (vId && /^[a-zA-Z0-9_-]{11}$/.test(vId)) return { type: "video", id: vId };
     }
-    if (parsed.pathname.includes("/embed/")) {
-      const vId = parsed.pathname.split("/embed/")[1]?.split("/")[0]?.split("?")[0];
-      if (vId) return { type: "video", id: vId };
+
+    // Case 5: Embed URL (/embed/...)
+    if (pathname.includes("/embed/")) {
+      const vId = pathname.split("/embed/")[1]?.split("/")[0]?.split("?")[0];
+      if (vId && /^[a-zA-Z0-9_-]{11}$/.test(vId)) return { type: "video", id: vId };
+    }
+
+    // Case 6: list param that is a genuine playlist (starts with PL)
+    if (listParam && listParam.startsWith("PL")) {
+      return { type: "playlist", id: listParam };
     }
   } catch (e) {
-    const listMatch = trimmed.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-    if (listMatch) return { type: "playlist", id: listMatch[1] };
-    const vMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+    const plMatch = trimmed.match(/[?&]list=(PL[a-zA-Z0-9_-]+)/);
+    if (plMatch) return { type: "playlist", id: plMatch[1] };
+    const vMatch = trimmed.match(/(?:watch\?v=|youtu\.be\/|shorts\/|embed\/)([a-zA-Z0-9_-]{11})/);
     if (vMatch) return { type: "video", id: vMatch[1] };
   }
   return null;
@@ -98,7 +114,7 @@ export async function POST(req: NextRequest) {
       let title = "MindMaster Video Training";
       let author = "Prashant Dhumal";
       let description = "MindMaster Certified Video Training Lecture.";
-      let thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+      let thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
       let durationSec = 900;
       let durationFormatted = "15:00";
 
@@ -112,7 +128,7 @@ export async function POST(req: NextRequest) {
           if (oData.author_name) author = oData.author_name;
           description = `MindMaster Training Lecture: ${title} by ${author}`;
           if (oData.thumbnail_url) {
-            thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+            thumbnailUrl = oData.thumbnail_url;
           }
         }
       } catch (err) {
@@ -298,6 +314,7 @@ export async function POST(req: NextRequest) {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
           "Accept-Language": "en-US,en;q=0.9",
+          "Cookie": "SOCS=CAESEwgDEgk2MTQyNjE3ODQaAmVuIAEaBgiA_LyaBg;",
         },
         cache: "no-store",
       });
@@ -310,17 +327,31 @@ export async function POST(req: NextRequest) {
       }
 
       const html = await res.text();
-      const startIdx = html.indexOf("ytInitialData = ");
-      if (startIdx === -1) {
+      let data: any = null;
+      const match = html.match(/ytInitialData\s*=\s*({.+?});/);
+      if (match) {
+        try {
+          data = JSON.parse(match[1]);
+        } catch {}
+      }
+
+      if (!data) {
+        const startIdx = html.indexOf("ytInitialData = ");
+        if (startIdx !== -1) {
+          const jsonStart = startIdx + "ytInitialData = ".length;
+          const endIdx = html.indexOf(";</script>", jsonStart);
+          try {
+            data = JSON.parse(html.substring(jsonStart, endIdx > 0 ? endIdx : undefined));
+          } catch {}
+        }
+      }
+
+      if (!data) {
         return NextResponse.json(
-          { error: "YouTube प्लेलिस्ट डेटा सापडला नाही. कृपया लिंक तपासा." },
+          { error: "YouTube प्लेलिस्ट डेटा सापडला नाही. कृपया लिंक तपासा किंवा ती Public आहे का ते तपासा." },
           { status: 400 }
         );
       }
-
-      const jsonStart = startIdx + "ytInitialData = ".length;
-      const endIdx = html.indexOf(";</script>", jsonStart);
-      const data = JSON.parse(html.substring(jsonStart, endIdx > 0 ? endIdx : undefined));
 
       // Extract Playlist Title, Author, Description
       const playlistTitle =

@@ -416,7 +416,7 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
     setYtFetchSuccess(null);
 
     try {
-      const res = await fetch("/api/youtube", {
+      const res = await fetch("/api/youtube/playlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: youtubeInputUrl.trim() }),
@@ -575,6 +575,48 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
       toast.error(err.message || (isMarathi ? "कोर्स सेव्ह करताना त्रुटी आली." : "Failed to save course."));
     } finally {
       setIsSavingCourse(false);
+    }
+  };
+
+  // Fetch Single Video Details Handler
+  const handleFetchSingleVideoDetails = async () => {
+    const cleanUrl = videoLink.trim();
+    if (!cleanUrl) {
+      toast.error(isMarathi ? "कृपया प्रथम YouTube व्हिडिओ URL टाका." : "Please enter YouTube video URL first.");
+      return;
+    }
+
+    setIsFetchingVideoMeta(true);
+    try {
+      const res = await fetch("/api/youtube/playlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: cleanUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Could not fetch video details.");
+      }
+
+      const item = data.type === "video" ? data : data.items?.[0];
+      if (item) {
+        setVideoTitle(item.title || "");
+        if (item.durationSec) {
+          setVideoDurationMinutes(Math.max(1, Math.round(item.durationSec / 60)));
+        }
+        if (item.description) {
+          setVideoDescription(item.description);
+        }
+        toast.success(
+          isMarathi
+            ? `✓ व्हिडिओ माहिती प्राप्त झाली: "${item.title}"`
+            : `✓ Video details fetched: "${item.title}"`
+        );
+      }
+    } catch (err: any) {
+      toast.error(err.message || (isMarathi ? "व्हिडिओ माहिती फेच करताना त्रुटी आली." : "Failed to fetch video."));
+    } finally {
+      setIsFetchingVideoMeta(false);
     }
   };
 
@@ -1540,17 +1582,47 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                {isMarathi ? "YouTube व्हिडिओ लिंक किंवा Video ID *" : "YouTube Video Link or ID *"}
-              </label>
-              <input
-                type="text"
-                required
-                value={videoLink}
-                onChange={(e) => setVideoLink(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ or dQw4w9WgXcQ"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-none"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {isMarathi ? "YouTube व्हिडिओ लिंक किंवा Video ID *" : "YouTube Video Link or ID *"}
+                </label>
+                <button
+                  type="button"
+                  onClick={handleFetchSingleVideoDetails}
+                  disabled={isFetchingVideoMeta || !videoLink.trim()}
+                  className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                >
+                  {isFetchingVideoMeta ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Play className="w-3 h-3" />
+                  )}
+                  <span>{isMarathi ? "माहिती ऑटो-फेच करा" : "Auto-Fetch Details"}</span>
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  required
+                  value={videoLink}
+                  onChange={(e) => setVideoLink(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ किंवा dQw4w9WgXcQ"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleFetchSingleVideoDetails}
+                  disabled={isFetchingVideoMeta || !videoLink.trim()}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                >
+                  {isFetchingVideoMeta ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  )}
+                  <span>{isMarathi ? "फेच" : "Fetch"}</span>
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

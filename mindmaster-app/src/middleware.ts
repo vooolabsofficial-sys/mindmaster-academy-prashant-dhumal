@@ -236,13 +236,14 @@ export async function middleware(req: NextRequest | Request) {
       return killRes;
     }
 
-    // Public auth and webhook endpoints allowed
+    // Public auth, youtube metadata fetcher, and webhook endpoints allowed
     const isPublicApi =
       pathname.startsWith("/api/staff/login") ||
       pathname.startsWith("/api/staff/logout") ||
       pathname.startsWith("/api/staff/forgot-password") ||
       pathname.startsWith("/api/student/auth") ||
       pathname.startsWith("/api/certificates/verify") ||
+      pathname.startsWith("/api/youtube") ||
       pathname.startsWith("/api/razorpay/webhook");
 
     if (isPublicApi) {
@@ -304,7 +305,6 @@ export async function middleware(req: NextRequest | Request) {
       isMutating &&
       (pathname.startsWith("/api/courses") ||
         pathname.startsWith("/api/videos") ||
-        pathname.startsWith("/api/youtube") ||
         pathname.startsWith("/api/coupons") ||
         pathname.startsWith("/api/grants") ||
         pathname.startsWith("/api/books"));
