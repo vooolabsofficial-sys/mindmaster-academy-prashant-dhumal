@@ -169,12 +169,12 @@ export default function AdminSidebar() {
     });
 
     return (
-      <aside className="w-64 bg-white dark:bg-[#1E293B] border-r border-slate-200/80 dark:border-slate-800 flex flex-col justify-between p-4 min-h-[calc(100vh-64px)] shadow-xs text-slate-800 dark:text-slate-100 font-sans select-none shrink-0 transition-colors duration-200">
+      <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 flex flex-col justify-between p-4 min-h-[calc(100vh-64px)] shadow-2xs text-slate-800 dark:text-slate-100 font-sans select-none shrink-0 transition-colors duration-200">
         <div className="space-y-4">
           {/* Sub-Admin Workspace Badge Card */}
           <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#2563EB] dark:text-blue-400 flex items-center gap-1.5">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
                 <MindMasterLogo size="xs" />
                 <span>Staff Console</span>
               </span>
@@ -185,7 +185,7 @@ export default function AdminSidebar() {
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1.5 truncate">
               {staff.name}
             </p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 tabular-nums">
               ID: {staff.staffId || staff.id} • Satara Centre
             </p>
           </div>
@@ -197,7 +197,7 @@ export default function AdminSidebar() {
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Active Scope</span>
               </span>
-              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 font-mono">
+              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 font-mono tabular-nums">
                 {staff.permissions.length} Keys
               </span>
             </div>
@@ -229,9 +229,9 @@ export default function AdminSidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
                     isActive
-                      ? "bg-[#2563EB] text-white shadow-xs font-bold"
+                      ? "bg-blue-600 text-white shadow-2xs font-bold"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80"
                   }`}
                 >
@@ -241,16 +241,16 @@ export default function AdminSidebar() {
                   </div>
                   {item.badge ? (
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums ${
                         isActive
                           ? "bg-white/20 text-white"
-                          : "bg-blue-100 dark:bg-blue-900/50 text-[#2563EB] dark:text-blue-300"
+                          : "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300"
                       }`}
                     >
                       {item.badge}
                     </span>
                   ) : isActive ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-white shadow-xs" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-white shadow-2xs" />
                   ) : null}
                 </Link>
               );
@@ -269,7 +269,7 @@ export default function AdminSidebar() {
           </p>
           <Link
             href="/admin/guide"
-            className="flex items-center justify-between text-[10px] font-bold text-[#2563EB] dark:text-blue-400 hover:underline pt-1 border-t border-slate-200 dark:border-slate-700"
+            className="flex items-center justify-between text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline pt-1 border-t border-slate-200 dark:border-slate-700"
           >
             <span>Staff SOP Guidelines</span>
             <span>→</span>
@@ -283,12 +283,12 @@ export default function AdminSidebar() {
   // MAIN ADMIN SIDEBAR (4 Clean Labeled Enterprise Categories)
   // =========================================================================
   return (
-    <aside className="w-64 bg-white dark:bg-[#1E293B] border-r border-slate-200/80 dark:border-slate-800 flex flex-col justify-between p-3.5 min-h-[calc(100vh-64px)] shadow-xs text-slate-800 dark:text-slate-100 font-sans select-none shrink-0 overflow-y-auto transition-colors duration-200">
+    <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 flex flex-col justify-between p-3.5 min-h-[calc(100vh-64px)] shadow-2xs text-slate-800 dark:text-slate-100 font-sans select-none shrink-0 overflow-y-auto transition-colors duration-200">
       <div className="space-y-4">
         {/* Brand & Staff Role Card */}
         <div className="px-3.5 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#2563EB] dark:text-blue-400 flex items-center gap-1.5">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
               <MindMasterLogo size="xs" />
               <span>Supreme Admin</span>
             </span>
@@ -299,7 +299,7 @@ export default function AdminSidebar() {
           <p className="text-xs font-bold text-slate-900 dark:text-white mt-1.5 truncate">
             {staff.name}
           </p>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 tabular-nums">
             ID: {staff.staffId || staff.id}
           </p>
         </div>
@@ -331,7 +331,7 @@ export default function AdminSidebar() {
                   <span className="flex items-center gap-1.5">
                     {cat.icon}
                     <span>{cat.name}</span>
-                    <span className="text-[9px] font-mono text-slate-400 dark:text-slate-500 font-normal">
+                    <span className="text-[9px] font-mono text-slate-400 dark:text-slate-500 font-normal tabular-nums">
                       ({visibleItems.length})
                     </span>
                   </span>
@@ -354,9 +354,9 @@ export default function AdminSidebar() {
                         <Link
                           key={item.href}
                           href={item.href}
-                          className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                          className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
                             isActive
-                              ? "bg-[#2563EB] text-white shadow-xs font-bold"
+                              ? "bg-blue-600 text-white shadow-2xs font-bold"
                               : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80"
                           }`}
                         >
@@ -366,16 +366,16 @@ export default function AdminSidebar() {
                           </div>
                           {item.badge ? (
                             <span
-                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full tabular-nums ${
                                 isActive
                                   ? "bg-white/20 text-white"
-                                  : "bg-blue-100 dark:bg-blue-900/50 text-[#2563EB] dark:text-blue-300"
+                                  : "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300"
                               }`}
                             >
                               {item.badge}
                             </span>
                           ) : isActive ? (
-                            <span className="w-1.5 h-1.5 rounded-full bg-white shadow-xs" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-white shadow-2xs" />
                           ) : null}
                         </Link>
                       );
@@ -400,7 +400,7 @@ export default function AdminSidebar() {
           </p>
           <Link
             href="/admin/guide"
-            className="flex items-center justify-between text-[10px] font-bold text-[#2563EB] dark:text-blue-400 hover:underline pt-1.5 mt-1 border-t border-slate-200 dark:border-slate-700"
+            className="flex items-center justify-between text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline pt-1.5 mt-1 border-t border-slate-200 dark:border-slate-700"
           >
             <span>Staff SOP Manual</span>
             <span>→</span>

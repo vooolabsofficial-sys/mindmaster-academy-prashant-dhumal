@@ -16,7 +16,30 @@ import {
 } from "@/lib/staffStore";
 import { getStaffCollectionTally, getGrants, fetchDbGrants, Grant } from "@/lib/grantStore";
 import { createClient } from "@/lib/supabase/client";
-import { IndianRupee, Smartphone, GraduationCap } from "lucide-react";
+import {
+  IndianRupee,
+  Smartphone,
+  GraduationCap,
+  Crown,
+  ShieldCheck,
+  Plus,
+  BookOpen,
+  Video,
+  Tag,
+  Users,
+  Search,
+  Settings,
+  Clock,
+  CheckCircle2,
+  Bell,
+  TrendingUp,
+  AlertCircle,
+  ArrowUpRight,
+  Sparkles,
+  Calendar,
+  Send,
+  Layers,
+} from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 
 interface PaymentTransaction {
@@ -183,114 +206,139 @@ export default function AdminOverviewPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-8 font-sans">
-        {/* Top Header Banner */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
+      <div className="space-y-6 sm:space-y-8 font-sans pb-10">
+        {/* Top Header Banner — UI/UX Pro Max High-Contrast Architectural Card */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-[#0E1B3D] dark:text-white font-heading">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white font-heading tracking-tight">
                 Admin Mission Control
               </h1>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#EDE9FE] dark:bg-purple-950/60 text-[#6D28D9] dark:text-purple-300 border border-[#DDD6FE] dark:border-purple-900/50">
-                {isMainAdmin ? "👑 MAIN ADMIN" : "🛡️ SUB-ADMIN"}
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                {isMainAdmin ? (
+                  <>
+                    <Crown className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    <span>MAIN ADMIN</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    <span>SUB-ADMIN</span>
+                  </>
+                )}
               </span>
             </div>
-            <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1">
-              Live operational metrics, payment verification, student access lifecycle, and instant dispatch.
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 max-w-2xl leading-relaxed">
+              Live operational metrics, payment verification, student access lifecycle, and instant dispatch console.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
-            <span className="px-3 py-1.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-full text-[#0E1B3D] dark:text-slate-200 font-semibold">
-              ● Razorpay Live Gateway: Connected
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-700 dark:text-slate-300 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+              <span>Razorpay Live Gateway</span>
             </span>
-            <span className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/50 rounded-full text-emerald-700 dark:text-emerald-400 font-bold">
-              ● Webhook v1.2 Active
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-full text-emerald-700 dark:text-emerald-400 font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>Webhook v1.2 Active</span>
             </span>
           </div>
         </div>
 
         {/* Toast Alert */}
         {reminderToast && (
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300 text-xs font-semibold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
-            <span>✅ {reminderToast}</span>
-            <span className="text-[10px] bg-emerald-200/60 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full">
-              In-App Only (No WhatsApp)
+          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-semibold rounded-2xl flex items-center justify-between shadow-xs animate-in fade-in duration-200">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span>{reminderToast}</span>
+            </div>
+            <span className="text-[10px] bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-0.5 rounded-full font-bold">
+              In-App Only
             </span>
           </div>
         )}
 
-        {/* Quick Action Pills */}
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
-          <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#8A94A6] dark:text-slate-400 mb-2 px-1">
+        {/* Quick Action Pills — Zero Emojis, Crisp Vector SVG Icons */}
+        <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
+          <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5 px-1">
             {isMarathi ? "झटपट कृती शॉर्टकट्स" : "Quick Action Shortcuts"}
           </p>
           <div className="flex flex-wrap gap-2">
             <Link
               href="/admin/courses"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] dark:hover:text-blue-400 border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold transition-all shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all duration-150 active:scale-95 shadow-2xs"
             >
-              <span>➕</span> {isMarathi ? "नवीन कोर्स" : "New Course"}
+              <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>{isMarathi ? "नवीन कोर्स" : "New Course"}</span>
             </Link>
             <Link
               href="/admin/grants"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F0FDF4] dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition-all shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition-all duration-150 active:scale-95 shadow-2xs"
             >
-              <span>🎓</span> {isMarathi ? "कोर्स ऍक्सेस द्या" : "Grant Access"}
+              <GraduationCap className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>{isMarathi ? "कोर्स ऍक्सेस द्या" : "Grant Access"}</span>
             </Link>
             <Link
               href="/admin/videos"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] dark:hover:text-blue-400 border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold transition-all shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all duration-150 active:scale-95 shadow-2xs"
             >
-              <span>🎬</span> {isMarathi ? "व्हिडिओ अपलोड" : "Upload Video"}
+              <Video className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <span>{isMarathi ? "व्हिडिओ अपलोड" : "Upload Video"}</span>
             </Link>
             <Link
               href="/admin/coupons"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] dark:hover:text-blue-400 border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold transition-all shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all duration-150 active:scale-95 shadow-2xs"
             >
-              <span>🏷️</span> {isMarathi ? "कूपन तयार करा" : "Create Coupon"}
+              <Tag className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>{isMarathi ? "कूपन तयार करा" : "Create Coupon"}</span>
             </Link>
             {isMainAdmin && (
               <Link
                 href="/admin/sub-admins"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] dark:hover:text-blue-400 border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold transition-all shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all duration-150 active:scale-95 shadow-2xs"
               >
-                <span>👥</span> {isMarathi ? "सब-ॲडमिन टीम" : "Sub-Admins"}
+                <Users className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                <span>{isMarathi ? "सब-ॲडमिन टीम" : "Sub-Admins"}</span>
               </Link>
             )}
             <Link
               href="/admin/students"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] dark:hover:text-blue-400 border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold transition-all shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all duration-150 active:scale-95 shadow-2xs"
             >
-              <span>🔍</span> {isMarathi ? "विद्यार्थी शोधा" : "Student Lookup"}
+              <Search className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+              <span>{isMarathi ? "विद्यार्थी शोधा" : "Student Lookup"}</span>
             </Link>
             {isMainAdmin && (
               <Link
                 href="/admin/settings"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#EDE9FE] dark:bg-purple-950/60 hover:bg-[#DDD6FE] dark:hover:bg-purple-900/60 text-[#6D28D9] dark:text-purple-300 border border-[#C4B5FD] dark:border-purple-800 text-xs font-bold transition-all shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-bold transition-all duration-150 active:scale-95 shadow-2xs"
               >
-                <span>⚙️</span> {isMarathi ? "सिस्टीम सेटिंग्स" : "Platform Settings"}
+                <Settings className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                <span>{isMarathi ? "सिस्टीम सेटिंग्स" : "Platform Settings"}</span>
               </Link>
             )}
           </div>
         </div>
 
-        {/* Four Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Four Executive Stat Cards — Tabular Numbers & Clean Contrast */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {/* Card 1: Total Revenue */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm hover:border-[#0B57D0] dark:hover:border-blue-500 transition-all">
-            <div className="flex items-center justify-between text-xs text-[#8A94A6] dark:text-slate-400 mb-2 font-medium">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-500 dark:hover:border-blue-500 transition-all group">
+            <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 mb-2 font-medium">
               <span className="font-extrabold uppercase tracking-wide">
                 {isMarathi ? "एकूण महसूल" : "TOTAL REVENUE"}
               </span>
-              <span className="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/50 px-2 py-0.5 rounded-full font-bold">
+              <span className="text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
                 Live Gateway
               </span>
             </div>
-            <p className="text-3xl font-extrabold text-[#0E1B3D] dark:text-white font-heading">
-              ₹{totalRevenueRupees.toLocaleString("en-IN")}
-            </p>
-            <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-2">
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-slate-400 font-bold text-xl">₹</span>
+              <p className="text-3xl font-extrabold text-slate-900 dark:text-white font-heading tabular-nums">
+                {totalRevenueRupees.toLocaleString("en-IN")}
+              </p>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               {isMarathi
                 ? "Razorpay द्वारे सर्व कोर्सेसची एकूण ऑनलाइन विक्री"
                 : "Captured via Razorpay across all course sales"}
@@ -298,19 +346,19 @@ export default function AdminOverviewPage() {
           </div>
 
           {/* Card 2: Active Students */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm hover:border-[#0B57D0] dark:hover:border-blue-500 transition-all">
-            <div className="flex items-center justify-between text-xs text-[#8A94A6] dark:text-slate-400 mb-2 font-medium">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-500 dark:hover:border-blue-500 transition-all group">
+            <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 mb-2 font-medium">
               <span className="font-extrabold uppercase tracking-wide">
                 {isMarathi ? "सक्रिय विद्यार्थी" : "ACTIVE LEARNERS"}
               </span>
-              <span className="text-[#0B57D0] dark:text-blue-400 bg-[#EBF3FE] dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50 px-2 py-0.5 rounded-full font-bold">
+              <span className="text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
                 {studentsCount > 0 ? "100% Active" : "Fresh Roster"}
               </span>
             </div>
-            <p className="text-3xl font-extrabold text-[#0E1B3D] dark:text-white font-heading">
+            <p className="text-3xl font-extrabold text-slate-900 dark:text-white font-heading mt-1 tabular-nums">
               {studentsCount}
             </p>
-            <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               {isMarathi
                 ? "नोंदणीकृत व चालू ऍक्सेस असलेले सर्व विद्यार्थी"
                 : "Enrolled students with active access"}
@@ -318,20 +366,20 @@ export default function AdminOverviewPage() {
           </div>
 
           {/* Card 3: Courses & Videos */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm hover:border-[#0B57D0] dark:hover:border-blue-500 transition-all">
-            <div className="flex items-center justify-between text-xs text-[#8A94A6] dark:text-slate-400 mb-2 font-medium">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-500 dark:hover:border-blue-500 transition-all group">
+            <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 mb-2 font-medium">
               <span className="font-extrabold uppercase tracking-wide">
                 {isMarathi ? "कोर्सेस व व्हिडिओ" : "CATALOGUE & VIDEOS"}
               </span>
-              <span className="text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-900/50 px-2 py-0.5 rounded-full font-bold">
+              <span className="text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
                 {courses.length} Courses
               </span>
             </div>
-            <p className="text-3xl font-extrabold text-[#0E1B3D] dark:text-white font-heading">
+            <p className="text-3xl font-extrabold text-slate-900 dark:text-white font-heading mt-1 tabular-nums">
               {courses.reduce((sum, c) => sum + (c.lessonsCount || 0), 0)}{" "}
-              <span className="text-sm font-normal text-[#5A6478] dark:text-slate-400">Lectures</span>
+              <span className="text-sm font-normal text-slate-500 dark:text-slate-400">Lectures</span>
             </p>
-            <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               {isMarathi
                 ? "शालेय, वैदिक गणित, मेमरी व शिक्षक सेगमेंट्स"
                 : "School, College, Vedic Maths & Teacher segments"}
@@ -339,20 +387,20 @@ export default function AdminOverviewPage() {
           </div>
 
           {/* Card 4: Coupons & Redemptions */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm hover:border-[#0B57D0] dark:hover:border-blue-500 transition-all">
-            <div className="flex items-center justify-between text-xs text-[#8A94A6] dark:text-slate-400 mb-2 font-medium">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-500 dark:hover:border-blue-500 transition-all group">
+            <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 mb-2 font-medium">
               <span className="font-extrabold uppercase tracking-wide">
                 {isMarathi ? "कूपन्स व सवलती" : "COUPON REDEMPTIONS"}
               </span>
-              <span className="text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900/50 px-2 py-0.5 rounded-full font-bold">
+              <span className="text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
                 {coupons.length} Active
               </span>
             </div>
-            <p className="text-3xl font-extrabold text-[#0E1B3D] dark:text-white font-heading">
+            <p className="text-3xl font-extrabold text-slate-900 dark:text-white font-heading mt-1 tabular-nums">
               {coupons.reduce((sum, c) => sum + (c.used_count || c.totalUsed || 0), 0)}{" "}
-              <span className="text-sm font-normal text-[#5A6478] dark:text-slate-400">Redeemed</span>
+              <span className="text-sm font-normal text-slate-500 dark:text-slate-400">Redeemed</span>
             </p>
-            <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               {isMarathi
                 ? "विद्यार्थ्यांनी वापरलेली विशेष सवलत कूपन्स"
                 : "Welcome discounts & renewals"}
@@ -362,16 +410,16 @@ export default function AdminOverviewPage() {
 
         {/* Sub-Admin Cash vs UPI Collection Tally (Main Admin Only) */}
         {isMainAdmin && (
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E4E8F8] dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold">
+                <h2 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center font-bold">
                     <IndianRupee className="w-4 h-4" />
                   </span>
                   <span>{isMarathi ? "सब-ॲडमिन फी संकलन व हिशोब टॅली" : "Sub-Admin Fee Collection & Grants Tally"}</span>
                 </h2>
-                <p className="text-xs text-[#5A6478] dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {isMarathi
                     ? "सातारा व पुणे ऑफिस कर्मचाऱ्यांनी Cash आणि UPI द्वारे गोळा केलेली ऑफलाइन फी व शिष्यवृत्ती वाटप."
                     : "Breakdown of student fees collected offline by staff via Cash and UPI, plus scholarship grants."}
@@ -379,7 +427,7 @@ export default function AdminOverviewPage() {
               </div>
 
               {/* Timeframe Toggles */}
-              <div className="flex items-center gap-1.5 bg-[#F5F7FF] dark:bg-slate-800 p-1 rounded-full border border-[#E4E8F8] dark:border-slate-700 self-start sm:self-auto">
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 self-start sm:self-auto">
                 {(
                   [
                     { id: "today", labelEn: "Today", labelMr: "आज" },
@@ -391,10 +439,10 @@ export default function AdminOverviewPage() {
                     key={t.id}
                     type="button"
                     onClick={() => setTallyTimeframe(t.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
                       tallyTimeframe === t.id
-                        ? "bg-[#0B57D0] text-white shadow-xs"
-                        : "text-[#5A6478] dark:text-slate-400 hover:text-[#0E1B3D] dark:hover:text-white"
+                        ? "bg-blue-600 text-white shadow-2xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
                     {isMarathi ? t.labelMr : t.labelEn}
@@ -405,12 +453,12 @@ export default function AdminOverviewPage() {
 
             {/* Aggregate Badges */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-2xl flex items-center justify-between">
+              <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800 rounded-2xl flex items-center justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wide">
                     {isMarathi ? "एकूण रोख जमा" : "Total Cash Collected"}
                   </span>
-                  <p className="text-xl font-extrabold text-emerald-900 dark:text-emerald-200 font-heading mt-0.5">
+                  <p className="text-xl font-extrabold text-emerald-900 dark:text-emerald-200 font-heading mt-0.5 tabular-nums">
                     ₹{(
                       tallyTimeframe === "today"
                         ? tallyReport.totals.todayCash
@@ -425,12 +473,12 @@ export default function AdminOverviewPage() {
                 </div>
               </div>
 
-              <div className="p-4 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-2xl flex items-center justify-between">
+              <div className="p-4 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800 rounded-2xl flex items-center justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-blue-800 dark:text-blue-300 uppercase tracking-wide">
                     {isMarathi ? "एकूण UPI संकलन" : "Total Direct UPI Collected"}
                   </span>
-                  <p className="text-xl font-extrabold text-[#0B57D0] dark:text-blue-400 font-heading mt-0.5">
+                  <p className="text-xl font-extrabold text-blue-600 dark:text-blue-400 font-heading mt-0.5 tabular-nums">
                     ₹{(
                       tallyTimeframe === "today"
                         ? tallyReport.totals.todayUpi
@@ -440,17 +488,17 @@ export default function AdminOverviewPage() {
                     ).toLocaleString("en-IN")}
                   </p>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-[#0B57D0] dark:text-blue-300 font-bold shrink-0 shadow-2xs">
+                <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold shrink-0 shadow-2xs">
                   <Smartphone className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="p-4 bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-900/50 rounded-2xl flex items-center justify-between">
+              <div className="p-4 bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800 rounded-2xl flex items-center justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-purple-800 dark:text-purple-300 uppercase tracking-wide">
                     {isMarathi ? "मोफत शिष्यवृत्ती" : "Scholarship / Free Grants"}
                   </span>
-                  <p className="text-xl font-extrabold text-purple-900 dark:text-purple-200 font-heading mt-0.5">
+                  <p className="text-xl font-extrabold text-purple-900 dark:text-purple-200 font-heading mt-0.5 tabular-nums">
                     {(
                       tallyTimeframe === "today"
                         ? tallyReport.totals.todayGrants
@@ -468,9 +516,9 @@ export default function AdminOverviewPage() {
             </div>
 
             {/* Staff Breakdown Table */}
-            <div className="overflow-x-auto rounded-2xl border border-[#E4E8F8] dark:border-slate-800">
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#FAFBFD] dark:bg-slate-800/80 text-[#5A6478] dark:text-slate-400 border-b border-[#E4E8F8] dark:border-slate-800">
+                <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="px-4 py-3 font-bold">Staff Member (granted_by)</th>
                     <th className="px-4 py-3 font-bold">Cash</th>
@@ -479,7 +527,7 @@ export default function AdminOverviewPage() {
                     <th className="px-4 py-3 font-bold text-right">Free Grants</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E4E8F8] dark:divide-slate-800">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                   {tallyReport.byStaff.map((s) => {
                     const cash =
                       tallyTimeframe === "today"
@@ -501,21 +549,21 @@ export default function AdminOverviewPage() {
                         : s.monthGrantsCount;
 
                     return (
-                      <tr key={s.staffId} className="hover:bg-[#F9FAFD] dark:hover:bg-slate-800/50">
-                        <td className="px-4 py-3 font-bold text-[#0E1B3D] dark:text-white">
+                      <tr key={s.staffId} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
+                        <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">
                           {s.staffName}
                         </td>
-                        <td className="px-4 py-3 font-semibold text-emerald-700 dark:text-emerald-400">
+                        <td className="px-4 py-3 font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">
                           ₹{cash.toLocaleString("en-IN")}
                         </td>
-                        <td className="px-4 py-3 font-semibold text-[#0B57D0] dark:text-blue-400">
+                        <td className="px-4 py-3 font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
                           ₹{upi.toLocaleString("en-IN")}
                         </td>
-                        <td className="px-4 py-3 font-extrabold text-[#0E1B3D] dark:text-white">
+                        <td className="px-4 py-3 font-extrabold text-slate-900 dark:text-white tabular-nums">
                           ₹{(cash + upi).toLocaleString("en-IN")}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-900/50">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 tabular-nums">
                             {count} grants
                           </span>
                         </td>
@@ -529,22 +577,22 @@ export default function AdminOverviewPage() {
         )}
 
         {/* Expiring-Soon Rows with In-App Reminder Status Chip */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-[#E4E8F8] dark:border-slate-800">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-[#0E1B3D] dark:text-white">
-                  Expiring Soon — Access & In-App Retention Reminders
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Expiring Soon — Access &amp; In-App Retention Reminders
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 text-[10px] font-bold">
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[10px] font-bold">
                   Next 14 Days
                 </span>
               </div>
-              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Students nearing end of 3-month access window. Send 50% renewal coupons directly inside app.
               </p>
             </div>
-            <span className="text-xs font-semibold text-[#8A94A6] dark:text-slate-400">
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 tabular-nums">
               {expiringList.length} students expiring soon
             </span>
           </div>
@@ -552,57 +600,61 @@ export default function AdminOverviewPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="bg-[#F5F7FF] dark:bg-slate-800/80 text-[#5A6478] dark:text-slate-400 uppercase text-[10px] tracking-wider border-b border-[#E4E8F8] dark:border-slate-800">
-                  <th className="py-3 px-4 rounded-l-xl">Student Name</th>
-                  <th className="py-3 px-4">Course</th>
-                  <th className="py-3 px-4">Expires In</th>
-                  <th className="py-3 px-4">In-App Reminder Status</th>
-                  <th className="py-3 px-4 text-right rounded-r-xl">Action</th>
+                <tr className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-800">
+                  <th className="py-3 px-4 rounded-l-xl font-bold">Student Name</th>
+                  <th className="py-3 px-4 font-bold">Course</th>
+                  <th className="py-3 px-4 font-bold">Expires In</th>
+                  <th className="py-3 px-4 font-bold">In-App Reminder Status</th>
+                  <th className="py-3 px-4 text-right rounded-r-xl font-bold">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E4E8F8] dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                 {expiringList.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-[#8A94A6] dark:text-slate-400">
+                    <td colSpan={5} className="py-8 text-center text-slate-400 dark:text-slate-500">
                       No student access expiring in next 14 days.
                     </td>
                   </tr>
                 ) : (
                   expiringList.map((item) => (
-                    <tr key={item.id} className="hover:bg-[#FAFBFD] dark:hover:bg-slate-800/50 transition-colors">
+                    <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="py-3 px-4">
-                        <div className="font-bold text-[#0E1B3D] dark:text-white">{item.name}</div>
-                        <div className="text-[11px] text-[#8A94A6] dark:text-slate-400">{item.phone}</div>
+                        <div className="font-bold text-slate-900 dark:text-white">{item.name}</div>
+                        <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">{item.phone}</div>
                       </td>
-                      <td className="py-3 px-4 font-medium text-[#5A6478] dark:text-slate-300">
+                      <td className="py-3 px-4 font-medium text-slate-600 dark:text-slate-300">
                         {item.courseTitle}
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`inline-flex items-center gap-1 font-bold ${
+                        <span className={`inline-flex items-center gap-1.5 font-bold tabular-nums ${
                           item.expiresInDays <= 3 ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"
                         }`}>
-                          ⏳ {item.expiresInDays} days ({item.expiryDate})
+                          <Clock className="w-3.5 h-3.5 shrink-0" />
+                          <span>{item.expiresInDays} days ({item.expiryDate})</span>
                         </span>
                       </td>
                       <td className="py-3 px-4">
                         {item.reminderStatus === "sent" ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
-                            <span>✅</span> {item.reminderSentAt || "In-App Sent"}
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span>{item.reminderSentAt || "In-App Sent"}</span>
                           </span>
                         ) : item.reminderStatus === "scheduled" ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50">
-                            <span>🔔</span> {item.reminderSentAt || "Auto-Scheduled"}
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                            <Bell className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                            <span>{item.reminderSentAt || "Auto-Scheduled"}</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50">
-                            <span>⏳</span> Pending Dispatch
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                            <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                            <span>Pending Dispatch</span>
                           </span>
                         )}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <button
                           onClick={() => handleSendReminder(item)}
-                          className="px-3 py-1.5 rounded-lg bg-[#0B57D0] hover:bg-[#0842A0] text-white font-bold text-[11px] shadow-sm transition-colors cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-2xs transition-all active:scale-95 cursor-pointer"
                         >
                           {item.reminderStatus === "sent" ? "Re-send In-App" : "Send 50% Reminder"}
                         </button>
@@ -615,75 +667,77 @@ export default function AdminOverviewPage() {
           </div>
         </div>
 
-        {/* Recent Payments Table */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-[#E4E8F8] dark:border-slate-800">
+        {/* Recent Payments Table — Real-time Webhooks & Tabular Numbers */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-[#0E1B3D] dark:text-white">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
                   Recent Razorpay Payment Transactions
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 text-[10px] font-bold">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold">
                   Verified Webhooks
                 </span>
               </div>
-              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Real-time captured student course fees via Razorpay gateway.
               </p>
             </div>
             <Link
               href="/admin/reports"
-              className="text-xs font-bold text-[#0B57D0] dark:text-blue-400 hover:underline"
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
             >
-              View Full Revenue Ledger →
+              <span>View Full Revenue Ledger</span>
+              <span>→</span>
             </Link>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="bg-[#F5F7FF] dark:bg-slate-800/80 text-[#5A6478] dark:text-slate-400 uppercase text-[10px] tracking-wider border-b border-[#E4E8F8] dark:border-slate-800">
-                  <th className="py-3 px-4 rounded-l-xl">Student</th>
-                  <th className="py-3 px-4">Course Enrolled</th>
-                  <th className="py-3 px-4">Amount</th>
-                  <th className="py-3 px-4">Date & Time</th>
-                  <th className="py-3 px-4">Payment ID</th>
-                  <th className="py-3 px-4 text-right rounded-r-xl">Status</th>
+                <tr className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-800">
+                  <th className="py-3 px-4 rounded-l-xl font-bold">Student</th>
+                  <th className="py-3 px-4 font-bold">Course Enrolled</th>
+                  <th className="py-3 px-4 font-bold">Amount</th>
+                  <th className="py-3 px-4 font-bold">Date &amp; Time</th>
+                  <th className="py-3 px-4 font-bold">Payment ID</th>
+                  <th className="py-3 px-4 text-right rounded-r-xl font-bold">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E4E8F8] dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                 {recentPayments.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-[#8A94A6] dark:text-slate-400">
+                    <td colSpan={6} className="py-8 text-center text-slate-400 dark:text-slate-500">
                       No recent transactions recorded yet.
                     </td>
                   </tr>
                 ) : (
                   recentPayments.map((p) => (
-                    <tr key={p.id} className="hover:bg-[#FAFBFD] dark:hover:bg-slate-800/50 transition-colors">
+                    <tr key={p.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="py-3 px-4">
-                        <div className="font-bold text-[#0E1B3D] dark:text-white">{p.studentName}</div>
-                        <div className="text-[11px] text-[#8A94A6] dark:text-slate-400">{p.studentPhone}</div>
+                        <div className="font-bold text-slate-900 dark:text-white">{p.studentName}</div>
+                        <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">{p.studentPhone}</div>
                       </td>
-                      <td className="py-3 px-4 font-medium text-[#0E1B3D] dark:text-slate-200">
+                      <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
                         {p.courseTitle}
                       </td>
-                      <td className="py-3 px-4 font-bold text-[#0E1B3D] dark:text-white text-sm">
-                        ₹{p.amount}
+                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-white text-sm tabular-nums">
+                        ₹{p.amount.toLocaleString("en-IN")}
                       </td>
-                      <td className="py-3 px-4 text-[#5A6478] dark:text-slate-400">
+                      <td className="py-3 px-4 text-slate-500 dark:text-slate-400 tabular-nums">
                         <div>{p.date}</div>
-                        <div className="text-[10px] text-[#8A94A6] dark:text-slate-400">{p.time}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">{p.time}</div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="font-mono text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                        <span className="font-mono text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
                           {p.id}
                         </span>
-                        <div className="text-[10px] text-[#8A94A6] dark:text-slate-400 mt-0.5">{p.method}</div>
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{p.method}</div>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
-                          <span>●</span> Captured
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <span>Captured</span>
                         </span>
                       </td>
                     </tr>
