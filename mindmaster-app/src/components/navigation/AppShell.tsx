@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import SidebarNav from "./SidebarNav";
 import TopBar from "./TopBar";
+import WebsiteAnnouncementStrip from "./WebsiteAnnouncementStrip";
 import BottomNav from "./BottomNav";
 import OfflineBanner from "@/components/common/OfflineBanner";
 import { LanguageProvider } from "@/lib/LanguageContext";
@@ -87,6 +88,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-8 lg:pl-[68px]">
           {/* Offline Connectivity Status */}
           <OfflineBanner />
+
+          {/* Top Announcement Bar / Marketing Strip */}
+          <WebsiteAnnouncementStrip />
 
           {/* Top Header */}
           <TopBar />

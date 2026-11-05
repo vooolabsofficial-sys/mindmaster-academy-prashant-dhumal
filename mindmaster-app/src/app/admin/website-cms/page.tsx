@@ -13,7 +13,9 @@ import {
   FacultyMember,
   OfflineCentre,
   FAQItem,
+  ANNOUNCEMENT_TEMPLATES,
 } from "@/lib/websiteCmsStore";
+import { Sparkles } from "lucide-react";
 
 export default function WebsiteCmsPage() {
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
@@ -98,6 +100,7 @@ export default function WebsiteCmsPage() {
         if (json.success) {
           setCmsData(json.data);
           showToast("✅ Website CMS changes published live successfully!");
+          if (typeof window !== "undefined") window.dispatchEvent(new Event("mma_website_cms_updated"));
           return;
         }
       }
@@ -288,14 +291,14 @@ export default function WebsiteCmsPage() {
       {/* 8 Management Tabs Navigation */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
         {[
-          { id: "announcement", label: "Announcement Bar", icon: "📢" },
-          { id: "hero", label: "Hero & Banners", icon: "🚀" },
-          { id: "popup_leads", label: "Popup & Leads CRM", icon: "🎯", badge: `${cmsData.leads.filter(l => l.status === "New").length} New` },
-          { id: "toppers", label: "Hall of Fame", icon: "🏆", badge: `${cmsData.toppers.length}` },
-          { id: "faculty_stats", label: "Faculty & Stats", icon: "👨‍🏫" },
-          { id: "centres", label: "Offline Centres", icon: "📍", badge: `${cmsData.centres.length}` },
-          { id: "faqs_visibility", label: "FAQs & Sections", icon: "⚙️" },
-          { id: "seo_footer", label: "SEO & Footer", icon: "🔍" },
+          { id: "announcement", label: "१. घोषणा पट्टी (Offer Strip)", icon: "📢" },
+          { id: "hero", label: "२. मुख्य बॅनर (Hero)", icon: "🚀" },
+          { id: "popup_leads", label: "३. पॉपअप व चौकशी CRM", icon: "🎯", badge: `${cmsData.leads.filter(l => l.status === "New").length} New` },
+          { id: "toppers", label: "४. टॉपर यशोगाथा", icon: "🏆", badge: `${cmsData.toppers.length}` },
+          { id: "faculty_stats", label: "५. शिक्षक व आकडेवारी", icon: "👨‍🏫" },
+          { id: "centres", label: "६. ऑफलाईन सेंटर्स", icon: "📍", badge: `${cmsData.centres.length}` },
+          { id: "faqs_visibility", label: "७. प्रश्नोत्तरे व विभाग", icon: "⚙️" },
+          { id: "seo_footer", label: "८. सोशल मीडिया व SEO", icon: "🔍" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -326,18 +329,21 @@ export default function WebsiteCmsPage() {
       {/* TAB 1: TOP ANNOUNCEMENT BAR & TICKER */}
       {activeTab === "announcement" && (
         <div className="bg-white dark:bg-slate-900 border border-[#E4E8F8] dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-6">
-          <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E4E8F8] dark:border-slate-800 pb-4">
             <div>
-              <h2 className="text-base font-extrabold text-[#0E1B3D]">
-                Top Announcement Bar & Offer Ticker
-              </h2>
-              <p className="text-xs text-[#5A6478] mt-0.5">
-                Displays a high-visibility marketing announcement strip at the very top of the website.
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📢</span>
+                <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white font-heading">
+                  वेबसाईट मुख्य घोषणा पट्टी (Top Announcement Bar & Ticker)
+                </h2>
+              </div>
+              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1">
+                विद्यार्थ्यांच्या मोबाईल व कॉम्प्युटर स्क्रीनवर सर्वांत वर ठळकपणे दिसणारी ऑफर व महत्त्वाची सूचना पट्टी.
               </p>
             </div>
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <span className="text-xs font-bold text-[#0E1B3D]">
-                {cmsData.announcement.enabled ? "Active (ON)" : "Hidden (OFF)"}
+            <label className="flex items-center gap-2.5 cursor-pointer select-none bg-slate-50 dark:bg-slate-800 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <span className={`text-xs font-bold ${cmsData.announcement.enabled ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
+                {cmsData.announcement.enabled ? "🟢 पट्टी चालू आहे (Active ON)" : "⚪ पट्टी बंद आहे (Hidden OFF)"}
               </span>
               <input
                 type="checkbox"
@@ -348,33 +354,151 @@ export default function WebsiteCmsPage() {
                     announcement: { ...cmsData.announcement, enabled: e.target.checked },
                   })
                 }
-                className="w-4 h-4 rounded text-[#0B57D0] focus:ring-[#0B57D0]"
+                className="w-4 h-4 rounded text-[#0B57D0] focus:ring-[#0B57D0] cursor-pointer"
               />
             </label>
           </div>
 
-          {/* Live Strip Visual Preview */}
+          {/* ⚡ 1-CLICK READYMADE MARATHI TEMPLATES */}
+          <div className="space-y-3 p-4 sm:p-5 bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-purple-50/70 dark:from-slate-800/80 dark:to-slate-800/40 rounded-2xl border border-blue-200/80 dark:border-slate-700">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="text-xs font-extrabold text-[#0E1B3D] dark:text-white flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>रेडीमेड १-क्लिक टेम्पलेट्स (Ready-made Strip Templates)</span>
+              </span>
+              <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-800 px-3 py-1 rounded-full border border-blue-200 dark:border-slate-700 shadow-2xs">
+                फक्त एकावर क्लिक करा – सर्व आपोआप भरेल!
+              </span>
+            </div>
+            <p className="text-[11px] text-[#5A6478] dark:text-slate-400 leading-relaxed">
+              टाईप करण्याची अजिबात गरज नाही! खालीलपैकी कोणत्याही एका पर्यायावर क्लिक करताच संदेश, कूपन कोड, बटण आणि योग्य रंग आपोआप सेट होईल:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+              {ANNOUNCEMENT_TEMPLATES.map((tmpl) => (
+                <button
+                  key={tmpl.id}
+                  type="button"
+                  onClick={() => {
+                    setCmsData({
+                      ...cmsData,
+                      announcement: {
+                        enabled: true,
+                        message: tmpl.message,
+                        tagText: tmpl.tagText,
+                        couponBadge: tmpl.couponBadge,
+                        ctaText: tmpl.ctaText,
+                        ctaUrl: tmpl.ctaUrl,
+                        themeColor: tmpl.themeColor,
+                        animation: "none",
+                      },
+                    });
+                    toast.success(`🎉 "${tmpl.title}" टेम्पलेट यशस्वीपणे लोड झाले!`);
+                  }}
+                  className="p-3.5 bg-white dark:bg-slate-800 hover:bg-blue-50/50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-400 rounded-2xl text-left transition-all shadow-2xs group flex flex-col justify-between space-y-2.5 cursor-pointer active:scale-98"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-[#0E1B3D] dark:text-white flex items-center gap-1.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      <span className="text-base">{tmpl.icon}</span>
+                      <span>{tmpl.title}</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md font-mono font-black text-[10px] bg-amber-100 text-amber-950 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300/60">
+                      {tmpl.couponBadge}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                    {tmpl.message}
+                  </p>
+                  <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-slate-700 text-[10px] text-blue-600 dark:text-blue-400 font-bold">
+                    <span>बटण: {tmpl.ctaText}</span>
+                    <span className="group-hover:translate-x-1 transition-transform">लागू करा →</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* COLOR THEME SWITCHER */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200">
+              🎨 पट्टीचा रंग (Strip Color Theme)
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              {[
+                { id: "navy", label: "रॉयल ब्लू", desc: "अधिकृत व व्यावसायिक", color: "bg-[#0E1B3D] border-blue-400" },
+                { id: "saffron", label: "भगवा / सण", desc: "गुढीपाडवा / सण ऑफर", color: "bg-orange-600 border-amber-400" },
+                { id: "crimson", label: "रेड अलर्ट", desc: "शेवटची तारीख / तातडीचे", color: "bg-red-700 border-rose-400" },
+                { id: "emerald", label: "सक्सेस ग्रीन", desc: "सवलत / ऑफलाईन बॅच", color: "bg-emerald-800 border-emerald-400" },
+                { id: "purple", label: "रॉयल पर्पल", desc: "वेबिनार / क्लास", color: "bg-purple-900 border-purple-400" },
+              ].map((th) => (
+                <button
+                  key={th.id}
+                  type="button"
+                  onClick={() =>
+                    setCmsData({
+                      ...cmsData,
+                      announcement: { ...cmsData.announcement, themeColor: th.id as any },
+                    })
+                  }
+                  className={`p-2.5 rounded-xl border text-left transition flex items-center gap-2.5 cursor-pointer ${
+                    (cmsData.announcement.themeColor || "navy") === th.id
+                      ? "ring-2 ring-blue-500 bg-blue-50/40 dark:bg-slate-800 border-blue-500 shadow-xs"
+                      : "bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-400"
+                  }`}
+                >
+                  <span className={`w-4 h-4 rounded-full shrink-0 shadow-xs ${th.color}`} />
+                  <div className="min-w-0">
+                    <p className="font-bold text-xs text-[#0E1B3D] dark:text-white truncate">{th.label}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{th.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* LIVE STRIP VISUAL PREVIEW */}
           <div>
-            <span className="text-[11px] font-bold text-[#5A6478] uppercase tracking-wider block mb-2">
-              Live Strip Preview
-            </span>
-            <div className="w-full bg-[#0E1B3D] text-white px-4 py-2.5 rounded-xl shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs border border-white/10">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-[#5A6478] dark:text-slate-400 uppercase tracking-wider">
+                वेबसाईटवर अशी दिसेल (Live Visual Strip Preview):
+              </span>
+              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                ● विद्यार्थ्यांच्या स्क्रीनवर Real-time दिसेल
+              </span>
+            </div>
+
+            <div
+              className={`w-full px-4 py-3 rounded-2xl shadow-md flex flex-wrap items-center justify-between gap-3 text-xs border transition-colors ${
+                cmsData.announcement.themeColor === "saffron"
+                  ? "bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white border-amber-400/30"
+                  : cmsData.announcement.themeColor === "crimson"
+                  ? "bg-gradient-to-r from-red-700 via-rose-600 to-red-800 text-white border-rose-400/30"
+                  : cmsData.announcement.themeColor === "emerald"
+                  ? "bg-gradient-to-r from-emerald-800 via-teal-700 to-emerald-900 text-white border-emerald-400/30"
+                  : cmsData.announcement.themeColor === "purple"
+                  ? "bg-gradient-to-r from-purple-900 via-indigo-800 to-purple-950 text-white border-purple-400/30"
+                  : "bg-gradient-to-r from-[#0E1B3D] via-[#0B57D0] to-[#0E1B3D] text-white border-blue-400/20"
+              }`}
+            >
               <div className="flex items-center gap-2 min-w-0">
-                <span className="px-2 py-0.5 rounded-full bg-[#FF453A] text-white font-extrabold text-[10px] uppercase">
-                  Special Offer
+                <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-white font-extrabold text-[10px] uppercase border border-white/30 shrink-0">
+                  {cmsData.announcement.tagText || "विशेष सूचना"}
                 </span>
-                <span className="truncate font-medium">
-                  {cmsData.announcement.message || "Enter announcement text..."}
+                <span className="truncate font-semibold text-xs">
+                  {cmsData.announcement.message || "येथे पट्टीचा मुख्य संदेश टाईप करा..."}
                 </span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {cmsData.announcement.couponBadge && (
-                  <span className="px-2 py-0.5 bg-yellow-400 text-black rounded font-mono font-black text-[11px] tracking-wider">
+                  <span className="px-2.5 py-1 bg-yellow-300 text-slate-950 font-black rounded-md text-[11px] tracking-wider shadow-xs">
                     {cmsData.announcement.couponBadge}
                   </span>
                 )}
-                <span className="bg-[#0052FF] hover:bg-blue-600 text-white font-bold px-3 py-1 rounded-full text-[11px]">
-                  {cmsData.announcement.ctaText || "Enroll Now"}
+                <span className="bg-white text-slate-950 font-bold px-3 py-1 rounded-full text-[11px] shadow-xs">
+                  {cmsData.announcement.ctaText || "प्रवेश घ्या →"}
+                </span>
+                <span className="w-5 h-5 rounded-full bg-black/30 flex items-center justify-center text-[10px] text-white/80">
+                  ✕
                 </span>
               </div>
             </div>
@@ -382,27 +506,28 @@ export default function WebsiteCmsPage() {
 
           {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
-                Announcement Message (English)
+            <div>
+              <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                १. टॅग बॅज मजकूर (Tag / Label Text)
               </label>
               <input
                 type="text"
-                value={cmsData.announcement.message}
+                value={cmsData.announcement.tagText || ""}
                 onChange={(e) =>
                   setCmsData({
                     ...cmsData,
-                    announcement: { ...cmsData.announcement, message: e.target.value },
+                    announcement: { ...cmsData.announcement, tagText: e.target.value },
                   })
                 }
-                placeholder="e.g. New Cognitive Memory &amp; Vedic Maths Batches Starting This Monday at Satara &amp; Pune Centres!"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-sm text-[#0E1B3D]"
+                placeholder="उदा. ⚡ नवीन बॅच किंवा 🚩 सण ऑफर"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-xs font-semibold text-[#0E1B3D] dark:text-white"
               />
+              <p className="text-[10px] text-[#5A6478] dark:text-slate-400 mt-1">पट्टीच्या डाव्या बाजूला दिसणारा लहान बॅज.</p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
-                Active Coupon Code Badge (Optional)
+              <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                २. ॲक्टिव्ह कूपन कोड (Coupon Code Badge - १-क्लिक कॉपी होईल)
               </label>
               <input
                 type="text"
@@ -413,14 +538,34 @@ export default function WebsiteCmsPage() {
                     announcement: { ...cmsData.announcement, couponBadge: e.target.value.toUpperCase() },
                   })
                 }
-                placeholder="e.g. PRASHANT20"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-sm text-[#0E1B3D] uppercase font-mono"
+                placeholder="उदा. POLICE50 किंवा GUDHI50"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-xs font-mono font-bold text-[#0E1B3D] dark:text-white uppercase"
               />
+              <p className="text-[10px] text-[#5A6478] dark:text-slate-400 mt-1">विद्यार्थी यावर क्लिक करून कूपन लगेच कॉपी करू शकतात.</p>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                ३. पट्टीवरील मुख्य संदेश (Announcement Headline) *
+              </label>
+              <input
+                type="text"
+                value={cmsData.announcement.message}
+                onChange={(e) =>
+                  setCmsData({
+                    ...cmsData,
+                    announcement: { ...cmsData.announcement, message: e.target.value },
+                  })
+                }
+                placeholder="उदा. नवीन पोलीस भरती व सरळसेवा १००% परिपूर्ण तयारी बॅच सुरू! मर्यादित जागा उपलब्ध."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-xs font-bold text-[#0E1B3D] dark:text-white"
+              />
+              <p className="text-[10px] text-[#5A6478] dark:text-slate-400 mt-1">वेबसाईटवर सर्वांत वर ठळकपणे दिसणारा मुख्य मजकूर.</p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
-                CTA Button Text
+              <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                ४. बटणाचा मजकूर (Action Button Text)
               </label>
               <input
                 type="text"
@@ -431,14 +576,14 @@ export default function WebsiteCmsPage() {
                     announcement: { ...cmsData.announcement, ctaText: e.target.value },
                   })
                 }
-                placeholder="e.g. Enroll with 20% Off"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-sm text-[#0E1B3D]"
+                placeholder="उदा. प्रवेश घ्या → किंवा सवलत मिळवा →"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-xs font-bold text-[#0E1B3D] dark:text-white"
               />
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-[#0E1B3D] mb-1">
-                CTA Button Target Link / Path
+            <div>
+              <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
+                ५. बटणाची लिंक (Action Button Link)
               </label>
               <input
                 type="text"
@@ -449,8 +594,8 @@ export default function WebsiteCmsPage() {
                     announcement: { ...cmsData.announcement, ctaUrl: e.target.value },
                   })
                 }
-                placeholder="e.g. /courses or https://app.mindmasteredu.in/checkout"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-sm text-[#0E1B3D]"
+                placeholder="उदा. /courses किंवा /help"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-xs font-mono text-[#0E1B3D] dark:text-white"
               />
             </div>
           </div>

@@ -7,7 +7,80 @@ export interface AnnouncementConfig {
   couponBadge: string;
   ctaText: string;
   ctaUrl: string;
+  themeColor?: "navy" | "saffron" | "crimson" | "emerald" | "purple";
+  tagText?: string;
+  animation?: "none" | "marquee" | "pulse";
 }
+
+export interface AnnouncementTemplate {
+  id: string;
+  title: string;
+  icon: string;
+  tagText: string;
+  message: string;
+  couponBadge: string;
+  ctaText: string;
+  ctaUrl: string;
+  themeColor: "navy" | "saffron" | "crimson" | "emerald" | "purple";
+}
+
+export const ANNOUNCEMENT_TEMPLATES: AnnouncementTemplate[] = [
+  {
+    id: "police_bharti",
+    title: "पोलीस भरती विशेष बॅच",
+    icon: "⚡",
+    tagText: "नवीन बॅच",
+    message: "नवीन पोलीस भरती व सरळसेवा १००% परिपूर्ण तयारी बॅच सुरू! मर्यादित जागा उपलब्ध.",
+    couponBadge: "POLICE50",
+    ctaText: "प्रवेश घ्या →",
+    ctaUrl: "/courses",
+    themeColor: "navy",
+  },
+  {
+    id: "free_webinar",
+    title: "मोफत मेमरी वेबिनार",
+    icon: "🎯",
+    tagText: "मोफत क्लास",
+    message: "या रविवारी संध्या. ७ वा. प्रशांत सरांचा लाईव्ह मेमरी व एकाग्रता सायन्स क्लास!",
+    couponBadge: "FREECLASS",
+    ctaText: "मोफत नावनोंदणी →",
+    ctaUrl: "/courses",
+    themeColor: "purple",
+  },
+  {
+    id: "festival_offer",
+    title: "सण / गुढीपाडवा ५०% सवलत",
+    icon: "🚩",
+    tagText: "महा-ऑफर",
+    message: "गुढीपाडवा विशेष महा-सवलत: सर्व डिजिटल कोर्सेसवर ५०% थेट सूट!",
+    couponBadge: "GUDHI50",
+    ctaText: "सवलत मिळवा →",
+    ctaUrl: "/courses",
+    themeColor: "saffron",
+  },
+  {
+    id: "urgent_last_chance",
+    title: "अंतिम मुदत अलर्ट",
+    icon: "⏳",
+    tagText: "शेवटची संधी",
+    message: "आज मध्यरात्री १२ वाजता प्रवेश सवलत बंद होत आहे! शेवटच्या ५ जागा शिल्लक.",
+    couponBadge: "LASTCHANCE",
+    ctaText: "लगेच सवलत मिळवा →",
+    ctaUrl: "/courses",
+    themeColor: "crimson",
+  },
+  {
+    id: "offline_centres",
+    title: "सातारा व पुणे ऑफलाईन",
+    icon: "🏢",
+    tagText: "क्लासरूम प्रवेश",
+    message: "सातारा मुख्यालय व पुणे सेंटरवर ऑफलाईन बॅचेस सुरू! थेट क्लासरूम प्रवेशासाठी संपर्क.",
+    couponBadge: "OFFLINE2026",
+    ctaText: "सेंटर माहिती पहा →",
+    ctaUrl: "/help",
+    themeColor: "emerald",
+  },
+];
 
 export interface HeroConfig {
   headline: string;
@@ -132,11 +205,14 @@ export interface WebsiteCmsData {
 
 export const DEFAULT_WEBSITE_CMS: WebsiteCmsData = {
   announcement: {
-    enabled: false,
-    message: "",
-    couponBadge: "",
-    ctaText: "",
-    ctaUrl: "",
+    enabled: true,
+    message: "नवीन पोलीस भरती व सरळसेवा १००% परिपूर्ण तयारी बॅच सुरू! मर्यादित जागा उपलब्ध.",
+    couponBadge: "POLICE50",
+    ctaText: "प्रवेश घ्या →",
+    ctaUrl: "/courses",
+    themeColor: "navy",
+    tagText: "नवीन बॅच",
+    animation: "none",
   },
   hero: {
     headline: "Train Your Mind. Master Your Memory. Succeed Anywhere.",
