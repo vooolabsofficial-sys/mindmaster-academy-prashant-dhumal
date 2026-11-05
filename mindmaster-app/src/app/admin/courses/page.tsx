@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { toast } from "sonner";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -21,6 +22,10 @@ import {
 import {
   saveLessonToSupabase,
   syncCourseLessonCount,
+  deleteLessonFromSupabase,
+  fetchDbVideos,
+  getStoredVideos,
+  extractYouTubeVideoId,
   ExtendedVideoRow,
 } from "@/lib/playlistStore";
 import {
@@ -43,18 +48,31 @@ import {
   Loader2,
   RotateCcw,
   X,
+  Eye,
+  ExternalLink,
+  ChevronUp,
+  ChevronDown,
+  Filter,
+  Check,
+  Film,
+  Users,
+  Info,
 } from "lucide-react";
 import CategoryManagerModal from "@/components/admin/CategoryManagerModal";
 import RecycleBinModal from "@/components/admin/RecycleBinModal";
 import {
   CategoryItem,
   getCategories,
-  DEFAULT_CATEGORIES,
+  saveCategory,
+  renameCategory,
+  deleteCategory,
+  moveCategory,
   addToRecycleBin,
   restoreFromRecycleBin,
   getRecycleBinItems,
   RecycleBinItem,
 } from "@/lib/categoryStore";
+import { useLanguage } from "@/lib/LanguageContext";
 
 function YoutubeIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
@@ -64,18 +82,15 @@ function YoutubeIcon({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
-// Fallback / Initial Category Options
-const TARGET_CATEGORY_OPTIONS = DEFAULT_CATEGORIES;
-
-// Course Validity Presets
+// Student-Relative Course Validity Presets
 const VALIDITY_PRESETS = [
-  { id: "15_days", label: "१५ दिवस (15 Days)", days: 15, months: 1 },
-  { id: "1_month", label: "१ महिना (30 Days)", days: 30, months: 1 },
-  { id: "3_months", label: "३ महिने (90 Days)", days: 90, months: 3 },
-  { id: "6_months", label: "६ महिने (180 Days)", days: 180, months: 6 },
-  { id: "12_months", label: "१ वर्ष (365 Days)", days: 365, months: 12 },
-  { id: "24_months", label: "२ वर्षे (730 Days)", days: 730, months: 24 },
-  { id: "lifetime", label: "आजीवन ऍक्सेस (Lifetime)", days: 3650, months: 120 },
+  { id: "15_days", labelEn: "15 Days", labelMr: "१५ दिवस", days: 15, months: 1 },
+  { id: "1_month", labelEn: "1 Month (30 Days)", labelMr: "१ महिना (३० दिवस)", days: 30, months: 1 },
+  { id: "3_months", labelEn: "3 Months (90 Days)", labelMr: "३ महिने (९० दिवस)", days: 90, months: 3 },
+  { id: "6_months", labelEn: "6 Months (180 Days)", labelMr: "६ महिने (१८० दिवस)", days: 180, months: 6 },
+  { id: "12_months", labelEn: "1 Year (365 Days)", labelMr: "१ वर्ष (३६५ दिवस)", days: 365, months: 12 },
+  { id: "24_months", labelEn: "2 Years (730 Days)", labelMr: "२ वर्षे (७३० दिवस)", days: 730, months: 24 },
+  { id: "lifetime", labelEn: "Lifetime Access", labelMr: "आजीवन ऍक्सेस", days: 3650, months: 120 },
 ];
 
 function generateNextCourseCode(existingCourses: Course[]): string {
@@ -101,1365 +116,1838 @@ interface FetchedPlaylistItem {
   selected: boolean;
 }
 
-export default function CourseManagerPage() {
+export default function ContentStudioPageWrapper({ initialTab = "courses" }: { initialTab?: "courses" | "videos" | "categories" }) {
+  return (
+    <Suspense fallback={<div className="p-8 text-center"><Spinner /></div>}>
+      <ContentStudioContent initialTab={initialTab} />
+    </Suspense>
+  );
+}
+
+function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "courses" | "videos" | "categories" }) {
   const pathname = usePathname();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const { currentLanguage } = useLanguage();
+  const isMarathi = currentLanguage === "mr";
+
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [videos, setVideos] = useState<ExtendedVideoRow[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Filters State
+  // Studio Mode: "list" | "course_studio" | "video_studio"
+  const [studioMode, setStudioMode] = useState<"list" | "course_studio" | "video_studio">("list");
+  
+  // Segmented Tabs: "courses" | "videos" | "categories"
+  const tabParam = searchParams?.get("tab");
+  const [activeTab, setActiveTab] = useState<"courses" | "videos" | "categories">(
+    tabParam === "videos" || initialTab === "videos"
+      ? "videos"
+      : tabParam === "categories" || initialTab === "categories"
+      ? "categories"
+      : "courses"
+  );
+
+  // Search & Filters State
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "live" | "scheduled" | "closed">("all");
-  const [typeFilter, setTypeFilter] = useState<"all" | "free" | "paid">("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "live" | "draft" | "unlisted">("all");
+  const [sortOption, setSortOption] = useState<"date_desc" | "date_asc" | "title_asc" | "students_desc" | "views_desc">("date_desc");
 
-  // Drawer State
-  const [isDrawerOpen, setIsDrawerOpen] = useState(pathname?.includes("builder"));
+  // Recycle Bin State
+  const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false);
+  const [recycleCount, setRecycleCount] = useState(0);
+  const [undoToast, setUndoToast] = useState<{ id: string; title: string; itemType: string } | null>(null);
+
+  // Category Manager Modal State
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+
+  // ----------------------------------------------------
+  // COURSE STUDIO (INLINE CUSTOMIZATION WORKSPACE) STATE
+  // ----------------------------------------------------
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingCourse, setIsSavingCourse] = useState(false);
 
-  // YouTube Fetcher State
+  // Course Form Fields
+  const [formCode, setFormCode] = useState("MM-01");
+  const [formTitle, setFormTitle] = useState("");
+  const [formTitleMr, setFormTitleMr] = useState("");
+  const [targetCategoryKey, setTargetCategoryKey] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formThumbnail, setFormThumbnail] = useState("");
+  const [isFree, setIsFree] = useState(false);
+  const [formPrice, setFormPrice] = useState(999);
+  const [formOriginalPrice, setFormOriginalPrice] = useState(2999);
+  const [formVisibility, setFormVisibility] = useState<"live" | "draft" | "unlisted">("live");
+
+  // Student-Relative Validity
+  const [validityMode, setValidityMode] = useState<"preset" | "custom_days" | "custom_months">("preset");
+  const [selectedPresetId, setSelectedPresetId] = useState("3_months");
+  const [customDays, setCustomDays] = useState(90);
+  const [customMonths, setCustomMonths] = useState(3);
+
+  // Standards (School / College scope)
+  const [selectedStandards, setSelectedStandards] = useState<number[]>([]);
+
+  // YouTube Playlist / Instant Video Import State
   const [youtubeInputUrl, setYoutubeInputUrl] = useState("");
   const [isFetchingYt, setIsFetchingYt] = useState(false);
   const [ytFetchError, setYtFetchError] = useState<string | null>(null);
   const [ytFetchSuccess, setYtFetchSuccess] = useState<string | null>(null);
   const [fetchedPlaylistVideos, setFetchedPlaylistVideos] = useState<FetchedPlaylistItem[]>([]);
 
-  // Form Fields State
-  const [formCode, setFormCode] = useState("MM-01");
-  const [formTitle, setFormTitle] = useState("");
-  const [formTitleMr, setFormTitleMr] = useState("");
-  const [targetCategoryKey, setTargetCategoryKey] = useState("school_5_10");
-  const [formDescription, setFormDescription] = useState("");
-  const [formThumbnail, setFormThumbnail] = useState("");
-  const [isFree, setIsFree] = useState(false);
-  const [formPrice, setFormPrice] = useState(199);
-  const [formOriginalPrice, setFormOriginalPrice] = useState(999);
+  // ----------------------------------------------------
+  // VIDEO STUDIO (INLINE WORKSPACE) STATE
+  // ----------------------------------------------------
+  const [editingVideo, setEditingVideo] = useState<ExtendedVideoRow | null>(null);
+  const [isSavingVideo, setIsSavingVideo] = useState(false);
+  const [videoTargetCourseId, setVideoTargetCourseId] = useState("");
+  const [videoLink, setVideoLink] = useState("");
+  const [videoTitle, setVideoTitle] = useState("");
+  const [videoPosition, setVideoPosition] = useState(1);
+  const [videoDurationMinutes, setVideoDurationMinutes] = useState(15);
+  const [videoIsFreePreview, setVideoIsFreePreview] = useState(false);
+  const [videoDescription, setVideoDescription] = useState("");
+  const [isFetchingVideoMeta, setIsFetchingVideoMeta] = useState(false);
 
-  // Validity Mode: "preset" | "custom_days" | "custom_months" | "fixed_date"
-  const [validityMode, setValidityMode] = useState<"preset" | "custom_days" | "custom_months" | "fixed_date">("preset");
-  const [selectedPresetId, setSelectedPresetId] = useState("6_months");
-  const [customDays, setCustomDays] = useState(45);
-  const [customMonths, setCustomMonths] = useState(18);
-  const [fixedExpiryDate, setFixedExpiryDate] = useState("");
-
-  const [formStatus, setFormStatus] = useState<"live" | "upcoming" | "draft">("live");
-  const [isLive, setIsLive] = useState(true);
-  const [segmentType, setSegmentType] = useState<"all" | "district" | "standard">("all");
-
-  // Dynamic Categories State
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-
-  // Recycle Bin & Undo Toast State
-  const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false);
-  const [recycleCount, setRecycleCount] = useState(0);
-  const [undoToast, setUndoToast] = useState<{ id: string; title: string } | null>(null);
-
-  // Delete Modal State
-  const [deleteModalCourse, setDeleteModalCourse] = useState<Course | null>(null);
+  // Delete Confirmation Modal
+  const [deleteModalItem, setDeleteModalItem] = useState<{ id: string; title: string; type: "course" | "video" | "category" } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Load Courses from Supabase (Source of Truth)
-  const reloadFromSupabase = async () => {
+  // Load Data
+  const loadData = async () => {
     setIsLoading(true);
-    setStaff(getCurrentStaff());
     try {
-      const dbCourses = await fetchDbCourses();
-      setCourses(dbCourses);
+      const liveCourses = await fetchDbCourses();
+      const loadedCourses = liveCourses && liveCourses.length > 0 ? liveCourses : getStaffCourses();
+      setCourses(loadedCourses);
+
+      const liveVideos = await fetchDbVideos();
+      const loadedVideos = liveVideos && liveVideos.length > 0 ? liveVideos : getStoredVideos();
+      setVideos(loadedVideos);
+
+      const dynamicCategories = getCategories();
+      setCategories(dynamicCategories);
+
+      setRecycleCount(getRecycleBinItems().length);
     } catch (e) {
-      console.warn("Failed to load courses from Supabase, fallback to local:", e);
-      setCourses(getStaffCourses());
+      console.error("Content studio data fetch error:", e);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    setCategories(getCategories());
-    setRecycleCount(getRecycleBinItems().length);
-    reloadFromSupabase();
+    loadData();
 
-    const handleSync = () => reloadFromSupabase();
-    const handleCatsChange = () => setCategories(getCategories());
-    const handleBinChange = () => setRecycleCount(getRecycleBinItems().length);
+    const handleCategoryChange = () => setCategories(getCategories());
+    const handleRecycleChange = () => setRecycleCount(getRecycleBinItems().length);
+    const handleStaffChange = () => setStaff(getCurrentStaff());
 
-    window.addEventListener("mma_courses_changed", handleSync);
-    window.addEventListener("mma_categories_changed", handleCatsChange);
-    window.addEventListener("mma_recycle_bin_changed", handleBinChange);
+    window.addEventListener("mma_categories_changed", handleCategoryChange);
+    window.addEventListener("mindmaster_categories_updated", handleCategoryChange);
+    window.addEventListener("mma_recycle_bin_changed", handleRecycleChange);
+    window.addEventListener("mma_staff_changed", handleStaffChange);
+
     return () => {
-      window.removeEventListener("mma_courses_changed", handleSync);
-      window.removeEventListener("mma_categories_changed", handleCatsChange);
-      window.removeEventListener("mma_recycle_bin_changed", handleBinChange);
+      window.removeEventListener("mma_categories_changed", handleCategoryChange);
+      window.removeEventListener("mindmaster_categories_updated", handleCategoryChange);
+      window.removeEventListener("mma_recycle_bin_changed", handleRecycleChange);
+      window.removeEventListener("mma_staff_changed", handleStaffChange);
     };
   }, []);
 
-  const isMainAdmin = staff.role === "main_admin";
-
-  // Calculate current effective validity label & months
+  // Calculate Student-Relative Validity
   const getEffectiveValidity = () => {
     if (validityMode === "preset") {
-      const p = VALIDITY_PRESETS.find((x) => x.id === selectedPresetId) || VALIDITY_PRESETS[3];
-      return { label: p.label, days: p.days, months: p.months, removeAt: null };
+      const p = VALIDITY_PRESETS.find((x) => x.id === selectedPresetId) || VALIDITY_PRESETS[2];
+      return {
+        label: isMarathi ? p.labelMr : p.labelEn,
+        days: p.days,
+        months: p.months,
+      };
     }
     if (validityMode === "custom_days") {
       const days = Math.max(1, customDays);
-      const months = Math.max(1, Math.ceil(days / 30));
-      return { label: `${days} दिवस (${days} Days)`, days, months, removeAt: null };
+      const months = Math.max(1, Math.round(days / 30));
+      return {
+        label: isMarathi ? `${days} दिवस` : `${days} Days`,
+        days,
+        months,
+      };
     }
     if (validityMode === "custom_months") {
       const months = Math.max(1, customMonths);
       const days = months * 30;
-      return { label: `${months} महिने (${months} Months)`, days, months, removeAt: null };
-    }
-    if (validityMode === "fixed_date" && fixedExpiryDate) {
-      const targetTime = new Date(fixedExpiryDate).getTime();
-      const diffMs = targetTime - Date.now();
-      const days = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-      const months = Math.max(1, Math.ceil(days / 30));
       return {
-        label: `परीक्षा दिनांक: ${fixedExpiryDate}`,
+        label: isMarathi ? `${months} महिने` : `${months} Months`,
         days,
         months,
-        removeAt: new Date(fixedExpiryDate).toISOString(),
       };
     }
-    return { label: "६ महिने (6 Months)", days: 180, months: 6, removeAt: null };
+    return {
+      label: isMarathi ? "३ महिने" : "3 Months",
+      days: 90,
+      months: 3,
+    };
   };
 
-  // Open Drawer for New Course
-  const handleOpenAdd = () => {
-    setEditingCourse(null);
-    const nextCode = generateNextCourseCode(courses);
-    setFormCode(nextCode);
-    setFormTitle("");
-    setFormTitleMr("");
-    setTargetCategoryKey("school_5_10");
-    setFormDescription("");
-    setFormThumbnail("");
-    setIsFree(false);
-    setFormPrice(199);
-    setFormOriginalPrice(999);
-    setValidityMode("preset");
-    setSelectedPresetId("6_months");
-    setCustomDays(45);
-    setCustomMonths(18);
-    setFixedExpiryDate("");
-    setFormStatus("live");
+  // Open Course Studio
+  const handleOpenCourseStudio = (course?: Course) => {
+    if (course) {
+      setEditingCourse(course);
+      setFormCode(course.code || "MM-01");
+      setFormTitle(course.title || "");
+      setFormTitleMr(course.titleMr || course.title || "");
+      setTargetCategoryKey(course.category || (categories[0]?.key || ""));
+      setFormDescription(course.description || "");
+      setFormThumbnail(course.imageSrc || "");
+      setIsFree(Boolean(course.isFree || course.pricePaise === 0));
+      setFormPrice(Math.round((course.pricePaise || 99900) / 100));
+      setFormOriginalPrice(Math.round((course.originalPricePaise || 299900) / 100));
+      setFormVisibility(course.status === "draft" ? "draft" : "live");
+      setSelectedStandards(course.standards || []);
+
+      if (course.validityDays && course.validityDays !== course.accessMonths * 30) {
+        setValidityMode("custom_days");
+        setCustomDays(course.validityDays);
+      } else {
+        const matched = VALIDITY_PRESETS.find((p) => p.months === (course.accessMonths || 3));
+        if (matched) {
+          setValidityMode("preset");
+          setSelectedPresetId(matched.id);
+        } else {
+          setValidityMode("custom_months");
+          setCustomMonths(course.accessMonths || 3);
+        }
+      }
+    } else {
+      setEditingCourse(null);
+      setFormCode(generateNextCourseCode(courses));
+      setFormTitle("");
+      setFormTitleMr("");
+      setTargetCategoryKey(categories[0]?.key || "");
+      setFormDescription("");
+      setFormThumbnail("");
+      setIsFree(false);
+      setFormPrice(999);
+      setFormOriginalPrice(2999);
+      setFormVisibility("live");
+      setSelectedStandards([]);
+      setValidityMode("preset");
+      setSelectedPresetId("3_months");
+    }
+
     setYoutubeInputUrl("");
     setYtFetchError(null);
     setYtFetchSuccess(null);
     setFetchedPlaylistVideos([]);
-    setIsDrawerOpen(true);
+    setStudioMode("course_studio");
   };
 
-  // Open Drawer for Edit
-  const handleOpenEdit = (c: Course) => {
-    setEditingCourse(c);
-    setFormCode(c.code);
-    setFormTitle(c.title);
-    setFormTitleMr(c.titleMr || c.title);
-    setFormDescription(c.description || "");
-    setFormThumbnail(c.imageSrc || "");
-    setIsFree(Boolean(c.isFree) || c.pricePaise === 0);
-    setFormPrice(Math.round(c.pricePaise / 100));
-    setFormOriginalPrice(Math.round((c.originalPricePaise || c.pricePaise * 2) / 100));
-    setFormStatus(c.status === "upcoming" ? "upcoming" : c.status === "closed" ? "draft" : "live");
-
-    // Match Target Category
-    const currentCats = categories.length > 0 ? categories : TARGET_CATEGORY_OPTIONS;
-    const matchedCategory = currentCats.find((t) => {
-      if (t.key === c.category) return true;
-      if (c.category === "trainer") return t.key === "teacher_training" || t.key === "educators";
-      if (c.category === "memory") return t.key === "vedic_memory";
-      if (c.standards && c.standards.includes(11)) return t.key === "junior_college_11_12";
-      if (c.standards && c.standards.includes(5) && c.standards.length === 2) return t.key === "scholarship_nmms";
-      return false;
-    }) || currentCats[0];
-    setTargetCategoryKey(matchedCategory ? matchedCategory.key : "school_5_10");
-
-    // Match Validity
-    if (c.removeAt) {
-      setValidityMode("fixed_date");
-      setFixedExpiryDate(c.removeAt.slice(0, 10));
-    } else if (c.validityDays && c.validityDays !== c.accessMonths * 30) {
-      setValidityMode("custom_days");
-      setCustomDays(c.validityDays);
+  // Open Video Studio
+  const handleOpenVideoStudio = (video?: ExtendedVideoRow) => {
+    if (video) {
+      setEditingVideo(video);
+      setVideoTargetCourseId(video.courseId || courses[0]?.id || "");
+      setVideoLink(video.videoType === "youtube" ? `https://youtube.com/watch?v=${video.videoId}` : video.videoId);
+      setVideoTitle(video.title || "");
+      setVideoPosition(video.position || 1);
+      setVideoDurationMinutes(Math.max(1, Math.round((video.durationSec || 900) / 60)));
+      setVideoIsFreePreview(Boolean(video.isFree));
+      setVideoDescription(video.description || "");
     } else {
-      setValidityMode("preset");
-      const matchedPreset = VALIDITY_PRESETS.find((p) => p.months === (c.accessMonths || 6));
-      setSelectedPresetId(matchedPreset ? matchedPreset.id : "6_months");
+      setEditingVideo(null);
+      setVideoTargetCourseId(courses[0]?.id || "");
+      setVideoLink("");
+      setVideoTitle("");
+      setVideoPosition(videos.length + 1);
+      setVideoDurationMinutes(15);
+      setVideoIsFreePreview(false);
+      setVideoDescription("");
     }
-
-    setYoutubeInputUrl(c.youtubeUrl || "");
-    setYtFetchError(null);
-    setYtFetchSuccess(null);
-    setFetchedPlaylistVideos([]);
-    setIsDrawerOpen(true);
+    setStudioMode("video_studio");
   };
 
-  // Fetch YouTube Info (Video or Playlist)
-  const handleFetchFromYouTube = async () => {
-    if (!youtubeInputUrl.trim()) {
-      setYtFetchError("कृपया YouTube Playlist किंवा Video ची लिंक टाका.");
-      return;
-    }
-
+  // YouTube Playlist / Single Video Fetcher
+  const handleFetchYoutubeContent = async () => {
+    if (!youtubeInputUrl.trim()) return;
     setIsFetchingYt(true);
     setYtFetchError(null);
     setYtFetchSuccess(null);
 
     try {
-      const res = await fetch("/api/youtube/playlist", {
+      const res = await fetch("/api/youtube", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: youtubeInputUrl.trim() }),
       });
-
       const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "YouTube माहिती आयात करता आली नाही.");
+
+      if (!res.ok || data.error) {
+        setYtFetchError(data.error || (isMarathi ? "व्हिडिओ लिंक शोधता आली नाही." : "Could not fetch YouTube content."));
+        return;
       }
 
-      // Populate Title & Description
-      if (data.title) {
-        setFormTitle(data.title);
-        if (!formTitleMr) {
-          setFormTitleMr(data.title);
+      if (data.type === "playlist" && data.items && data.items.length > 0) {
+        if (!formTitle) setFormTitle(data.title || "YouTube Masterclass Series");
+        if (!formTitleMr) setFormTitleMr(data.title || "YouTube Masterclass Series");
+        if (data.items[0]?.thumbnailUrl && !formThumbnail) {
+          setFormThumbnail(data.items[0].thumbnailUrl);
         }
-      }
 
-      if (data.description) {
-        setFormDescription(data.description);
-      }
-
-      if (data.thumbnailUrl) {
-        setFormThumbnail(data.thumbnailUrl);
-      }
-
-      // Playlist vs Single Video items
-      if (data.items && Array.isArray(data.items)) {
-        const mappedItems: FetchedPlaylistItem[] = data.items.map((item: any, idx: number) => ({
-          videoId: item.videoId,
-          title: item.title,
-          durationSec: item.durationSec || 900,
-          durationFormatted: item.durationFormatted || "15:00",
-          thumbnailUrl: item.thumbnailUrl || `https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg`,
+        const itemsWithSelection: FetchedPlaylistItem[] = data.items.map((it: any, idx: number) => ({
+          videoId: it.videoId,
+          title: it.title,
+          durationSec: it.durationSec || 900,
+          durationFormatted: it.durationFormatted || "15:00",
+          thumbnailUrl: it.thumbnailUrl,
           position: idx + 1,
-          isFree: idx === 0, // First video free by default
+          isFree: idx === 0,
           selected: true,
         }));
-        setFetchedPlaylistVideos(mappedItems);
+
+        setFetchedPlaylistVideos(itemsWithSelection);
+        setYtFetchSuccess(
+          isMarathi
+            ? `✓ ${data.items.length} व्हिडिओ सापडले! खालील लेक्चर्स तपासा.`
+            : `✓ Found ${data.items.length} videos from YouTube Playlist!`
+        );
+      } else if (data.type === "video") {
+        if (!formTitle) setFormTitle(data.title);
+        if (!formTitleMr) setFormTitleMr(data.title);
+        if (data.thumbnailUrl && !formThumbnail) setFormThumbnail(data.thumbnailUrl);
+
+        setFetchedPlaylistVideos([
+          {
+            videoId: data.videoId,
+            title: data.title,
+            durationSec: data.durationSec || 900,
+            durationFormatted: data.durationFormatted || "15:00",
+            thumbnailUrl: data.thumbnailUrl,
+            position: 1,
+            isFree: true,
+            selected: true,
+          },
+        ]);
 
         setYtFetchSuccess(
-          data.type === "playlist"
-            ? `🎉 YouTube प्लेलिस्ट यशस्वीपणे लोड झाली! ${mappedItems.length} लेक्चर्स सापडले.`
-            : `🎉 YouTube व्हिडिओची माहिती यशस्वीपणे लोड झाली!`
+          isMarathi
+            ? `✓ YouTube व्हिडिओ सापडला: "${data.title}"`
+            : `✓ Fetched video: "${data.title}"`
         );
       }
     } catch (err: any) {
-      console.error("YouTube Fetch Error:", err);
-      setYtFetchError(err.message || "YouTube URL तपासा किंवा इंटरनेट कनेक्शन तपासा.");
+      setYtFetchError(err.message || (isMarathi ? "नेटवर्क त्रुटी आली." : "Network connection error."));
     } finally {
       setIsFetchingYt(false);
     }
   };
 
-  // Toggle Video Selection in Playlist Import List
-  const handleTogglePlaylistItemSelect = (idx: number) => {
-    setFetchedPlaylistVideos((prev) =>
-      prev.map((v, i) => (i === idx ? { ...v, selected: !v.selected } : v))
-    );
-  };
-
-  // Toggle Free Demo Preview for a video in Playlist Import List
-  const handleTogglePlaylistItemFree = (idx: number) => {
-    setFetchedPlaylistVideos((prev) =>
-      prev.map((v, i) => (i === idx ? { ...v, isFree: !v.isFree } : v))
-    );
-  };
-
-  // Save Course Handler (100% Live Supabase Sync)
+  // Save Course Handler
   const handleSaveCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim()) {
-      toast.error("कृपया कोर्सचे नाव प्रविष्ट करा.");
+      toast.error(isMarathi ? "कृपया कोर्सचे नाव टाका." : "Please enter course title.");
       return;
     }
 
-    setIsSaving(true);
-    const currentCats = categories.length > 0 ? categories : TARGET_CATEGORY_OPTIONS;
-    const selectedTargetCategory =
-      currentCats.find((t) => t.key === targetCategoryKey) ||
-      currentCats[0] ||
-      TARGET_CATEGORY_OPTIONS[0];
-
+    setIsSavingCourse(true);
     const validity = getEffectiveValidity();
+    const courseId = editingCourse?.id || `course_${Date.now()}`;
 
-    const courseData: Course = {
-      id: editingCourse ? editingCourse.id : `c-${Date.now()}`,
-      code: formCode.trim().toUpperCase(),
+    const newCourse: Course = {
+      id: courseId,
+      code: formCode.trim().toUpperCase() || "MM-01",
       title: formTitle.trim(),
       titleMr: formTitleMr.trim() || formTitle.trim(),
-      subtitle: editingCourse ? editingCourse.subtitle : "प्रशांत धुमाळ सर • MindMaster Certified",
-      description: formDescription.trim() || "MindMaster Certified Video Training Curriculum.",
-      headerTint: "sky",
-      pricePaise: isFree ? 0 : formPrice * 100,
-      originalPricePaise: isFree ? 0 : (formOriginalPrice || formPrice * 2) * 100,
-      isFree,
+      subtitle: `${validity.label} Access • English & Marathi`,
+      description: formDescription.trim() || "Complete comprehensive masterclass curriculum by Prashant Dhumal Sir.",
+      headerTint: editingCourse?.headerTint || "sky",
+      pricePaise: isFree ? 0 : Math.round(Number(formPrice) * 100),
+      originalPricePaise: isFree ? 0 : Math.round(Number(formOriginalPrice) * 100),
+      isFree: Boolean(isFree),
       accessMonths: validity.months,
       validityDays: validity.days,
       validityLabel: validity.label,
-      status: formStatus === "draft" ? "closed" : formStatus,
-      badgeText: isFree ? "मोफत (FREE)" : selectedTargetCategory.badge,
+      status: formVisibility,
+      badgeText: isFree ? "FREE" : "POPULAR",
       badgeType: isFree ? "free" : "popular",
-      imageSrc:
-        formThumbnail.trim() ||
-        (fetchedPlaylistVideos[0]?.videoId
-          ? `https://i.ytimg.com/vi/${fetchedPlaylistVideos[0].videoId}/maxresdefault.jpg`
-          : "/assets/images/student_mindmaps_notebook.png"),
-      instructorName: "Prashant Dhumal Sir",
-      instructorTitle: "International Memory Record Holder & Author",
-      totalStudents: editingCourse ? editingCourse.totalStudents : 0,
-      rating: editingCourse ? editingCourse.rating : 5.0,
-      ratingCount: editingCourse ? editingCourse.ratingCount : 1,
-      lessonsCount: editingCourse
-        ? editingCourse.lessonsCount
-        : fetchedPlaylistVideos.filter((v) => v.selected).length,
-      totalDurationHours: editingCourse ? editingCourse.totalDurationHours : 10.0,
-      category: selectedTargetCategory.category,
-      audienceType: selectedTargetCategory.audienceType,
-      standards: selectedTargetCategory.standards,
+      imageSrc: formThumbnail.trim() || "/assets/images/student_mindmaps_notebook.png",
+      instructorName: "Prashant Dhumal",
+      instructorTitle: "Director & Memory Coach",
+      totalStudents: editingCourse?.totalStudents || 0,
+      rating: editingCourse?.rating || 4.9,
+      ratingCount: editingCourse?.ratingCount || 128,
+      lessonsCount: editingCourse?.lessonsCount || fetchedPlaylistVideos.length || 1,
+      totalDurationHours: editingCourse?.totalDurationHours || 2,
+      category: targetCategoryKey as any,
       features: [
-        `वैधता: ${validity.label}`,
-        "सर्व व्हिडिओ लेक्चर्स (HD Video)",
-        "डिजिटल वर्कबुक व नोट्स (PDF)",
-        "अधिकृत ई-सर्टिफिकेट",
+        `${validity.label} Personal Student Access`,
+        "HD Video Lectures & Speed Drills",
+        "Mind Mastery & Calculation Shortcuts",
+        "Verified Academy Certificate",
       ],
-      removeAt: validity.removeAt,
-      publishAt: new Date().toISOString(),
-      youtubeUrl: youtubeInputUrl.trim() || undefined,
+      standards: selectedStandards.length > 0 ? selectedStandards : undefined,
+      removeAt: null, // Critical: Course itself never expires in store
     };
 
     try {
-      // 1. Save Course to Supabase
-      const { data: savedCourse, error: courseErr } = await saveCourseToSupabase(courseData);
-      if (courseErr) {
-        throw new Error(courseErr.message || "Course save failed in Supabase");
-      }
+      await saveCourseToSupabase(newCourse);
 
-      const activeCourseId = savedCourse ? savedCourse.id : courseData.id;
-
-      // 2. If playlist videos were fetched, save all selected lessons to Supabase
-      const videosToSave = fetchedPlaylistVideos.filter((v) => v.selected);
-      if (videosToSave.length > 0) {
-        for (let i = 0; i < videosToSave.length; i++) {
-          const v = videosToSave[i];
-          const newLesson: ExtendedVideoRow = {
-            id: `vid-${Date.now()}-${i + 1}`,
-            lessonId: `les-${Date.now()}-${i + 1}`,
-            lessonTitle: v.title,
-            courseId: activeCourseId,
-            courseTitle: courseData.title,
+      // Save imported YouTube playlist videos if any
+      const selectedVideos = fetchedPlaylistVideos.filter((v) => v.selected);
+      if (selectedVideos.length > 0) {
+        for (const vid of selectedVideos) {
+          const lessonRow: ExtendedVideoRow = {
+            id: `yt_${vid.videoId}_${Date.now()}`,
+            courseId: newCourse.id,
+            title: vid.title,
+            durationSec: vid.durationSec,
+            isFree: vid.isFree,
             videoType: "youtube",
-            videoId: v.videoId,
-            position: i + 1,
-            durationSec: v.durationSec,
-            isFree: v.isFree,
+            videoId: vid.videoId,
+            position: vid.position,
             status: "active",
-            publishAt: new Date().toISOString(),
-            removeAt: null,
-            validityDays: 30,
             views: 0,
-            avgWatchPercent: 0,
+            likesCount: 0,
           };
-          await saveLessonToSupabase(newLesson);
+          await saveLessonToSupabase(lessonRow);
         }
-        await syncCourseLessonCount(activeCourseId);
+        await syncCourseLessonCount(newCourse.id);
       }
 
-      logStaffAction(
-        editingCourse ? "COURSE_UPDATE" : "COURSE_CREATE",
-        "course",
-        activeCourseId,
-        courseData.title,
-        `${editingCourse ? "Updated" : "Created"} course ${courseData.code} (${courseData.titleMr}) with ${videosToSave.length} lessons`
+      toast.success(
+        isMarathi
+          ? `✓ कोर्स "${newCourse.title}" यशस्वीपणे सेव्ह केला!`
+          : `✓ Course "${newCourse.title}" saved successfully!`
       );
-
-      setIsDrawerOpen(false);
-      await reloadFromSupabase();
-    } catch (saveErr: any) {
-      console.error("Save course error:", saveErr);
-      toast.error(`कोर्स सेव्ह करताना त्रुटी आली: ${saveErr.message}`);
+      setStudioMode("list");
+      loadData();
+    } catch (err: any) {
+      toast.error(err.message || (isMarathi ? "कोर्स सेव्ह करताना त्रुटी आली." : "Failed to save course."));
     } finally {
-      setIsSaving(false);
+      setIsSavingCourse(false);
     }
   };
 
-  // Move Course to Recycle Bin (Soft Delete with Undo Loop)
-  const handleConfirmDelete = async () => {
-    if (!deleteModalCourse) return;
-    if (staff.role !== "main_admin") {
-      toast.error("Unauthorized: Course deletion is strictly reserved for Main Admin.");
-      setDeleteModalCourse(null);
+  // Save Video Handler
+  const handleSaveVideo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!videoTitle.trim()) {
+      toast.error(isMarathi ? "कृपया व्हिडिओचे शीर्षक टाका." : "Please enter video title.");
       return;
     }
-    setIsDeleting(true);
-    try {
-      const courseToDelete = deleteModalCourse;
+    const extractedId = extractYouTubeVideoId(videoLink) || videoLink.trim();
+    if (!extractedId) {
+      toast.error(isMarathi ? "कृपया वैध YouTube URL टाका." : "Please enter valid YouTube link.");
+      return;
+    }
 
-      // 1. Move to Recycle Bin
-      const binItem = addToRecycleBin({
-        itemType: "course",
-        itemId: courseToDelete.id,
-        title: courseToDelete.titleMr || courseToDelete.title,
-        subtitle: `${courseToDelete.code} • ${courseToDelete.badgeText || "कोर्स"}`,
-        data: courseToDelete,
+    setIsSavingVideo(true);
+    const videoId = editingVideo?.id || `yt_${extractedId}_${Date.now()}`;
+    const lessonRow: ExtendedVideoRow = {
+      id: videoId,
+      courseId: videoTargetCourseId || courses[0]?.id || "",
+      title: videoTitle.trim(),
+      durationSec: Math.max(60, videoDurationMinutes * 60),
+      isFree: videoIsFreePreview,
+      videoType: "youtube",
+      videoId: extractedId,
+      position: Number(videoPosition) || 1,
+      description: videoDescription.trim(),
+      status: "active",
+      views: editingVideo?.views || 0,
+      likesCount: editingVideo?.likesCount || 0,
+    };
+
+    try {
+      await saveLessonToSupabase(lessonRow);
+      if (lessonRow.courseId) {
+        await syncCourseLessonCount(lessonRow.courseId);
+      }
+
+      toast.success(
+        isMarathi
+          ? `✓ व्हिडिओ "${lessonRow.title}" यशस्वीपणे सेव्ह केला!`
+          : `✓ Video "${lessonRow.title}" saved successfully!`
+      );
+      setStudioMode("list");
+      loadData();
+    } catch (err: any) {
+      toast.error(err.message || (isMarathi ? "व्हिडिओ सेव्ह करताना त्रुटी आली." : "Failed to save video."));
+    } finally {
+      setIsSavingVideo(false);
+    }
+  };
+
+  // Delete Action
+  const handleConfirmDelete = async () => {
+    if (!deleteModalItem) return;
+    setIsDeleting(true);
+
+    try {
+      if (deleteModalItem.type === "course") {
+        const targetCourse = courses.find((c) => c.id === deleteModalItem.id);
+        if (targetCourse) {
+          addToRecycleBin({
+            itemType: "course",
+            itemId: targetCourse.id,
+            title: targetCourse.title,
+            subtitle: `Code: ${targetCourse.code || "MM"}`,
+            data: targetCourse,
+          });
+        }
+        await deleteCourseFromSupabase(deleteModalItem.id);
+      } else if (deleteModalItem.type === "video") {
+        const targetVideo = videos.find((v) => v.id === deleteModalItem.id);
+        if (targetVideo) {
+          addToRecycleBin({
+            itemType: "video",
+            itemId: targetVideo.id,
+            title: targetVideo.title,
+            subtitle: `Duration: ${Math.round(targetVideo.durationSec / 60)}m`,
+            data: targetVideo,
+          });
+        }
+        await deleteLessonFromSupabase(deleteModalItem.id, targetVideo?.courseId || "");
+        if (targetVideo?.courseId) {
+          await syncCourseLessonCount(targetVideo.courseId);
+        }
+      } else if (deleteModalItem.type === "category") {
+        deleteCategory(deleteModalItem.id);
+      }
+
+      setUndoToast({
+        id: deleteModalItem.id,
+        title: deleteModalItem.title,
+        itemType: deleteModalItem.type,
       });
 
-      // 2. Mark as closed in Supabase so students don't see it
-      await saveCourseToSupabase({ ...courseToDelete, status: "closed" });
-
-      logStaffAction(
-        "COURSE_DELETE",
-        "course",
-        courseToDelete.id,
-        courseToDelete.title,
-        `Main admin moved course ${courseToDelete.code} to Recycle Bin`
+      toast.success(
+        isMarathi
+          ? `🗑️ "${deleteModalItem.title}" रीसायकल बिनमध्ये हलवले.`
+          : `🗑️ "${deleteModalItem.title}" moved to Recycle Bin.`
       );
 
-      setDeleteModalCourse(null);
-      await reloadFromSupabase();
-
-      // 3. Show 1-Click Undo Toast
-      setUndoToast({
-        id: binItem.id,
-        title: courseToDelete.titleMr || courseToDelete.title,
-      });
-      setTimeout(() => {
-        setUndoToast((prev) => (prev?.id === binItem.id ? null : prev));
-      }, 8000);
+      setDeleteModalItem(null);
+      loadData();
     } catch (err: any) {
-      toast.error(`कोर्स हटवताना त्रुटी आली: ${err.message}`);
+      toast.error(err.message || "Failed to delete item.");
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // 1-Click Undo Course Deletion
-  const handleUndoCourseDelete = async () => {
-    if (!undoToast) return;
-    const res = await restoreFromRecycleBin(undoToast.id);
-    if (res.success) {
-      setUndoToast(null);
-      await reloadFromSupabase();
-    }
-  };
+  // Filtered & Sorted Courses
+  const filteredCourses = useMemo(() => {
+    return courses
+      .filter((c) => {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesQuery =
+          !q ||
+          c.title?.toLowerCase().includes(q) ||
+          c.titleMr?.toLowerCase().includes(q) ||
+          c.code?.toLowerCase().includes(q) ||
+          c.description?.toLowerCase().includes(q);
 
-  // Filter Courses Logic (Excludes courses currently in the Recycle Bin)
-  const recycleCourseIds = new Set(
-    getRecycleBinItems()
-      .filter((i) => i.itemType === "course")
-      .map((i) => i.itemId)
-  );
+        const matchesCat =
+          categoryFilter === "all" ||
+          c.category?.toLowerCase() === categoryFilter.toLowerCase();
 
-  const filteredCourses = courses.filter((c) => {
-    if (recycleCourseIds.has(c.id)) return false;
+        const matchesVis =
+          visibilityFilter === "all" ||
+          (visibilityFilter === "live" && c.status === "live") ||
+          (visibilityFilter === "draft" && c.status === "draft") ||
+          (visibilityFilter === "unlisted" && c.status === "unlisted");
 
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      c.title.toLowerCase().includes(q) ||
-      (c.titleMr && c.titleMr.toLowerCase().includes(q)) ||
-      c.code.toLowerCase().includes(q);
+        return matchesQuery && matchesCat && matchesVis;
+      })
+      .sort((a, b) => {
+        if (sortOption === "title_asc") return (a.title || "").localeCompare(b.title || "");
+        if (sortOption === "students_desc") return (b.totalStudents || 0) - (a.totalStudents || 0);
+        return 0; // Default order
+      });
+  }, [courses, searchQuery, categoryFilter, visibilityFilter, sortOption]);
 
-    let matchesStatus = true;
-    if (statusFilter !== "all") {
-      if (statusFilter === "live") matchesStatus = c.status === "live";
-      else if (statusFilter === "scheduled") matchesStatus = c.status === "scheduled" || c.status === "upcoming";
-      else if (statusFilter === "closed") matchesStatus = c.status === "closed" || c.status === "removed";
-    }
+  // Filtered & Sorted Videos
+  const filteredVideos = useMemo(() => {
+    return videos
+      .filter((v) => {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesQuery =
+          !q ||
+          v.title?.toLowerCase().includes(q) ||
+          v.description?.toLowerCase().includes(q);
 
-    let matchesType = true;
-    if (typeFilter !== "all") {
-      if (typeFilter === "free") matchesType = c.isFree || c.pricePaise === 0;
-      else if (typeFilter === "paid") matchesType = !c.isFree && c.pricePaise > 0;
-    }
+        const matchesCat =
+          categoryFilter === "all" ||
+          courses.find((c) => c.id === v.courseId)?.category?.toLowerCase() === categoryFilter.toLowerCase();
 
-    return matchesSearch && matchesStatus && matchesType;
-  });
+        const matchesVis =
+          visibilityFilter === "all" ||
+          (visibilityFilter === "live" && v.status === "active") ||
+          (visibilityFilter === "draft" && v.status === "draft");
 
-  return (
-    <PermissionGuard permission="courses.manage">
+        return matchesQuery && matchesCat && matchesVis;
+      })
+      .sort((a, b) => {
+        if (sortOption === "title_asc") return (a.title || "").localeCompare(b.title || "");
+        if (sortOption === "views_desc") return (b.views || 0) - (a.views || 0);
+        return (a.position || 0) - (b.position || 0);
+      });
+  }, [videos, courses, searchQuery, categoryFilter, visibilityFilter, sortOption]);
+
+  // -------------------------------------------------------------------------
+  // RENDER: INLINE COURSE STUDIO (ZERO SLIDE DRAWERS)
+  // -------------------------------------------------------------------------
+  if (studioMode === "course_studio") {
+    const validity = getEffectiveValidity();
+
+    return (
       <AdminShell>
-        <div className="space-y-6 font-sans">
-          {isDrawerOpen ? (
-            /* ========================================================= */
-            /* IN-PAGE DEDICATED COURSE STUDIO WORKSPACE (No Slide Drawer) */
-            /* ========================================================= */
-            <div className="space-y-6 animate-fadeIn">
-              {/* Studio Header Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-[#E4E8F8] dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-start sm:items-center gap-3.5">
-                  <button
-                    type="button"
-                    onClick={() => !isSaving && setIsDrawerOpen(false)}
-                    className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl transition shadow-xs"
-                    title="यादीकडे परत जा"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                  </button>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#0B57D0] dark:text-blue-400 font-mono text-xs font-black">
-                        {formCode}
-                      </span>
-                      <span className="text-xs text-slate-400 font-semibold">• {editingCourse ? "कोर्स संपादन मोड" : "नवीन कोर्स निर्मिती"}</span>
-                    </div>
-                    <h1 className="text-2xl font-black text-[#0E1B3D] dark:text-white font-heading">
-                      {editingCourse ? "कोर्स संपादन स्टुडिओ (Edit Course Studio)" : "नवीन कोर्स निर्मिती स्टुडिओ (Create Course Studio)"}
-                    </h1>
-                    <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
-                      YouTube प्लेलिस्ट/व्हिडिओ लिंक द्वारे थेट डेटा ऑटो-इम्पोर्ट करा किंवा खालील तपशील भरून लाइव्ह सेव्ह करा.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <button
-                    type="button"
-                    disabled={isSaving}
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition"
-                  >
-                    रद्द करा (Cancel)
-                  </button>
-                  <SubmitButton
-                    type="button"
-                    onClick={() => {
-                      const form = document.getElementById("course-studio-form") as HTMLFormElement;
-                      if (form) form.requestSubmit();
-                    }}
-                    loading={isSaving}
-                    loadingText="सेव्ह करत आहे..."
-                    className="px-6 py-2.5 rounded-xl text-xs font-black shadow-md"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>कोर्स सेव्ह करा (Save Course)</span>
-                    </span>
-                  </SubmitButton>
-                </div>
-              </div>
-
-              {/* Studio Form */}
-              <form id="course-studio-form" onSubmit={handleSaveCourse} className="space-y-6">
-                {/* 1. YOUTUBE IMPORT BOX (Direct Link & Auto-Fetch) */}
-                <div className="p-6 bg-gradient-to-br from-red-50 via-slate-50 to-blue-50 dark:from-red-950/20 dark:via-slate-900 dark:to-blue-950/20 border-2 border-red-200/70 dark:border-red-900/40 rounded-3xl space-y-4 shadow-sm">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <label className="font-extrabold text-sm sm:text-base text-[#0E1B3D] dark:text-white flex items-center gap-2">
-                      <YoutubeIcon className="w-5 h-5 text-red-600" />
-                      <span>YouTube वरून थेट कोर्स भरा (Instant YouTube Import)</span>
-                    </label>
-                    <span className="text-[11px] font-extrabold text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/50 px-3 py-1 rounded-full w-fit">
-                      ⚡ Playlist किंवा Single Video Link
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-4xl">
-                    YouTube Playlist किंवा Single Video ची लिंक पेस्ट करा. कोर्सचे नाव, वर्णन, HD थंबनेल आणि सर्व लेक्चर्स एका सेकंदात आपोआप भरले जातील!
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
-                    <input
-                      type="text"
-                      value={youtubeInputUrl}
-                      onChange={(e) => {
-                        setYoutubeInputUrl(e.target.value);
-                        setYtFetchError(null);
-                      }}
-                      placeholder="https://www.youtube.com/playlist?list=... किंवा https://youtu.be/..."
-                      className="flex-1 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl text-xs font-medium text-slate-800 dark:text-white focus:outline-none focus:border-red-500 shadow-2xs font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleFetchFromYouTube}
-                      disabled={isFetchingYt || !youtubeInputUrl.trim()}
-                      className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition shrink-0"
-                    >
-                      {isFetchingYt ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>शोधत आहे...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4" />
-                          <span>माहिती मिळवा (Fetch)</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {ytFetchError && (
-                    <div className="p-3.5 bg-red-100 dark:bg-red-950/50 border border-red-300 dark:border-red-800 rounded-2xl text-red-800 dark:text-red-200 text-xs flex items-center gap-2 font-semibold">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                      <span>{ytFetchError}</span>
-                    </div>
-                  )}
-
-                  {ytFetchSuccess && (
-                    <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 rounded-2xl text-emerald-800 dark:text-emerald-200 text-xs flex items-center gap-2 font-semibold">
-                      <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-                      <span>{ytFetchSuccess}</span>
-                    </div>
-                  )}
-
-                  {/* Display Fetched Playlist Videos Preview */}
-                  {fetchedPlaylistVideos.length > 0 && (
-                    <div className="pt-3 space-y-2.5 border-t border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                        <span>सापडलेले लेक्चर्स ({fetchedPlaylistVideos.filter((v) => v.selected).length}/{fetchedPlaylistVideos.length} निवडले):</span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">पहिले लेक्चर मोफत डेमो म्हणून सेट करू शकता</span>
-                      </div>
-                      <div className="max-h-64 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-750 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-2.5 space-y-1.5">
-                        {fetchedPlaylistVideos.map((v, idx) => (
-                          <div
-                            key={v.videoId + idx}
-                            className={`flex items-center justify-between gap-3 p-2.5 rounded-xl text-xs transition ${
-                              v.selected ? "bg-slate-50 dark:bg-slate-750" : "opacity-40"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                              <input
-                                type="checkbox"
-                                checked={v.selected}
-                                onChange={() => handleTogglePlaylistItemSelect(idx)}
-                                className="w-4 h-4 rounded accent-red-600 cursor-pointer"
-                              />
-                              <span className="font-mono text-[11px] text-slate-400">#{idx + 1}</span>
-                              <span className="font-bold text-slate-800 dark:text-slate-200 truncate">{v.title}</span>
-                              <span className="text-[11px] text-slate-400 shrink-0">({v.durationFormatted})</span>
-                            </div>
-
-                            <label className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 cursor-pointer shrink-0">
-                              <input
-                                type="checkbox"
-                                checked={v.isFree}
-                                onChange={() => handleTogglePlaylistItemFree(idx)}
-                                className="w-3.5 h-3.5 rounded accent-emerald-600"
-                              />
-                              <span>Free Demo</span>
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 2-Column Responsive Workspace Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  {/* Left Column (7 cols): Primary Details */}
-                  <div className="lg:col-span-7 space-y-6">
-                    {/* Basic Info Card */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
-                      <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                        <span>📝</span>
-                        <span>प्राथमिक तपशील (Core Details)</span>
-                      </h3>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center gap-1 text-xs">
-                            <Lock className="w-3 h-3 text-slate-400" />
-                            <span>Course Code (Auto)</span>
-                          </label>
-                          <input
-                            type="text"
-                            readOnly
-                            value={formCode}
-                            className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl font-mono text-xs font-extrabold text-[#0B57D0] cursor-not-allowed"
-                          />
-                        </div>
-
-                        <div className="sm:col-span-2">
-                          <div className="flex items-center justify-between mb-1">
-                            <label className="font-bold text-[#0E1B3D] dark:text-slate-200 flex items-center gap-1 text-xs">
-                              <Tag className="w-3 h-3 text-purple-600" />
-                              <span>लक्ष्य प्रवर्ग (Target Category) *</span>
-                            </label>
-                            <button
-                              type="button"
-                              onClick={() => setIsCategoryModalOpen(true)}
-                              className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline"
-                            >
-                              <Edit2 className="w-2.5 h-2.5" />
-                              <span>प्रवर्गे व्यवस्थापन (+ / Edit)</span>
-                            </button>
-                          </div>
-                          <select
-                            value={targetCategoryKey}
-                            onChange={(e) => setTargetCategoryKey(e.target.value)}
-                            className="w-full px-3 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none focus:border-[#0B57D0]"
-                          >
-                            {(categories.length > 0 ? categories : TARGET_CATEGORY_OPTIONS).map((cat) => (
-                              <option key={cat.key} value={cat.key}>
-                                {cat.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Course Titles */}
-                      <div className="space-y-3 pt-1">
-                        <div>
-                          <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center justify-between text-xs">
-                            <span>कोर्सचे नाव (Course Title in Marathi / Regional) *</span>
-                            {formTitleMr.trim().length >= 3 && (
-                              <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> मान्य
-                              </span>
-                            )}
-                          </label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              required
-                              value={formTitleMr}
-                              onChange={(e) => setFormTitleMr(e.target.value)}
-                              placeholder="उदा. महाराष्ट्र पोलीस भरती १००% परिपूर्ण तयारी किंवा ५०० वर्षांचे कॅलेंडर"
-                              className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none transition-all ${
-                                formTitleMr.trim().length >= 3
-                                  ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
-                                  : "bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 focus:border-[#0B57D0]"
-                              }`}
-                            />
-                            {formTitleMr.trim().length >= 3 && (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
-                            )}
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 flex items-center justify-between text-xs">
-                            <span>Course Title (English) *</span>
-                            {formTitle.trim().length >= 3 && (
-                              <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Valid
-                              </span>
-                            )}
-                          </label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              required
-                              value={formTitle}
-                              onChange={(e) => setFormTitle(e.target.value)}
-                              placeholder="e.g. Memory Science & Vedic Maths Mastery"
-                              className={`w-full px-3.5 py-2.5 rounded-xl text-xs text-[#0E1B3D] dark:text-white focus:outline-none transition-all ${
-                                formTitle.trim().length >= 3
-                                  ? "bg-emerald-50/15 border border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
-                                  : "bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 focus:border-[#0B57D0]"
-                              }`}
-                            />
-                            {formTitle.trim().length >= 3 && (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Course Description */}
-                      <div>
-                        <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 text-xs">
-                          कोर्सचे सविस्तर वर्णन (Course Description)
-                        </label>
-                        <textarea
-                          value={formDescription}
-                          onChange={(e) => setFormDescription(e.target.value)}
-                          placeholder="विद्यार्थी या कोर्समध्ये काय शिकणार आहेत, अभ्यासक्रमाचे वैशिष्ट्ये काय आहेत..."
-                          rows={4}
-                          className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 text-[#0E1B3D] dark:text-white rounded-xl text-xs focus:outline-none focus:border-[#0B57D0] resize-y"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column (5 cols): Commercials, Validity, Thumbnail, Status */}
-                  <div className="lg:col-span-5 space-y-6">
-                    {/* Pricing Card */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-3">
-                      <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                        <div>
-                          <span className="font-bold text-[#0E1B3D] dark:text-slate-200 block text-xs">
-                            💰 कोर्स फी व सवलत (Pricing & Fee)
-                          </span>
-                          <span className="text-[11px] text-[#5A6478] dark:text-slate-400">
-                            {isFree ? "विद्यार्थ्यांसाठी पूर्णपणे मोफत (₹0)" : `विद्यार्थी भरतील: ₹${formPrice} (मूळ: ₹${formOriginalPrice})`}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setIsFree(!isFree)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            isFree ? "bg-emerald-500" : "bg-blue-600"
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              isFree ? "translate-x-1" : "translate-x-6"
-                            }`}
-                          />
-                        </button>
-                      </div>
-
-                      {!isFree && (
-                        <div className="grid grid-cols-2 gap-3 pt-1">
-                          <div>
-                            <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 text-xs">
-                              Selling Price (₹) *
-                            </label>
-                            <input
-                              type="number"
-                              min={0}
-                              value={formPrice}
-                              onChange={(e) => setFormPrice(Number(e.target.value))}
-                              className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl font-bold text-xs text-[#0E1B3D] dark:text-white focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 mb-1 text-xs">
-                              Original MRP (₹)
-                            </label>
-                            <input
-                              type="number"
-                              min={0}
-                              value={formOriginalPrice}
-                              onChange={(e) => setFormOriginalPrice(Number(e.target.value))}
-                              className="w-full px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl font-bold text-xs text-[#0E1B3D] dark:text-white focus:outline-none"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Validity Card */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-amber-200 dark:border-amber-900/50 shadow-sm space-y-3">
-                      <div className="flex items-center justify-between pb-2 border-b border-amber-100 dark:border-amber-900/30">
-                        <span className="font-extrabold text-[#0E1B3D] dark:text-white flex items-center gap-1.5 text-xs">
-                          <Clock className="w-4 h-4 text-amber-600" />
-                          <span>कोर्स वैधता (Validity)</span>
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-extrabold text-[11px] border border-amber-300">
-                          {getEffectiveValidity().label}
-                        </span>
-                      </div>
-
-                      {/* Mode Chips */}
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {[
-                          { key: "preset", label: "जलद पर्याय (Presets)" },
-                          { key: "custom_days", label: "दिवस (Days)" },
-                          { key: "custom_months", label: "महिने (Months)" },
-                          { key: "fixed_date", label: "परीक्षेची तारीख (Fixed)" },
-                        ].map((m) => (
-                          <button
-                            key={m.key}
-                            type="button"
-                            onClick={() => setValidityMode(m.key as any)}
-                            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition ${
-                              validityMode === m.key
-                                ? "bg-amber-600 text-white shadow-sm"
-                                : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-amber-400"
-                            }`}
-                          >
-                            {m.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Preset Buttons */}
-                      {validityMode === "preset" && (
-                        <div className="grid grid-cols-2 gap-2 pt-2">
-                          {VALIDITY_PRESETS.map((p) => (
-                            <button
-                              key={p.id}
-                              type="button"
-                              onClick={() => setSelectedPresetId(p.id)}
-                              className={`p-2 rounded-xl text-center font-bold text-xs border transition ${
-                                selectedPresetId === p.id
-                                  ? "bg-amber-600 text-white border-amber-600 shadow-sm"
-                                  : "bg-[#F5F7FF] dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-amber-200/60 dark:border-amber-900/40 hover:border-amber-400"
-                              }`}
-                            >
-                              {p.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Custom Days Input */}
-                      {validityMode === "custom_days" && (
-                        <div className="pt-2 flex items-center gap-3">
-                          <label className="font-bold text-slate-700 dark:text-slate-300 text-xs">दिवसांची संख्या:</label>
-                          <input
-                            type="number"
-                            min={1}
-                            value={customDays}
-                            onChange={(e) => setCustomDays(Number(e.target.value))}
-                            className="w-32 px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-amber-300 rounded-xl font-bold text-xs text-amber-900 dark:text-amber-200 focus:outline-none"
-                          />
-                          <span className="text-slate-500 font-semibold text-xs">दिवस (Days)</span>
-                        </div>
-                      )}
-
-                      {/* Custom Months Input */}
-                      {validityMode === "custom_months" && (
-                        <div className="pt-2 flex items-center gap-3">
-                          <label className="font-bold text-slate-700 dark:text-slate-300 text-xs">महिन्यांची संख्या:</label>
-                          <input
-                            type="number"
-                            min={1}
-                            value={customMonths}
-                            onChange={(e) => setCustomMonths(Number(e.target.value))}
-                            className="w-32 px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-amber-300 rounded-xl font-bold text-xs text-amber-900 dark:text-amber-200 focus:outline-none"
-                          />
-                          <span className="text-slate-500 font-semibold text-xs">महिने (Months)</span>
-                        </div>
-                      )}
-
-                      {/* Fixed Expiry Date */}
-                      {validityMode === "fixed_date" && (
-                        <div className="pt-2 flex items-center gap-3">
-                          <label className="font-bold text-slate-700 dark:text-slate-300 text-xs">अंतिम तारीख:</label>
-                          <input
-                            type="date"
-                            value={fixedExpiryDate}
-                            onChange={(e) => setFixedExpiryDate(e.target.value)}
-                            className="px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-amber-300 rounded-xl font-bold text-xs text-amber-900 dark:text-amber-200 focus:outline-none"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* HD Thumbnail Card */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-3">
-                      <label className="block font-bold text-[#0E1B3D] dark:text-slate-200 text-xs">
-                        🖼️ HD Thumbnail Image URL
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-24 h-16 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0 bg-slate-900">
-                          {formThumbnail ? (
-                            <Image src={formThumbnail} alt="Thumbnail" fill className="object-cover" />
-                          ) : (
-                            <div className="flex items-center justify-center h-full text-slate-500 font-bold text-[10px]">
-                              No Photo
-                            </div>
-                          )}
-                        </div>
-                        <input
-                          type="text"
-                          value={formThumbnail}
-                          onChange={(e) => setFormThumbnail(e.target.value)}
-                          placeholder="https://i.ytimg.com/vi/... किंवा इमेज लिंक"
-                          className="flex-1 px-3 py-2 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 text-[#0E1B3D] dark:text-white rounded-xl text-xs focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Course Status Card */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-3">
-                      <span className="font-bold text-[#0E1B3D] dark:text-slate-200 block text-xs">
-                        🚀 प्रसिद्धी स्थिती (Course Status)
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        {[
-                          { key: "live", label: "Live", desc: "विद्यार्थ्यांना लगेच उपलब्ध" },
-                          { key: "upcoming", label: "Upcoming", desc: "Coming Soon बॅज" },
-                          { key: "draft", label: "Draft", desc: "फक्त ॲडमिनसाठी" },
-                        ].map((st) => (
-                          <button
-                            key={st.key}
-                            type="button"
-                            onClick={() => setFormStatus(st.key as any)}
-                            className={`p-2.5 rounded-xl text-center border font-bold text-xs transition ${
-                              formStatus === st.key
-                                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                                : "bg-[#F5F7FF] dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300"
-                            }`}
-                          >
-                            <div>{st.label}</div>
-                            <div className="text-[10px] font-normal opacity-80 mt-0.5">{st.desc}</div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Sticky Action Bar */}
-                <div className="sticky bottom-4 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl flex items-center justify-between">
-                  <button
-                    type="button"
-                    disabled={isSaving}
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition"
-                  >
-                    ← यादीकडे परत जा (Back to List)
-                  </button>
-
-                  <SubmitButton
-                    type="submit"
-                    loading={isSaving}
-                    loadingText="सेव्ह करत आहे... (Saving to Supabase)"
-                    className="px-7 py-3 rounded-xl text-xs font-black shadow-md"
-                  >
-                    <span className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>कोर्स सेव्ह करा (Save to Supabase)</span>
-                    </span>
-                  </SubmitButton>
-                </div>
-              </form>
-            </div>
-          ) : (
-            <>
-              {/* Header Banner */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-[#0B57D0] border border-blue-200">
-                  अभ्यासक्रम व्यवस्थापन (Courses Hub)
-                </span>
-                <span className="text-xs text-slate-400 font-semibold">• {courses.length} कोर्सेस उपलब्ध</span>
-              </div>
-              <h2 className="text-2xl font-extrabold text-[#0E1B3D] dark:text-white font-heading">
-                Courses &amp; Curriculum Builder
-              </h2>
-              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1">
-                YouTube व्हिडिओ किंवा प्लेलिस्ट लिंक टाकून थेट कोर्स तयार करा आणि लाइव्ह डेटाबेसवर सेव्ह करा.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5">
+        <div className="max-w-7xl mx-auto space-y-6 pb-16 font-sans">
+          {/* Top Sticky Header Bar */}
+          <div className="sticky top-0 z-30 bg-white/95 dark:bg-[#1E293B]/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setIsCategoryModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-3 bg-white dark:bg-slate-800 border border-[#CCD7E6] dark:border-slate-700 hover:border-[#0B57D0] hover:bg-blue-50 dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] text-xs font-bold rounded-2xl shadow-xs transition-all shrink-0"
+                onClick={() => setStudioMode("list")}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold transition flex items-center gap-1.5 text-xs cursor-pointer"
               >
-                <Tag className="w-4 h-4 text-purple-600" />
-                <span>प्रवर्ग व्यवस्थापन (Categories)</span>
+                <ArrowLeft className="w-4 h-4" />
+                <span>{isMarathi ? "← यादीकडे परत जा" : "← Back to Content Studio"}</span>
               </button>
-
-              <button
-                type="button"
-                onClick={() => setIsRecycleBinOpen(true)}
-                className={`inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all border shadow-xs shrink-0 ${
-                  recycleCount > 0
-                    ? "bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100"
-                    : "bg-white dark:bg-slate-800 border-[#CCD7E6] dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
-                }`}
-              >
-                <Trash2 className="w-4 h-4 text-amber-600" />
-                <span>कचरापेटी (Recycle Bin)</span>
-                {recycleCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white leading-none">
-                    {recycleCount}
+              <div>
+                <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <span>
+                    {editingCourse
+                      ? isMarathi ? `कोर्स संपादन: ${editingCourse.code || "MM"}` : `Edit Course: ${editingCourse.code || "MM"}`
+                      : isMarathi ? "नवीन कोर्स स्टुडिओ (Create Course)" : "Create New Course"}
                   </span>
-                )}
-              </button>
+                </h1>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {isMarathi
+                    ? "कोर्सचे तपशील, युट्यूब व्हिडिओ, फी व वैधता संपादित करा. बदल थेट विद्यार्थी पोर्टलवर लागू होतात."
+                    : "Configure curriculum, instant YouTube imports, pricing, and student-relative validity."}
+                </p>
+              </div>
+            </div>
 
+            <div className="flex items-center gap-2">
               <button
-                onClick={handleOpenAdd}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#0B57D0] hover:bg-[#0842A0] text-white text-xs font-bold rounded-2xl shadow-md transition-all shrink-0"
+                type="button"
+                onClick={() => setStudioMode("list")}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold text-xs transition cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
-                <span>नवीन कोर्स तयार करा (+ Create Course)</span>
+                {isMarathi ? "रद्द करा" : "Cancel"}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveCourse}
+                disabled={isSavingCourse}
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isSavingCourse ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                <span>{isMarathi ? "💾 कोर्स सेव्ह करा" : "Save Course"}</span>
               </button>
             </div>
           </div>
 
-          {/* Filters Bar */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+          {/* 2-Column YouTube Studio Editor */}
+          <form onSubmit={handleSaveCourse} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left 2 Columns: Main Details, YouTube Import & Curriculum */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Card 1: Basic Metadata */}
+              <div className="bg-white dark:bg-[#1E293B] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <Sparkles className="w-4 h-4 text-blue-600" />
+                  <span>{isMarathi ? "कोर्सची प्राथमिक माहिती" : "Course Details"}</span>
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      {isMarathi ? "कोर्स कोड *" : "Course Code *"}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formCode}
+                      onChange={(e) => setFormCode(e.target.value)}
+                      placeholder="e.g. MM-01"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      {isMarathi ? "कोर्सचे नाव (English) *" : "Course Title (English) *"}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formTitle}
+                      onChange={(e) => setFormTitle(e.target.value)}
+                      placeholder="e.g. Memory Science & Superfast Vedic Maths Masterclass"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {isMarathi ? "कोर्सचे नाव (मराठी) *" : "Course Title (Marathi Alternative)"}
+                  </label>
+                  <input
+                    type="text"
+                    value={formTitleMr}
+                    onChange={(e) => setFormTitleMr(e.target.value)}
+                    placeholder="उदा. मेमरी सायन्स व सुपरफास्ट वैदिक गणित मास्टरक्लास"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {isMarathi ? "कोर्सचे सविस्तर वर्णन *" : "Description & Learning Outcomes"}
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                    placeholder="Describe syllabus, techniques, key benefits, and who this course is designed for..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              {/* Card 2: YouTube Instant Import & Auto-Discovery */}
+              <div className="bg-white dark:bg-[#1E293B] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <YoutubeIcon className="w-5 h-5 text-red-600" />
+                    <div>
+                      <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                        {isMarathi ? "युट्यूब ऑटो-इम्पोर्ट (Single Video किंवा Playlist)" : "YouTube Auto-Import (Playlist or Single Video)"}
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {isMarathi
+                          ? "युट्यूब लिंक पेस्ट करा — सिस्टीम आपोआप सर्व लेक्चर्स, थंबनेल्स आणि कालावधी आयात करेल."
+                          : "Paste YouTube link to instantly extract lessons, titles, durations, and HD thumbnails."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={youtubeInputUrl}
+                    onChange={(e) => setYoutubeInputUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/playlist?list=... or https://youtu.be/..."
+                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-red-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleFetchYoutubeContent}
+                    disabled={isFetchingYt || !youtubeInputUrl.trim()}
+                    className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    {isFetchingYt ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                    <span>{isMarathi ? "इम्पोर्ट करा" : "Auto-Fetch"}</span>
+                  </button>
+                </div>
+
+                {ytFetchError && (
+                  <p className="text-xs text-rose-600 font-bold flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{ytFetchError}</span>
+                  </p>
+                )}
+                {ytFetchSuccess && (
+                  <p className="text-xs text-emerald-600 font-bold flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>{ytFetchSuccess}</span>
+                  </p>
+                )}
+
+                {/* Fetched Playlist Videos Table */}
+                {fetchedPlaylistVideos.length > 0 && (
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span>{isMarathi ? `आयात केलेले लेक्चर्स (${fetchedPlaylistVideos.length})` : `Imported Lessons (${fetchedPlaylistVideos.length})`}</span>
+                      <span className="text-[11px] text-blue-600">
+                        {isMarathi ? "पहिले व्याख्यान मोफत डेमो म्हणून चिन्हांकित केले आहे" : "1st lecture marked as Free Demo Preview"}
+                      </span>
+                    </div>
+
+                    <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/40">
+                      {fetchedPlaylistVideos.map((vid, idx) => (
+                        <div key={vid.videoId + idx} className="p-2.5 flex items-center justify-between gap-3 text-xs">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={vid.selected}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setFetchedPlaylistVideos((prev) =>
+                                  prev.map((v, i) => (i === idx ? { ...v, selected: checked } : v))
+                                );
+                              }}
+                              className="rounded text-blue-600 cursor-pointer"
+                            />
+                            <span className="font-mono text-slate-400 text-[10px] w-5">#{idx + 1}</span>
+                            <span className="font-bold text-slate-800 dark:text-white truncate max-w-xs">{vid.title}</span>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[10px] text-slate-500 font-mono">{vid.durationFormatted}</span>
+                            <label className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={vid.isFree}
+                                onChange={(e) => {
+                                  const isFreeVal = e.target.checked;
+                                  setFetchedPlaylistVideos((prev) =>
+                                    prev.map((v, i) => (i === idx ? { ...v, isFree: isFreeVal } : v))
+                                  );
+                                }}
+                                className="rounded text-emerald-600"
+                              />
+                              <span>Demo</span>
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Custom Thumbnail, Dynamic Category, Validity & Pricing */}
+            <div className="space-y-6">
+              {/* Card 3: Dynamic Category & Visibility */}
+              <div className="bg-white dark:bg-[#1E293B] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <Tag className="w-4 h-4 text-purple-600" />
+                  <span>{isMarathi ? "प्रवर्ग व प्रसिद्धी (Category & Visibility)" : "Category & Visibility"}</span>
+                </h3>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      {isMarathi ? "प्रवर्ग (Category) *" : "Dynamic Category *"}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                      className="text-[11px] text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer"
+                    >
+                      {isMarathi ? "+ नवीन प्रवर्ग" : "+ Manage Categories"}
+                    </button>
+                  </div>
+                  <select
+                    value={targetCategoryKey}
+                    onChange={(e) => setTargetCategoryKey(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="">{isMarathi ? "प्रवर्ग निवडा (Select Category)" : "Select Category"}</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.key || cat.id}>
+                        {cat.label} ({cat.badge})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {isMarathi ? "प्रसिद्धी स्थिती (Visibility)" : "Publish Status"}
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { key: "live", label: isMarathi ? "🟢 Public" : "🟢 Published" },
+                      { key: "unlisted", label: isMarathi ? "⚪ Unlisted" : "⚪ Unlisted" },
+                      { key: "draft", label: isMarathi ? "🟡 Draft" : "🟡 Draft" },
+                    ].map((status) => (
+                      <button
+                        key={status.key}
+                        type="button"
+                        onClick={() => setFormVisibility(status.key as any)}
+                        className={`py-2 rounded-xl text-xs font-bold border transition cursor-pointer text-center ${
+                          formVisibility === status.key
+                            ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-500"
+                            : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+                        }`}
+                      >
+                        {status.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Thumbnail Upload / URL */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {isMarathi ? "कस्टम थंबनेल (HD Image URL)" : "Custom Thumbnail URL"}
+                  </label>
+                  <input
+                    type="url"
+                    value={formThumbnail}
+                    onChange={(e) => setFormThumbnail(e.target.value)}
+                    placeholder="https://... or /assets/images/..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 mb-2"
+                  />
+                  {formThumbnail ? (
+                    <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100">
+                      <Image src={formThumbnail} alt="Thumbnail preview" fill className="object-cover" unoptimized />
+                    </div>
+                  ) : (
+                    <div className="aspect-video rounded-xl border border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 text-xs bg-slate-50 dark:bg-slate-800/40">
+                      <Film className="w-6 h-6 mb-1 text-slate-300" />
+                      <span>{isMarathi ? "थंबनेल प्रिव्ह्यू" : "16:9 Thumbnail Preview"}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Card 4: STUDENT-RELATIVE COURSE VALIDITY (PER-ENROLLMENT EXPIRY) */}
+              <div className="bg-white dark:bg-[#1E293B] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-emerald-600" />
+                    <span>{isMarathi ? "विद्यार्थी ऍक्सेस वैधता (Student Validity)" : "Student Validity Duration"}</span>
+                  </h3>
+                  <div className="mt-2 p-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-[11px] text-blue-900 dark:text-blue-300 leading-relaxed flex items-start gap-2">
+                    <Info className="w-4 h-4 shrink-0 text-blue-600 mt-0.5" />
+                    <span>
+                      {isMarathi
+                        ? "विद्यार्थी-सापेक्ष वैधता: निवडलेला कालावधी विद्यार्थ्याच्या प्रवेशाच्या किंवा खरेदीच्या वेळेपासून मोजला जातो. कोर्स ॲकॅडमी स्टोअरमध्ये कायमस्वरूपी उपलब्ध राहतो."
+                        : "Per-Enrollment Countdown: Access duration counts down strictly from each student's personal enrollment timestamp. The course itself never expires in the store."}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Validity Mode Selector */}
+                <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setValidityMode("preset")}
+                    className={`py-1.5 rounded-lg transition ${
+                      validityMode === "preset" ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs" : "text-slate-600 dark:text-slate-400"
+                    }`}
+                  >
+                    {isMarathi ? "प्रीसेट" : "Presets"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setValidityMode("custom_months")}
+                    className={`py-1.5 rounded-lg transition ${
+                      validityMode === "custom_months" ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs" : "text-slate-600 dark:text-slate-400"
+                    }`}
+                  >
+                    {isMarathi ? "महिने" : "Months"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setValidityMode("custom_days")}
+                    className={`py-1.5 rounded-lg transition ${
+                      validityMode === "custom_days" ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs" : "text-slate-600 dark:text-slate-400"
+                    }`}
+                  >
+                    {isMarathi ? "दिवस" : "Days"}
+                  </button>
+                </div>
+
+                {validityMode === "preset" && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {VALIDITY_PRESETS.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setSelectedPresetId(p.id)}
+                        className={`p-2 rounded-xl text-xs font-bold border transition text-left cursor-pointer ${
+                          selectedPresetId === p.id
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 border-emerald-500"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                        }`}
+                      >
+                        <div>{isMarathi ? p.labelMr : p.labelEn}</div>
+                        <div className="text-[10px] text-slate-400">{p.days} days access</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {validityMode === "custom_months" && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      {isMarathi ? "वैधतेचे महिने (Months) *" : "Number of Months *"}
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={customMonths}
+                      onChange={(e) => setCustomMonths(Number(e.target.value) || 1)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  </div>
+                )}
+
+                {validityMode === "custom_days" && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      {isMarathi ? "वैधतेचे दिवस (Days) *" : "Number of Days *"}
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={1825}
+                      value={customDays}
+                      onChange={(e) => setCustomDays(Number(e.target.value) || 1)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  </div>
+                )}
+
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  {isMarathi ? `निवडलेली विद्यार्थी मुदत: ${validity.label}` : `Effective Student Access: ${validity.label}`}
+                </div>
+              </div>
+
+              {/* Card 5: Pricing & MRP */}
+              <div className="bg-white dark:bg-[#1E293B] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    {isMarathi ? "फी आणि किंमत" : "Pricing & Fees"}
+                  </h3>
+                  <label className="flex items-center gap-2 text-xs font-bold text-emerald-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isFree}
+                      onChange={(e) => setIsFree(e.target.checked)}
+                      className="rounded text-emerald-600"
+                    />
+                    <span>{isMarathi ? "मोफत कोर्स (100% Free)" : "Free Course"}</span>
+                  </label>
+                </div>
+
+                {!isFree && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        {isMarathi ? "विक्री किंमत (₹ Offer) *" : "Discounted Fee (₹) *"}
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        required
+                        value={formPrice}
+                        onChange={(e) => setFormPrice(Number(e.target.value))}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        {isMarathi ? "मूळ किंमत (₹ MRP) *" : "Original MRP (₹) *"}
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        required
+                        value={formOriginalPrice}
+                        onChange={(e) => setFormOriginalPrice(Number(e.target.value))}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </form>
+        </div>
+      </AdminShell>
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // RENDER: INLINE VIDEO STUDIO (ZERO SLIDE DRAWERS)
+  // -------------------------------------------------------------------------
+  if (studioMode === "video_studio") {
+    return (
+      <AdminShell>
+        <div className="max-w-4xl mx-auto space-y-6 pb-16 font-sans">
+          {/* Top Sticky Header */}
+          <div className="sticky top-0 z-30 bg-white/95 dark:bg-[#1E293B]/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setStudioMode("list")}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold transition flex items-center gap-1.5 text-xs cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>{isMarathi ? "← यादीकडे परत जा" : "← Back to Content Studio"}</span>
+              </button>
+              <div>
+                <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <Video className="w-5 h-5 text-red-600" />
+                  <span>
+                    {editingVideo
+                      ? isMarathi ? `व्हिडिओ संपादन: ${editingVideo.title}` : `Edit Video: ${editingVideo.title}`
+                      : isMarathi ? "नवीन व्हिडिओ लेक्चर जोडा" : "Upload / Add Video Lecture"}
+                  </span>
+                </h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setStudioMode("list")}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold text-xs transition cursor-pointer"
+              >
+                {isMarathi ? "रद्द करा" : "Cancel"}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveVideo}
+                disabled={isSavingVideo}
+                className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isSavingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                <span>{isMarathi ? "व्हिडिओ सेव्ह करा" : "Save Video"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Video Edit Form */}
+          <form onSubmit={handleSaveVideo} className="bg-white dark:bg-[#1E293B] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                {isMarathi ? "संबंधित कोर्स (Target Course) *" : "Target Course Batch *"}
+              </label>
+              <select
+                required
+                value={videoTargetCourseId}
+                onChange={(e) => setVideoTargetCourseId(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+              >
+                {courses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.code || "MM"} — {c.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                {isMarathi ? "YouTube व्हिडिओ लिंक किंवा Video ID *" : "YouTube Video Link or ID *"}
+              </label>
               <input
                 type="text"
-                placeholder="कोर्सचे नाव किंवा कोड शोधा (उदा. MM-01, पोलीस भरती, वैदिक गणित)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs pl-10 pr-4 py-3 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl focus:outline-none focus:border-[#0B57D0] text-[#0E1B3D] dark:text-white"
+                required
+                value={videoLink}
+                onChange={(e) => setVideoLink(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ or dQw4w9WgXcQ"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-none"
               />
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mr-1">
-                  स्थिती (Status):
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {isMarathi ? "लेक्चर शीर्षक (Lesson Title) *" : "Lesson Title *"}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={videoTitle}
+                  onChange={(e) => setVideoTitle(e.target.value)}
+                  placeholder="e.g. Session 01: Mental Math Foundations"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {isMarathi ? "कालावधी (मिनिटे) *" : "Duration (Minutes) *"}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  required
+                  value={videoDurationMinutes}
+                  onChange={(e) => setVideoDurationMinutes(Number(e.target.value) || 15)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <div>
+                <span className="font-bold text-xs text-slate-900 dark:text-white block">
+                  {isMarathi ? "मोफत डेमो प्रिव्ह्यू (Free Demo Preview)" : "Free Demo Preview"}
                 </span>
-                {(["all", "live", "scheduled", "closed"] as const).map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-all ${
-                      statusFilter === st
-                        ? "bg-[#0B57D0] text-white shadow-sm"
-                        : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-400 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0B57D0]"
-                    }`}
-                  >
-                    {st === "all" ? "सर्व (All)" : st === "live" ? "Live" : st === "scheduled" ? "Upcoming" : "Closed"}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider mr-1">
-                  प्रकार (Type):
-                </span>
-                {(["all", "free", "paid"] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTypeFilter(t)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-all ${
-                      typeFilter === t
-                        ? "bg-[#0E1B3D] text-white shadow-sm"
-                        : "bg-[#F5F7FF] dark:bg-slate-800 text-[#5A6478] dark:text-slate-400 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 hover:text-[#0E1B3D] dark:hover:text-white"
-                    }`}
-                  >
-                    {t === "all" ? "सर्व (All)" : t === "free" ? "मोफत (Free)" : "Paid"}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Courses Grid / Cards (Clean YouTube Thumbnail Cards, No Header Tints) */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="p-4 bg-[#FAFBFD] dark:bg-slate-800/80 border-b border-[#E4E8F8] dark:border-slate-800 flex items-center justify-between text-xs">
-              <span className="font-bold text-[#0E1B3D] dark:text-white">
-                एकूण {filteredCourses.length} कोर्सेस उपलब्ध
-              </span>
-              <span className="text-[11px] text-[#8A94A6] flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Live Supabase Database Sync
-              </span>
-            </div>
-
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 p-6">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-64 rounded-2xl bg-slate-100 animate-pulse border border-slate-200" />
-                ))}
-              </div>
-            ) : filteredCourses.length === 0 ? (
-              <div className="p-16 text-center flex flex-col items-center justify-center">
-                <div className="w-16 h-16 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center text-3xl mb-4 shadow-inner">
-                  🎬
-                </div>
-                <h4 className="font-extrabold text-base text-[#0E1B3D] dark:text-white">
-                  कोणताही कोर्स सापडला नाही (No Courses Found)
-                </h4>
-                <p className="text-xs text-[#5A6478] max-w-md mt-1 mb-5 leading-relaxed">
-                  वरील <strong>&quot;+ Create Course&quot;</strong> बटणावर क्लिक करा आणि YouTube लिंक टाकून एका मिनिटात पहिला कोर्स तयार करा.
-                </p>
-                <button
-                  onClick={handleOpenAdd}
-                  className="px-6 py-2.5 bg-[#0B57D0] text-white text-xs font-bold rounded-full shadow hover:bg-blue-700 transition"
-                >
-                  + पहिला कोर्स तयार करा
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 p-6">
-                {filteredCourses.map((course) => {
-                  const priceRupees = Math.round(course.pricePaise / 100);
-                  const origRupees = Math.round((course.originalPricePaise || 0) / 100);
-                  const thumb = course.imageSrc || "/assets/images/student_mindmaps_notebook.png";
-
-                  return (
-                    <div
-                      key={course.id}
-                      className="group bg-white dark:bg-slate-800/90 rounded-2xl border border-[#E4E8F8] dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 shadow-xs hover:shadow-md transition-all flex flex-col overflow-hidden"
-                    >
-                      {/* Course Thumbnail Image */}
-                      <div className="relative w-full h-44 bg-slate-900 overflow-hidden">
-                        <Image
-                          src={thumb}
-                          alt={course.title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                        {/* Top Badges */}
-                        <div className="absolute top-3 left-3 flex items-center gap-2">
-                          <span className="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white font-mono text-[11px] font-extrabold border border-white/20">
-                            {course.code}
-                          </span>
-                          <StatusBadge status={course.status} size="sm" className="backdrop-blur-md" />
-                        </div>
-
-                        {/* Bottom Thumbnail Overlay: Price & Duration */}
-                        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
-                          <div className="font-bold">
-                            {course.isFree || course.pricePaise === 0 ? (
-                              <span className="px-2 py-0.5 rounded-md bg-emerald-500 text-slate-950 font-extrabold text-[11px]">
-                                FREE
-                              </span>
-                            ) : (
-                              <span>
-                                ₹{priceRupees}{" "}
-                                {origRupees > priceRupees && (
-                                  <span className="line-through text-slate-300 text-[10px] ml-1">
-                                    ₹{origRupees}
-                                  </span>
-                                )}
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[11px] text-amber-300 font-semibold flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {course.validityLabel || `${course.accessMonths || 6} महिने`}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Card Content */}
-                      <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                        <div>
-                          <h3 className="font-extrabold text-sm text-[#0E1B3D] dark:text-white line-clamp-1 group-hover:text-[#0B57D0] dark:group-hover:text-blue-400 transition-colors">
-                            {course.titleMr || course.title}
-                          </h3>
-                          {course.titleMr && course.titleMr !== course.title && (
-                            <p className="text-[11px] text-slate-400 font-medium line-clamp-1 mt-0.5">
-                              {course.title}
-                            </p>
-                          )}
-                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">
-                            {course.description}
-                          </p>
-                        </div>
-
-                        {/* Meta Tags */}
-                        <div className="pt-2 border-t border-[#F0F2F9] dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                          <span className="text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1">
-                            <Video className="w-3.5 h-3.5 text-blue-600" />
-                            {course.lessonsCount || 0} लेक्चर्स
-                          </span>
-                          <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
-                            {course.badgeText || "Course"}
-                          </span>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#F0F2F9] dark:border-slate-700">
-                          <button
-                            onClick={() => handleOpenEdit(course)}
-                            className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-[#0B57D0] dark:text-blue-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                            <span>Edit</span>
-                          </button>
-
-                          {isMainAdmin && (
-                            <button
-                              onClick={() => setDeleteModalCourse(course)}
-                              className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 flex items-center justify-center transition-colors"
-                              title="Delete Course"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Move to Recycle Bin Confirmation Modal */}
-          {deleteModalCourse && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-amber-200 dark:border-amber-900/50 space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
-                  <Trash2 className="w-6 h-6" />
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-base text-[#0E1B3D]">
-                    हा कोर्स रीसायकल बिनमध्ये हलवायचा आहे का?
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                    <strong>{deleteModalCourse.titleMr || deleteModalCourse.title}</strong> ({deleteModalCourse.code}) हा कोर्स विद्यार्थ्यांसाठी लपवला जाईल आणि रीसायकल बिनमध्ये हलवला जाईल. तुम्ही तो कधीही <strong>पूर्ववत (Undo / Restore)</strong> करू शकता.
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-2">
-                  <button
-                    disabled={isDeleting}
-                    onClick={() => setDeleteModalCourse(null)}
-                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl"
-                  >
-                    रद्द करा (Cancel)
-                  </button>
-                  <button
-                    disabled={isDeleting}
-                    onClick={handleConfirmDelete}
-                    className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5"
-                  >
-                    {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                    <span>रीसायकल बिनमध्ये हलवा (Trash)</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 1-Click Undo Floating Toast */}
-          {undoToast && (
-            <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#0E1B3D] text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-blue-400/30">
-              <div className="flex items-center gap-2 text-xs font-semibold">
-                <span className="text-amber-400">🗑️</span>
-                <span>
-                  <strong>{undoToast.title}</strong> कचरापेटीत हलवला आहे.
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {isMarathi ? "विद्यार्थी कोर्स खरेदी करण्यापूर्वी हे व्याख्यान विनामूल्य पाहू शकतात." : "Learners can stream this lesson before enrolling."}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={handleUndoCourseDelete}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow-xs"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>पूर्ववत करा (Undo)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setUndoToast(null)}
-                className="text-slate-400 hover:text-white text-xs font-bold ml-1"
-              >
-                ✕
-              </button>
+              <input
+                type="checkbox"
+                checked={videoIsFreePreview}
+                onChange={(e) => setVideoIsFreePreview(e.target.checked)}
+                className="w-4 h-4 rounded text-emerald-600 cursor-pointer"
+              />
             </div>
-          )}
 
-          {/* Category Manager Modal */}
-          <CategoryManagerModal
-            isOpen={isCategoryModalOpen}
-            onClose={() => setIsCategoryModalOpen(false)}
-            onCategoriesChanged={() => setCategories(getCategories())}
-          />
-
-          {/* Recycle Bin Modal */}
-          <RecycleBinModal
-            isOpen={isRecycleBinOpen}
-            onClose={() => setIsRecycleBinOpen(false)}
-            onRestored={() => reloadFromSupabase()}
-          />
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                {isMarathi ? "लेक्चरच्या नोट्स / वर्णन" : "Lesson Notes / Description"}
+              </label>
+              <textarea
+                rows={3}
+                value={videoDescription}
+                onChange={(e) => setVideoDescription(e.target.value)}
+                placeholder="Key concepts, practice exercises, timestamps..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none"
+              />
+            </div>
+          </form>
         </div>
       </AdminShell>
-    </PermissionGuard>
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // RENDER: YOUTUBE STUDIO "CONTENT STUDIO" MAIN VIEW
+  // -------------------------------------------------------------------------
+  return (
+    <AdminShell>
+      <div className="max-w-7xl mx-auto space-y-6 pb-16 font-sans">
+        {/* Header Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+              <Layers className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <span>{isMarathi ? "कंटेंट स्टुडिओ (Content Studio)" : "Channel Content Studio"}</span>
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {isMarathi
+                ? "कोर्सेस, व्हिडिओ लेक्चर्स आणि डायनॅमिक प्रवर्गांचे एकाच डॅशबोर्डवरून सुलभ व्यवस्थापन."
+                : "YouTube Studio-style central management for courses, video lectures, and dynamic categories."}
+            </p>
+          </div>
+
+          {/* Primary Action Button */}
+          <div className="flex items-center gap-2">
+            {activeTab === "courses" && (
+              <button
+                type="button"
+                onClick={() => handleOpenCourseStudio()}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isMarathi ? "+ नवीन कोर्स तयार करा" : "+ Create Course"}</span>
+              </button>
+            )}
+
+            {activeTab === "videos" && (
+              <button
+                type="button"
+                onClick={() => handleOpenVideoStudio()}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isMarathi ? "+ नवीन व्हिडिओ जोडा" : "+ Add Video"}</span>
+              </button>
+            )}
+
+            {activeTab === "categories" && (
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(true)}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isMarathi ? "+ नवीन प्रवर्ग तयार करा" : "+ Add Category"}</span>
+              </button>
+            )}
+
+            {/* Recycle Bin Button */}
+            <button
+              type="button"
+              onClick={() => setIsRecycleBinOpen(true)}
+              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shrink-0"
+              title="Recycle Bin"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <span>{isMarathi ? "कचरापेटी" : "Trash"}</span>
+              {recycleCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] font-mono">
+                  {recycleCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Undo Toast */}
+        {undoToast && (
+          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
+            <span>
+              {isMarathi ? `"${undoToast.title}" कचरापेटीत हलवले.` : `"${undoToast.title}" moved to trash.`}
+            </span>
+            <button
+              onClick={() => {
+                restoreFromRecycleBin(undoToast.id);
+                setUndoToast(null);
+                loadData();
+              }}
+              className="text-emerald-700 dark:text-emerald-300 underline cursor-pointer"
+            >
+              {isMarathi ? "पूर्ववत करा (Undo)" : "Undo"}
+            </button>
+          </div>
+        )}
+
+        {/* Segmented Top Tabs (YouTube Studio Layout) */}
+        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab("courses")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              activeTab === "courses"
+                ? "bg-blue-600 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>{isMarathi ? "कोर्सेस (Structured Batches)" : "Courses (Structured Batches)"}</span>
+            <span className={`px-2 py-0.2 rounded-full text-[10px] font-mono ${activeTab === "courses" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"}`}>
+              {courses.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("videos")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              activeTab === "videos"
+                ? "bg-red-600 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            }`}
+          >
+            <Video className="w-3.5 h-3.5" />
+            <span>{isMarathi ? "व्हिडिओ लेक्चर्स लायब्ररी" : "Videos (Lectures Library)"}</span>
+            <span className={`px-2 py-0.2 rounded-full text-[10px] font-mono ${activeTab === "videos" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"}`}>
+              {videos.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("categories")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              activeTab === "categories"
+                ? "bg-purple-600 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            }`}
+          >
+            <Tag className="w-3.5 h-3.5" />
+            <span>{isMarathi ? "प्रवर्ग (Categories)" : "Categories"}</span>
+            <span className={`px-2 py-0.2 rounded-full text-[10px] font-mono ${activeTab === "categories" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"}`}>
+              {categories.length}
+            </span>
+          </button>
+        </div>
+
+        {/* Advanced Filter & Search Bar */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-white dark:bg-[#1E293B] p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+          {/* Search Input */}
+          <div className="relative sm:col-span-2">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isMarathi ? "नाव, वर्णन किंवा कोडने शोधा..." : "Filter by title, description, or code..."}
+              className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          {/* Dynamic Category Filter */}
+          <div>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none"
+            >
+              <option value="all">{isMarathi ? "सर्व प्रवर्ग (All Categories)" : "All Categories"}</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.key || cat.id}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Visibility / Sort Filter */}
+          <div>
+            <select
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value as any)}
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none"
+            >
+              <option value="date_desc">{isMarathi ? "नवीनतम आधी (Newest)" : "Date (Newest First)"}</option>
+              <option value="title_asc">{isMarathi ? "नाव (A-Z)" : "Title (A to Z)"}</option>
+              {activeTab === "courses" && <option value="students_desc">{isMarathi ? "विद्यार्थी संख्या (Most Enrolled)" : "Enrolled Students"}</option>}
+              {activeTab === "videos" && <option value="views_desc">{isMarathi ? "सर्वाधिक व्ह्यूज (Most Views)" : "Views (Highest First)"}</option>}
+            </select>
+          </div>
+        </div>
+
+        {/* ----------------------------------------------------------------- */}
+        {/* TAB 1: COURSES TABLE (YOUTUBE STUDIO DATA TABLE) */}
+        {/* ----------------------------------------------------------------- */}
+        {activeTab === "courses" && (
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 uppercase text-[10px] font-extrabold tracking-wider">
+                  <tr>
+                    <th className="py-3 px-4">{isMarathi ? "कोर्स" : "Course"}</th>
+                    <th className="py-3 px-3">{isMarathi ? "प्रवर्ग" : "Category"}</th>
+                    <th className="py-3 px-3">{isMarathi ? "स्थिती" : "Visibility"}</th>
+                    <th className="py-3 px-3">{isMarathi ? "विद्यार्थी मुदत" : "Student Validity"}</th>
+                    <th className="py-3 px-3">{isMarathi ? "किंमत" : "Price"}</th>
+                    <th className="py-3 px-3">{isMarathi ? "विद्यार्थी" : "Students"}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {filteredCourses.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-slate-400">
+                        <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                        <p className="font-bold">{isMarathi ? "कोणतेही कोर्सेस सापडले नाहीत." : "No courses found."}</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCourses.map((c) => {
+                      const matchedCat = categories.find((cat) => cat.key === c.category || cat.id === c.category);
+
+                      return (
+                        <tr key={c.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors">
+                          {/* Course Thumbnail + Title + Hover Actions */}
+                          <td className="py-3.5 px-4 min-w-[280px] max-w-md">
+                            <div className="flex gap-3 items-start">
+                              <div className="relative w-24 aspect-video rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
+                                {c.imageSrc ? (
+                                  <Image src={c.imageSrc} alt={c.title} fill className="object-cover" unoptimized />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                    <Film className="w-5 h-5 opacity-40" />
+                                  </div>
+                                )}
+                                <span className="absolute bottom-1 right-1 bg-black/80 text-white font-mono text-[9px] px-1 py-0.2 rounded">
+                                  {c.lessonsCount || 1} lessons
+                                </span>
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                  <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded border border-blue-200 dark:border-blue-800">
+                                    {c.code || "MM"}
+                                  </span>
+                                  <span className="font-extrabold text-slate-900 dark:text-white truncate block">
+                                    {isMarathi ? (c.titleMr || c.title) : c.title}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                                  {c.description || "Comprehensive academy video course curriculum."}
+                                </p>
+
+                                {/* YouTube Studio Style Quick Action Icons on Hover */}
+                                <div className="flex items-center gap-2 mt-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenCourseStudio(c)}
+                                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                                    title={isMarathi ? "तपशील संपादित करा (Edit Details)" : "Edit Details"}
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <Link
+                                    href={`/course/${c.id}`}
+                                    target="_blank"
+                                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                                    title={isMarathi ? "विद्यार्थी म्हणून प्रिव्ह्यू करा (Preview as Student)" : "Preview as Student"}
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </Link>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteModalItem({ id: c.id, title: c.title, type: "course" })}
+                                    className="p-1 rounded hover:bg-red-100 text-red-600 transition"
+                                    title={isMarathi ? "हटवा (Delete)" : "Delete"}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Dynamic Category Badge */}
+                          <td className="py-3 px-3 shrink-0">
+                            <span className="px-2.5 py-1 rounded-full font-bold text-[10px] bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 whitespace-nowrap">
+                              {matchedCat?.label || c.category || "General"}
+                            </span>
+                          </td>
+
+                          {/* Visibility */}
+                          <td className="py-3 px-3">
+                            {c.status === "live" ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                Public
+                              </span>
+                            ) : c.status === "unlisted" ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                Unlisted
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                Draft
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Student Validity Duration */}
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            <div className="font-bold text-slate-900 dark:text-white">
+                              {c.validityLabel || `${c.accessMonths || 3} Months`}
+                            </div>
+                            <div className="text-[10px] text-slate-400">from enrollment</div>
+                          </td>
+
+                          {/* Price */}
+                          <td className="py-3 px-3 font-bold whitespace-nowrap">
+                            {c.isFree || c.pricePaise === 0 ? (
+                              <span className="text-emerald-600">FREE</span>
+                            ) : (
+                              <span>₹{Math.round(c.pricePaise / 100)}</span>
+                            )}
+                          </td>
+
+                          {/* Students Count */}
+                          <td className="py-3 px-3 text-slate-600 dark:text-slate-400 font-bold whitespace-nowrap">
+                            <div className="flex items-center gap-1">
+                              <Users className="w-3.5 h-3.5 text-slate-400" />
+                              <span>{c.totalStudents || 0}</span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------------------------------------------------------- */}
+        {/* TAB 2: VIDEOS TABLE (YOUTUBE STUDIO DATA TABLE) */}
+        {/* ----------------------------------------------------------------- */}
+        {activeTab === "videos" && (
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 uppercase text-[10px] font-extrabold tracking-wider">
+                  <tr>
+                    <th className="py-3 px-4">{isMarathi ? "व्हिडिओ व्याख्यान" : "Video Lecture"}</th>
+                    <th className="py-3 px-3">{isMarathi ? "संबंधित कोर्स" : "Course Batch"}</th>
+                    <th className="py-3 px-3">{isMarathi ? "प्रकार" : "Access Type"}</th>
+                    <th className="py-3 px-3">{isMarathi ? "कालावधी" : "Duration"}</th>
+                    <th className="py-3 px-3">{isMarathi ? "व्ह्यूज" : "Views"}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {filteredVideos.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-slate-400">
+                        <Video className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                        <p className="font-bold">{isMarathi ? "कोणतेही व्हिडिओ सापडले नाहीत." : "No videos found."}</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredVideos.map((v) => {
+                      const assignedCourse = courses.find((c) => c.id === v.courseId);
+
+                      return (
+                        <tr key={v.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors">
+                          {/* Video Thumbnail + Title + Hover Actions */}
+                          <td className="py-3.5 px-4 min-w-[260px] max-w-md">
+                            <div className="flex gap-3 items-start">
+                              <div className="relative w-20 aspect-video rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
+                                {v.videoId ? (
+                                  <Image
+                                    src={`https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg`}
+                                    alt={v.title}
+                                    fill
+                                    className="object-cover"
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                    <Video className="w-4 h-4 opacity-40" />
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                  <Play className="w-4 h-4 text-white fill-current opacity-80" />
+                                </div>
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <span className="font-extrabold text-slate-900 dark:text-white truncate block">
+                                  {v.title}
+                                </span>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                                  {v.description || "Video lecture lesson."}
+                                </p>
+
+                                {/* Quick Action Icons on Hover */}
+                                <div className="flex items-center gap-2 mt-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenVideoStudio(v)}
+                                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                                    title="Edit Video"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <a
+                                    href={`https://youtube.com/watch?v=${v.videoId}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                                    title="Open YouTube Video"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteModalItem({ id: v.id, title: v.title, type: "video" })}
+                                    className="p-1 rounded hover:bg-red-100 text-red-600 transition cursor-pointer"
+                                    title="Delete Video"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Target Course Batch */}
+                          <td className="py-3 px-3">
+                            <span className="font-bold text-slate-900 dark:text-white block truncate max-w-xs">
+                              {assignedCourse?.title || "Standalone Video"}
+                            </span>
+                            <span className="font-mono text-[10px] text-slate-400">
+                              {assignedCourse?.code || "MM"}
+                            </span>
+                          </td>
+
+                          {/* Access Type */}
+                          <td className="py-3 px-3">
+                            {v.isFree ? (
+                              <span className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                Free Demo
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                Enrolled Only
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Duration */}
+                          <td className="py-3 px-3 font-mono text-slate-600 dark:text-slate-400">
+                            {Math.round((v.durationSec || 900) / 60)} min
+                          </td>
+
+                          {/* Views */}
+                          <td className="py-3 px-3 font-bold text-slate-600 dark:text-slate-400">
+                            {v.views || 0}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------------------------------------------------------- */}
+        {/* TAB 3: DYNAMIC CATEGORIES IN-PLACE MANAGER */}
+        {/* ----------------------------------------------------------------- */}
+        {activeTab === "categories" && (
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                  {isMarathi ? "डायनॅमिक प्रवर्ग व्यवस्थापन" : "Dynamic Category Architecture"}
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {isMarathi
+                    ? "येथे तयार केलेले किंवा सुधारित केलेले प्रवर्ग थेट विद्यार्थी व ॲडमिन पोर्टलवर रिअल-टाइम अपडेट होतात."
+                    : "Categories created or edited here synchronize dynamically across Admin, Sub-Admin, and Student portals."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(true)}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{isMarathi ? "+ नवीन प्रवर्ग" : "+ Add Category"}</span>
+              </button>
+            </div>
+
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {categories.length === 0 ? (
+                <div className="p-12 text-center text-slate-400">
+                  <Tag className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                  <p className="font-bold">{isMarathi ? "कोणतेही प्रवर्ग उपलब्ध नाहीत." : "No categories configured yet."}</p>
+                </div>
+              ) : (
+                categories.map((cat, index) => (
+                  <div key={cat.id} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() => {
+                            moveCategory(cat.id, "up");
+                            setCategories(getCategories());
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-blue-600 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={index === categories.length - 1}
+                          onClick={() => {
+                            moveCategory(cat.id, "down");
+                            setCategories(getCategories());
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-blue-600 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+                            {cat.label}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-purple-50 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                            {cat.badge}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          {cat.description || "Active dynamic category"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setIsCategoryModalOpen(true)}
+                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-700 dark:hover:bg-blue-900/40 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                        title="Edit Category"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteModalItem({ id: cat.id, title: cat.label, type: "category" })}
+                        className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 transition cursor-pointer"
+                        title="Delete Category"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteModalItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans">
+            <div className="bg-white dark:bg-[#1E293B] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white space-y-4">
+              <h3 className="font-extrabold text-base flex items-center gap-2 text-red-600">
+                <Trash2 className="w-5 h-5" />
+                <span>{isMarathi ? "कचरापेटीत हलवायचे आहे का?" : "Move to Recycle Bin?"}</span>
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                {isMarathi
+                  ? `तुम्हाला खात्री आहे का की "${deleteModalItem.title}" हटवायचे आहे? ही वस्तू रीसायकल बिनमधून कधीही पूर्ववत (Undo) करता येईल.`
+                  : `Are you sure you want to delete "${deleteModalItem.title}"? It will be moved to the Recycle Bin and can be restored anytime.`}
+              </p>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteModalItem(null)}
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs cursor-pointer"
+                >
+                  {isMarathi ? "रद्द करा" : "Cancel"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition cursor-pointer disabled:opacity-50"
+                >
+                  {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isMarathi ? "होय, हटवा" : "Yes, Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Category Manager Modal */}
+        <CategoryManagerModal
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+          onCategoriesChanged={() => loadData()}
+        />
+
+        {/* Recycle Bin Modal */}
+        <RecycleBinModal
+          isOpen={isRecycleBinOpen}
+          onClose={() => setIsRecycleBinOpen(false)}
+          onRestored={() => loadData()}
+        />
+      </div>
+    </AdminShell>
   );
 }

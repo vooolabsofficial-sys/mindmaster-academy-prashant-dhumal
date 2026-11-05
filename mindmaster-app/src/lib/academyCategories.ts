@@ -1,16 +1,24 @@
-// Central MindMaster Academy Category Classification & Filtering
-// Covers Memory, School, Jr College, Teacher Certification & Scholarship
+// Dynamic MindMaster Academy Category Classification & Filtering
+// Synchronized in real-time across Admin, Sub-Admin, and Student Portal
 
+import { getCategories, CategoryItem } from "./categoryStore";
+
+export type AcademyCategory = string;
+
+/**
+ * Returns dynamic category filter names created by Admin / Sub-Admin.
+ * Always includes "All Categories" as the first tab.
+ */
+export function getDynamicCategoryList(): string[] {
+  const dynamicCats = getCategories();
+  const labels = dynamicCats.map((c) => c.label).filter(Boolean);
+  return ["All Categories", ...labels];
+}
+
+// Fallback constant for backwards compatibility
 export const ACADEMY_CATEGORIES = [
   "All Categories",
-  "Mind Memory & Vedic Maths",
-  "School (1st–10th Std)",
-  "Jr. College (11th–12th)",
-  "Teacher Certification",
-  "Scholarship",
 ] as const;
-
-export type AcademyCategory = (typeof ACADEMY_CATEGORIES)[number];
 
 export function matchesAcademyCategory(
   item: {
@@ -23,46 +31,56 @@ export function matchesAcademyCategory(
     badgeText?: string;
     standards?: number[];
   },
-  targetCategory: AcademyCategory
+  targetCategory: string
 ): boolean {
-  if (targetCategory === "All Categories") return true;
-
-  const text = `${item.title || ""} ${item.titleMr || ""} ${item.description || ""} ${item.code || ""} ${item.badge || ""} ${item.badgeText || ""}`.toLowerCase();
-  const cat = (item.category || "").toLowerCase();
-  const stds = item.standards || [];
-
-  switch (targetCategory) {
-    case "Mind Memory & Vedic Maths":
-      return (
-        cat === "memory" ||
-        cat === "vedic" ||
-        cat === "calendar" ||
-        /memory|vedic|math|गणित|स्मृती|पाढे|mind|speed|calculation|technique/i.test(text)
-      );
-
-    case "School (1st–10th Std)":
-      return (
-        stds.some((s) => s >= 1 && s <= 10) ||
-        /1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|school|शालेय|इयत्ता|ssc|board/i.test(text)
-      );
-
-    case "Jr. College (11th–12th)":
-      return (
-        stds.some((s) => s === 11 || s === 12) ||
-        /11th|12th|hsc|junior college|college|अकरावी|बारावी/i.test(text)
-      );
-
-    case "Teacher Certification":
-      return (
-        cat === "trainer" ||
-        cat === "teacher" ||
-        /trainer|teacher|certification|शिक्षक|ट्रेनर|प्रशिक्षक/i.test(text)
-      );
-
-    case "Scholarship":
-      return /scholarship|शिष्यवृत्ती|navodaya|नवोदय|talent|manthan/i.test(text);
-
-    default:
-      return true;
+  if (!targetCategory || targetCategory === "All Categories" || targetCategory === "सर्व प्रवर्ग") {
+    return true;
   }
+
+  const normalizedTarget = targetCategory.toLowerCase().trim();
+  const currentCats = getCategories();
+  const matchedCat = currentCats.find(
+    (c) =>
+      c.label.toLowerCase() === normalizedTarget ||
+      c.key.toLowerCase() === normalizedTarget ||
+      c.id.toLowerCase() === normalizedTarget ||
+      c.badge.toLowerCase() === normalizedTarget ||
+      (c.labelMr && c.labelMr.toLowerCase() === normalizedTarget)
+  );
+
+  const itemCat = (item.category || "").toLowerCase().trim();
+  const itemCode = (item.code || "").toLowerCase().trim();
+  const itemTitle = `${item.title || ""} ${item.titleMr || ""}`.toLowerCase();
+  const itemDesc = (item.description || "").toLowerCase();
+
+  // 1. Direct match with course category field
+  if (itemCat && (itemCat === normalizedTarget || (matchedCat && itemCat === matchedCat.key.toLowerCase()))) {
+    return true;
+  }
+
+  // 2. Direct match with category ID or key
+  if (matchedCat) {
+    if (itemCat === matchedCat.id.toLowerCase() || itemCat === matchedCat.key.toLowerCase()) {
+      return true;
+    }
+    // Match standards if defined on dynamic category
+    if (matchedCat.standards && matchedCat.standards.length > 0 && item.standards) {
+      if (item.standards.some((s) => matchedCat.standards!.includes(s))) {
+        return true;
+      }
+    }
+  }
+
+  // 3. Match against title / badge / description
+  if (itemTitle.includes(normalizedTarget) || itemDesc.includes(normalizedTarget)) {
+    return true;
+  }
+
+  // 4. Match against badge
+  const itemBadge = `${item.badge || ""} ${item.badgeText || ""}`.toLowerCase();
+  if (itemBadge.includes(normalizedTarget)) {
+    return true;
+  }
+
+  return false;
 }

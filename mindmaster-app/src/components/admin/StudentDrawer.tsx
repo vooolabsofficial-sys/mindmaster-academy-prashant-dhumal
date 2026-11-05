@@ -171,12 +171,12 @@ export default function StudentDrawer({
       />
 
       {/* Slide-Over Drawer */}
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs font-sans overflow-y-auto">
         <aside
           role="dialog"
           aria-modal="true"
           aria-labelledby="student-drawer-title"
-          className="w-screen max-w-xl bg-white dark:bg-[#1E293B] border-l border-slate-200/80 dark:border-slate-700/60 shadow-2xl flex flex-col justify-between text-[#0F172A] dark:text-[#F1F5F9] transition-all duration-300"
+          className="max-w-3xl w-full bg-white dark:bg-[#1E293B] rounded-3xl border border-slate-200/80 dark:border-slate-700/60 shadow-2xl flex flex-col justify-between text-[#0F172A] dark:text-[#F1F5F9] max-h-[90vh] overflow-hidden transition-all duration-200"
         >
           {/* Header */}
           <div className="p-6 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/70 dark:bg-slate-800/40">

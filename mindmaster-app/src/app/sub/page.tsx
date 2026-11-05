@@ -13,9 +13,11 @@ import {
   Lock,
   Layers,
   Sparkles,
-  HelpCircle
+  HelpCircle,
+  Tag
 } from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
+import CategoryManagerModal from "@/components/admin/CategoryManagerModal";
 import { getCurrentStaff, getAuditLogs, getStaffStudents } from "@/lib/staffStore";
 import { getUnreadCountForStaff, getConversationsForStaff } from "@/lib/messageStore";
 import { StaffUser, AuditLogEntry, hasStaffPermission } from "@/lib/types";
@@ -26,6 +28,7 @@ export default function SubAdminRootPage() {
   const [studentCount, setStudentCount] = useState(0);
   const [msgUnread, setMsgUnread] = useState(0);
   const [conversationCount, setConversationCount] = useState(0);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   useEffect(() => {
     const current = getCurrentStaff();
@@ -316,6 +319,25 @@ export default function SubAdminRootPage() {
                 </p>
               </div>
             </Link>
+
+            {/* 5. Dynamic Categories Manager Launcher */}
+            <button
+              type="button"
+              onClick={() => setIsCategoryModalOpen(true)}
+              className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-purple-500 hover:bg-white dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 group text-left cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-900/50 flex items-center justify-center text-purple-600 shadow-xs group-hover:scale-105 transition-transform">
+                <Tag className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-purple-600">
+                  Category Manager
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Create, edit, reorder &amp; sync dynamic curriculum categories
+                </p>
+              </div>
+            </button>
           </div>
         </div>
 
@@ -374,6 +396,12 @@ export default function SubAdminRootPage() {
             <span><strong>Main Admin Safeguards:</strong> Master Settings, Sub-Admin management, Financial/Watch Telemetry Reports, and Deletion operations remain securely reserved for Main Admin (Prashant Sir).</span>
           </div>
         </div>
+
+        {/* Dynamic Category Manager Modal for Sub-Admin */}
+        <CategoryManagerModal
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+        />
       </div>
     </AdminShell>
   );

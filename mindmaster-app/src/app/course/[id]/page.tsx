@@ -21,6 +21,7 @@ import AppShell from "@/components/navigation/AppShell";
 import { getStaffCourses } from "@/lib/staffStore";
 import { getStoredVideos } from "@/lib/playlistStore";
 import { createClient } from "@/lib/supabase/client";
+import { getCategories } from "@/lib/categoryStore";
 
 export default function CourseDetailPage({
   params,
@@ -180,7 +181,7 @@ export default function CourseDetailPage({
                   {course.badgeText || "POPULAR"}
                 </span>
                 <span className="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-2xs">
-                  {course.category ? course.category.toUpperCase() : "ACADEMY"}
+                  {getCategories().find((c) => c.key === course.category || c.id === course.category)?.label || (course.category ? course.category.toUpperCase() : "ACADEMY")}
                 </span>
               </div>
 

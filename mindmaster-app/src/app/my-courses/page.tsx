@@ -420,7 +420,11 @@ export default function MyLearningPage() {
                               title={formattedISTDate}
                             >
                               <Clock className="w-3 h-3 text-amber-500" />
-                              <span>{remaining.label} Remaining</span>
+                              <span>
+                                {isMarathi
+                                  ? `सक्रिय: ${formattedISTDate ? formattedISTDate.slice(0, 11) : "सक्रिय"} — ${remaining.days} दिवस शिल्लक`
+                                  : `Active until: ${formattedISTDate ? formattedISTDate.slice(0, 11) : "Active"} — ${remaining.days} days remaining`}
+                              </span>
                             </span>
                           )}
                         </div>

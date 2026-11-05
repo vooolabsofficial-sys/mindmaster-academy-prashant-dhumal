@@ -7,12 +7,14 @@ export interface CategoryItem {
   id: string;
   key: string;
   label: string;
+  labelMr?: string;
   badge: string;
-  category: "all" | "memory" | "vedic" | "trainer" | "calendar" | "free" | "police";
+  category?: "all" | "memory" | "vedic" | "trainer" | "calendar" | "free" | "police" | string;
   standards?: number[];
-  audienceType: "all" | "competitive" | "school";
-  description: string;
+  audienceType?: "all" | "competitive" | "school";
+  description?: string;
   isDefault?: boolean;
+  order?: number;
   createdAt: string;
 }
 
@@ -29,69 +31,8 @@ export interface RecycleBinItem {
 const STORAGE_KEY_CATEGORIES = "mma_dynamic_categories";
 const STORAGE_KEY_RECYCLE_BIN = "mma_recycle_bin";
 
-// Default Initial Categories
-export const DEFAULT_CATEGORIES: CategoryItem[] = [
-  {
-    id: "cat_school_5_10",
-    key: "school_5_10",
-    label: "School (5th–10th Std) / शालेय ५ वी ते १० वी",
-    badge: "School 5th-10th",
-    category: "all",
-    standards: [5, 6, 7, 8, 9, 10],
-    audienceType: "school",
-    description: "Memory, calculation tables and scientific study techniques for students",
-    isDefault: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "cat_junior_college",
-    key: "junior_college_11_12",
-    label: "Jr. College (11th–12th Std) / ११ वी व १२ वी",
-    badge: "11th-12th College",
-    category: "all",
-    standards: [11, 12],
-    audienceType: "school",
-    description: "Memory anchors and concentration systems for board & entrance exams",
-    isDefault: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "cat_vedic_memory",
-    key: "vedic_memory",
-    label: "Vedic Maths & Memory Science / वैदिक गणित आणि मेमरी सायन्स",
-    badge: "Brain Science",
-    category: "memory",
-    standards: undefined,
-    audienceType: "all",
-    description: "Superfast 500-year calendar, mental multiplication and single-reading retention",
-    isDefault: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "cat_trainer_certification",
-    key: "trainer_certification",
-    label: "Teacher & Trainer Certification / शिक्षक सर्टिफिकेशन",
-    badge: "Teacher Certification",
-    category: "all",
-    standards: undefined,
-    audienceType: "all",
-    description: "Official certification program for aspiring memory trainers and teachers",
-    isDefault: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "cat_scholarship_nmms",
-    key: "scholarship_nmms",
-    label: "स्कॉलरशिप व NMMS परीक्षा (Scholarship & NMMS)",
-    badge: "Scholarship",
-    category: "all",
-    standards: [5, 8],
-    audienceType: "school",
-    description: "५ वी व ८ वी शिष्यवृत्ती, मंथन आणि NMMS परीक्षेची तयारी",
-    isDefault: true,
-    createdAt: new Date().toISOString(),
-  },
-];
+// Clean Slate: Zero hardcoded dummy categories
+export const DEFAULT_CATEGORIES: CategoryItem[] = [];
 
 // Helper: safe localStorage access
 function safeGetItem<T>(key: string, fallback: T): T {
@@ -128,13 +69,15 @@ export function saveCategory(cat: Partial<CategoryItem>): CategoryItem {
   const newItem: CategoryItem = {
     id,
     key,
-    label: cat.label?.trim() || "नवीन प्रवर्ग",
+    label: cat.label?.trim() || "New Category",
+    labelMr: cat.labelMr?.trim() || undefined,
     badge: cat.badge?.trim() || cat.label?.trim() || "Category",
     category: cat.category || "memory",
     standards: cat.standards || undefined,
     audienceType: cat.audienceType || "all",
     description: cat.description?.trim() || "",
     isDefault: Boolean(cat.isDefault),
+    order: cat.order ?? (cat.id ? current.find((c) => c.id === cat.id)?.order : current.length + 1) ?? 1,
     createdAt: cat.createdAt || new Date().toISOString(),
   };
 
@@ -150,11 +93,12 @@ export function saveCategory(cat: Partial<CategoryItem>): CategoryItem {
   safeSetItem(STORAGE_KEY_CATEGORIES, updated);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event("mma_categories_changed"));
+    window.dispatchEvent(new Event("mindmaster_categories_updated"));
   }
   return newItem;
 }
 
-export function renameCategory(id: string, newLabel: string, newBadge: string, newDesc?: string): boolean {
+export function renameCategory(id: string, newLabel: string, newBadge: string, newDesc?: string, newLabelMr?: string): boolean {
   const current = getCategories();
   const target = current.find((c) => c.id === id);
   if (!target) return false;
@@ -162,12 +106,67 @@ export function renameCategory(id: string, newLabel: string, newBadge: string, n
   target.label = newLabel.trim();
   target.badge = newBadge.trim() || newLabel.trim();
   if (newDesc !== undefined) target.description = newDesc.trim();
+  if (newLabelMr !== undefined) target.labelMr = newLabelMr.trim();
 
   safeSetItem(STORAGE_KEY_CATEGORIES, current);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event("mma_categories_changed"));
+    window.dispatchEvent(new Event("mindmaster_categories_updated"));
   }
   return true;
+}
+
+export function moveCategory(id: string, direction: "up" | "down"): boolean {
+  const current = [...getCategories()];
+  const idx = current.findIndex((c) => c.id === id);
+  if (idx < 0) return false;
+  if (direction === "up" && idx === 0) return false;
+  if (direction === "down" && idx === current.length - 1) return false;
+
+  const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+  const temp = current[idx];
+  current[idx] = current[targetIdx];
+  current[targetIdx] = temp;
+
+  // Update order property
+  current.forEach((cat, index) => {
+    cat.order = index + 1;
+  });
+
+  safeSetItem(STORAGE_KEY_CATEGORIES, current);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("mma_categories_changed"));
+    window.dispatchEvent(new Event("mindmaster_categories_updated"));
+  }
+  return true;
+}
+
+export function reorderCategories(orderedIds: string[]): CategoryItem[] {
+  const current = getCategories();
+  const map = new Map(current.map((c) => [c.id, c]));
+  const reordered: CategoryItem[] = [];
+
+  orderedIds.forEach((id, idx) => {
+    const item = map.get(id);
+    if (item) {
+      item.order = idx + 1;
+      reordered.push(item);
+      map.delete(id);
+    }
+  });
+
+  // Append any unmentioned categories at the end
+  map.forEach((item) => {
+    item.order = reordered.length + 1;
+    reordered.push(item);
+  });
+
+  safeSetItem(STORAGE_KEY_CATEGORIES, reordered);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("mma_categories_changed"));
+    window.dispatchEvent(new Event("mindmaster_categories_updated"));
+  }
+  return reordered;
 }
 
 export function deleteCategory(id: string): { success: boolean; deleted: CategoryItem | null } {
@@ -189,6 +188,7 @@ export function deleteCategory(id: string): { success: boolean; deleted: Categor
 
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event("mma_categories_changed"));
+    window.dispatchEvent(new Event("mindmaster_categories_updated"));
   }
   return { success: true, deleted: target };
 }

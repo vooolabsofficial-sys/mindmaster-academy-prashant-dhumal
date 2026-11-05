@@ -24,7 +24,8 @@ import {
 import AppShell from "@/components/navigation/AppShell";
 import FilterChips, { StandardFilter } from "@/components/courses/FilterChips";
 import { getStaffCourses, getStaffStudents, fetchDbCourses } from "@/lib/staffStore";
-import { ACADEMY_CATEGORIES, AcademyCategory, matchesAcademyCategory } from "@/lib/academyCategories";
+import { matchesAcademyCategory } from "@/lib/academyCategories";
+import { getCategories, CategoryItem } from "@/lib/categoryStore";
 import { useLanguage } from "@/lib/LanguageContext";
 
 type FeeFilter = "All" | "Free" | "Paid";
@@ -67,7 +68,10 @@ function extractStandardNumber(val: any): number | null {
 export default function CoursesCatalogPage() {
   const { currentLanguage } = useLanguage();
   const isMarathi = currentLanguage === "mr";
-  const [selectedCategory, setSelectedCategory] = useState<AcademyCategory>("All Categories");
+  const [categories, setCategories] = useState<CategoryItem[]>(() =>
+    typeof window !== "undefined" ? getCategories() : []
+  );
+  const [selectedCategory, setSelectedCategory] = useState<string>("All Categories");
   const [feeFilter, setFeeFilter] = useState<FeeFilter>("All");
   const [activeStandard, setActiveStandard] = useState<StandardFilter>("all");
   const [studentProfile, setStudentProfile] = useState<any>(null);
@@ -87,8 +91,19 @@ export default function CoursesCatalogPage() {
     const handleUpdate = () => {
       setStaffCourses(getStaffCourses());
     };
+    const handleCategoryUpdate = () => {
+      setCategories(getCategories());
+    };
+
     window.addEventListener("mindmaster_courses_updated", handleUpdate);
-    return () => window.removeEventListener("mindmaster_courses_updated", handleUpdate);
+    window.addEventListener("mma_categories_changed", handleCategoryUpdate);
+    window.addEventListener("mindmaster_categories_updated", handleCategoryUpdate);
+
+    return () => {
+      window.removeEventListener("mindmaster_courses_updated", handleUpdate);
+      window.removeEventListener("mma_categories_changed", handleCategoryUpdate);
+      window.removeEventListener("mindmaster_categories_updated", handleCategoryUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -239,21 +254,41 @@ export default function CoursesCatalogPage() {
             </span>
           </div>
           <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" role="tablist">
-            {ACADEMY_CATEGORIES.map((cat) => {
-              const isActive = selectedCategory === cat;
+            <button
+              role="tab"
+              aria-selected={selectedCategory === "All Categories"}
+              onClick={() => setSelectedCategory("All Categories")}
+              className={`min-h-[38px] px-4 py-2 rounded-xl text-xs font-bold shrink-0 transition-all border cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 ${
+                selectedCategory === "All Categories"
+                  ? "bg-[#2563EB] dark:bg-[#3B82F6] text-white border-transparent shadow-xs"
+                  : "bg-white dark:bg-slate-800/60 text-[#475569] dark:text-[#94A3B8] border-slate-200/80 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
+              }`}
+            >
+              <span>{isMarathi ? "सर्व प्रवर्ग (All)" : "All Categories"}</span>
+            </button>
+            {categories.map((cat) => {
+              const label = isMarathi ? (cat.labelMr || cat.label) : cat.label;
+              const isActive = selectedCategory === cat.label || selectedCategory === cat.id;
               return (
                 <button
-                  key={cat}
+                  key={cat.id}
                   role="tab"
                   aria-selected={isActive}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => setSelectedCategory(cat.label)}
                   className={`min-h-[38px] px-4 py-2 rounded-xl text-xs font-bold shrink-0 transition-all border cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 ${
                     isActive
                       ? "bg-[#2563EB] dark:bg-[#3B82F6] text-white border-transparent shadow-xs"
                       : "bg-white dark:bg-slate-800/60 text-[#475569] dark:text-[#94A3B8] border-slate-200/80 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#0F172A] dark:hover:text-[#F1F5F9]"
                   }`}
                 >
-                  <span>{cat}</span>
+                  <span>{label}</span>
+                  {cat.badge && (
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                      isActive ? "bg-white/20 text-white" : "bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300"
+                    }`}>
+                      {cat.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}
