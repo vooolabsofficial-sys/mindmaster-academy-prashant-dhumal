@@ -40,6 +40,19 @@ export async function middleware(req: NextRequest | Request) {
   const method = (req.method || "GET").toUpperCase();
   const isMutating = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
 
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isSubRoute = pathname.startsWith("/sub");
+
+  // Dedicated staff login and recovery pages are strictly public
+  if (
+    pathname === "/admin/login" ||
+    pathname === "/sub/login" ||
+    pathname === "/staff/login" ||
+    pathname === "/staff/forgot-password"
+  ) {
+    return NextResponse.next();
+  }
+
   // Redirect obsolete /notes route seamlessly to /books
   if (pathname === "/notes" || pathname.startsWith("/notes/")) {
     const booksUrl = new URL(pathname.replace(/^\/notes/, "/books"), req.url);
@@ -126,38 +139,21 @@ export async function middleware(req: NextRequest | Request) {
   let staffCookie: string | undefined = undefined;
   if ("cookies" in req && (req as any).cookies?.get) {
     staffCookie = (req as any).cookies.get("mma_staff_session")?.value;
-  } else {
+  }
+  if (!staffCookie) {
     const cookieHeader = req.headers.get("cookie") || "";
     const match = cookieHeader.match(/mma_staff_session=([^;]+)/);
-    if (match) staffCookie = decodeURIComponent(match[1]);
+    if (match) staffCookie = match[1];
   }
 
   if (staffCookie) {
     try {
-      staffSession = verifyStaffSession(staffCookie);
-      // Data migration check: sanitize sub-admin permissions
-      if (staffSession && staffSession.role === "sub_admin") {
-        staffSession.permissions = (staffSession.permissions || []).filter(
-          (p: string) => ASSIGNABLE_PERMISSIONS.includes(p as any)
-        );
-        // Instant Live DB check: verify account is still active in staff_accounts
-        try {
-          const supabase = createAdminClient();
-          const staffIdentifier = staffSession.staff_id || staffSession.id;
-          const { data: dbStaff } = await supabase
-            .from("staff_accounts")
-            .select("status")
-            .or(`id.eq.${staffIdentifier},staff_id.eq.${staffIdentifier}`)
-            .maybeSingle();
-          if (dbStaff && dbStaff.status !== "active") {
-            staffSession.status = "suspended";
-          }
-        } catch {
-          // If network / Supabase temporarily unreachable, rely on signed token status
-        }
+      staffSession = await verifyStaffSession(staffCookie);
+      if (!staffSession && staffCookie.includes("%")) {
+        staffSession = await verifyStaffSession(decodeURIComponent(staffCookie));
       }
-    } catch {
-      // Cookie corrupted
+    } catch (e: any) {
+      // verification fallback
     }
   }
 
@@ -342,19 +338,6 @@ export async function middleware(req: NextRequest | Request) {
   // =========================================================================
   // 4. STAFF / ADMIN / SUB-ADMIN ROUTE ENFORCEMENT
   // =========================================================================
-  const isAdminRoute = pathname.startsWith("/admin");
-  const isSubRoute = pathname.startsWith("/sub");
-
-  // Dedicated login pages are public
-  if (
-    pathname === "/admin/login" ||
-    pathname === "/sub/login" ||
-    pathname === "/staff/login" ||
-    pathname === "/staff/forgot-password"
-  ) {
-    return NextResponse.next();
-  }
-
   if (isAdminRoute || isSubRoute) {
     // A. Must be authenticated as staff
     if (!staffSession) {

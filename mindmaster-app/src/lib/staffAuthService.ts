@@ -5,6 +5,7 @@ import { getStaffUsers } from "./staffStore";
 export type { StaffSessionData } from "./staffSession";
 export {
   signStaffSession,
+  signStaffSessionAsync,
   createStaffSessionToken,
   verifyStaffSession,
 } from "./staffSession";

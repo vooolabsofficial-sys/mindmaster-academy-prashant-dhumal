@@ -239,6 +239,30 @@ async function runTests() {
     assert.strictEqual(res.status, 200, `Main admin accessing /admin/* should pass, got ${res.status}`);
   });
 
+  await test("Main-admin with signed token accessing /admin is allowed", async () => {
+    const { signStaffSession } = await import("../src/lib/staffSession.js");
+    const token = signStaffSession({
+      staff_id: "MMA-000",
+      name: "Prashant Dhumal",
+      phone: "+918459344077",
+      role: "main_admin",
+      permissions: ["messages.manage", "students.view", "videos.manage", "courses.manage", "coupons.manage", "reports.view", "notes.books.manage", "freegrant.manage"],
+      status: "active",
+      must_change_password: false,
+      logged_at: Date.now(),
+    });
+
+    const req = new Request("http://localhost:3000/admin", {
+      method: "GET",
+      headers: {
+        cookie: `mma_staff_session=${token}`,
+      },
+    });
+
+    const res = await middleware(req);
+    assert.strictEqual(res.status, 200, `Expected 200, got ${res.status} to ${res.headers.get("location")}`);
+  });
+
   await test("Sub-admin without messages.manage accessing /sub/messages gets 403", async () => {
     const subAdminWithoutMessages = {
       staff_id: "MMA-002",

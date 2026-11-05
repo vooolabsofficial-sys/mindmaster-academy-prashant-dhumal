@@ -6,6 +6,7 @@ import {
   clearFailedAttempts,
   StaffSessionData,
   signStaffSession,
+  signStaffSessionAsync,
 } from "@/lib/staffAuthService";
 import { verifyArgon2 } from "@/lib/argon2";
 import { normalizePhone } from "@/lib/phoneUtils";
@@ -55,6 +56,19 @@ export async function POST(req: Request) {
     if (normPhone === "8459344077") canonicalId = "MMA-000";
     else if (normPhone === "9876543211") canonicalId = "MMA-001";
     else if (normPhone === "9765098765") canonicalId = "MMA-002";
+
+    // Check 5-fail lockout status
+    const lockout = getLockoutStatus(canonicalId);
+    if (lockout.isLocked) {
+      return NextResponse.json(
+        {
+          error: `Account locked due to 5 consecutive failed attempts. Try again in ${Math.ceil(lockout.remainingSec / 60)} minute(s) or contact Main Admin.`,
+          isLocked: true,
+          remainingSec: lockout.remainingSec,
+        },
+        { status: 423 }
+      );
+    }
 
     // 2. Locate Staff Account (Supabase live DB first, fallback to store)
     let staff = findStaffAccount(canonicalId) || findStaffAccount(rawId);
@@ -161,12 +175,12 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: locked
-            ? "Account temporarily locked after 5 consecutive failed attempts. Contact Main Admin."
+            ? "Account locked due to 5 consecutive failed attempts. Contact Main Admin."
             : `Incorrect password. ${attemptsLeft} attempt(s) remaining before temporary lockout.`,
           attemptsLeft,
           isLocked: locked,
         },
-        { status: 401 }
+        { status: locked ? 423 : 401 }
       );
     }
 
@@ -199,7 +213,7 @@ export async function POST(req: Request) {
     });
 
     // Set secure HTTP session cookie
-    const signedToken = signStaffSession(sessionData);
+    const signedToken = await signStaffSessionAsync(sessionData);
     const isHttps = req.url.startsWith("https");
     res.cookies.set("mma_staff_session", signedToken, {
       httpOnly: false, // accessible to client auth store
