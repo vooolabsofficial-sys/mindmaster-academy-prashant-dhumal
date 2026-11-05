@@ -46,15 +46,45 @@ const MAHARASHTRA_DISTRICTS = [
 const ALL_PERMISSIONS: { key: StaffPermission; label: string; desc: string; icon: string }[] = [
   {
     key: "students.view",
-    label: "Student Finder & 360° Profile",
-    desc: "Search students, view admission history, and inspect profiles (telemetry watch drilldown locked to Main Admin)",
+    label: "१. विद्यार्थी शोध व प्रोफाईल (Student Finder & Profile)",
+    desc: "विद्यार्थी शोधणे, फोन पडताळणी करणे व डिव्हाइस रिसेट करणे.",
     icon: "🎓",
   },
   {
     key: "messages.manage",
-    label: "Student Support Messages",
-    desc: "Reply to student queries and send in-app support messages",
+    label: "२. सपोर्ट टिकट्स व मेसेज (Support Messages & Tickets)",
+    desc: "विद्यार्थ्यांच्या अडचणी सोडवणे व इन-ॲप मेसेज पाठवणे.",
     icon: "💬",
+  },
+  {
+    key: "courses.manage",
+    label: "३. कोर्सेस व्यवस्थापन (Courses Studio)",
+    desc: "कोर्सेस तयार करणे, किंमत व कालावधी अपडेट करणे.",
+    icon: "📚",
+  },
+  {
+    key: "videos.manage",
+    label: "४. व्हिडिओ व लेक्चर्स (Video Lectures & Chapters)",
+    desc: "युट्यूब व्हिडिओ लेक्चर्स जोडणे व चॅप्टर क्रम ठरवणे.",
+    icon: "🎥",
+  },
+  {
+    key: "notes.books.manage",
+    label: "५. ई-बुक्स व PDF नोट्स (PDF Books Studio)",
+    desc: "वैदिक गणित व मेमरी पुस्तके अपलोड करणे व कोर्सेसशी जोडणे.",
+    icon: "📖",
+  },
+  {
+    key: "coupons.manage",
+    label: "६. सवलत कूपन कोड्स (Coupons & Offers)",
+    desc: "सणांचे व विशेष बॅचचे डिस्काउंट कूपन कोड्स तयार करणे.",
+    icon: "🏷️",
+  },
+  {
+    key: "reports.view",
+    label: "७. ॲनालिटिक्स व रिपोर्ट्स (Reports & Analytics)",
+    desc: "विद्यार्थी वाढ, ऍक्सेस एक्सपायरी आणि फी कलेक्शन अहवाल पाहणे.",
+    icon: "📊",
   },
 ];
 

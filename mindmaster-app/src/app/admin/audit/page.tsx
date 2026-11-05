@@ -21,6 +21,26 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
+function formatAuditAction(action: string): { label: string; sub?: string } {
+  const map: Record<string, { label: string; sub: string }> = {
+    STAFF_LOGIN: { label: "स्टाफ लॉगिन", sub: "Staff Login" },
+    STAFF_LOGOUT: { label: "स्टाफ लॉगआउट", sub: "Staff Logout" },
+    COURSE_GRANT: { label: "कोर्स ऍक्सेस मंजूर", sub: "Course Granted" },
+    GRANT_REVOKE: { label: "कोर्स ऍक्सेस रद्द", sub: "Access Revoked" },
+    DEVICE_RESET: { label: "विद्यार्थी फोन रिसेट", sub: "Device Reset" },
+    CASH_COLLECTED: { label: "ऑफलाईन फी जमा", sub: "Cash Collected" },
+    CASH_SETTLED: { label: "कॅश हिशोब पूर्ण", sub: "Cash Settled" },
+    COUPON_CREATE: { label: "नवीन कूपन तयार", sub: "Coupon Created" },
+    COURSE_CREATE: { label: "नवीन कोर्स तयार", sub: "Course Created" },
+    COURSE_UPDATE: { label: "कोर्स अपडेट", sub: "Course Updated" },
+    SECURITY_LOCK: { label: "खाते लॉक (५ फेल्स)", sub: "Security Lock" },
+  };
+
+  if (map[action]) return map[action];
+  const clean = action.replace(/^(POST|PUT|DELETE|GET)_API_/, "").replace(/_/g, " ");
+  return { label: clean, sub: action };
+}
+
 export default function AuditLogPage() {
   const [logs, setLogs] = useState<ForensicAuditLogEntry[]>([]);
   const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
@@ -320,9 +340,21 @@ export default function AuditLogPage() {
                         </td>
 
                         <td className="py-3.5 whitespace-nowrap">
-                          <span className="px-2 py-0.5 bg-[#EEF4FF] dark:bg-blue-950/40 text-[#0B57D0] dark:text-blue-300 font-mono rounded font-bold text-[10px]">
-                            {log.action}
-                          </span>
+                          {(() => {
+                            const info = formatAuditAction(log.action);
+                            return (
+                              <div className="flex flex-col">
+                                <span className="font-bold text-xs text-[#0E1B3D] dark:text-white">
+                                  {info.label}
+                                </span>
+                                {info.sub && (
+                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                                    {info.sub}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
 
                         <td className="py-3.5 whitespace-nowrap">

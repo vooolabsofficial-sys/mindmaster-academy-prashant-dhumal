@@ -87,6 +87,7 @@ export default function AdminSettingsPage() {
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(Boolean(DEFAULT_PLATFORM_SETTINGS.maintenance));
   const [maintenanceMessage, setMaintenanceMessage] = useState(DEFAULT_PLATFORM_SETTINGS.maintenance_message || "");
   const [isExportingBackup, setIsExportingBackup] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   // UI state
   const [isSaving, setIsSaving] = useState(false);
@@ -1086,7 +1087,14 @@ export default function AdminSettingsPage() {
                       <input
                         type="checkbox"
                         checked={isMaintenanceMode}
-                        onChange={(e) => setIsMaintenanceMode(e.target.checked)}
+                        onChange={() => {
+                          if (!isMaintenanceMode) {
+                            setShowMaintenanceModal(true);
+                          } else {
+                            setIsMaintenanceMode(false);
+                            toast.info("मेन्टेनन्स मोड बंद केला आहे. बदल लागू करण्यासाठी 'Save' करा.");
+                          }
+                        }}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
@@ -1181,6 +1189,57 @@ export default function AdminSettingsPage() {
             </div>
           </form>
         </div>
+
+        {/* 🚨 CRITICAL SAFETY CONFIRMATION MODAL FOR MAINTENANCE MODE */}
+        {showMaintenanceModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 border-2 border-red-500 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-4">
+              <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+                <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/60 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">
+                    🚨 मेन्टेनन्स मोड सुरू करायचा आहे का?
+                  </h3>
+                  <p className="text-[11px] font-bold text-red-600 dark:text-red-400">
+                    विद्यार्थ्यांचे लेक्चर्स व कोर्सेस तात्काळ थांबतील!
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 text-xs text-red-900 dark:text-red-200 leading-relaxed space-y-2">
+                <p>
+                  <strong>सावधान:</strong> हा मोड ऑन केल्यास संपूर्ण महाराष्ट्रातील विद्यार्थ्यांचे चालू असलेले व्हिडिओ लेक्चर्स, टेस्ट्स आणि कोर्सेस तात्पुरते बंद होतील.
+                </p>
+                <p>
+                  फक्त ॲडमिन आणि सब-ॲडमिनच पोर्टल उघडू शकतील. तुम्ही सर्व्हर अपग्रेडेशन किंवा मेंटेनन्सचे काम करत असतानाच हा मोड ऑन करा.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowMaintenanceModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                >
+                  रद्द करा (Cancel)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMaintenanceMode(true);
+                    setShowMaintenanceModal(false);
+                    toast.warning("मेन्टेनन्स मोड ऑन केला आहे! बदल लागू करण्यासाठी खाली 'Save Platform Settings' वर क्लिक करा.");
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-md shadow-red-500/25 transition cursor-pointer"
+                >
+                  होय, मेन्टेनन्स मोड ऑन करा
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </AdminShell>
     </PermissionGuard>
   );

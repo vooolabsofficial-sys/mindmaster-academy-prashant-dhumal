@@ -921,6 +921,41 @@ export default function CouponManagerPage() {
 
                   {/* Drawer Form Body */}
                   <form onSubmit={handleSaveCoupon} id="coupon-drawer-form" className="p-6 space-y-5 flex-1">
+                    {/* ⚡ 1-CLICK MARATHI COUPON TEMPLATES */}
+                    <div className="p-3.5 bg-blue-50/60 dark:bg-slate-800/80 rounded-2xl border border-blue-200/80 dark:border-slate-700 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-extrabold text-[#0B57D0] dark:text-blue-400 flex items-center gap-1.5">
+                          <span>⚡ रेडीमेड १-क्लिक कूपन टेम्पलेट्स:</span>
+                        </span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">एका क्लिकवर कोड व सूट भरा</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {[
+                          { code: "POLICE20", disc: "20", type: "percentage", desc: "पोलीस भरती विशेष २०% सवलत", tag: "⚡ पोलीस भरती" },
+                          { code: "GUDHI50", disc: "50", type: "percentage", desc: "गुढीपाडवा विशेष ५०% सवलत", tag: "🚩 गुढीपाडवा" },
+                          { code: "FLAT500", disc: "500", type: "flat", desc: "थेट ₹५०० ची विशेष सूट", tag: "💰 ₹५०० सूट" },
+                          { code: "SEMINAR2026", disc: "30", type: "percentage", desc: "सातारा व पुणे सेमिनार ३०% सवलत", tag: "🏢 सेमिनार" },
+                        ].map((tmpl, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setFormCode(tmpl.code);
+                              setFormValue(Number(tmpl.disc));
+                              setFormDiscountType(tmpl.type as any);
+                              setFormDesc(tmpl.desc);
+                              setFormAppliesAll(true);
+                              setFormIsPublicChip(true);
+                              toast.success(`🎉 "${tmpl.code}" टेम्पलेट भरले!`);
+                            }}
+                            className="p-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-left transition cursor-pointer shadow-2xs"
+                          >
+                            <p className="font-mono font-black text-xs text-[#0B57D0] dark:text-blue-400">{tmpl.code}</p>
+                            <p className="text-[10px] font-bold text-slate-600 dark:text-slate-300 mt-0.5">{tmpl.tag}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     {/* 1. Code & Active Toggle */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                       <div className="sm:col-span-2">

@@ -73,18 +73,18 @@ export default function MyActivityPage() {
     <AdminShell>
       <div className="space-y-6">
         {/* Header Banner */}
-        <div className="bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-extrabold text-[#0E1B3D] font-heading tracking-tight">
+                <h1 className="text-2xl font-extrabold text-[#0E1B3D] dark:text-white font-heading tracking-tight">
                   My Activity Timeline
                 </h1>
                 <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-[#EEF4FF] text-[#0B57D0] border border-[#D0E2FF]">
                   staff_id = {staff.staffId || staff.id}
                 </span>
               </div>
-              <p className="text-xs text-[#5A6478] mt-1">
+              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1">
                 Personal chronological audit trail filtered for <span className="font-semibold text-[#0E1B3D]">{staff.name}</span> ({staff.email}).
               </p>
             </div>
@@ -95,22 +95,22 @@ export default function MyActivityPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-[#E4E8F8]">
-            <div className="p-4 bg-[#F5F7FF] rounded-2xl">
-              <p className="text-xs text-[#8A94A6]">Role & Designation</p>
-              <p className="text-base font-bold text-[#0E1B3D] capitalize mt-0.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-[#E4E8F8] dark:border-slate-800">
+            <div className="p-4 bg-[#F5F7FF] dark:bg-slate-800/60 rounded-2xl border border-transparent dark:border-slate-700/60">
+              <p className="text-xs text-slate-500 dark:text-slate-400">Role & Designation</p>
+              <p className="text-base font-bold text-[#0E1B3D] dark:text-white capitalize mt-0.5">
                 {staff.role === "main_admin" ? "Founder / Supreme Admin" : "Sub-Admin Staff"}
               </p>
             </div>
-            <div className="p-4 bg-[#F5F7FF] rounded-2xl">
-              <p className="text-xs text-[#8A94A6]">Assigned Staff ID</p>
+            <div className="p-4 bg-[#F5F7FF] dark:bg-slate-800/60 rounded-2xl border border-transparent dark:border-slate-700/60">
+              <p className="text-xs text-slate-500 dark:text-slate-400">Assigned Staff ID</p>
               <p className="text-base font-mono font-bold text-[#0B57D0] mt-0.5">
                 {staff.staffId || staff.id}
               </p>
             </div>
-            <div className="p-4 bg-[#F5F7FF] rounded-2xl">
-              <p className="text-xs text-[#8A94A6]">Active Permission Keys</p>
-              <p className="text-base font-bold text-[#0E1B3D] mt-0.5">
+            <div className="p-4 bg-[#F5F7FF] dark:bg-slate-800/60 rounded-2xl border border-transparent dark:border-slate-700/60">
+              <p className="text-xs text-slate-500 dark:text-slate-400">Active Permission Keys</p>
+              <p className="text-base font-bold text-[#0E1B3D] dark:text-white mt-0.5">
                 {staff.permissions.length} Keys Granted
               </p>
             </div>
@@ -118,7 +118,7 @@ export default function MyActivityPage() {
         </div>
 
         {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl border border-[#E4E8F8]">
+        <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800">
           <span className="text-xs font-bold text-[#5A6478] mr-2">Filter By Entity:</span>
           {[
             { key: "all", label: "All Activity" },
@@ -145,12 +145,12 @@ export default function MyActivityPage() {
         </div>
 
         {/* Vertical Activity Timeline */}
-        <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-base font-bold text-[#0E1B3D] flex items-center gap-2">
+            <h2 className="text-base font-bold text-[#0E1B3D] dark:text-white flex items-center gap-2">
               <span>⏱️</span> Chronological Timeline ({displayedLogs.length})
             </h2>
-            <span className="text-[11px] text-[#8A94A6]">Real-time audit log binding</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">Real-time audit log binding</span>
           </div>
 
           {displayedLogs.length === 0 ? (
@@ -159,7 +159,7 @@ export default function MyActivityPage() {
                 📜
               </div>
               <p className="text-sm font-bold text-[#0E1B3D]">No activity recorded</p>
-              <p className="text-xs text-[#8A94A6] mt-1 max-w-sm mx-auto">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
                 Actions performed by this account (e.g., student 360 views, course updates, coupon creation) will automatically show up here.
               </p>
             </div>
@@ -170,12 +170,12 @@ export default function MyActivityPage() {
                 return (
                   <div key={log.id} className="relative group">
                     {/* Timeline Node Dot */}
-                    <div className="absolute -left-6 sm:-left-8 top-1.5 w-6 h-6 rounded-full bg-white border-2 border-[#0B57D0] flex items-center justify-center text-[10px] shadow-xs group-hover:scale-110 transition-transform">
+                    <div className="absolute -left-6 sm:-left-8 top-1.5 w-6 h-6 rounded-full bg-white dark:bg-slate-900 border-2 border-[#0B57D0] flex items-center justify-center text-[10px] shadow-xs group-hover:scale-110 transition-transform">
                       {badge.icon}
                     </div>
 
                     {/* Timeline Card */}
-                    <div className="bg-[#FAFBFD] group-hover:bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl p-4 transition-all">
+                    <div className="bg-[#FAFBFD] dark:bg-slate-800/80 group-hover:bg-[#F5F7FF] dark:group-hover:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-2xl p-4 transition-all">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
@@ -183,23 +183,23 @@ export default function MyActivityPage() {
                           >
                             {log.action}
                           </span>
-                          <span className="text-xs font-bold text-[#0E1B3D]">
+                          <span className="text-xs font-bold text-[#0E1B3D] dark:text-white">
                             {log.entityName || log.entityId}
                           </span>
-                          <span className="text-[10px] text-[#8A94A6] uppercase font-semibold px-2 py-0.5 bg-white rounded border border-[#E4E8F8]">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold px-2 py-0.5 bg-white rounded border border-[#E4E8F8]">
                             {log.entityType}
                           </span>
                         </div>
-                        <span className="font-mono text-[11px] text-[#8A94A6] whitespace-nowrap">
+                        <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
                           {log.timestamp}
                         </span>
                       </div>
 
-                      <p className="text-xs text-[#5A6478] mt-2 leading-relaxed">
+                      <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-2 leading-relaxed">
                         {log.details}
                       </p>
 
-                      <div className="mt-3 pt-2 border-t border-[#E4E8F8]/60 flex items-center justify-between text-[10px] text-[#8A94A6]">
+                      <div className="mt-3 pt-2 border-t border-[#E4E8F8] dark:border-slate-800/60 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
                         <span>Log ID: <code className="text-[#0B57D0]">{log.id}</code></span>
                         <span>Operator: <strong className="text-[#0E1B3D]">{log.staffName}</strong></span>
                       </div>

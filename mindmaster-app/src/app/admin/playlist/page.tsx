@@ -255,14 +255,14 @@ export default function PlaylistImportPage() {
           <div className="bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl md:text-3xl font-extrabold text-[#0E1B3D] font-heading">
+                <h1 className="text-2xl md:text-3xl font-extrabold text-[#0E1B3D] dark:text-white font-heading">
                   Course & Playlist Builder
                 </h1>
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#EBF3FE] text-[#0B57D0]">
                   videos.manage
                 </span>
               </div>
-              <p className="text-xs text-[#5A6478] mt-1">
+              <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-1">
                 Import complete YouTube playlists or bulk video links as ordered curriculum lessons in seconds.
               </p>
             </div>
@@ -336,7 +336,7 @@ export default function PlaylistImportPage() {
           )}
 
           {/* Mode Tabs */}
-          <div className="flex border-b border-[#E4E8F8] gap-4">
+          <div className="flex border-b border-[#E4E8F8] dark:border-slate-800 gap-4">
             {hasApiKey && (
               <button
                 type="button"
@@ -372,7 +372,7 @@ export default function PlaylistImportPage() {
 
           {/* Input Card: Fetch Mode */}
           {activeMode === "api" && hasApiKey && (
-            <div className="bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-4">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <label className="text-xs font-bold text-[#0E1B3D]">
                   YouTube Playlist URL or Playlist ID
@@ -427,13 +427,13 @@ export default function PlaylistImportPage() {
 
           {/* Input Card: Bulk Paste Mode */}
           {activeMode === "bulk" && (
-            <div className="bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-4">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <label className="text-xs font-bold text-[#0E1B3D]">
                     Bulk Paste YouTube Links (One link per line)
                   </label>
-                  <p className="text-[11px] text-[#5A6478]">
+                  <p className="text-[11px] text-[#5A6478] dark:text-slate-400">
                     Optional format: <code className="bg-[#F5F7FF] px-1 py-0.5 rounded">Lesson Title | https://...</code> or simple links.
                   </p>
                 </div>
@@ -488,7 +488,7 @@ export default function PlaylistImportPage() {
                     <h3 className="text-sm font-bold text-[#0E1B3D]">
                       Playlist Preview ({items.length} items found)
                     </h3>
-                    <p className="text-xs text-[#5A6478]">
+                    <p className="text-xs text-[#5A6478] dark:text-slate-400">
                       {selectedCount} selected for import. Edit titles inline if desired.
                     </p>
                   </div>
@@ -534,7 +534,7 @@ export default function PlaylistImportPage() {
                     </div>
 
                     {/* Thumbnail */}
-                    <div className="w-24 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200 relative">
+                    <div className="w-24 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 relative">
                       <Image
                         src={item.thumbnailUrl || "/assets/images/memory_seminar_brain_3d.png"}
                         alt={item.title}
@@ -552,10 +552,10 @@ export default function PlaylistImportPage() {
                         type="text"
                         value={item.title}
                         onChange={(e) => handleUpdateItemTitle(item.id, e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[#F5F7FF] hover:bg-white focus:bg-white border border-[#E4E8F8] rounded-xl text-xs font-semibold text-[#0E1B3D] focus:outline-none focus:border-[#0B57D0]"
+                        className="w-full px-3 py-1.5 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-750 focus:bg-white dark:focus:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-xl text-xs font-semibold text-[#0E1B3D] dark:text-white focus:outline-none focus:border-[#0B57D0]"
                       />
-                      <div className="flex items-center gap-3 text-[11px] text-[#5A6478]">
-                        <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">
+                      <div className="flex items-center gap-3 text-[11px] text-[#5A6478] dark:text-slate-400">
+                        <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-700 dark:text-slate-300">
                           {item.videoId}
                         </span>
                         <span>⏱️ {item.durationFormatted}</span>
@@ -580,8 +580,8 @@ export default function PlaylistImportPage() {
               </div>
 
               {/* Import Configuration Panel */}
-              <div className="bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm space-y-6">
-                <h3 className="text-base font-bold text-[#0E1B3D] font-heading pb-3 border-b border-[#E4E8F8]">
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-6">
+                <h3 className="text-base font-bold text-[#0E1B3D] dark:text-white dark:text-white font-heading pb-3 border-b border-[#E4E8F8] dark:border-slate-800">
                   Import Configuration
                 </h3>
 
@@ -637,7 +637,7 @@ export default function PlaylistImportPage() {
                   <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl flex items-center justify-between">
                     <div>
                       <h4 className="font-bold text-[#0E1B3D]">First Lesson Free Preview</h4>
-                      <p className="text-[11px] text-[#5A6478]">
+                      <p className="text-[11px] text-[#5A6478] dark:text-slate-400">
                         Sets Lesson #{startPosition} as Free Demo; subsequent lessons require enrollment.
                       </p>
                     </div>
@@ -653,7 +653,7 @@ export default function PlaylistImportPage() {
                   <div className="p-4 bg-[#F5F7FF] border border-[#E4E8F8] rounded-2xl flex items-center justify-between">
                     <div>
                       <h4 className="font-bold text-[#0E1B3D]">Video Live Validity</h4>
-                      <p className="text-[11px] text-[#5A6478]">
+                      <p className="text-[11px] text-[#5A6478] dark:text-slate-400">
                         Days lessons remain active before auto-removal window.
                       </p>
                     </div>
@@ -679,7 +679,7 @@ export default function PlaylistImportPage() {
 
                 {/* Primary Action Button */}
                 <div className="pt-4 border-t border-[#E4E8F8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="text-xs text-[#5A6478]">
+                  <div className="text-xs text-[#5A6478] dark:text-slate-400">
                     Ready to import <strong className="text-[#0E1B3D]">{selectedCount}</strong> video lessons into{" "}
                     <strong className="text-[#0E1B3D]">
                       {courses.find((c) => c.id === selectedCourseId)?.title}
@@ -705,7 +705,7 @@ export default function PlaylistImportPage() {
           {showNewCourseModal && (
             <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
               <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-[#E4E8F8] space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-[#E4E8F8]">
+                <div className="flex items-center justify-between pb-3 border-b border-[#E4E8F8] dark:border-slate-800">
                   <h3 className="font-bold text-[#0E1B3D] text-base font-heading">
                     Create New Course Inline
                   </h3>

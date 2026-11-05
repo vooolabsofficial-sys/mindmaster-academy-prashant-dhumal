@@ -684,7 +684,29 @@ export default function StaffMessagesPage() {
                   </div>
 
                   {/* Reply Composer */}
-                  <div className="p-3 bg-white dark:bg-[#1E293B] border-t border-slate-200/80 dark:border-slate-800">
+                  <div className="p-3 bg-white dark:bg-[#1E293B] border-t border-slate-200/80 dark:border-slate-800 space-y-2">
+                    {/* ⚡ 1-Click Marathi Canned Replies */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                      <span className="text-[10px] font-extrabold uppercase text-slate-400 dark:text-slate-500 shrink-0">
+                        १-क्लिक उत्तरे:
+                      </span>
+                      {[
+                        { label: "📱 फोन रिसेट केला", msg: "नमस्कार! तुमचे जुने डिव्हाइस रिसेट केले आहे. आता नवीन फोनमध्ये लॉगिन करा." },
+                        { label: "🎓 ऍक्सेस ॲक्टिव्ह केला", msg: "तुमचा कोर्स ऍक्सेस यशस्वीरीत्या ॲक्टिव्ह केला आहे. 'My Courses' मध्ये जाऊन पहा." },
+                        { label: "⏳ समस्या तपासत आहोत", msg: "तुमची समस्या तपासली जात आहे. थोड्याच वेळात आमचे प्रतिनिधी संपर्क करतील." },
+                        { label: "📞 ऑफिसला कॉल करा", msg: "या समस्येसाठी कृपया आमच्या सातारा सपोर्ट नंबरवर कॉल करा: +91 84593 44077." },
+                      ].map((canned, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setComposerText(canned.msg)}
+                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap transition cursor-pointer border border-slate-200/70 dark:border-slate-700 text-[10px]"
+                        >
+                          {canned.label}
+                        </button>
+                      ))}
+                    </div>
+
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
