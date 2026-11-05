@@ -39,7 +39,7 @@ export const INITIAL_STAFF_USERS: StaffUser[] = [
     ],
     status: "active",
     lastLoginAt: new Date().toISOString(),
-    mustChangePassword: true,
+    mustChangePassword: false,
     password: ownerTempPass,
   },
   {

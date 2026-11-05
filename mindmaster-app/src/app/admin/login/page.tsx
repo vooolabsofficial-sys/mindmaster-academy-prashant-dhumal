@@ -89,7 +89,7 @@ function AdminLoginContent() {
 
   const handleFillDemoAdmin = () => {
     setStaffId("MMA-000");
-    setPassword("MasterAdmin@2026");
+    setPassword("Owner@2026");
     setError("");
   };
 

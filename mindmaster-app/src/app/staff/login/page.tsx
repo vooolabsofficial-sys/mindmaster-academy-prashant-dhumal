@@ -11,7 +11,7 @@ import SubmitButton from "@/components/ui/SubmitButton";
 function StaffLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const roleParam = searchParams.get("role") || "main_admin";
+  const roleParam = searchParams.get("role") || "";
   const [staffId, setStaffId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

@@ -89,7 +89,7 @@ function SubAdminLoginContent() {
 
   const handleFillDemoSubAdmin = () => {
     setStaffId("MMA-001");
-    setPassword("SubAdmin@2026");
+    setPassword("Staff@2026");
     setError("");
   };
 

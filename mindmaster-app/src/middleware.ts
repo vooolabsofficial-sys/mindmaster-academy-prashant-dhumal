@@ -57,7 +57,7 @@ export async function middleware(req: NextRequest | Request) {
 
   if (SENSITIVE_API_ROUTES.some((route) => pathname.startsWith(route))) {
     const ip = getClientIp(req);
-    const rl = checkRateLimit(`mw_rate_limit:${ip}`, 10, 60000);
+    const rl = checkRateLimit(`mw_rate_limit:${ip}`, 60, 60000);
     if (!rl.success) {
       return rateLimitResponse(
         rl.resetInSec,
@@ -346,7 +346,12 @@ export async function middleware(req: NextRequest | Request) {
   const isSubRoute = pathname.startsWith("/sub");
 
   // Dedicated login pages are public
-  if (pathname === "/admin/login" || pathname === "/sub/login") {
+  if (
+    pathname === "/admin/login" ||
+    pathname === "/sub/login" ||
+    pathname === "/staff/login" ||
+    pathname === "/staff/forgot-password"
+  ) {
     return NextResponse.next();
   }
 
