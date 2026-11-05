@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import ContentStudioPageWrapper from "../courses/page";
+import ContentStudio from "@/components/admin/ContentStudio";
 
 export default function VideoManagerPage() {
-  return <ContentStudioPageWrapper initialTab="videos" />;
+  return <ContentStudio initialTab="videos" />;
 }

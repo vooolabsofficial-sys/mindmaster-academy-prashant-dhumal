@@ -45,7 +45,7 @@ export interface Course {
   originalPricePaise: number; // e.g. 299900 = ₹2,999
   isFree: boolean;
   accessMonths: number;
-  status: "live" | "upcoming" | "scheduled" | "closed" | "removed" | "archived" | "draft";
+  status: "live" | "upcoming" | "scheduled" | "closed" | "removed" | "archived" | "draft" | "unlisted";
   badgeText: string;
   badgeType: "bestseller" | "popular" | "free" | "new";
   imageSrc: string;

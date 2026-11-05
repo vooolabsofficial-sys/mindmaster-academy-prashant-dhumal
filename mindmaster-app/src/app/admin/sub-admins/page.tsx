@@ -641,7 +641,7 @@ export default function SubAdminManagerPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setFormPermissions(["messages.manage", "students.view", "students.call"]);
+                              setFormPermissions(["messages.manage", "students.view"]);
                               toast.success("वरिष्ठ समुपदेशक (Counselor) परवानग्या लागू!");
                             }}
                             className="p-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-[10px] font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer"
@@ -651,7 +651,7 @@ export default function SubAdminManagerPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setFormPermissions(["students.view", "students.manage", "messages.manage", "coupons.view"]);
+                              setFormPermissions(["students.view", "messages.manage", "coupons.manage"]);
                               toast.success("शाखा व्यवस्थापक (Branch Manager) परवानग्या लागू!");
                             }}
                             className="p-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-[10px] font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer"
@@ -661,7 +661,7 @@ export default function SubAdminManagerPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setFormPermissions(["students.manage", "coupons.view", "students.view"]);
+                              setFormPermissions(["students.view", "coupons.manage", "freegrant.manage"]);
                               toast.success("प्रवेश कक्ष (Admission Desk) परवानग्या लागू!");
                             }}
                             className="p-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-[10px] font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer"

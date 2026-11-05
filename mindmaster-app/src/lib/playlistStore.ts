@@ -48,7 +48,8 @@ export interface ExtendedVideoRow {
   durationSec: number;
   views: number;
   avgWatchPercent: number;
-  status: "active" | "expiring_soon" | "expired";
+  status: "active" | "expiring_soon" | "expired" | "draft" | string;
+  title?: string;
   daysLeft?: number;
   description?: string;
   position?: number;
@@ -290,6 +291,7 @@ export async function fetchDbVideos(): Promise<ExtendedVideoRow[]> {
 
     const mapped: ExtendedVideoRow[] = data.map((d: any) => ({
       id: d.id,
+      title: d.title,
       lessonId: d.id,
       lessonTitle: d.title,
       courseId: d.course_id,
@@ -346,7 +348,7 @@ export async function saveLessonToSupabase(video: ExtendedVideoRow): Promise<voi
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(video.id);
     const payload: any = {
       course_id: video.courseId,
-      title: video.lessonTitle,
+      title: video.title || video.lessonTitle || "Untitled Video",
       duration_sec: video.durationSec || 900,
       is_free: Boolean(video.isFree),
       video_type: video.videoType || "youtube",
