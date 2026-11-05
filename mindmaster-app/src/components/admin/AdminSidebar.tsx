@@ -114,7 +114,7 @@ export default function AdminSidebar() {
       items: [
         { label: isMarathi ? "कंटेंट स्टुडिओ" : "Content Studio", href: "/admin/courses", icon: <BookOpen className="w-4 h-4" />, permission: "courses.manage" },
         { label: isMarathi ? "व्हिडिओ लायब्ररी" : "Video Library", href: "/admin/videos", icon: <Video className="w-4 h-4" />, permission: "videos.manage" },
-        { label: isMarathi ? "युट्यूब सिंक" : "YouTube Sync", href: "/admin/playlist", icon: <ListPlus className="w-4 h-4" />, permission: "courses.manage" },
+        { label: isMarathi ? "युट्यूब सिंक" : "YouTube Sync", href: "/admin/courses?tab=sync", icon: <ListPlus className="w-4 h-4" />, permission: "courses.manage" },
         { label: isMarathi ? "ई-बुक्स व नोट्स" : "PDF Books", href: "/admin/notes", icon: <FileText className="w-4 h-4" />, permission: "notes.books.manage" },
       ],
     },

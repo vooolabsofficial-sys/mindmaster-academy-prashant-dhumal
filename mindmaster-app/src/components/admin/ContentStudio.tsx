@@ -27,6 +27,8 @@ import {
   getStoredVideos,
   extractYouTubeVideoId,
   ExtendedVideoRow,
+  PlaylistItem,
+  parseBulkYouTubeLinks,
 } from "@/lib/playlistStore";
 import {
   ArrowLeft,
@@ -58,6 +60,12 @@ import {
   Film,
   Users,
   Info,
+  ListPlus,
+  RefreshCw,
+  UploadCloud,
+  ClipboardList,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import CategoryManagerModal from "@/components/admin/CategoryManagerModal";
 import RecycleBinModal from "@/components/admin/RecycleBinModal";
@@ -117,7 +125,7 @@ interface FetchedPlaylistItem {
   selected: boolean;
 }
 
-export default function ContentStudio({ initialTab = "courses" }: { initialTab?: "courses" | "videos" | "categories" }) {
+export default function ContentStudio({ initialTab = "courses" }: { initialTab?: "courses" | "videos" | "sync" | "categories" }) {
   return (
     <Suspense fallback={<div className="p-8 text-center"><Spinner /></div>}>
       <ContentStudioContent initialTab={initialTab} />
@@ -125,7 +133,7 @@ export default function ContentStudio({ initialTab = "courses" }: { initialTab?:
   );
 }
 
-function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "courses" | "videos" | "categories" }) {
+function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "courses" | "videos" | "sync" | "categories" }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { currentLanguage } = useLanguage();
@@ -140,11 +148,13 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
   // Studio Mode: "list" | "course_studio" | "video_studio"
   const [studioMode, setStudioMode] = useState<"list" | "course_studio" | "video_studio">("list");
   
-  // Segmented Tabs: "courses" | "videos" | "categories"
+  // Segmented Tabs: "courses" | "videos" | "sync" | "categories"
   const tabParam = searchParams?.get("tab");
-  const [activeTab, setActiveTab] = useState<"courses" | "videos" | "categories">(
+  const [activeTab, setActiveTab] = useState<"courses" | "videos" | "sync" | "categories">(
     tabParam === "videos" || initialTab === "videos"
       ? "videos"
+      : tabParam === "sync" || initialTab === "sync"
+      ? "sync"
       : tabParam === "categories" || initialTab === "categories"
       ? "categories"
       : "courses"
@@ -216,6 +226,30 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
   const [deleteModalItem, setDeleteModalItem] = useState<{ id: string; title: string; type: "course" | "video" | "category" } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // ----------------------------------------------------
+  // YOUTUBE PLAYLIST SYNC HUB STATE & HANDLERS
+  // ----------------------------------------------------
+  const [syncMode, setSyncMode] = useState<"playlist" | "bulk">("playlist");
+  const [syncUrl, setSyncUrl] = useState("");
+  const [syncBulkText, setSyncBulkText] = useState("");
+  const [syncTargetCourseId, setSyncTargetCourseId] = useState("");
+  const [syncFirstIsFree, setSyncFirstIsFree] = useState(true);
+  const [syncValidityDays, setSyncValidityDays] = useState(30);
+  const [isFetchingSync, setIsFetchingSync] = useState(false);
+  const [syncFetchError, setSyncFetchError] = useState<string | null>(null);
+  const [syncFetchedVideos, setSyncFetchedVideos] = useState<PlaylistItem[]>([]);
+  const [syncPlaylistMeta, setSyncPlaylistMeta] = useState<{
+    title: string;
+    author: string;
+    thumbnailUrl: string;
+    totalItems: number;
+  } | null>(null);
+  const [isExecutingSync, setIsExecutingSync] = useState(false);
+  const [syncCreateNewCourse, setSyncCreateNewCourse] = useState(false);
+  const [syncNewCourseTitle, setSyncNewCourseTitle] = useState("");
+  const [syncNewCourseCategory, setSyncNewCourseCategory] = useState("memory");
+  const [syncNewCoursePrice, setSyncNewCoursePrice] = useState(999);
+
   // Load Data
   const loadData = async () => {
     setIsLoading(true);
@@ -223,6 +257,9 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
       const liveCourses = await fetchDbCourses();
       const loadedCourses = liveCourses && liveCourses.length > 0 ? liveCourses : getStaffCourses();
       setCourses(loadedCourses);
+      if (loadedCourses.length > 0) {
+        setSyncTargetCourseId((prev) => prev || loadedCourses[0].id);
+      }
 
       const liveVideos = await fetchDbVideos();
       const loadedVideos = liveVideos && liveVideos.length > 0 ? liveVideos : getStoredVideos();
@@ -656,6 +693,245 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  // ----------------------------------------------------
+  // YOUTUBE PLAYLIST SYNC LOGIC
+  // ----------------------------------------------------
+  const handleFetchSyncPlaylist = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanUrl = syncUrl.trim();
+    if (!cleanUrl) {
+      setSyncFetchError(isMarathi ? "कृपया YouTube प्लेलिस्ट URL किंवा ID टाका." : "Please enter a YouTube playlist URL or ID.");
+      return;
+    }
+
+    setIsFetchingSync(true);
+    setSyncFetchError(null);
+
+    try {
+      const res = await fetch("/api/youtube/playlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playlistUrl: cleanUrl }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Failed to fetch YouTube playlist.");
+      }
+
+      if (data.items && data.items.length > 0) {
+        const mapped: PlaylistItem[] = data.items.map((it: any, idx: number) => ({
+          id: `yt-sync-${it.videoId}-${idx}`,
+          videoId: it.videoId,
+          title: it.title || `Lesson ${idx + 1}`,
+          description: it.description || "",
+          durationSec: it.durationSec || 900,
+          durationFormatted: it.durationFormatted || "15:00",
+          thumbnailUrl: it.thumbnailUrl || `https://i.ytimg.com/vi/${it.videoId}/hqdefault.jpg`,
+          selected: true,
+        }));
+
+        setSyncFetchedVideos(mapped);
+        setSyncPlaylistMeta({
+          title: data.title || "YouTube Course Playlist",
+          author: data.author || "Prashant Dhumal",
+          thumbnailUrl: data.thumbnailUrl || mapped[0]?.thumbnailUrl || "",
+          totalItems: mapped.length,
+        });
+
+        if (!syncNewCourseTitle) {
+          setSyncNewCourseTitle(data.title || "New Video Batch");
+        }
+
+        toast.success(
+          isMarathi
+            ? `✓ प्लेलिस्ट सापडली! ${mapped.length} व्हिडिओ प्राप्त झाले.`
+            : `✓ Playlist found! Retrieved ${mapped.length} lessons.`
+        );
+      } else {
+        throw new Error(isMarathi ? "या प्लेलिस्टमध्ये कोणतेही व्हिडिओ सापडले नाहीत." : "No videos found in this playlist.");
+      }
+    } catch (err: any) {
+      setSyncFetchError(err.message || (isMarathi ? "प्लेलिस्ट फेच करताना त्रुटी आली." : "Error fetching playlist."));
+      toast.error(err.message || (isMarathi ? "प्लेलिस्ट फेच करताना त्रुटी आली." : "Error fetching playlist."));
+    } finally {
+      setIsFetchingSync(false);
+    }
+  };
+
+  const handleParseBulkText = () => {
+    if (!syncBulkText.trim()) {
+      toast.error(isMarathi ? "कृपया किमान एक YouTube URL पेस्ट करा." : "Please paste at least one YouTube link.");
+      return;
+    }
+
+    const parsed = parseBulkYouTubeLinks(syncBulkText);
+    if (parsed.length === 0) {
+      toast.error(isMarathi ? "पेस्ट केलेल्या मजकुरात वैध YouTube लिंक्स सापडल्या नाहीत." : "No valid YouTube links found in the text.");
+      return;
+    }
+
+    setSyncFetchedVideos(parsed);
+    setSyncPlaylistMeta({
+      title: "Bulk Pasted Lessons",
+      author: staff.name || "Admin",
+      thumbnailUrl: parsed[0]?.thumbnailUrl || "",
+      totalItems: parsed.length,
+    });
+
+    toast.success(
+      isMarathi
+        ? `✓ ${parsed.length} व्हिडिओ यशस्वीपणे एक्सट्रॅक्ट केले!`
+        : `✓ Extracted ${parsed.length} lessons from text!`
+    );
+  };
+
+  const handleToggleSelectAllSync = () => {
+    const allSelected = syncFetchedVideos.every((v) => v.selected);
+    setSyncFetchedVideos(syncFetchedVideos.map((v) => ({ ...v, selected: !allSelected })));
+  };
+
+  const handleToggleVideoSelect = (idx: number) => {
+    const updated = [...syncFetchedVideos];
+    updated[idx] = { ...updated[idx], selected: !updated[idx].selected };
+    setSyncFetchedVideos(updated);
+  };
+
+  const handleExecuteSync = async () => {
+    const selected = syncFetchedVideos.filter((v) => v.selected);
+    if (selected.length === 0) {
+      toast.error(isMarathi ? "कृपया सिंक करण्यासाठी किमान एक व्हिडिओ निवडा." : "Please select at least one lesson to sync.");
+      return;
+    }
+
+    let targetCourseId = syncTargetCourseId;
+    let targetCourseTitle = "";
+
+    setIsExecutingSync(true);
+
+    try {
+      if (syncCreateNewCourse) {
+        if (!syncNewCourseTitle.trim()) {
+          toast.error(isMarathi ? "कृपया नवीन कोर्सचे नाव प्रविष्ट करा." : "Please enter new course title.");
+          setIsExecutingSync(false);
+          return;
+        }
+
+        const newId = `c_yt_${Date.now()}`;
+        const newCourse: Course = {
+          id: newId,
+          code: `YT-${Math.floor(100 + Math.random() * 900)}`,
+          title: syncNewCourseTitle.trim(),
+          titleMr: syncNewCourseTitle.trim(),
+          subtitle: syncPlaylistMeta?.author ? `By ${syncPlaylistMeta.author}` : "YouTube Lecture Series",
+          description: syncPlaylistMeta?.title || "Imported YouTube course playlist batch.",
+          headerTint: "sky",
+          pricePaise: syncNewCoursePrice * 100,
+          originalPricePaise: syncNewCoursePrice * 200,
+          isFree: syncNewCoursePrice === 0,
+          accessMonths: 3,
+          status: "live",
+          badgeText: "NEW",
+          badgeType: "new",
+          imageSrc: syncPlaylistMeta?.thumbnailUrl || selected[0]?.thumbnailUrl || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80",
+          instructorName: "Prashant Dhumal",
+          instructorTitle: "Mind & Memory Expert",
+          totalStudents: 0,
+          rating: 5.0,
+          ratingCount: 1,
+          lessonsCount: selected.length,
+          totalDurationHours: Number((selected.reduce((acc, v) => acc + (v.durationSec || 900), 0) / 3600).toFixed(1)),
+          category: (syncNewCourseCategory as any) || "memory",
+          features: ["Full Video Lectures", "Certificate upon completion", "Lifetime access support"],
+          publishAt: new Date().toISOString(),
+          removeAt: null,
+          validityDays: syncValidityDays,
+          validityLabel: `${syncValidityDays} Days`,
+          youtubeUrl: syncUrl.trim() || undefined,
+          youtubePlaylistId: syncUrl ? extractYouTubeVideoId(syncUrl) || undefined : undefined,
+        };
+
+        await saveCourseToSupabase(newCourse);
+        targetCourseId = newId;
+        targetCourseTitle = newCourse.title;
+      } else {
+        const found = courses.find((c) => c.id === targetCourseId);
+        if (!found) {
+          toast.error(isMarathi ? "कृपया लक्ष्य कोर्स निवडा." : "Please select target course.");
+          setIsExecutingSync(false);
+          return;
+        }
+        targetCourseTitle = found.title;
+      }
+
+      const existingCourseVideos = videos.filter((v) => v.courseId === targetCourseId);
+      const startPos = existingCourseVideos.length;
+
+      for (let idx = 0; idx < selected.length; idx++) {
+        const it = selected[idx];
+        const isFirst = idx === 0 && startPos === 0;
+        const lessonRow: ExtendedVideoRow = {
+          id: `vid_sync_${it.videoId}_${Date.now()}_${idx}`,
+          lessonId: `les_sync_${it.videoId}_${startPos + idx + 1}`,
+          lessonTitle: it.title,
+          courseId: targetCourseId,
+          courseTitle: targetCourseTitle,
+          title: it.title,
+          durationSec: it.durationSec || 900,
+          isFree: isFirst ? syncFirstIsFree : false,
+          videoType: "youtube",
+          videoId: it.videoId,
+          position: startPos + idx + 1,
+          description: it.description || "",
+          publishAt: new Date().toISOString(),
+          removeAt: null,
+          validityDays: syncValidityDays,
+          avgWatchPercent: 0,
+          status: "active",
+          views: 0,
+          likesCount: 0,
+        };
+        await saveLessonToSupabase(lessonRow);
+      }
+
+      await syncCourseLessonCount(targetCourseId);
+
+      logStaffAction(
+        "PLAYLIST_SYNC",
+        "video",
+        targetCourseId,
+        targetCourseTitle,
+        `Synced ${selected.length} YouTube lessons into course "${targetCourseTitle}"`
+      );
+
+      toast.success(
+        isMarathi
+          ? `✓ अभिनंदन! ${selected.length} लेक्चर्स "${targetCourseTitle}" मध्ये यशस्वीपणे सिंक झाले!`
+          : `✓ Success! Synced ${selected.length} lessons into "${targetCourseTitle}"!`
+      );
+
+      setSyncFetchedVideos([]);
+      setSyncPlaylistMeta(null);
+      setSyncUrl("");
+      setSyncBulkText("");
+      await loadData();
+      setActiveTab("videos");
+    } catch (err: any) {
+      toast.error(err.message || (isMarathi ? "सिंक करताना त्रुटी आली." : "Failed to sync lessons."));
+    } finally {
+      setIsExecutingSync(false);
+    }
+  };
+
+  const handleQuickSyncCourse = (c: Course) => {
+    setSyncTargetCourseId(c.id);
+    setSyncCreateNewCourse(false);
+    if (c.youtubeUrl) {
+      setSyncUrl(c.youtubeUrl);
+    }
+    setActiveTab("sync");
   };
 
   // Filtered & Sorted Courses
@@ -1386,6 +1662,22 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
               </button>
             )}
 
+            {activeTab === "sync" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSyncUrl("");
+                  setSyncBulkText("");
+                  setSyncFetchedVideos([]);
+                  setSyncPlaylistMeta(null);
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>{isMarathi ? "नवीन सिंक सुरू करा" : "New Playlist Sync"}</span>
+              </button>
+            )}
+
             {activeTab === "categories" && (
               <button
                 type="button"
@@ -1435,7 +1727,7 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
         )}
 
         {/* Segmented Top Tabs (YouTube Studio Layout) */}
-        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
           <button
             type="button"
             onClick={() => setActiveTab("courses")}
@@ -1470,6 +1762,22 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
 
           <button
             type="button"
+            onClick={() => setActiveTab("sync")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              activeTab === "sync"
+                ? "bg-rose-600 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            }`}
+          >
+            <ListPlus className="w-3.5 h-3.5" />
+            <span>{isMarathi ? "YouTube प्लेलिस्ट सिंक" : "YouTube Playlist Sync"}</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "sync" ? "bg-white/20 text-white" : "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300"}`}>
+              AUTO
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab("categories")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
               activeTab === "categories"
@@ -1486,49 +1794,51 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
         </div>
 
         {/* Advanced Filter & Search Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-white dark:bg-[#1E293B] p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          {/* Search Input */}
-          <div className="relative sm:col-span-2">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isMarathi ? "नाव, वर्णन किंवा कोडने शोधा..." : "Filter by title, description, or code..."}
-              className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
-            />
-          </div>
+        {activeTab !== "sync" && (
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-white dark:bg-[#1E293B] p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            {/* Search Input */}
+            <div className="relative sm:col-span-2">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={isMarathi ? "नाव, वर्णन किंवा कोडने शोधा..." : "Filter by title, description, or code..."}
+                className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+              />
+            </div>
 
-          {/* Dynamic Category Filter */}
-          <div>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none"
-            >
-              <option value="all">{isMarathi ? "सर्व प्रवर्ग (All Categories)" : "All Categories"}</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.key || cat.id}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Dynamic Category Filter */}
+            <div>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none"
+              >
+                <option value="all">{isMarathi ? "सर्व प्रवर्ग (All Categories)" : "All Categories"}</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.key || cat.id}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Visibility / Sort Filter */}
-          <div>
-            <select
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value as any)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none"
-            >
-              <option value="date_desc">{isMarathi ? "नवीनतम आधी (Newest)" : "Date (Newest First)"}</option>
-              <option value="title_asc">{isMarathi ? "नाव (A-Z)" : "Title (A to Z)"}</option>
-              {activeTab === "courses" && <option value="students_desc">{isMarathi ? "विद्यार्थी संख्या (Most Enrolled)" : "Enrolled Students"}</option>}
-              {activeTab === "videos" && <option value="views_desc">{isMarathi ? "सर्वाधिक व्ह्यूज (Most Views)" : "Views (Highest First)"}</option>}
-            </select>
+            {/* Visibility / Sort Filter */}
+            <div>
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as any)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none"
+              >
+                <option value="date_desc">{isMarathi ? "नवीनतम आधी (Newest)" : "Date (Newest First)"}</option>
+                <option value="title_asc">{isMarathi ? "नाव (A-Z)" : "Title (A to Z)"}</option>
+                {activeTab === "courses" && <option value="students_desc">{isMarathi ? "विद्यार्थी संख्या (Most Enrolled)" : "Enrolled Students"}</option>}
+                {activeTab === "videos" && <option value="views_desc">{isMarathi ? "सर्वाधिक व्ह्यूज (Most Views)" : "Views (Highest First)"}</option>}
+              </select>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ----------------------------------------------------------------- */}
         {/* TAB 1: COURSES TABLE (YOUTUBE STUDIO DATA TABLE) */}
@@ -1582,6 +1892,12 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
                                   <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded border border-blue-200 dark:border-blue-800">
                                     {c.code || "MM"}
                                   </span>
+                                  {(c.youtubeUrl || c.youtubePlaylistId) && (
+                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800 flex items-center gap-1">
+                                      <YoutubeIcon className="w-2.5 h-2.5 text-red-600 fill-current" />
+                                      Playlist
+                                    </span>
+                                  )}
                                   <span className="font-extrabold text-slate-900 dark:text-white truncate block">
                                     {isMarathi ? (c.titleMr || c.title) : c.title}
                                   </span>
@@ -1595,10 +1911,18 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
                                   <button
                                     type="button"
                                     onClick={() => handleOpenCourseStudio(c)}
-                                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer"
                                     title={isMarathi ? "तपशील संपादित करा (Edit Details)" : "Edit Details"}
                                   >
                                     <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleQuickSyncCourse(c)}
+                                    className="p-1 rounded hover:bg-red-100 text-red-600 transition cursor-pointer"
+                                    title={isMarathi ? "YouTube प्लेलिस्ट सिंक करा (Sync Playlist)" : "Sync with YouTube Playlist"}
+                                  >
+                                    <ListPlus className="w-3.5 h-3.5" />
                                   </button>
                                   <Link
                                     href={`/course/${c.id}`}
@@ -1611,7 +1935,7 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
                                   <button
                                     type="button"
                                     onClick={() => setDeleteModalItem({ id: c.id, title: c.title, type: "course" })}
-                                    className="p-1 rounded hover:bg-red-100 text-red-600 transition"
+                                    className="p-1 rounded hover:bg-red-100 text-red-600 transition cursor-pointer"
                                     title={isMarathi ? "हटवा (Delete)" : "Delete"}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -1817,7 +2141,403 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
         )}
 
         {/* ----------------------------------------------------------------- */}
-        {/* TAB 3: DYNAMIC CATEGORIES IN-PLACE MANAGER */}
+        {/* TAB 3: YOUTUBE PLAYLIST SYNC HUB (AUTO-INGESTION & BULK ENGINE) */}
+        {/* ----------------------------------------------------------------- */}
+        {activeTab === "sync" && (
+          <div className="space-y-6">
+            {/* Hero Header Banner */}
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white shadow-md relative overflow-hidden">
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-xs text-[11px] font-bold tracking-wide">
+                    <YoutubeIcon className="w-3.5 h-3.5 fill-current" />
+                    <span>YouTube Studio Content Sync Hub</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+                    {isMarathi ? "YouTube प्लेलिस्ट व लेक्चर्स ऑटो-सिंक" : "YouTube Playlist & Bulk Lecture Ingestion"}
+                  </h2>
+                  <p className="text-xs text-white/90 leading-relaxed">
+                    {isMarathi
+                      ? "YouTube प्लेलिस्टची लिंक टाकून किंवा लिंक्स पेस्ट करून सर्व व्हिडिओंचे शीर्षक, थंबनेल आणि वेळ थेट कोर्सच्या अभ्यासक्रमात (Curriculum) एका क्लिकवर जोडा."
+                      : "Directly import YouTube playlists or batch paste video links into course batches with automated titles, durations, HD thumbnails, and curriculum ordering."}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="bg-black/20 backdrop-blur-xs rounded-xl px-4 py-2.5 text-center border border-white/10">
+                    <div className="text-lg font-black">{courses.length}</div>
+                    <div className="text-[10px] text-white/80 font-bold uppercase">{isMarathi ? "उपलब्ध कोर्सेस" : "Course Batches"}</div>
+                  </div>
+                  <div className="bg-black/20 backdrop-blur-xs rounded-xl px-4 py-2.5 text-center border border-white/10">
+                    <div className="text-lg font-black">{videos.length}</div>
+                    <div className="text-[10px] text-white/80 font-bold uppercase">{isMarathi ? "एकूण व्हिडिओ" : "Synced Videos"}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Ingestion Mode Switcher */}
+            <div className="flex flex-wrap items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 w-fit">
+              <button
+                type="button"
+                onClick={() => setSyncMode("playlist")}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                  syncMode === "playlist"
+                    ? "bg-white dark:bg-[#1E293B] text-red-600 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <YoutubeIcon className="w-3.5 h-3.5 fill-current" />
+                <span>{isMarathi ? "१. YouTube Playlist URL (1-Click Sync)" : "1. YouTube Playlist URL (1-Click Sync)"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSyncMode("bulk")}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                  syncMode === "bulk"
+                    ? "bg-white dark:bg-[#1E293B] text-blue-600 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <ClipboardList className="w-3.5 h-3.5" />
+                <span>{isMarathi ? "२. स्मार्ट बल्क पेस्ट (Multiple Links)" : "2. Smart Bulk Paste (Multiple Links)"}</span>
+              </button>
+            </div>
+
+            {/* Input Card */}
+            <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
+              {syncMode === "playlist" ? (
+                <form onSubmit={handleFetchSyncPlaylist} className="space-y-3">
+                  <label className="block text-xs font-extrabold text-slate-800 dark:text-slate-200">
+                    {isMarathi ? "YouTube Playlist लिंक किंवा ID टाका:" : "Enter YouTube Playlist URL or ID:"}
+                  </label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative flex-1">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-red-500">
+                        <YoutubeIcon className="w-4 h-4 fill-current" />
+                      </div>
+                      <input
+                        type="text"
+                        value={syncUrl}
+                        onChange={(e) => setSyncUrl(e.target.value)}
+                        placeholder="https://www.youtube.com/playlist?list=PL... किंवा PLw5nZ_hJ8h..."
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isFetchingSync}
+                      className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
+                    >
+                      {isFetchingSync ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>{isMarathi ? "फेच होत आहे..." : "Fetching..."}</span>
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4" />
+                          <span>{isMarathi ? "प्लेलिस्ट फेच करा" : "Fetch Playlist"}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {syncFetchError && (
+                    <p className="text-xs font-bold text-red-600 flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{syncFetchError}</span>
+                    </p>
+                  )}
+                </form>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-extrabold text-slate-800 dark:text-slate-200">
+                      {isMarathi ? "एकाच वेळी अनेक YouTube लिंक्स पेस्ट करा (प्रत्येक ओळीवर एक):" : "Paste multiple YouTube links (one per line):"}
+                    </label>
+                    <span className="text-[11px] text-slate-400">
+                      Format: Title | URL किंवा फक्त URL
+                    </span>
+                  </div>
+                  <textarea
+                    rows={5}
+                    value={syncBulkText}
+                    onChange={(e) => setSyncBulkText(e.target.value)}
+                    placeholder={`Introduction to Mind Mastery | https://www.youtube.com/watch?v=dQw4w9WgXcQ\nMemory Techniques Part 1 | https://youtu.be/dQw4w9WgXcQ\nVedic Maths Tricks | https://www.youtube.com/watch?v=dQw4w9WgXcQ`}
+                    className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleParseBulkText}
+                      className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer"
+                    >
+                      <ClipboardList className="w-4 h-4" />
+                      <span>{isMarathi ? "व्हिडिओ एक्सट्रॅक्ट करा" : "Extract Videos"}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Target Course & Settings Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Destination Course */}
+              <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-extrabold text-xs text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{isMarathi ? "लक्ष्य कोर्स (Destination Course Batch)" : "Destination Course Batch"}</span>
+                  </h3>
+                  <label className="flex items-center gap-1.5 text-xs font-bold text-blue-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={syncCreateNewCourse}
+                      onChange={(e) => setSyncCreateNewCourse(e.target.checked)}
+                      className="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                    />
+                    <span>{isMarathi ? "+ नवीन कोर्स बनवा" : "+ Create New Course"}</span>
+                  </label>
+                </div>
+
+                {syncCreateNewCourse ? (
+                  <div className="space-y-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        {isMarathi ? "नवीन कोर्सचे नाव:" : "New Course Title:"}
+                      </label>
+                      <input
+                        type="text"
+                        value={syncNewCourseTitle}
+                        onChange={(e) => setSyncNewCourseTitle(e.target.value)}
+                        placeholder="उदा. वैदिक मॅथ्स मास्टरक्लास २०२६"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                          {isMarathi ? "प्रवर्ग (Category):" : "Category:"}
+                        </label>
+                        <select
+                          value={syncNewCourseCategory}
+                          onChange={(e) => setSyncNewCourseCategory(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none font-bold"
+                        >
+                          {categories.map((cat) => (
+                            <option key={cat.id} value={cat.key || cat.id}>{cat.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                          {isMarathi ? "किंमत (₹):" : "Price (₹):"}
+                        </label>
+                        <input
+                          type="number"
+                          value={syncNewCoursePrice}
+                          onChange={(e) => setSyncNewCoursePrice(Number(e.target.value))}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none font-bold"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                      {isMarathi ? "कोणत्या कोर्समध्ये हे लेक्चर्स जोडायचे आहेत?" : "Select course to append lessons to:"}
+                    </label>
+                    <select
+                      value={syncTargetCourseId}
+                      onChange={(e) => setSyncTargetCourseId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                    >
+                      {courses.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.title} ({c.lessonsCount || 0} lessons)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Student Access & Preview Settings */}
+              <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-3">
+                <h3 className="font-extrabold text-xs text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{isMarathi ? "विद्यार्थी ॲक्सेस व प्रिव्ह्यू नियम" : "Access & Preview Settings"}</span>
+                </h3>
+
+                <div className="space-y-2.5 pt-1">
+                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={syncFirstIsFree}
+                      onChange={(e) => setSyncFirstIsFree(e.target.checked)}
+                      className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                    />
+                    <div>
+                      <span className="font-extrabold text-xs text-slate-900 dark:text-white block">
+                        {isMarathi ? "पहिला व्हिडिओ मोफत प्रिव्ह्यू ठेवा (Free Demo)" : "First Video Free Demo Preview"}
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block">
+                        {isMarathi
+                          ? "विद्यार्थ्यांना कोर्स खरेदी करण्यापूर्वी १ ला व्हिडिओ पाहता येईल."
+                          : "Enables prospective students to watch lesson 1 before purchase."}
+                      </span>
+                    </div>
+                  </label>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                      {isMarathi ? "विद्यार्थी ॲक्सेस मुदत (खरेदी केल्यापासून):" : "Student Access Validity (from purchase):"}
+                    </label>
+                    <select
+                      value={syncValidityDays}
+                      onChange={(e) => setSyncValidityDays(Number(e.target.value))}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                    >
+                      <option value={15}>{isMarathi ? "१५ दिवस" : "15 Days"}</option>
+                      <option value={30}>{isMarathi ? "१ महिना (३० दिवस)" : "1 Month (30 Days)"}</option>
+                      <option value={90}>{isMarathi ? "३ महिने (९० दिवस)" : "3 Months (90 Days)"}</option>
+                      <option value={180}>{isMarathi ? "६ महिने (१८० दिवस)" : "6 Months (180 Days)"}</option>
+                      <option value={365}>{isMarathi ? "१ वर्ष (३६५ दिवस)" : "1 Year (365 Days)"}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Fetched Videos Checklist Preview */}
+            {syncFetchedVideos.length > 0 && (
+              <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs space-y-0">
+                {/* Checklist Header */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleToggleSelectAllSync}
+                      className="flex items-center gap-2 text-xs font-extrabold text-slate-900 dark:text-white cursor-pointer"
+                    >
+                      {syncFetchedVideos.every((v) => v.selected) ? (
+                        <CheckSquare className="w-4 h-4 text-red-600" />
+                      ) : (
+                        <Square className="w-4 h-4 text-slate-400" />
+                      )}
+                      <span>
+                        {isMarathi
+                          ? `${syncFetchedVideos.filter((v) => v.selected).length}/${syncFetchedVideos.length} व्हिडिओ निवडले`
+                          : `${syncFetchedVideos.filter((v) => v.selected).length}/${syncFetchedVideos.length} Videos Selected`}
+                      </span>
+                    </button>
+                    {syncPlaylistMeta && (
+                      <span className="text-[11px] text-slate-500 font-medium truncate max-w-sm">
+                        • {syncPlaylistMeta.title} ({syncPlaylistMeta.author})
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Big Execution Button */}
+                  <button
+                    type="button"
+                    onClick={handleExecuteSync}
+                    disabled={isExecutingSync || syncFetchedVideos.filter((v) => v.selected).length === 0}
+                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    {isExecutingSync ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>{isMarathi ? "सिंक होत आहे..." : "Syncing Curriculum..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>
+                          {isMarathi
+                            ? `✓ सिंक पूर्ण करा (${syncFetchedVideos.filter((v) => v.selected).length} लेक्चर्स जोडा)`
+                            : `✓ Ingest & Sync ${syncFetchedVideos.filter((v) => v.selected).length} Lessons`}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Videos Table */}
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[500px] overflow-y-auto">
+                  {syncFetchedVideos.map((item, idx) => (
+                    <div
+                      key={item.id || idx}
+                      className={`p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition ${
+                        item.selected ? "bg-white dark:bg-[#1E293B]" : "opacity-50 bg-slate-50/50 dark:bg-slate-900/30"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={item.selected}
+                          onChange={() => handleToggleVideoSelect(idx)}
+                          className="rounded text-red-600 focus:ring-red-500 w-4 h-4 shrink-0 cursor-pointer"
+                        />
+
+                        {/* Thumbnail */}
+                        <div className="relative w-20 aspect-video rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-800 shrink-0 border border-slate-200 dark:border-slate-700">
+                          {item.thumbnailUrl ? (
+                            <Image
+                              src={item.thumbnailUrl}
+                              alt={item.title}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-400">
+                              <Video className="w-4 h-4" />
+                            </div>
+                          )}
+                          <span className="absolute bottom-1 right-1 px-1 py-0.2 rounded bg-black/80 text-[9px] font-mono font-bold text-white">
+                            {item.durationFormatted || "15:00"}
+                          </span>
+                        </div>
+
+                        {/* Title & Info */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                              #{idx + 1}
+                            </span>
+                            <span className="font-extrabold text-xs text-slate-900 dark:text-white truncate block">
+                              {item.title}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-slate-400">
+                            ID: {item.videoId}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {idx === 0 && syncFirstIsFree ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                            Free Demo
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                            Locked
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ----------------------------------------------------------------- */}
+        {/* TAB 4: DYNAMIC CATEGORIES IN-PLACE MANAGER */}
         {/* ----------------------------------------------------------------- */}
         {activeTab === "categories" && (
           <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
