@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, Sun, Moon } from "lucide-react";
 import StudentNotificationBell from "@/components/notifications/StudentNotificationBell";
 import { useTheme } from "@/lib/ThemeContext";
+import MindMasterLogo from "@/components/common/MindMasterLogo";
 
 export default function TopBar() {
   const { toggleTheme, isDark } = useTheme();
@@ -19,9 +20,7 @@ export default function TopBar() {
             aria-label="MindMaster Academy"
             className="lg:hidden flex items-center gap-2 active:scale-95 transition"
           >
-            <div className="w-8 h-8 rounded-xl bg-[#2563EB] flex items-center justify-center text-white font-black text-xs shadow-xs">
-              MM
-            </div>
+            <MindMasterLogo size="sm" />
             <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white">MindMaster</span>
           </Link>
 

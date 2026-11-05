@@ -536,7 +536,7 @@ export default function PlaylistImportPage() {
                     {/* Thumbnail */}
                     <div className="w-24 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200 relative">
                       <Image
-                        src={item.thumbnailUrl || "https://placehold.co/120x80/0E1B3D/FFFFFF?text=Video"}
+                        src={item.thumbnailUrl || "/assets/images/memory_seminar_brain_3d.png"}
                         alt={item.title}
                         width={96}
                         height={64}

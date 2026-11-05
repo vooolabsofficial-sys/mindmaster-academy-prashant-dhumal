@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { setCurrentStaff } from "@/lib/staffStore";
 import AuthRoleSwitcher from "@/components/auth/AuthRoleSwitcher";
+import MindMasterLogo from "@/components/common/MindMasterLogo";
 
 function SubAdminLoginContent() {
   const searchParams = useSearchParams();
@@ -99,10 +100,8 @@ function SubAdminLoginContent() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-b from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       {/* Top Brand Identity */}
-      <div className="w-full max-w-md pt-8 text-center relative z-10">
-        <div className="w-12 h-12 mx-auto rounded-2xl bg-[#0052FF] flex items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-3">
-          <ShieldCheck className="w-6 h-6" />
-        </div>
+      <div className="w-full max-w-md pt-8 text-center relative z-10 flex flex-col items-center">
+        <MindMasterLogo size="lg" className="mb-3" />
         <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
           Sub-Admin Staff Console
         </h1>

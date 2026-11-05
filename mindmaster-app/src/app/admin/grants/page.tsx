@@ -39,6 +39,7 @@ import {
   Edit,
   Check,
   AlertCircle,
+  IndianRupee,
   Banknote,
   Smartphone,
   GraduationCap,
@@ -630,7 +631,10 @@ export default function GrantsManagerPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E4E8F8]">
                 <div>
                   <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white flex items-center gap-2">
-                    <span>💰</span> Sub-Admin Cash vs UPI Collection Tally
+                    <span className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold">
+                      <IndianRupee className="w-4 h-4" />
+                    </span>
+                    <span>Sub-Admin Fee Collection &amp; Grants Tally</span>
                   </h2>
                   <p className="text-xs text-[#5A6478]">
                     Real-time audit breakdown of offline fees collected by staff via Cash, UPI, and Scholarships.
@@ -682,7 +686,9 @@ export default function GrantsManagerPage() {
                       ).toLocaleString("en-IN")}
                     </p>
                   </div>
-                  <span className="text-2xl">💵</span>
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold shrink-0 shadow-2xs">
+                    <IndianRupee className="w-5 h-5" />
+                  </div>
                 </div>
 
                 <div className="p-4 bg-blue-50/70 border border-blue-200/80 rounded-2xl flex items-center justify-between">
@@ -702,7 +708,9 @@ export default function GrantsManagerPage() {
                       ).toLocaleString("en-IN")}
                     </p>
                   </div>
-                  <span className="text-2xl">📱</span>
+                  <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-[#0B57D0] dark:text-blue-300 font-bold shrink-0 shadow-2xs">
+                    <Smartphone className="w-5 h-5" />
+                  </div>
                 </div>
 
                 <div className="p-4 bg-purple-50/70 border border-purple-200/80 rounded-2xl flex items-center justify-between">
@@ -723,7 +731,9 @@ export default function GrantsManagerPage() {
                       Grants
                     </p>
                   </div>
-                  <span className="text-2xl">🎓</span>
+                  <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center text-purple-700 dark:text-purple-300 font-bold shrink-0 shadow-2xs">
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
                 </div>
               </div>
 

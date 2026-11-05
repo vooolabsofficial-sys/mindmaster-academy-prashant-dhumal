@@ -24,7 +24,7 @@ import {
   Edit3,
   Trash2,
   ExternalLink,
-  DollarSign,
+  IndianRupee,
   Gift,
   Layers,
   CheckCircle2,
@@ -467,7 +467,7 @@ export default function DigitalBooksManagerPage() {
                 <p className="text-[11px] text-slate-500 mt-0.5">Standalone paid ebooks</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                <DollarSign className="w-6 h-6" />
+                <IndianRupee className="w-6 h-6" />
               </div>
             </div>
 
@@ -785,7 +785,7 @@ export default function DigitalBooksManagerPage() {
                         }`}
                       >
                         <div className="flex items-center gap-2 font-bold text-xs mb-1">
-                          <DollarSign className="w-4 h-4 text-[#0B57D0]" />
+                          <IndianRupee className="w-4 h-4 text-[#0B57D0]" />
                           <span>Paid Standalone</span>
                         </div>
                         <p className="text-[11px] text-slate-500 leading-snug">
@@ -843,7 +843,7 @@ export default function DigitalBooksManagerPage() {
                   {accessMode === "paid" && (
                     <div className="p-4 bg-blue-50/60 rounded-2xl border border-blue-200 space-y-3">
                       <div className="font-bold text-[#0B57D0] text-xs flex items-center gap-1.5">
-                        <DollarSign className="w-4 h-4" /> Paid Pricing &amp; Validity
+                        <IndianRupee className="w-4 h-4" /> Paid Pricing &amp; Validity
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>

@@ -29,6 +29,7 @@ import {
 import { StaffUser, hasStaffPermission, StaffPermission } from "@/lib/types";
 import { getCurrentStaff } from "@/lib/staffStore";
 import { getUnreadCountForStaff } from "@/lib/messageStore";
+import MindMasterLogo from "@/components/common/MindMasterLogo";
 
 interface NavItem {
   label: string;
@@ -170,11 +171,12 @@ export default function AdminSidebar() {
           {/* Sub-Admin Workspace Badge Card */}
           <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#2563EB] dark:text-blue-400">
-                Staff Console
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#2563EB] dark:text-blue-400 flex items-center gap-1.5">
+                <MindMasterLogo size="xs" />
+                <span>Staff Console</span>
               </span>
               <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/80">
-                Sub-Admin Workspace
+                Sub-Admin
               </span>
             </div>
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1.5 truncate">
@@ -284,7 +286,7 @@ export default function AdminSidebar() {
         <div className="px-3.5 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#2563EB] dark:text-blue-400 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" />
+              <MindMasterLogo size="xs" />
               <span>Supreme Admin</span>
             </span>
             <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/80">

@@ -37,6 +37,7 @@ import { getUnreadCountForStaff } from "@/lib/messageStore";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useTheme } from "@/lib/ThemeContext";
 import LanguageModal from "@/components/common/LanguageModal";
+import MindMasterLogo from "@/components/common/MindMasterLogo";
 
 interface NavItem {
   label: string;
@@ -219,9 +220,7 @@ export default function AdminTopbar() {
           </button>
 
           <Link href={homeHref} className="flex items-center gap-2 sm:gap-2.5 group">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white shadow-xs font-bold group-hover:scale-105 transition-transform shrink-0">
-              <Brain className="w-5 h-5" />
-            </div>
+            <MindMasterLogo size="sm" className="group-hover:scale-105 transition-transform shrink-0" />
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base leading-none font-heading tracking-tight">

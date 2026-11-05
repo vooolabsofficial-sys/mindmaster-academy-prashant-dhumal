@@ -15,7 +15,7 @@ import {
   X,
   ClipboardList,
   GraduationCap,
-  DollarSign,
+  IndianRupee,
   BookOpen,
   ShieldCheck,
   AlertTriangle,
@@ -183,7 +183,7 @@ export default function AuditLogPage() {
             {[
               { id: "all", label: "All Categories", icon: <ClipboardList className="w-3.5 h-3.5" /> },
               { id: "admissions", label: "Admissions & Grants", icon: <GraduationCap className="w-3.5 h-3.5" /> },
-              { id: "settlements", label: "Cash & Settlements", icon: <DollarSign className="w-3.5 h-3.5" /> },
+              { id: "settlements", label: "Cash & Settlements", icon: <IndianRupee className="w-3.5 h-3.5" /> },
               { id: "catalog", label: "Catalog & CMS Edits", icon: <BookOpen className="w-3.5 h-3.5" /> },
               { id: "security", label: "Logins & Security", icon: <ShieldCheck className="w-3.5 h-3.5" /> },
               { id: "high_risk", label: "High-Risk / Alerts", icon: <AlertTriangle className="w-3.5 h-3.5" /> },

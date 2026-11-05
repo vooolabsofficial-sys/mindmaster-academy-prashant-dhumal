@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { getUnreadCountForStudent } from "@/lib/messageStore";
 import { useLanguage } from "@/lib/LanguageContext";
+import MindMasterLogo from "@/components/common/MindMasterLogo";
 
 export default function SidebarNav() {
   const pathname = usePathname();
@@ -60,9 +61,7 @@ export default function SidebarNav() {
         {/* Top Brand Monogram */}
         <div className="h-18 flex items-center px-[18px] border-b border-slate-200/70 dark:border-slate-800 shrink-0">
           <Link href="/home" className="flex items-center gap-3.5 group/logo cursor-pointer">
-            <div className="w-8 h-8 rounded-xl bg-[#2563EB] flex items-center justify-center text-white font-black text-xs tracking-tight shrink-0 shadow-xs group-hover/logo:scale-105 transition-transform">
-              MM
-            </div>
+            <MindMasterLogo size="sm" className="group-hover/logo:scale-105 transition-transform" />
             <div className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200 delay-100 whitespace-nowrap">
               <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white block leading-none">
                 MINDMASTER
