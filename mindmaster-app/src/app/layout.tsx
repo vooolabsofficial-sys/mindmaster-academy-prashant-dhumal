@@ -4,6 +4,7 @@ import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import { ThemeProvider } from "@/lib/ThemeContext";
+import { LanguageProvider } from "@/lib/LanguageContext";
 import MaintenanceBanner from "@/components/common/MaintenanceBanner";
 import { Toaster } from "sonner";
 
@@ -171,11 +172,13 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning className="min-h-full flex flex-col bg-[#F8FAFC] dark:bg-[#0F172A] text-[#0F172A] dark:text-[#F1F5F9] font-sans antialiased transition-colors duration-200">
         <ThemeProvider>
-          <MaintenanceBanner />
-          <ServiceWorkerRegister />
-          <PwaInstallPrompt />
-          <Toaster richColors position="top-right" closeButton />
-          {children}
+          <LanguageProvider>
+            <MaintenanceBanner />
+            <ServiceWorkerRegister />
+            <PwaInstallPrompt />
+            <Toaster richColors position="top-right" closeButton />
+            {children}
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

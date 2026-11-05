@@ -29,6 +29,7 @@ import {
 import { StaffUser, hasStaffPermission, StaffPermission } from "@/lib/types";
 import { getCurrentStaff } from "@/lib/staffStore";
 import { getUnreadCountForStaff } from "@/lib/messageStore";
+import { useLanguage } from "@/lib/LanguageContext";
 import MindMasterLogo from "@/components/common/MindMasterLogo";
 
 interface NavItem {
@@ -57,6 +58,8 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
   const [msgUnread, setMsgUnread] = useState(0);
+  const { currentLanguage } = useLanguage();
+  const isMarathi = currentLanguage === "mr";
 
   // Collapsible category state (defaults to open, active category stays open)
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
@@ -91,12 +94,12 @@ export default function AdminSidebar() {
   const adminCategories: NavCategory[] = [
     {
       id: "overview",
-      name: "Overview & Support",
+      name: isMarathi ? "विहंगावलोकन व सपोर्ट" : "Overview & Support",
       icon: <LayoutDashboard className="w-3.5 h-3.5 text-blue-500" />,
       items: [
-        { label: "Dashboard", href: "/admin", icon: <LayoutDashboard className="w-4 h-4" /> },
+        { label: isMarathi ? "डॅशबोर्ड" : "Dashboard", href: "/admin", icon: <LayoutDashboard className="w-4 h-4" /> },
         {
-          label: "Support Tickets",
+          label: isMarathi ? "सपोर्ट टिकट्स" : "Support Tickets",
           href: "/admin/messages",
           icon: <MessageSquare className="w-4 h-4" />,
           badge: msgUnread > 0 ? `${msgUnread}` : undefined,
@@ -106,37 +109,37 @@ export default function AdminSidebar() {
     },
     {
       id: "learning",
-      name: "Learning Studio",
+      name: isMarathi ? "अध्ययन स्टुडिओ" : "Learning Studio",
       icon: <GraduationCap className="w-3.5 h-3.5 text-indigo-500" />,
       items: [
-        { label: "Courses", href: "/admin/courses", icon: <BookOpen className="w-4 h-4" />, permission: "courses.manage" },
-        { label: "Videos", href: "/admin/videos", icon: <Video className="w-4 h-4" />, permission: "videos.manage" },
-        { label: "YouTube Sync", href: "/admin/playlist", icon: <ListPlus className="w-4 h-4" />, permission: "courses.manage" },
-        { label: "PDF Books", href: "/admin/notes", icon: <FileText className="w-4 h-4" />, permission: "notes.books.manage" },
+        { label: isMarathi ? "कोर्सेस" : "Courses", href: "/admin/courses", icon: <BookOpen className="w-4 h-4" />, permission: "courses.manage" },
+        { label: isMarathi ? "व्हिडिओ" : "Videos", href: "/admin/videos", icon: <Video className="w-4 h-4" />, permission: "videos.manage" },
+        { label: isMarathi ? "युट्यूब सिंक" : "YouTube Sync", href: "/admin/playlist", icon: <ListPlus className="w-4 h-4" />, permission: "courses.manage" },
+        { label: isMarathi ? "ई-बुक्स व नोट्स" : "PDF Books", href: "/admin/notes", icon: <FileText className="w-4 h-4" />, permission: "notes.books.manage" },
       ],
     },
     {
       id: "students",
-      name: "Students & Access",
+      name: isMarathi ? "विद्यार्थी व ऍक्सेस" : "Students & Access",
       icon: <Users className="w-3.5 h-3.5 text-emerald-500" />,
       items: [
-        { label: "Students", href: "/admin/students", icon: <Users className="w-4 h-4" />, permission: "students.view" },
-        { label: "Course Grants", href: "/admin/grants", icon: <Gift className="w-4 h-4" />, adminOnly: true },
-        { label: "Coupons", href: "/admin/coupons", icon: <Tag className="w-4 h-4" />, permission: "coupons.manage" },
+        { label: isMarathi ? "विद्यार्थी CRM" : "Students", href: "/admin/students", icon: <Users className="w-4 h-4" />, permission: "students.view" },
+        { label: isMarathi ? "कोर्स ग्रँट्स" : "Course Grants", href: "/admin/grants", icon: <Gift className="w-4 h-4" />, adminOnly: true },
+        { label: isMarathi ? "कूपन कोड्स" : "Coupons", href: "/admin/coupons", icon: <Tag className="w-4 h-4" />, permission: "coupons.manage" },
       ],
     },
     {
       id: "system",
-      name: "System & Control",
+      name: isMarathi ? "प्रणाली व नियंत्रण" : "System & Control",
       icon: <Settings className="w-3.5 h-3.5 text-slate-500" />,
       items: [
-        { label: "Sub-Admins", href: "/admin/sub-admins", icon: <ShieldCheck className="w-4 h-4" />, badge: "Admin", adminOnly: true },
-        { label: "Audit Logs", href: "/admin/audit", icon: <History className="w-4 h-4" />, adminOnly: true },
-        { label: "My Activity", href: "/admin/my-activity", icon: <Activity className="w-4 h-4" /> },
-        { label: "Reports", href: "/admin/reports", icon: <BarChart3 className="w-4 h-4" />, adminOnly: true },
-        { label: "Website CMS", href: "/admin/website-cms", icon: <Globe className="w-4 h-4" />, badge: "CMS", adminOnly: true },
-        { label: "Settings", href: "/admin/settings", icon: <Settings className="w-4 h-4" />, badge: "Config", adminOnly: true },
-        { label: "SOP Guide", href: "/admin/guide", icon: <HelpCircle className="w-4 h-4" />, badge: "SOP" },
+        { label: isMarathi ? "सब-ॲडमिन" : "Sub-Admins", href: "/admin/sub-admins", icon: <ShieldCheck className="w-4 h-4" />, badge: "Admin", adminOnly: true },
+        { label: isMarathi ? "ऑडिट लॉग्स" : "Audit Logs", href: "/admin/audit", icon: <History className="w-4 h-4" />, adminOnly: true },
+        { label: isMarathi ? "माझी ॲक्टिव्हिटी" : "My Activity", href: "/admin/my-activity", icon: <Activity className="w-4 h-4" /> },
+        { label: isMarathi ? "रिपोर्ट्स" : "Reports", href: "/admin/reports", icon: <BarChart3 className="w-4 h-4" />, adminOnly: true },
+        { label: isMarathi ? "वेबसाईट CMS" : "Website CMS", href: "/admin/website-cms", icon: <Globe className="w-4 h-4" />, badge: "CMS", adminOnly: true },
+        { label: isMarathi ? "सेटिंग्ज" : "Settings", href: "/admin/settings", icon: <Settings className="w-4 h-4" />, badge: "Config", adminOnly: true },
+        { label: isMarathi ? "मार्गदर्शिका" : "SOP Guide", href: "/admin/guide", icon: <HelpCircle className="w-4 h-4" />, badge: "SOP" },
       ],
     },
   ];
@@ -146,17 +149,17 @@ export default function AdminSidebar() {
   // =========================================================================
   if (isSubAdmin) {
     const subNavItems: NavItem[] = [
-      { label: "Dashboard", href: "/sub", icon: <LayoutDashboard className="w-4 h-4" /> },
-      { label: "Students Finder", href: "/sub/students", icon: <Users className="w-4 h-4" />, permission: "students.view" },
+      { label: isMarathi ? "डॅशबोर्ड" : "Dashboard", href: "/sub", icon: <LayoutDashboard className="w-4 h-4" /> },
+      { label: isMarathi ? "विद्यार्थी शोध" : "Students Finder", href: "/sub/students", icon: <Users className="w-4 h-4" />, permission: "students.view" },
       {
-        label: "Support Tickets",
+        label: isMarathi ? "सपोर्ट टिकट्स" : "Support Tickets",
         href: "/sub/messages",
         icon: <MessageSquare className="w-4 h-4" />,
         badge: msgUnread > 0 ? `${msgUnread}` : undefined,
         permission: "messages.manage",
       },
-      { label: "My Activity", href: "/sub/activity", icon: <Activity className="w-4 h-4" /> },
-      { label: "SOP Guide", href: "/admin/guide", icon: <HelpCircle className="w-4 h-4" />, badge: "SOP" },
+      { label: isMarathi ? "माझी ॲक्टिव्हिटी" : "My Activity", href: "/sub/activity", icon: <Activity className="w-4 h-4" /> },
+      { label: isMarathi ? "मार्गदर्शिका" : "SOP Guide", href: "/admin/guide", icon: <HelpCircle className="w-4 h-4" />, badge: "SOP" },
     ];
 
     const filteredSubItems = subNavItems.filter((item) => {

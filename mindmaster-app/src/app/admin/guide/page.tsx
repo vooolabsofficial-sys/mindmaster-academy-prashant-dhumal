@@ -31,6 +31,7 @@ import {
 import AdminShell from "@/components/admin/AdminShell";
 import { getCurrentStaff } from "@/lib/staffStore";
 import { StaffUser } from "@/lib/types";
+import { useLanguage } from "@/lib/LanguageContext";
 
 interface SopItem {
   id: string;
@@ -392,7 +393,8 @@ const SOP_REGISTRY: SopItem[] = [
 
 export default function AdminGuidePage() {
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
-  const [isMarathi, setIsMarathi] = useState(false);
+  const { currentLanguage, setLanguage } = useLanguage();
+  const isMarathi = currentLanguage === "mr";
   const [roleFilter, setRoleFilter] = useState<"all" | "sub_admin" | "main_admin">("all");
   const [sopSearch, setSopSearch] = useState("");
 
@@ -467,11 +469,11 @@ export default function AdminGuidePage() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setIsMarathi(!isMarathi)}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 shadow-2xs active:scale-95"
+                onClick={() => setLanguage(isMarathi ? "en" : "mr")}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 shadow-2xs active:scale-95"
                 title="Change Language / भाषा बदला"
               >
-                <Globe className="w-3.5 h-3.5 text-blue-600" />
+                <Globe className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 <span>{isMarathi ? "मराठी (Marathi)" : "English (Primary)"}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
@@ -479,8 +481,8 @@ export default function AdminGuidePage() {
               {isMarathi && (
                 <button
                   type="button"
-                  onClick={() => setIsMarathi(false)}
-                  className="text-[11px] font-extrabold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1 rounded-xl transition cursor-pointer animate-pulse"
+                  onClick={() => setLanguage("en")}
+                  className="text-[11px] font-extrabold text-blue-600 hover:text-blue-800 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-900/60 px-3 py-1 rounded-xl transition cursor-pointer animate-pulse"
                 >
                   <span>← Switch to English</span>
                 </button>

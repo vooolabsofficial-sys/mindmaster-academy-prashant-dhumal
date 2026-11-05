@@ -17,6 +17,7 @@ import {
 import { getStaffCollectionTally, getGrants, fetchDbGrants, Grant } from "@/lib/grantStore";
 import { createClient } from "@/lib/supabase/client";
 import { IndianRupee, Smartphone, GraduationCap } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
 
 interface PaymentTransaction {
   id: string;
@@ -42,6 +43,8 @@ interface ExpiringStudent {
 }
 
 export default function AdminOverviewPage() {
+  const { currentLanguage } = useLanguage();
+  const isMarathi = currentLanguage === "mr";
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
   const [courses, setCourses] = useState<Course[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -220,64 +223,66 @@ export default function AdminOverviewPage() {
         {/* Quick Action Pills */}
         <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
           <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#8A94A6] dark:text-slate-400 mb-2 px-1">
-            झटपट कृती शॉर्टकट्स • Quick Action Shortcuts
+            {isMarathi ? "झटपट कृती शॉर्टकट्स" : "Quick Action Shortcuts"}
           </p>
           <div className="flex flex-wrap gap-2">
             <Link
               href="/admin/courses"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] dark:hover:text-blue-400 border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold transition-all shadow-sm"
             >
-              <span>➕</span> नवीन कोर्स (New Course)
+              <span>➕</span> {isMarathi ? "नवीन कोर्स" : "New Course"}
             </Link>
             <Link
               href="/admin/grants"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F0FDF4] dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition-all shadow-sm"
             >
-              <span>🎓</span> कोर्स ऍक्सेस द्या (Grant Access)
+              <span>🎓</span> {isMarathi ? "कोर्स ऍक्सेस द्या" : "Grant Access"}
             </Link>
             <Link
               href="/admin/videos"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] dark:hover:text-blue-400 border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold transition-all shadow-sm"
             >
-              <span>🎬</span> व्हिडिओ अपलोड (Videos)
+              <span>🎬</span> {isMarathi ? "व्हिडिओ अपलोड" : "Upload Video"}
             </Link>
             <Link
               href="/admin/coupons"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] dark:hover:text-blue-400 border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold transition-all shadow-sm"
             >
-              <span>🏷️</span> कूपन तयार करा (Create Coupon)
+              <span>🏷️</span> {isMarathi ? "कूपन तयार करा" : "Create Coupon"}
             </Link>
             {isMainAdmin && (
               <Link
                 href="/admin/sub-admins"
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] dark:hover:text-blue-400 border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold transition-all shadow-sm"
               >
-                <span>👥</span> सब-ॲडमिन टीम (Sub-Admins)
+                <span>👥</span> {isMarathi ? "सब-ॲडमिन टीम" : "Sub-Admins"}
               </Link>
             )}
             <Link
               href="/admin/students"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 text-[#0E1B3D] dark:text-slate-200 hover:text-[#0B57D0] dark:hover:text-blue-400 border border-[#E4E8F8] dark:border-slate-700 text-xs font-bold transition-all shadow-sm"
             >
-              <span>🔍</span> विद्यार्थी शोधा (Student Lookup)
+              <span>🔍</span> {isMarathi ? "विद्यार्थी शोधा" : "Student Lookup"}
             </Link>
             {isMainAdmin && (
               <Link
                 href="/admin/settings"
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#EDE9FE] dark:bg-purple-950/60 hover:bg-[#DDD6FE] dark:hover:bg-purple-900/60 text-[#6D28D9] dark:text-purple-300 border border-[#C4B5FD] dark:border-purple-800 text-xs font-bold transition-all shadow-sm"
               >
-                <span>⚙️</span> सिस्टीम सेटिंग्स (Settings)
+                <span>⚙️</span> {isMarathi ? "सिस्टीम सेटिंग्स" : "Platform Settings"}
               </Link>
             )}
           </div>
         </div>
 
-        {/* Four Stat Cards per user request */}
+        {/* Four Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Card 1: Total Revenue */}
           <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm hover:border-[#0B57D0] dark:hover:border-blue-500 transition-all">
             <div className="flex items-center justify-between text-xs text-[#8A94A6] dark:text-slate-400 mb-2 font-medium">
-              <span className="font-extrabold uppercase tracking-wide">एकूण महसूल (Revenue)</span>
+              <span className="font-extrabold uppercase tracking-wide">
+                {isMarathi ? "एकूण महसूल" : "TOTAL REVENUE"}
+              </span>
               <span className="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/50 px-2 py-0.5 rounded-full font-bold">
                 Live Gateway
               </span>
@@ -286,14 +291,18 @@ export default function AdminOverviewPage() {
               ₹{totalRevenueRupees.toLocaleString("en-IN")}
             </p>
             <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-2">
-              Razorpay द्वारे सर्व कोर्सेसची एकूण ऑनलाइन विक्री
+              {isMarathi
+                ? "Razorpay द्वारे सर्व कोर्सेसची एकूण ऑनलाइन विक्री"
+                : "Captured via Razorpay across all course sales"}
             </p>
           </div>
 
           {/* Card 2: Active Students */}
           <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm hover:border-[#0B57D0] dark:hover:border-blue-500 transition-all">
             <div className="flex items-center justify-between text-xs text-[#8A94A6] dark:text-slate-400 mb-2 font-medium">
-              <span className="font-extrabold uppercase tracking-wide">सक्रिय विद्यार्थी (Learners)</span>
+              <span className="font-extrabold uppercase tracking-wide">
+                {isMarathi ? "सक्रिय विद्यार्थी" : "ACTIVE LEARNERS"}
+              </span>
               <span className="text-[#0B57D0] dark:text-blue-400 bg-[#EBF3FE] dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/50 px-2 py-0.5 rounded-full font-bold">
                 {studentsCount > 0 ? "100% Active" : "Fresh Roster"}
               </span>
@@ -302,14 +311,18 @@ export default function AdminOverviewPage() {
               {studentsCount}
             </p>
             <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-2">
-              नोंदणीकृत व चालू ऍक्सेस असलेले सर्व विद्यार्थी
+              {isMarathi
+                ? "नोंदणीकृत व चालू ऍक्सेस असलेले सर्व विद्यार्थी"
+                : "Enrolled students with active access"}
             </p>
           </div>
 
           {/* Card 3: Courses & Videos */}
           <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm hover:border-[#0B57D0] dark:hover:border-blue-500 transition-all">
             <div className="flex items-center justify-between text-xs text-[#8A94A6] dark:text-slate-400 mb-2 font-medium">
-              <span className="font-extrabold uppercase tracking-wide">कोर्सेस व व्हिडिओ (Catalogue)</span>
+              <span className="font-extrabold uppercase tracking-wide">
+                {isMarathi ? "कोर्सेस व व्हिडिओ" : "CATALOGUE & VIDEOS"}
+              </span>
               <span className="text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-900/50 px-2 py-0.5 rounded-full font-bold">
                 {courses.length} Courses
               </span>
@@ -319,14 +332,18 @@ export default function AdminOverviewPage() {
               <span className="text-sm font-normal text-[#5A6478] dark:text-slate-400">Lectures</span>
             </p>
             <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-2">
-              शालेय, वैदिक गणित, मेमरी व शिक्षक सेगमेंट्स
+              {isMarathi
+                ? "शालेय, वैदिक गणित, मेमरी व शिक्षक सेगमेंट्स"
+                : "School, College, Vedic Maths & Teacher segments"}
             </p>
           </div>
 
           {/* Card 4: Coupons & Redemptions */}
           <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm hover:border-[#0B57D0] dark:hover:border-blue-500 transition-all">
             <div className="flex items-center justify-between text-xs text-[#8A94A6] dark:text-slate-400 mb-2 font-medium">
-              <span className="font-extrabold uppercase tracking-wide">कूपन्स व सवलती (Coupons)</span>
+              <span className="font-extrabold uppercase tracking-wide">
+                {isMarathi ? "कूपन्स व सवलती" : "COUPON REDEMPTIONS"}
+              </span>
               <span className="text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900/50 px-2 py-0.5 rounded-full font-bold">
                 {coupons.length} Active
               </span>
@@ -336,7 +353,9 @@ export default function AdminOverviewPage() {
               <span className="text-sm font-normal text-[#5A6478] dark:text-slate-400">Redeemed</span>
             </p>
             <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-2">
-              विद्यार्थ्यांनी वापरलेली विशेष सवलत कूपन्स
+              {isMarathi
+                ? "विद्यार्थ्यांनी वापरलेली विशेष सवलत कूपन्स"
+                : "Welcome discounts & renewals"}
             </p>
           </div>
         </div>
@@ -350,10 +369,12 @@ export default function AdminOverviewPage() {
                   <span className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold">
                     <IndianRupee className="w-4 h-4" />
                   </span>
-                  <span>सब-ॲडमिन फी संकलन व हिशोब टॅली (Collection Tally)</span>
+                  <span>{isMarathi ? "सब-ॲडमिन फी संकलन व हिशोब टॅली" : "Sub-Admin Fee Collection & Grants Tally"}</span>
                 </h2>
                 <p className="text-xs text-[#5A6478] dark:text-slate-400">
-                  सातारा व पुणे ऑफिस कर्मचाऱ्यांनी Cash आणि UPI द्वारे गोळा केलेली ऑफलाइन फी व शिष्यवृत्ती वाटप.
+                  {isMarathi
+                    ? "सातारा व पुणे ऑफिस कर्मचाऱ्यांनी Cash आणि UPI द्वारे गोळा केलेली ऑफलाइन फी व शिष्यवृत्ती वाटप."
+                    : "Breakdown of student fees collected offline by staff via Cash and UPI, plus scholarship grants."}
                 </p>
               </div>
 
@@ -361,9 +382,9 @@ export default function AdminOverviewPage() {
               <div className="flex items-center gap-1.5 bg-[#F5F7FF] dark:bg-slate-800 p-1 rounded-full border border-[#E4E8F8] dark:border-slate-700 self-start sm:self-auto">
                 {(
                   [
-                    { id: "today", label: "आज (Today)" },
-                    { id: "week", label: "या आठवड्यात (This Week)" },
-                    { id: "month", label: "या महिन्यात (This Month)" },
+                    { id: "today", labelEn: "Today", labelMr: "आज" },
+                    { id: "week", labelEn: "This Week", labelMr: "या आठवड्यात" },
+                    { id: "month", labelEn: "This Month", labelMr: "या महिन्यात" },
                   ] as const
                 ).map((t) => (
                   <button
@@ -376,7 +397,7 @@ export default function AdminOverviewPage() {
                         : "text-[#5A6478] dark:text-slate-400 hover:text-[#0E1B3D] dark:hover:text-white"
                     }`}
                   >
-                    {t.label}
+                    {isMarathi ? t.labelMr : t.labelEn}
                   </button>
                 ))}
               </div>
@@ -387,7 +408,7 @@ export default function AdminOverviewPage() {
               <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-2xl flex items-center justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wide">
-                    एकूण रोख जमा (Total Cash)
+                    {isMarathi ? "एकूण रोख जमा" : "Total Cash Collected"}
                   </span>
                   <p className="text-xl font-extrabold text-emerald-900 dark:text-emerald-200 font-heading mt-0.5">
                     ₹{(
@@ -407,7 +428,7 @@ export default function AdminOverviewPage() {
               <div className="p-4 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-2xl flex items-center justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-blue-800 dark:text-blue-300 uppercase tracking-wide">
-                    एकूण UPI संकलन (Total UPI)
+                    {isMarathi ? "एकूण UPI संकलन" : "Total Direct UPI Collected"}
                   </span>
                   <p className="text-xl font-extrabold text-[#0B57D0] dark:text-blue-400 font-heading mt-0.5">
                     ₹{(
@@ -427,7 +448,7 @@ export default function AdminOverviewPage() {
               <div className="p-4 bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-900/50 rounded-2xl flex items-center justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-purple-800 dark:text-purple-300 uppercase tracking-wide">
-                    मोफत शिष्यवृत्ती (Scholarships)
+                    {isMarathi ? "मोफत शिष्यवृत्ती" : "Scholarship / Free Grants"}
                   </span>
                   <p className="text-xl font-extrabold text-purple-900 dark:text-purple-200 font-heading mt-0.5">
                     {(

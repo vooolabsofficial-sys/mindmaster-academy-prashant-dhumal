@@ -38,10 +38,13 @@ import {
   subscribeToSupportLiveUpdates,
   updateTicketStatus,
 } from "@/lib/messageStore";
+import { useLanguage } from "@/lib/LanguageContext";
 
 type StatusTab = "all" | "Open" | "In Progress" | "Resolved";
 
 export default function StaffMessagesPage() {
+  const { currentLanguage } = useLanguage();
+  const isMarathi = currentLanguage === "mr";
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
@@ -685,17 +688,25 @@ export default function StaffMessagesPage() {
 
                   {/* Reply Composer */}
                   <div className="p-3 bg-white dark:bg-[#1E293B] border-t border-slate-200/80 dark:border-slate-800 space-y-2">
-                    {/* ⚡ 1-Click Marathi Canned Replies */}
+                    {/* ⚡ 1-Click Canned Replies (English / Marathi) */}
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                       <span className="text-[10px] font-extrabold uppercase text-slate-400 dark:text-slate-500 shrink-0">
-                        १-क्लिक उत्तरे:
+                        {isMarathi ? "१-क्लिक उत्तरे:" : "Quick Replies:"}
                       </span>
-                      {[
-                        { label: "📱 फोन रिसेट केला", msg: "नमस्कार! तुमचे जुने डिव्हाइस रिसेट केले आहे. आता नवीन फोनमध्ये लॉगिन करा." },
-                        { label: "🎓 ऍक्सेस ॲक्टिव्ह केला", msg: "तुमचा कोर्स ऍक्सेस यशस्वीरीत्या ॲक्टिव्ह केला आहे. 'My Courses' मध्ये जाऊन पहा." },
-                        { label: "⏳ समस्या तपासत आहोत", msg: "तुमची समस्या तपासली जात आहे. थोड्याच वेळात आमचे प्रतिनिधी संपर्क करतील." },
-                        { label: "📞 ऑफिसला कॉल करा", msg: "या समस्येसाठी कृपया आमच्या सातारा सपोर्ट नंबरवर कॉल करा: +91 84593 44077." },
-                      ].map((canned, i) => (
+                      {(isMarathi
+                        ? [
+                            { label: "📱 फोन रिसेट केला", msg: "नमस्कार! तुमचे जुने डिव्हाइस रिसेट केले आहे. आता नवीन फोनमध्ये लॉगिन करा." },
+                            { label: "🎓 ऍक्सेस ॲक्टिव्ह केला", msg: "तुमचा कोर्स ऍक्सेस यशस्वीरीत्या ॲक्टिव्ह केला आहे. 'My Courses' मध्ये जाऊन पहा." },
+                            { label: "⏳ समस्या तपासत आहोत", msg: "तुमची समस्या तपासली जात आहे. थोड्याच वेळात आमचे प्रतिनिधी संपर्क करतील." },
+                            { label: "📞 ऑफिसला कॉल करा", msg: "या समस्येसाठी कृपया आमच्या सातारा सपोर्ट नंबरवर कॉल करा: +91 84593 44077." },
+                          ]
+                        : [
+                            { label: "📱 Device Reset Done", msg: "Hello! Your device lock has been cleared. You can now login from your phone." },
+                            { label: "🎓 Access Activated", msg: "Your course access has been activated. Please check your 'My Courses' tab." },
+                            { label: "⏳ Checking Issue", msg: "We are reviewing your query. Our team will update you shortly." },
+                            { label: "📞 Contact Academy", msg: "For urgent assistance, please call our academy desk at +91 84593 44077." },
+                          ]
+                      ).map((canned, i) => (
                         <button
                           key={i}
                           type="button"

@@ -20,28 +20,35 @@ import {
   ShieldCheck,
   AlertTriangle,
 } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
 
-function formatAuditAction(action: string): { label: string; sub?: string } {
-  const map: Record<string, { label: string; sub: string }> = {
-    STAFF_LOGIN: { label: "स्टाफ लॉगिन", sub: "Staff Login" },
-    STAFF_LOGOUT: { label: "स्टाफ लॉगआउट", sub: "Staff Logout" },
-    COURSE_GRANT: { label: "कोर्स ऍक्सेस मंजूर", sub: "Course Granted" },
-    GRANT_REVOKE: { label: "कोर्स ऍक्सेस रद्द", sub: "Access Revoked" },
-    DEVICE_RESET: { label: "विद्यार्थी फोन रिसेट", sub: "Device Reset" },
-    CASH_COLLECTED: { label: "ऑफलाईन फी जमा", sub: "Cash Collected" },
-    CASH_SETTLED: { label: "कॅश हिशोब पूर्ण", sub: "Cash Settled" },
-    COUPON_CREATE: { label: "नवीन कूपन तयार", sub: "Coupon Created" },
-    COURSE_CREATE: { label: "नवीन कोर्स तयार", sub: "Course Created" },
-    COURSE_UPDATE: { label: "कोर्स अपडेट", sub: "Course Updated" },
-    SECURITY_LOCK: { label: "खाते लॉक (५ फेल्स)", sub: "Security Lock" },
+function formatAuditAction(action: string, isMarathi: boolean = false): { label: string; sub?: string } {
+  const map: Record<string, { en: string; mr: string }> = {
+    STAFF_LOGIN: { en: "Staff Login Success", mr: "स्टाफ लॉगिन" },
+    STAFF_LOGOUT: { en: "Staff Logout", mr: "स्टाफ लॉगआउट" },
+    COURSE_GRANT: { en: "Course Access Granted", mr: "कोर्स ऍक्सेस मंजूर" },
+    GRANT_REVOKE: { en: "Course Access Revoked", mr: "कोर्स ऍक्सेस रद्द" },
+    DEVICE_RESET: { en: "Device Session Reset", mr: "विद्यार्थी फोन रिसेट" },
+    CASH_COLLECTED: { en: "Offline Cash Collected", mr: "ऑफलाईन फी जमा" },
+    CASH_SETTLED: { en: "Cash Handover Settled", mr: "कॅश हिशोब पूर्ण" },
+    COUPON_CREATE: { en: "Coupon Created", mr: "नवीन कूपन तयार" },
+    COURSE_CREATE: { en: "Course Created", mr: "नवीन कोर्स तयार" },
+    COURSE_UPDATE: { en: "Course Updated", mr: "कोर्स अपडेट" },
+    SECURITY_LOCK: { en: "Security Lock (5 Fails)", mr: "खाते लॉक (५ फेल्स)" },
   };
 
-  if (map[action]) return map[action];
+  if (map[action]) {
+    return isMarathi
+      ? { label: map[action].mr, sub: map[action].en }
+      : { label: map[action].en, sub: map[action].mr };
+  }
   const clean = action.replace(/^(POST|PUT|DELETE|GET)_API_/, "").replace(/_/g, " ");
   return { label: clean, sub: action };
 }
 
 export default function AuditLogPage() {
+  const { currentLanguage } = useLanguage();
+  const isMarathi = currentLanguage === "mr";
   const [logs, setLogs] = useState<ForensicAuditLogEntry[]>([]);
   const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -341,7 +348,7 @@ export default function AuditLogPage() {
 
                         <td className="py-3.5 whitespace-nowrap">
                           {(() => {
-                            const info = formatAuditAction(log.action);
+                            const info = formatAuditAction(log.action, isMarathi);
                             return (
                               <div className="flex flex-col">
                                 <span className="font-bold text-xs text-[#0E1B3D] dark:text-white">
