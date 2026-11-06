@@ -1584,7 +1584,7 @@ export default function CouponManagerPage() {
           {/* IN-PAGE DELETE CONFIRMATION MODAL */}
           {/* ==================================================================== */}
           {deleteModalCoupon && (
-            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 animate-in fade-in duration-150">
               <div className="bg-white dark:bg-slate-900 max-w-sm w-full p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
                 <div className="flex items-center gap-2 text-red-600 font-bold text-base">
                   <Trash2 className="w-5 h-5" />

@@ -50,14 +50,17 @@ import {
   Phone,
   AlertCircle,
   IndianRupee,
-  Banknote,
   Smartphone,
   GraduationCap,
   BookOpen,
   Layers,
   ArrowLeft,
   Calendar,
-  Building,
+  Building2,
+  MapPin,
+  School,
+  UserCheck,
+  Globe,
   Check,
   Clock,
   Sparkles,
@@ -69,6 +72,13 @@ import {
   Filter,
   DollarSign,
   Info,
+  Trash2,
+  FileSpreadsheet,
+  Download,
+  CheckSquare,
+  Square,
+  HelpCircle,
+  Tag,
 } from "lucide-react";
 
 export default function GrantsManagerPage() {
@@ -80,8 +90,8 @@ export default function GrantsManagerPage() {
   const [pendingApprovals, setPendingApprovals] = useState<Grant[]>([]);
   const [cashSettlements, setCashSettlements] = useState<SubAdminCashSummary[]>([]);
 
-  // View Mode: 'list' | 'issue' | 'bulk'
-  const [viewMode, setViewMode] = useState<"list" | "issue" | "bulk">("list");
+  // View Mode: 'list' | 'create' | 'bulk'
+  const [viewMode, setViewMode] = useState<"list" | "create" | "bulk">("list");
 
   // Feedback Banner
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
@@ -98,23 +108,27 @@ export default function GrantsManagerPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
-  // Modals inside page
-  const [rejectModalGrant, setRejectModalGrant] = useState<Grant | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
-  const [extendModalGrant, setExtendModalGrant] = useState<Grant | null>(null);
-  const [extendDays, setExtendDays] = useState(30);
-  const [revokeModalGrant, setRevokeModalGrant] = useState<Grant | null>(null);
-  const [revokeReason, setRevokeReason] = useState("");
+  // In-line Action States (Zero heavy blurred overlays)
+  const [actionModal, setActionModal] = useState<{
+    type: "extend" | "revoke" | "reject" | null;
+    grant: Grant | null;
+  }>({ type: null, grant: null });
+  const [actionExtendDays, setActionExtendDays] = useState(30);
+  const [actionReason, setActionReason] = useState("");
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   // ============================================================================
-  // ISSUE NEW GRANT STATE (2-Column Inline Workspace)
+  // FULL-WIDTH 2-COLUMN INLINE STUDIO WORKSPACE STATE
   // ============================================================================
-  const [studentMode, setStudentMode] = useState<"existing" | "new">("existing");
-  const [studentSearchInput, setStudentSearchInput] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState<StudentRecord | null>(null);
+  // Step 1: Target Scope
+  const [targetScopeType, setTargetScopeType] = useState<"student" | "district" | "taluka" | "school" | "all">("student");
 
-  // New Student Profile Fields
+  // When targetScopeType === 'student'
+  const [studentSubMode, setStudentSubMode] = useState<"search" | "inline_create" | "bulk_paste">("search");
+  const [studentSearchInput, setStudentSearchInput] = useState("");
+  const [selectedStudents, setSelectedStudents] = useState<StudentRecord[]>([]);
+
+  // Inline Quick Student Registration
   const [newStudentName, setNewStudentName] = useState("");
   const [newStudentPhone, setNewStudentPhone] = useState("");
   const [newStudentEmail, setNewStudentEmail] = useState("");
@@ -124,25 +138,40 @@ export default function GrantsManagerPage() {
   const [newStudentDistrict, setNewStudentDistrict] = useState("Pune");
   const [newStudentTaluka, setNewStudentTaluka] = useState("Haveli");
 
-  // Content Selection
-  const [contentType, setContentType] = useState<"course" | "book">("course");
+  // Bulk Multi-Phone / CSV Paste
+  const [bulkPasteInput, setBulkPasteInput] = useState("");
+  const [duplicateEnrollmentPolicy, setDuplicateEnrollmentPolicy] = useState<"skip" | "extend">("skip");
+
+  // Geography & School Target
+  const [targetState, setTargetState] = useState("maharashtra");
+  const [targetDistrict, setTargetDistrict] = useState("Pune");
+  const [targetTaluka, setTargetTaluka] = useState("Haveli");
+  const [targetSchoolName, setTargetSchoolName] = useState("");
+
+  // Step 2: Multi-Item Curriculum Selection (Courses + Digital Books)
+  const [curriculumSearch, setCurriculumSearch] = useState("");
+  const [curriculumTab, setCurriculumTab] = useState<"all" | "courses" | "books">("all");
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
   const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
 
-  // Grant Cart Configurations
-  const [validityMode, setValidityMode] = useState<"preset" | "custom_days" | "fixed_date">("preset");
-  const [validityPresetDays, setValidityPresetDays] = useState<number>(90);
-  const [validityCustomDays, setValidityCustomDays] = useState<number>(45);
-  const [validityFixedDate, setValidityFixedDate] = useState<string>("");
-  const [paymentMode, setPaymentMode] = useState<"scholarship" | "cash" | "upi" | "institutional">("scholarship");
-  const [upiRef, setUpiRef] = useState("");
-  const [customAmountCollected, setCustomAmountCollected] = useState<number | "">("");
-  const [officialRemark, setOfficialRemark] = useState("");
-  const [issueError, setIssueError] = useState<string | null>(null);
+  // Right Column: Grant Cart & Pricing
+  const [grantPricingMode, setGrantPricingMode] = useState<"scholarship" | "discounted" | "offline_fee">("scholarship");
+  const [offlinePaymentType, setOfflinePaymentType] = useState<"cash" | "upi">("cash");
+  const [customCollectedRupees, setCustomCollectedRupees] = useState<number | "">("");
+  const [offlineUpiRef, setOfflineUpiRef] = useState("");
+  const [grantRemarks, setGrantRemarks] = useState("");
+
+  // Relative Validity Engine
+  const [validityPreset, setValidityPreset] = useState<number>(90); // default 90 days / 3 months
+  const [validityMode, setValidityMode] = useState<"preset" | "custom_days" | "exam_date">("preset");
+  const [customDaysInput, setCustomDaysInput] = useState<number>(45);
+  const [fixedExamDate, setFixedExamDate] = useState<string>("");
+
   const [isSubmittingGrant, setIsSubmittingGrant] = useState(false);
+  const [formValidationError, setFormValidationError] = useState<string | null>(null);
 
   // ============================================================================
-  // BULK PROVISIONING ENGINE STATE
+  // BULK PROVISIONING ENGINE STATE (Cohort Mode)
   // ============================================================================
   const [bulkScopeType, setBulkScopeType] = useState<GrantScopeType>("district");
   const [bulkState, setBulkState] = useState("maharashtra");
@@ -204,7 +233,7 @@ export default function GrantsManagerPage() {
 
   const isMainAdmin = staff.role === "main_admin";
 
-  // Existing student search matching
+  // Autocomplete matching for existing students
   const matchingStudentResults = useMemo(() => {
     if (!studentSearchInput.trim()) return [];
     const q = studentSearchInput.trim().toLowerCase();
@@ -220,13 +249,7 @@ export default function GrantsManagerPage() {
       .slice(0, 8);
   }, [studentSearchInput, students]);
 
-  // Active grants of the selected student
-  const studentActiveAccess = useMemo(() => {
-    if (!selectedStudent) return [];
-    return getStudentActiveGrants(selectedStudent.phone);
-  }, [selectedStudent]);
-
-  // Cart financial calculations
+  // Selected curriculum objects
   const cartSelectedCourses = useMemo(() => {
     return courses.filter((c) => selectedCourseIds.includes(c.id));
   }, [courses, selectedCourseIds]);
@@ -235,41 +258,60 @@ export default function GrantsManagerPage() {
     return books.filter((b) => selectedBookIds.includes(b.id));
   }, [books, selectedBookIds]);
 
-  const cartSubtotalRupees = useMemo(() => {
-    if (contentType === "course") {
-      const paiseSum = cartSelectedCourses.reduce((sum, c) => sum + (c.pricePaise || 0), 0);
-      return Math.round(paiseSum / 100);
-    } else {
-      const paiseSum = cartSelectedBooks.reduce((sum, b) => sum + (b.pricePaise || 0), 0);
-      return Math.round(paiseSum / 100);
-    }
-  }, [contentType, cartSelectedCourses, cartSelectedBooks]);
+  const totalCartItemsCount = cartSelectedCourses.length + cartSelectedBooks.length;
 
+  // Financial calculations
+  const cartSubtotalRupees = useMemo(() => {
+    const coursePaise = cartSelectedCourses.reduce((sum, c) => sum + (c.pricePaise || 0), 0);
+    const bookPaise = cartSelectedBooks.reduce((sum, b) => sum + (b.pricePaise || 0), 0);
+    return Math.round((coursePaise + bookPaise) / 100);
+  }, [cartSelectedCourses, cartSelectedBooks]);
+
+  // Relative Validity Calculation
   const effectiveValidityDays = useMemo(() => {
-    if (validityMode === "preset") return validityPresetDays;
-    if (validityMode === "custom_days") return validityCustomDays;
-    if (validityMode === "fixed_date" && validityFixedDate) {
-      const target = new Date(validityFixedDate).getTime();
+    if (validityMode === "preset") return validityPreset;
+    if (validityMode === "custom_days") return Math.max(1, customDaysInput);
+    if (validityMode === "exam_date" && fixedExamDate) {
+      const target = new Date(fixedExamDate).getTime();
       const diff = Math.ceil((target - Date.now()) / 86400000);
       return Math.max(1, diff);
     }
     return 90;
-  }, [validityMode, validityPresetDays, validityCustomDays, validityFixedDate]);
+  }, [validityMode, validityPreset, customDaysInput, fixedExamDate]);
 
-  const previewExpiryIST = useMemo(() => {
-    if (validityMode === "fixed_date" && validityFixedDate) {
-      return `${validityFixedDate} 23:59:59 IST`;
+  // Live Relative Expiry Preview (Relative to enrollment timestamp)
+  const relativeExpiryPreviewText = useMemo(() => {
+    if (validityMode === "exam_date" && fixedExamDate) {
+      return `${fixedExamDate} (Fixed Exam Date)`;
     }
     return calculateExpiryIST(new Date(), { days: effectiveValidityDays });
-  }, [validityMode, validityFixedDate, effectiveValidityDays]);
+  }, [validityMode, fixedExamDate, effectiveValidityDays]);
+
+  // Recipient Count Estimate
+  const totalRecipientsCount = useMemo(() => {
+    if (targetScopeType === "student") {
+      if (studentSubMode === "search" || studentSubMode === "inline_create") {
+        return Math.max(1, selectedStudents.length);
+      }
+      if (studentSubMode === "bulk_paste") {
+        const nums = bulkPasteInput.split(/[\n,]+/).map((n) => n.trim().slice(-10)).filter((n) => n.length === 10);
+        return Math.max(1, nums.length);
+      }
+      return 1;
+    }
+    if (targetScopeType === "district") return getMatchingStudentCount("district", targetDistrict);
+    if (targetScopeType === "taluka") return getMatchingStudentCount("taluka", targetTaluka);
+    if (targetScopeType === "school") return getMatchingStudentCount("school", targetSchoolName.trim());
+    return students.length || 1;
+  }, [targetScopeType, studentSubMode, selectedStudents, bulkPasteInput, targetDistrict, targetTaluka, targetSchoolName, students]);
 
   const netCollectedRupees = useMemo(() => {
-    if (paymentMode === "scholarship") return 0;
-    if (customAmountCollected !== "") return Number(customAmountCollected);
+    if (grantPricingMode === "scholarship") return 0;
+    if (customCollectedRupees !== "") return Number(customCollectedRupees);
     return cartSubtotalRupees;
-  }, [paymentMode, customAmountCollected, cartSubtotalRupees]);
+  }, [grantPricingMode, customCollectedRupees, cartSubtotalRupees]);
 
-  const waivedScholarshipRupees = useMemo(() => {
+  const waiverScholarshipRupees = useMemo(() => {
     return Math.max(0, cartSubtotalRupees - netCollectedRupees);
   }, [cartSubtotalRupees, netCollectedRupees]);
 
@@ -277,38 +319,60 @@ export default function GrantsManagerPage() {
   const revenueStats = useMemo(() => getWaivedRevenue(), [grants]);
   const collectionTally = useMemo(() => getStaffCollectionTally(grants), [grants]);
 
-  // Bulk matching preview
-  const bulkScopeValue = useMemo(() => {
-    if (bulkScopeType === "district") return bulkDistrict;
-    if (bulkScopeType === "taluka") return bulkTaluka;
-    if (bulkScopeType === "school") return bulkSchoolName.trim();
-    return "all";
-  }, [bulkScopeType, bulkDistrict, bulkTaluka, bulkSchoolName]);
+  // Filtered Grants List
+  const filteredGrants = useMemo(() => {
+    return grants.filter((g) => {
+      if (debouncedSearchQuery) {
+        const q = debouncedSearchQuery.toLowerCase();
+        const sName = (g.student_name || g.studentName || "").toLowerCase();
+        const sPhone = (g.student_phone || g.studentPhone || g.scope_value || g.scopeValue || "").toLowerCase();
+        const cTitle = (g.courseTitle || g.bookTitle || "").toLowerCase();
+        const reason = (g.reason || "").toLowerCase();
+        if (!sName.includes(q) && !sPhone.includes(q) && !cTitle.includes(q) && !reason.includes(q)) {
+          return false;
+        }
+      }
+      if (filterDistrict !== "all") {
+        const dist = (g.district || "").toLowerCase();
+        if (dist !== filterDistrict.toLowerCase()) return false;
+      }
+      if (filterTaluka !== "all") {
+        const tal = (g.taluka || "").toLowerCase();
+        if (tal !== filterTaluka.toLowerCase()) return false;
+      }
+      if (courseFilter !== "all") {
+        if (g.courseId !== courseFilter && g.itemId !== courseFilter) return false;
+      }
+      if (paymentModeFilter !== "all") {
+        if (g.payment_mode !== paymentModeFilter) return false;
+      }
+      if (statusFilter !== "all") {
+        if (g.status !== statusFilter) return false;
+      }
+      return true;
+    });
+  }, [grants, debouncedSearchQuery, filterDistrict, filterTaluka, courseFilter, paymentModeFilter, statusFilter]);
 
-  const bulkMatchingCount = useMemo(() => {
-    if (bulkScopeType === "student") {
-      const nums = bulkManualPhones.split(/[\n,]+/).map((n) => n.trim().slice(-10)).filter((n) => n.length === 10);
-      return nums.length;
-    }
-    return getMatchingStudentCount(bulkScopeType, bulkScopeValue);
-  }, [bulkScopeType, bulkScopeValue, bulkManualPhones]);
-
-  const bulkWaivedEstimateRupees = useMemo(() => {
-    if (bulkMatchingCount === 0) return 0;
-    if (bulkCourseScope === "all") {
-      const sumPaise = courses.reduce((acc, c) => acc + (c.pricePaise || 0), 0);
-      return Math.round((sumPaise * bulkMatchingCount) / 100);
-    }
-    const single = courses.find((c) => c.id === bulkSelectedCourseId);
-    const singlePaise = single?.pricePaise || 0;
-    return Math.round((singlePaise * bulkMatchingCount) / 100);
-  }, [bulkMatchingCount, bulkCourseScope, bulkSelectedCourseId, courses]);
+  const totalPages = Math.ceil(filteredGrants.length / pageSize) || 1;
+  const paginatedGrants = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredGrants.slice(start, start + pageSize);
+  }, [filteredGrants, currentPage, pageSize]);
 
   // --------------------------------------------------------------------------
-  // ACTIONS
+  // ACTIONS & HANDLERS
   // --------------------------------------------------------------------------
+  const handleAddStudentToSelection = (st: StudentRecord) => {
+    if (!selectedStudents.some((s) => s.phone === st.phone)) {
+      setSelectedStudents((prev) => [...prev, st]);
+    }
+    setStudentSearchInput("");
+  };
 
-  // Send WhatsApp Access Receipt
+  const handleRemoveStudentFromSelection = (phone: string) => {
+    setSelectedStudents((prev) => prev.filter((s) => s.phone !== phone));
+  };
+
   const handleSendWhatsApp = (grant: Grant) => {
     const rawPhone = grant.student_phone || grant.studentPhone || grant.scope_value || grant.scopeValue || "";
     const cleanPhone = rawPhone.replace(/\D/g, "").slice(-10);
@@ -335,314 +399,224 @@ export default function GrantsManagerPage() {
     window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
-  // Issue Course Grant / Cart Admission
+  // Issue Grant Submission
   const handleConfirmIssueGrant = async () => {
-    setIssueError(null);
+    setFormValidationError(null);
 
-    let targetStudentName = "";
-    let targetStudentPhone = "";
-
-    if (studentMode === "existing") {
-      if (!selectedStudent) {
-        setIssueError("Please search and select a student from the directory.");
-        return;
-      }
-      targetStudentName = selectedStudent.name;
-      targetStudentPhone = selectedStudent.phone;
-    } else {
-      // Register New Student Inline
-      if (!newStudentName.trim()) {
-        setIssueError("Please enter the student's full name.");
-        return;
-      }
-      const clean = normalizePhone(newStudentPhone);
-      if (!clean || clean.length !== 10) {
-        setIssueError("Please enter a valid 10-digit mobile number.");
-        return;
-      }
-      targetStudentName = newStudentName.trim();
-      targetStudentPhone = clean;
-
-      // Save Student Profile
-      const newRecord: StudentRecord = {
-        id: `std-${Date.now()}`,
-        name: targetStudentName,
-        phone: targetStudentPhone,
-        email: newStudentEmail.trim() || undefined,
-        district: newStudentDistrict,
-        taluka: newStudentTaluka,
-        school: newStudentSchool.trim() || undefined,
-        totalPaidPaise: netCollectedRupees * 100,
-        joinedDate: new Date().toISOString(),
-        status: "active",
-        coursesTaken: [],
-      };
-      saveStaffStudent(newRecord);
-    }
-
-    const itemIds = contentType === "course" ? selectedCourseIds : selectedBookIds;
-    if (itemIds.length === 0) {
-      setIssueError(`Please select at least one ${contentType} to grant.`);
+    const allItemIds = [...selectedCourseIds, ...selectedBookIds];
+    if (allItemIds.length === 0) {
+      setFormValidationError("Please select at least one Course or Digital Book in Step 2.");
       return;
     }
 
-    // Sub-Admin security guardrail
-    if (!isMainAdmin && paymentMode === "scholarship") {
-      setIssueError("Sub-Admins cannot issue ₹0 Free Scholarships directly. Only Main Admin (Prashant Sir) has grant authority.");
+    // Role-based security validation
+    if (!isMainAdmin && grantPricingMode === "scholarship") {
+      setFormValidationError("Sub-Admins cannot issue ₹0 Free Scholarships directly. Only Main Admin (Prashant Sir) has grant authority.");
       return;
     }
 
-    if (paymentMode === "upi" && (!upiRef || !upiRef.trim())) {
-      setIssueError("Mandatory UPI Reference (UTR) number is required for UPI admissions.");
+    if (grantPricingMode === "offline_fee" && offlinePaymentType === "upi" && (!offlineUpiRef || !offlineUpiRef.trim())) {
+      setFormValidationError("Mandatory UPI Reference (UTR) number is required for UPI admissions.");
       return;
     }
 
     setIsSubmittingGrant(true);
 
     try {
-      const result = grantMultiCourseAdmission({
-        studentPhone: targetStudentPhone,
-        studentName: targetStudentName,
-        itemIds,
-        validityDays: effectiveValidityDays,
-        customExpiryDate: validityMode === "fixed_date" ? validityFixedDate : undefined,
-        paymentMode: paymentMode === "institutional" ? "scholarship" : paymentMode,
-        upiRef: paymentMode === "upi" ? upiRef.trim() : undefined,
-        totalAmountPaid: netCollectedRupees,
-        remarks: officialRemark.trim() || `Course Grant [${paymentMode.toUpperCase()}] issued by ${staff.name}`,
-      });
+      // 1. SPECIFIC STUDENT TARGETING
+      if (targetScopeType === "student") {
+        let recipientList: { name: string; phone: string; school?: string; district?: string; taluka?: string }[] = [];
 
-      if (!result.success) {
-        setIssueError(result.error || "Failed to grant admission.");
-        setIsSubmittingGrant(false);
-        return;
+        if (studentSubMode === "search") {
+          if (selectedStudents.length === 0) {
+            setFormValidationError("Please search and select at least one student from the directory.");
+            setIsSubmittingGrant(false);
+            return;
+          }
+          recipientList = selectedStudents.map((s) => ({
+            name: s.name,
+            phone: s.phone,
+            school: s.school,
+            district: s.district,
+            taluka: s.taluka,
+          }));
+        } else if (studentSubMode === "inline_create") {
+          if (!newStudentName.trim()) {
+            setFormValidationError("Please enter student's full name.");
+            setIsSubmittingGrant(false);
+            return;
+          }
+          const clean = normalizePhone(newStudentPhone);
+          if (!clean || clean.length !== 10) {
+            setFormValidationError("Please enter a valid 10-digit mobile number.");
+            setIsSubmittingGrant(false);
+            return;
+          }
+
+          const newRecord: StudentRecord = {
+            id: `std-${Date.now()}`,
+            name: newStudentName.trim(),
+            phone: clean,
+            email: newStudentEmail.trim() || undefined,
+            district: newStudentDistrict,
+            taluka: newStudentTaluka,
+            school: newStudentSchool.trim() || undefined,
+            totalPaidPaise: netCollectedRupees * 100,
+            joinedDate: new Date().toISOString(),
+            status: "active",
+            coursesTaken: [],
+          };
+          saveStaffStudent(newRecord);
+
+          recipientList = [{
+            name: newStudentName.trim(),
+            phone: clean,
+            school: newStudentSchool.trim(),
+            district: newStudentDistrict,
+            taluka: newStudentTaluka,
+          }];
+        } else if (studentSubMode === "bulk_paste") {
+          const rawPhones = bulkPasteInput.split(/[\n,]+/).map((n) => n.trim().slice(-10)).filter((n) => n.length === 10);
+          if (rawPhones.length === 0) {
+            setFormValidationError("Please enter at least one valid 10-digit mobile number.");
+            setIsSubmittingGrant(false);
+            return;
+          }
+          recipientList = rawPhones.map((ph, idx) => ({
+            name: `Student ${ph.slice(-4)}`,
+            phone: ph,
+          }));
+        }
+
+        // Execute Multi-Course / Item Grant for each recipient
+        let successCount = 0;
+        for (const recipient of recipientList) {
+          // Duplicate enrollment check
+          if (duplicateEnrollmentPolicy === "skip") {
+            const activeGrants = getStudentActiveGrants(recipient.phone);
+            const alreadyHasAll = allItemIds.every((id) => activeGrants.some((ag) => ag.itemId === id));
+            if (alreadyHasAll) continue;
+          }
+
+          const result = grantMultiCourseAdmission({
+            studentPhone: recipient.phone,
+            studentName: recipient.name,
+            itemIds: allItemIds,
+            validityDays: effectiveValidityDays,
+            customExpiryDate: validityMode === "exam_date" ? fixedExamDate : undefined,
+            paymentMode: grantPricingMode === "scholarship" ? "scholarship" : offlinePaymentType,
+            upiRef: grantPricingMode === "offline_fee" && offlinePaymentType === "upi" ? offlineUpiRef.trim() : undefined,
+            totalAmountPaid: netCollectedRupees,
+            remarks: grantRemarks.trim() || `Grant issued by ${staff.name} [${grantPricingMode.toUpperCase()}]`,
+          });
+
+          if (result.success) successCount++;
+        }
+
+        toast.success(`Access successfully granted for ${successCount} student(s)!`);
+        setActionFeedback(`Successfully provisioned curriculum access for ${successCount} student(s).`);
+        setTimeout(() => setActionFeedback(null), 4000);
+
+        // Reset and return to directory
+        setSelectedStudents([]);
+        setStudentSearchInput("");
+        setNewStudentName("");
+        setNewStudentPhone("");
+        setBulkPasteInput("");
+        setGrantRemarks("");
+        setCustomCollectedRupees("");
+        setOfflineUpiRef("");
+        setViewMode("list");
+        await loadData();
+      } else {
+        // 2. COHORT / GEOGRAPHY / ALL TARGETING
+        let scopeVal = "all";
+        if (targetScopeType === "district") scopeVal = targetDistrict;
+        if (targetScopeType === "taluka") scopeVal = targetTaluka;
+        if (targetScopeType === "school") scopeVal = targetSchoolName.trim();
+
+        for (const courseId of selectedCourseIds) {
+          createGrant({
+            scopeType: targetScopeType === "all" ? "all" : targetScopeType,
+            scopeValue: scopeVal,
+            courseScope: "one",
+            courseId,
+            months: Math.max(1, Math.round(effectiveValidityDays / 30)),
+            validityDays: effectiveValidityDays,
+            reason: grantRemarks.trim() || `Cohort grant for ${targetScopeType}: ${scopeVal}`,
+          });
+        }
+
+        toast.success(`Cohort grant successfully authorized for ${targetScopeType}!`);
+        setActionFeedback(`Cohort grant activated for ${targetScopeType}: ${scopeVal}.`);
+        setTimeout(() => setActionFeedback(null), 4000);
+        setViewMode("list");
+        await loadData();
       }
-
-      toast.success(`Access successfully granted for ${targetStudentName}!`);
-      setActionFeedback(`✅ Successfully issued access for ${targetStudentName} (${itemIds.length} items unlocked).`);
-      setTimeout(() => setActionFeedback(null), 4000);
-
-      // Offer instant WhatsApp link
-      const primaryGrant = getGrants().find(
-        (g) => normalizePhone(g.student_phone || g.scope_value || "") === normalizePhone(targetStudentPhone)
-      );
-      if (primaryGrant) {
-        handleSendWhatsApp(primaryGrant);
-      }
-
-      // Reset and return to list
-      setSelectedStudent(null);
-      setStudentSearchInput("");
-      setNewStudentName("");
-      setNewStudentPhone("");
-      setOfficialRemark("");
-      setCustomAmountCollected("");
-      setUpiRef("");
-      setViewMode("list");
-      await loadData();
     } catch (err: any) {
-      setIssueError(err.message || "Failed to execute admission grant.");
+      setFormValidationError(err.message || "Failed to execute admission grant.");
     } finally {
       setIsSubmittingGrant(false);
     }
   };
 
-  // Bulk Provisioning Execution
-  const handleExecuteBulkGrant = async () => {
-    if (!bulkReason.trim()) {
-      toast.error("Please enter an official approval note or batch reason.");
-      return;
-    }
-    if (bulkMatchingCount === 0) {
-      toast.error("No matching students found for the selected scope.");
-      return;
-    }
+  // In-line action execution
+  const handleExecuteActionModal = async () => {
+    if (!actionModal.grant) return;
+    setIsActionLoading(true);
 
-    setIsExecutingBulk(true);
     try {
-      createGrant({
-        scopeType: bulkScopeType,
-        scopeValue: bulkScopeValue,
-        courseScope: bulkCourseScope,
-        courseId: bulkCourseScope === "one" ? bulkSelectedCourseId : undefined,
-        months: Math.max(1, Math.round(bulkValidityDays / 30)),
-        validityDays: bulkValidityDays,
-        reason: bulkReason.trim(),
-      });
+      if (actionModal.type === "extend") {
+        extendStudentAccess(actionModal.grant.id, actionExtendDays);
+        toast.success(`Extended access by +${actionExtendDays} days!`);
+      } else if (actionModal.type === "revoke") {
+        if (!actionReason.trim()) {
+          toast.error("Please enter a mandatory revocation reason.");
+          setIsActionLoading(false);
+          return;
+        }
+        revokeStudentAccess(actionModal.grant.id, actionReason.trim());
+        toast.success("Curriculum access revoked.");
+      } else if (actionModal.type === "reject") {
+        rejectGrant(actionModal.grant.id, actionReason.trim() || undefined);
+        toast.success("Grant request rejected.");
+      }
 
-      toast.success(`Bulk grant successfully provisioned for ${bulkMatchingCount} students!`);
-      setActionFeedback(`✅ Bulk grant provisioned for ${bulkMatchingCount} students.`);
-      setTimeout(() => setActionFeedback(null), 4000);
-      setViewMode("list");
+      setActionModal({ type: null, grant: null });
+      setActionReason("");
       await loadData();
     } catch (err: any) {
-      toast.error(err.message || "Failed to execute bulk grant.");
-    } finally {
-      setIsExecutingBulk(false);
-    }
-  };
-
-  // Maker-Checker Approvals
-  const handleApprove = (grantId: string) => {
-    try {
-      approveGrant(grantId);
-      toast.success("Grant approved & student access activated!");
-      loadData();
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to approve grant.");
-    }
-  };
-
-  const handleConfirmReject = () => {
-    if (!rejectModalGrant) return;
-    try {
-      rejectGrant(rejectModalGrant.id, rejectReason.trim() || undefined);
-      setRejectModalGrant(null);
-      toast.success("Grant rejected successfully.");
-      loadData();
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to reject grant.");
-    }
-  };
-
-  // Extend Validity
-  const handleConfirmExtend = async () => {
-    if (!extendModalGrant) return;
-    setIsActionLoading(true);
-    try {
-      const res = await extendStudentAccess({
-        studentPhone: extendModalGrant.student_phone || extendModalGrant.scope_value || "",
-        studentName: extendModalGrant.student_name,
-        itemId: extendModalGrant.course_id || extendModalGrant.book_id || "",
-        itemType: extendModalGrant.item_type || "course",
-        daysToAdd: extendDays,
-        grantId: extendModalGrant.id,
-      });
-
-      if (!res.success) {
-        toast.error(res.error || "Failed to extend access.");
-        return;
-      }
-
-      toast.success(`Access extended by ${extendDays} days!`);
-      setExtendModalGrant(null);
-      await loadData();
-    } catch (e: any) {
-      toast.error(e?.message || "Error extending access.");
+      toast.error(err.message || "Failed to complete action.");
     } finally {
       setIsActionLoading(false);
     }
   };
-
-  // Revoke Access
-  const handleConfirmRevoke = async () => {
-    if (!revokeModalGrant) return;
-    if (!revokeReason.trim()) {
-      toast.error("Please enter a mandatory revocation reason.");
-      return;
-    }
-    setIsActionLoading(true);
-    try {
-      const res = await revokeStudentAccess({
-        studentPhone: revokeModalGrant.student_phone || revokeModalGrant.scope_value || "",
-        studentName: revokeModalGrant.student_name,
-        itemId: revokeModalGrant.course_id || revokeModalGrant.book_id || "",
-        itemType: revokeModalGrant.item_type || "course",
-        reason: revokeReason.trim(),
-        grantId: revokeModalGrant.id,
-      });
-
-      if (!res.success) {
-        toast.error(res.error || "Failed to revoke access.");
-        return;
-      }
-
-      toast.success("Access successfully revoked.");
-      setRevokeModalGrant(null);
-      await loadData();
-    } catch (e: any) {
-      toast.error(e?.message || "Error revoking access.");
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  // Settle Cash
-  const handleSettleSubAdmin = (staffId: string) => {
-    if (!confirm(`Settle and mark cash collections as received from sub-admin (${staffId})?`)) return;
-    try {
-      const amount = settleSubAdminCash(staffId);
-      toast.success(`Settled ₹${amount.toLocaleString("en-IN")} from ${staffId}.`);
-      loadData();
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to settle cash.");
-    }
-  };
-
-  // Filtered Table Data
-  const filteredGrants = useMemo(() => {
-    return grants.filter((g) => {
-      const q = debouncedSearchQuery.toLowerCase();
-      const matchSearch =
-        !q ||
-        g.student_name?.toLowerCase().includes(q) ||
-        g.student_phone?.includes(q) ||
-        g.scope_value?.toLowerCase().includes(q) ||
-        g.courseTitle?.toLowerCase().includes(q) ||
-        g.id.toLowerCase().includes(q);
-
-      const matchDistrict =
-        filterDistrict === "all" ||
-        (g.scope_type === "district" && g.scope_value?.toLowerCase() === filterDistrict.toLowerCase());
-
-      const matchCourse =
-        courseFilter === "all" ||
-        g.course_id === courseFilter ||
-        g.courseScope === "all";
-
-      const matchPayment =
-        paymentModeFilter === "all" ||
-        g.payment_mode === paymentModeFilter;
-
-      const matchStatus =
-        statusFilter === "all" ||
-        g.status === statusFilter;
-
-      return matchSearch && matchDistrict && matchCourse && matchPayment && matchStatus;
-    });
-  }, [grants, debouncedSearchQuery, filterDistrict, courseFilter, paymentModeFilter, statusFilter]);
-
-  const totalPages = Math.ceil(filteredGrants.length / pageSize) || 1;
-  const paginatedGrants = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredGrants.slice(start, start + pageSize);
-  }, [filteredGrants, currentPage, pageSize]);
 
   return (
-    <AdminShell currentSection="grants">
-      <PermissionGuard requiredRole={["main_admin", "sub_admin"]}>
-        <div className="space-y-6">
+    <AdminShell>
+      <PermissionGuard permission="students.view">
+        <div className="space-y-6 font-sans pb-12">
 
-          {/* Feedback banner */}
+          {/* Action Feedback Toast Banner */}
           {actionFeedback && (
-            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 rounded-2xl flex items-center justify-between shadow-xs">
-              <span className="font-semibold text-sm flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                {actionFeedback}
-              </span>
-              <button onClick={() => setActionFeedback(null)} className="text-emerald-600 hover:text-emerald-900 text-sm font-bold">
-                ✕
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-bold rounded-2xl flex items-center justify-between shadow-xs animate-in fade-in">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span>{actionFeedback}</span>
+              </div>
+              <button onClick={() => setActionFeedback(null)} className="text-emerald-600 hover:text-emerald-800">
+                <X className="w-4 h-4" />
               </button>
             </div>
           )}
 
           {/* ==================================================================== */}
-          {/* VIEW: ISSUE NEW COURSE GRANT (INLINE 2-COLUMN WORKSPACE) */}
+          {/* VIEW 1: FULL-WIDTH INLINE 2-COLUMN STUDIO WORKSPACE (NO DRAWERS) */}
           {/* ==================================================================== */}
-          {viewMode === "issue" && (
-            <div className="space-y-6">
-              {/* Header with Breadcrumb */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+          {viewMode === "create" && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Header Bar with Breadcrumb */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs">
                 <div>
                   <button
                     type="button"
@@ -650,263 +624,381 @@ export default function GrantsManagerPage() {
                     className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline mb-1 cursor-pointer"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    Back to Grants Directory
+                    <span>Back to Grants List</span>
                   </button>
-                  <h1 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 font-heading">
                     <Gift className="w-6 h-6 text-blue-600" />
-                    Issue Course Grant & Direct Admission
+                    <span>Grant Provisioning Studio</span>
                   </h1>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Assign courses with immediate unlocking, custom validity duration, and payment reconciliation.
+                    Configure curriculum access, select recipients with full location cascade, and reconcile fees inline.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
-                    Staff: {staff.name} ({staff.role === "main_admin" ? "Main Admin" : "Sub-Admin"})
+                  <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    Staff: {staff.name} ({isMainAdmin ? "Main Admin" : "Sub-Admin"})
                   </span>
                 </div>
               </div>
 
-              {/* 2-Column Responsive Workspace */}
+              {/* 2-Column Full-Page Grid: Left 65% Steps | Right 35% Sticky Grant Cart */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-                {/* Left Column (8 cols): Student Profile & Content Selection */}
-                <div className="lg:col-span-7 space-y-6">
+                {/* LEFT COLUMN (65%): Configuration Steps */}
+                <div className="lg:col-span-8 space-y-6">
 
-                  {/* Section 1: Student Provisioning */}
-                  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                  {/* STEP 1: Recipient & Target Scope Definition */}
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                       <div className="flex items-center gap-2">
                         <Users className="w-5 h-5 text-blue-600" />
-                        <h2 className="font-bold text-sm text-slate-900 dark:text-white">
-                          Step 1: Student Profile
+                        <h2 className="font-bold text-base text-slate-900 dark:text-white font-heading">
+                          Step 1: Recipient &amp; Target Scope
                         </h2>
                       </div>
-                      <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-semibold">
-                        <button
-                          type="button"
-                          onClick={() => setStudentMode("existing")}
-                          className={`px-3 py-1 rounded-lg transition ${
-                            studentMode === "existing"
-                              ? "bg-white dark:bg-slate-900 text-blue-600 shadow-xs"
-                              : "text-slate-600 dark:text-slate-400"
-                          }`}
-                        >
-                          Select Existing Student
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setStudentMode("new")}
-                          className={`px-3 py-1 rounded-lg transition ${
-                            studentMode === "new"
-                              ? "bg-white dark:bg-slate-900 text-blue-600 shadow-xs"
-                              : "text-slate-600 dark:text-slate-400"
-                          }`}
-                        >
-                          Register New Student Inline
-                        </button>
-                      </div>
+                      <span className="text-xs text-slate-400">Zero Hardcoded Districts</span>
                     </div>
 
-                    {/* Mode A: Existing Student Search */}
-                    {studentMode === "existing" && (
-                      <div className="space-y-3">
-                        <div className="relative">
-                          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                          <input
-                            type="text"
-                            value={studentSearchInput}
-                            onChange={(e) => setStudentSearchInput(e.target.value)}
-                            placeholder="Search student by Name, Mobile Number (10 digits), or School..."
-                            className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-600 transition"
-                          />
+                    {/* Scope Selector Pills with Vector SVG Icons */}
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {[
+                        { id: "student", label: "Specific Student(s)", icon: <UserCheck className="w-4 h-4" /> },
+                        { id: "district", label: "District-Wide", icon: <MapPin className="w-4 h-4" /> },
+                        { id: "taluka", label: "Taluka-Wide", icon: <Building2 className="w-4 h-4" /> },
+                        { id: "school", label: "School Cohort", icon: <School className="w-4 h-4" /> },
+                        { id: "all", label: "All Academy", icon: <Globe className="w-4 h-4" /> },
+                      ].map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setTargetScopeType(s.id as any)}
+                          className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                            targetScopeType === s.id
+                              ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                              : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400"
+                          }`}
+                        >
+                          {s.icon}
+                          <span className="text-center">{s.label}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* A. SPECIFIC STUDENTS MODE */}
+                    {targetScopeType === "student" && (
+                      <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        {/* Sub-modes Toggle */}
+                        <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-bold">
+                          <button
+                            type="button"
+                            onClick={() => setStudentSubMode("search")}
+                            className={`flex-1 py-1.5 px-3 rounded-lg transition ${
+                              studentSubMode === "search"
+                                ? "bg-white dark:bg-slate-900 text-blue-600 shadow-2xs font-extrabold"
+                                : "text-slate-600 dark:text-slate-400"
+                            }`}
+                          >
+                            Search Directory ({selectedStudents.length} Selected)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStudentSubMode("inline_create")}
+                            className={`flex-1 py-1.5 px-3 rounded-lg transition ${
+                              studentSubMode === "inline_create"
+                                ? "bg-white dark:bg-slate-900 text-blue-600 shadow-2xs font-extrabold"
+                                : "text-slate-600 dark:text-slate-400"
+                            }`}
+                          >
+                            Quick Student Registration
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStudentSubMode("bulk_paste")}
+                            className={`flex-1 py-1.5 px-3 rounded-lg transition ${
+                              studentSubMode === "bulk_paste"
+                                ? "bg-white dark:bg-slate-900 text-blue-600 shadow-2xs font-extrabold"
+                                : "text-slate-600 dark:text-slate-400"
+                            }`}
+                          >
+                            Multi-Phone CSV Paste
+                          </button>
                         </div>
 
-                        {/* Search Results Dropdown List */}
-                        {matchingStudentResults.length > 0 && !selectedStudent && (
-                          <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 shadow-sm max-h-60 overflow-y-auto">
-                            {matchingStudentResults.map((st) => (
-                              <button
-                                key={st.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedStudent(st);
-                                  setStudentSearchInput(`${st.name} (${st.phone})`);
-                                }}
-                                className="w-full text-left p-3 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 flex items-center justify-between transition cursor-pointer"
-                              >
-                                <div>
-                                  <p className="font-bold text-sm text-slate-900 dark:text-white">{st.name}</p>
-                                  <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
-                                    <Phone className="w-3 h-3" /> {st.phone} • {st.school || "School Not Set"} • {st.district}
-                                  </p>
-                                </div>
-                                <span className="text-xs font-bold text-blue-600">Select →</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Selected Student Active Card */}
-                        {selectedStudent && (
-                          <div className="p-4 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                                <span className="font-extrabold text-sm text-slate-900 dark:text-white">
-                                  {selectedStudent.name}
-                                </span>
-                                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                                  {selectedStudent.phone}
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedStudent(null);
-                                  setStudentSearchInput("");
-                                }}
-                                className="text-xs font-bold text-red-600 hover:underline"
-                              >
-                                Change Student
-                              </button>
+                        {/* Sub-Mode 1: Search Existing Students with Tag Badges */}
+                        {studentSubMode === "search" && (
+                          <div className="space-y-3">
+                            <div className="relative">
+                              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                              <input
+                                type="text"
+                                value={studentSearchInput}
+                                onChange={(e) => setStudentSearchInput(e.target.value)}
+                                placeholder="Search student by Name, Mobile Number (10 digits), School, or Taluka..."
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-600 transition"
+                              />
                             </div>
-                            <p className="text-xs text-slate-600 dark:text-slate-400">
-                              🏫 {selectedStudent.school || "Individual Student"} • 📍 {selectedStudent.district}
-                              {selectedStudent.taluka ? `, Taluka: ${selectedStudent.taluka}` : ""}
-                            </p>
 
-                            {/* Active enrollments warning */}
-                            {studentActiveAccess.length > 0 && (
-                              <div className="pt-2 border-t border-blue-200/60 dark:border-blue-800/60">
-                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                                  Currently Enrolled Curriculum ({studentActiveAccess.length}):
-                                </span>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {studentActiveAccess.map((acc) => (
+                            {/* Dropdown Suggestions */}
+                            {matchingStudentResults.length > 0 && (
+                              <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 shadow-md max-h-56 overflow-y-auto">
+                                {matchingStudentResults.map((st) => (
+                                  <button
+                                    key={st.id}
+                                    type="button"
+                                    onClick={() => handleAddStudentToSelection(st)}
+                                    className="w-full text-left p-2.5 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 flex items-center justify-between transition cursor-pointer text-xs"
+                                  >
+                                    <div>
+                                      <span className="font-bold text-slate-900 dark:text-white">{st.name}</span>
+                                      <span className="text-[11px] text-slate-500 font-mono ml-2">({st.phone})</span>
+                                      <p className="text-[10px] text-slate-400 mt-0.5">
+                                        {st.school || "School Not Set"} • {st.district || "Maharashtra"}
+                                      </p>
+                                    </div>
+                                    <span className="text-[11px] font-bold text-blue-600 flex items-center gap-1">
+                                      <Plus className="w-3.5 h-3.5" />
+                                      <span>Add to Cart</span>
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Selected Students Chip Pills */}
+                            {selectedStudents.length > 0 ? (
+                              <div className="p-3 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-800/60 rounded-2xl space-y-2">
+                                <div className="flex items-center justify-between text-xs font-bold text-blue-700 dark:text-blue-300">
+                                  <span>Selected Recipients ({selectedStudents.length}):</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedStudents([])}
+                                    className="text-[10px] text-red-600 hover:underline cursor-pointer"
+                                  >
+                                    Clear All
+                                  </button>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
+                                  {selectedStudents.map((s) => (
                                     <span
-                                      key={acc.id}
-                                      className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200"
+                                      key={s.phone}
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 shadow-2xs"
                                     >
-                                      <span>{acc.itemTitle}</span>
-                                      <span className="text-emerald-600 font-bold">({acc.daysLeft}d left)</span>
+                                      <span>{s.name}</span>
+                                      <span className="font-mono text-[10px] text-slate-500">({s.phone})</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveStudentFromSelection(s.phone)}
+                                        className="text-slate-400 hover:text-red-600 cursor-pointer"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
                                     </span>
                                   ))}
                                 </div>
                               </div>
+                            ) : (
+                              <p className="text-xs text-slate-400 italic">No students selected yet. Search above or click Quick Registration.</p>
                             )}
+                          </div>
+                        )}
+
+                        {/* Sub-Mode 2: Inline Quick Student Registration */}
+                        {studentSubMode === "inline_create" && (
+                          <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3.5">
+                            <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                              Register &amp; Add Student Profile
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                  Student Full Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newStudentName}
+                                  onChange={(e) => setNewStudentName(e.target.value)}
+                                  placeholder="e.g. Ramesh Vijay Patil"
+                                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                  Mobile Number (10 Digits) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="tel"
+                                  maxLength={10}
+                                  value={newStudentPhone}
+                                  onChange={(e) => setNewStudentPhone(e.target.value.replace(/\D/g, ""))}
+                                  placeholder="9876543210"
+                                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600 tabular-nums"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                  School / College Name
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newStudentSchool}
+                                  onChange={(e) => setNewStudentSchool(e.target.value)}
+                                  placeholder="e.g. Shivaji High School, Satara"
+                                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                  Standard / Class
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newStudentStandard}
+                                  onChange={(e) => setNewStudentStandard(e.target.value)}
+                                  placeholder="e.g. 10th Standard"
+                                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Cascading Location Selectors */}
+                            <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                              <LocationCascadeSelect
+                                selectedState={newStudentState}
+                                selectedDistrict={newStudentDistrict}
+                                selectedTaluka={newStudentTaluka}
+                                onStateChange={(id, name) => setNewStudentState(id)}
+                                onDistrictChange={(id, name) => setNewStudentDistrict(name)}
+                                onTalukaChange={(id, name) => setNewStudentTaluka(name)}
+                                layout="grid"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Sub-Mode 3: Bulk Multi-Phone / CSV Paste */}
+                        {studentSubMode === "bulk_paste" && (
+                          <div className="space-y-3">
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                              Paste 10-Digit Mobile Numbers (one per line or comma-separated):
+                            </label>
+                            <textarea
+                              rows={4}
+                              value={bulkPasteInput}
+                              onChange={(e) => setBulkPasteInput(e.target.value)}
+                              placeholder="9823000001&#10;9823000002&#10;9823000003"
+                              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-900 dark:text-white outline-none"
+                            />
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-slate-500 tabular-nums">
+                                Validated Numbers: {bulkPasteInput.split(/[\n,]+/).map((n) => n.trim().slice(-10)).filter((n) => n.length === 10).length}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] text-slate-500">Duplicate Active Grant Policy:</span>
+                                <select
+                                  value={duplicateEnrollmentPolicy}
+                                  onChange={(e) => setDuplicateEnrollmentPolicy(e.target.value as any)}
+                                  className="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-900 dark:text-white"
+                                >
+                                  <option value="skip">Skip If Already Active</option>
+                                  <option value="extend">Extend Access Validity</option>
+                                </select>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
                     )}
 
-                    {/* Mode B: Register New Student Inline */}
-                    {studentMode === "new" && (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                              Student Full Name <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={newStudentName}
-                              onChange={(e) => setNewStudentName(e.target.value)}
-                              placeholder="e.g. Ramesh Vijay Patil"
-                              className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                              Mobile Number (10 Digits) <span className="text-red-500">*</span>
-                            </label>
-                            <div className="relative">
-                              <span className="absolute left-3 top-2 text-xs font-bold text-slate-400">+91</span>
-                              <input
-                                type="tel"
-                                maxLength={10}
-                                required
-                                value={newStudentPhone}
-                                onChange={(e) => setNewStudentPhone(e.target.value.replace(/\D/g, ""))}
-                                placeholder="9876543210"
-                                className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600 tabular-nums"
-                              />
-                            </div>
-                          </div>
-                        </div>
+                    {/* B. GEOGRAPHY (District / Taluka) & SCHOOL MODE */}
+                    {(targetScopeType === "district" || targetScopeType === "taluka" || targetScopeType === "school") && (
+                      <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                          Target Location Cascade (State &rarr; District &rarr; Taluka):
+                        </label>
+                        <LocationCascadeSelect
+                          selectedState={targetState}
+                          selectedDistrict={targetDistrict}
+                          selectedTaluka={targetTaluka}
+                          onStateChange={(id, name) => setTargetState(id)}
+                          onDistrictChange={(id, name) => setTargetDistrict(name)}
+                          onTalukaChange={(id, name) => setTargetTaluka(name)}
+                          layout="grid"
+                        />
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                              School / College / Academy Name
+                        {targetScopeType === "school" && (
+                          <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                              School / College Name (Exact or Partial Match):
                             </label>
                             <input
                               type="text"
-                              value={newStudentSchool}
-                              onChange={(e) => setNewStudentSchool(e.target.value)}
-                              placeholder="e.g. ZP High School, Satara"
-                              className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600"
+                              value={targetSchoolName}
+                              onChange={(e) => setTargetSchoolName(e.target.value)}
+                              placeholder="e.g. Shivaji High School, Satara"
+                              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none"
                             />
                           </div>
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                              Standard / Stream
-                            </label>
-                            <input
-                              type="text"
-                              value={newStudentStandard}
-                              onChange={(e) => setNewStudentStandard(e.target.value)}
-                              placeholder="e.g. 10th Standard / MPSC"
-                              className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600"
-                            />
-                          </div>
-                        </div>
+                        )}
 
-                        {/* Standardized Cascading Location */}
-                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                          <LocationCascadeSelect
-                            selectedState={newStudentState}
-                            selectedDistrict={newStudentDistrict}
-                            selectedTaluka={newStudentTaluka}
-                            onStateChange={(id, name) => setNewStudentState(id)}
-                            onDistrictChange={(id, name) => setNewStudentDistrict(name)}
-                            onTalukaChange={(id, name) => setNewStudentTaluka(name)}
-                            layout="grid"
-                          />
+                        <div className="p-3 bg-blue-50/50 dark:bg-blue-950/30 rounded-xl text-xs text-blue-700 dark:text-blue-300 flex items-center justify-between">
+                          <span>Matching active students in this cohort:</span>
+                          <span className="font-extrabold tabular-nums">{totalRecipientsCount} Students</span>
                         </div>
+                      </div>
+                    )}
+
+                    {/* C. ALL ACADEMY STUDENTS MODE */}
+                    {targetScopeType === "all" && (
+                      <div className="p-4 bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-2xl text-xs text-purple-800 dark:text-purple-300 space-y-1">
+                        <div className="flex items-center gap-2 font-bold">
+                          <Globe className="w-4 h-4 text-purple-600" />
+                          <span>Academy-Wide Blanket Grant</span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed">
+                          This will provision curriculum access to all {students.length} currently active registered students across all districts.
+                        </p>
                       </div>
                     )}
                   </div>
 
-                  {/* Section 2: Course & Content Selection */}
-                  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  {/* STEP 2: Choose Curriculum (Multi-Item Selection) */}
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
                       <div className="flex items-center gap-2">
                         <GraduationCap className="w-5 h-5 text-blue-600" />
-                        <h2 className="font-bold text-sm text-slate-900 dark:text-white">
-                          Step 2: Choose Curriculum
+                        <h2 className="font-bold text-base text-slate-900 dark:text-white font-heading">
+                          Step 2: Choose Curriculum Items ({totalCartItemsCount} Selected)
                         </h2>
                       </div>
-                      <div className="flex items-center gap-2">
+
+                      {/* Tab Filters */}
+                      <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-semibold">
                         <button
                           type="button"
-                          onClick={() => setContentType("course")}
-                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                            contentType === "course"
-                              ? "bg-blue-600 text-white"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                          onClick={() => setCurriculumTab("all")}
+                          className={`px-3 py-1 rounded-lg transition ${
+                            curriculumTab === "all" ? "bg-white dark:bg-slate-900 text-blue-600 shadow-2xs font-extrabold" : "text-slate-600 dark:text-slate-400"
+                          }`}
+                        >
+                          All ({courses.length + books.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCurriculumTab("courses")}
+                          className={`px-3 py-1 rounded-lg transition ${
+                            curriculumTab === "courses" ? "bg-white dark:bg-slate-900 text-blue-600 shadow-2xs font-extrabold" : "text-slate-600 dark:text-slate-400"
                           }`}
                         >
                           Courses ({courses.length})
                         </button>
                         <button
                           type="button"
-                          onClick={() => setContentType("book")}
-                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                            contentType === "book"
-                              ? "bg-blue-600 text-white"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                          onClick={() => setCurriculumTab("books")}
+                          className={`px-3 py-1 rounded-lg transition ${
+                            curriculumTab === "books" ? "bg-white dark:bg-slate-900 text-blue-600 shadow-2xs font-extrabold" : "text-slate-600 dark:text-slate-400"
                           }`}
                         >
                           Digital Books ({books.length})
@@ -914,17 +1006,26 @@ export default function GrantsManagerPage() {
                       </div>
                     </div>
 
-                    {/* Quick Selection Helpers */}
-                    <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span>Select one or multiple items to bundle into the cart:</span>
-                      <div className="flex gap-2">
+                    {/* Search & Bulk Select Controls */}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="relative flex-1">
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                        <input
+                          type="text"
+                          value={curriculumSearch}
+                          onChange={(e) => setCurriculumSearch(e.target.value)}
+                          placeholder="Filter courses and digital books by title..."
+                          className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 text-xs font-bold shrink-0">
                         <button
                           type="button"
                           onClick={() => {
-                            if (contentType === "course") setSelectedCourseIds(courses.map((c) => c.id));
-                            else setSelectedBookIds(books.map((b) => b.id));
+                            setSelectedCourseIds(courses.map((c) => c.id));
+                            setSelectedBookIds(books.map((b) => b.id));
                           }}
-                          className="font-bold text-blue-600 hover:underline"
+                          className="text-blue-600 hover:underline cursor-pointer"
                         >
                           Select All
                         </button>
@@ -932,182 +1033,303 @@ export default function GrantsManagerPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            if (contentType === "course") setSelectedCourseIds([]);
-                            else setSelectedBookIds([]);
+                            setSelectedCourseIds([]);
+                            setSelectedBookIds([]);
                           }}
-                          className="font-bold text-slate-500 hover:underline"
+                          className="text-slate-500 hover:underline cursor-pointer"
                         >
                           Clear
                         </button>
                       </div>
                     </div>
 
-                    {/* Courses Checklist */}
-                    {contentType === "course" && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-80 overflow-y-auto pr-1">
-                        {courses.map((course) => {
-                          const isSelected = selectedCourseIds.includes(course.id);
-                          const isAlreadyEnrolled = studentActiveAccess.some((acc) => acc.itemId === course.id);
-                          return (
-                            <div
-                              key={course.id}
-                              onClick={() => {
-                                if (isSelected) setSelectedCourseIds(selectedCourseIds.filter((id) => id !== course.id));
-                                else setSelectedCourseIds([...selectedCourseIds, course.id]);
-                              }}
-                              className={`p-3 rounded-xl border flex items-center justify-between transition cursor-pointer select-none ${
-                                isSelected
-                                  ? "bg-blue-50/70 dark:bg-blue-950/40 border-blue-500 shadow-xs"
-                                  : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 hover:border-slate-300"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition ${
-                                  isSelected ? "bg-blue-600 border-blue-600 text-white" : "border-slate-300 dark:border-slate-600"
-                                }`}>
-                                  {isSelected && <Check className="w-3.5 h-3.5" />}
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
-                                    {course.title}
-                                  </p>
-                                  <div className="flex items-center gap-1.5 mt-0.5">
-                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium">
-                                      {course.category || "General"}
-                                    </span>
-                                    {isAlreadyEnrolled && (
-                                      <span className="text-[10px] text-amber-600 font-bold">
-                                        • Already Active
+                    {/* Multi-Item Checklist Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
+                      {/* Courses */}
+                      {(curriculumTab === "all" || curriculumTab === "courses") &&
+                        courses
+                          .filter((c) => !curriculumSearch.trim() || c.title.toLowerCase().includes(curriculumSearch.toLowerCase()))
+                          .map((course) => {
+                            const isSelected = selectedCourseIds.includes(course.id);
+                            return (
+                              <div
+                                key={course.id}
+                                onClick={() => {
+                                  if (isSelected) setSelectedCourseIds(selectedCourseIds.filter((id) => id !== course.id));
+                                  else setSelectedCourseIds([...selectedCourseIds, course.id]);
+                                }}
+                                className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all cursor-pointer select-none ${
+                                  isSelected
+                                    ? "bg-blue-50/70 dark:bg-blue-950/40 border-blue-500 shadow-2xs"
+                                    : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 hover:border-slate-300"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition ${
+                                    isSelected ? "bg-blue-600 border-blue-600 text-white" : "border-slate-300 dark:border-slate-600"
+                                  }`}>
+                                    {isSelected && <Check className="w-3.5 h-3.5" />}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                                      {course.title}
+                                    </p>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold">
+                                        Course
                                       </span>
-                                    )}
+                                      <span className="text-[10px] text-slate-400">
+                                        {course.lessonsCount || 0} lectures
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
+                                <span className="text-xs font-bold text-slate-900 dark:text-white tabular-nums">
+                                  ₹{Math.round((course.pricePaise || 0) / 100)}
+                                </span>
                               </div>
-                              <span className="text-xs font-bold text-slate-900 dark:text-white tabular-nums">
-                                ₹{Math.round((course.pricePaise || 0) / 100)}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                            );
+                          })}
 
-                    {/* Books Checklist */}
-                    {contentType === "book" && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-80 overflow-y-auto pr-1">
-                        {books.map((book) => {
-                          const isSelected = selectedBookIds.includes(book.id);
-                          return (
-                            <div
-                              key={book.id}
-                              onClick={() => {
-                                if (isSelected) setSelectedBookIds(selectedBookIds.filter((id) => id !== book.id));
-                                else setSelectedBookIds([...selectedBookIds, book.id]);
-                              }}
-                              className={`p-3 rounded-xl border flex items-center justify-between transition cursor-pointer select-none ${
-                                isSelected
-                                  ? "bg-blue-50/70 dark:bg-blue-950/40 border-blue-500 shadow-xs"
-                                  : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 hover:border-slate-300"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition ${
-                                  isSelected ? "bg-blue-600 border-blue-600 text-white" : "border-slate-300 dark:border-slate-600"
-                                }`}>
-                                  {isSelected && <Check className="w-3.5 h-3.5" />}
+                      {/* Digital Books */}
+                      {(curriculumTab === "all" || curriculumTab === "books") &&
+                        books
+                          .filter((b) => !curriculumSearch.trim() || b.title.toLowerCase().includes(curriculumSearch.toLowerCase()))
+                          .map((book) => {
+                            const isSelected = selectedBookIds.includes(book.id);
+                            return (
+                              <div
+                                key={book.id}
+                                onClick={() => {
+                                  if (isSelected) setSelectedBookIds(selectedBookIds.filter((id) => id !== book.id));
+                                  else setSelectedBookIds([...selectedBookIds, book.id]);
+                                }}
+                                className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all cursor-pointer select-none ${
+                                  isSelected
+                                    ? "bg-blue-50/70 dark:bg-blue-950/40 border-blue-500 shadow-2xs"
+                                    : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 hover:border-slate-300"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition ${
+                                    isSelected ? "bg-blue-600 border-blue-600 text-white" : "border-slate-300 dark:border-slate-600"
+                                  }`}>
+                                    {isSelected && <Check className="w-3.5 h-3.5" />}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                                      {book.title}
+                                    </p>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-bold">
+                                        Digital PDF
+                                      </span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="min-w-0">
-                                  <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
-                                    {book.title}
-                                  </p>
-                                  <span className="text-[10px] text-slate-500">
-                                    Digital PDF
-                                  </span>
-                                </div>
+                                <span className="text-xs font-bold text-slate-900 dark:text-white tabular-nums">
+                                  ₹{Math.round((book.pricePaise || 0) / 100)}
+                                </span>
                               </div>
-                              <span className="text-xs font-bold text-slate-900 dark:text-white tabular-nums">
-                                ₹{Math.round((book.pricePaise || 0) / 100)}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                            );
+                          })}
+                    </div>
                   </div>
                 </div>
 
-                {/* Right Column (5 cols): Live Grant Cart Summary & Reconciliation */}
-                <div className="lg:col-span-5 sticky top-20 space-y-4">
-                  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                {/* RIGHT COLUMN (35%): Sticky Live Grant Cart Panel */}
+                <div className="lg:col-span-4 sticky top-20 space-y-4">
+                  <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                       <div className="flex items-center gap-2">
                         <Gift className="w-5 h-5 text-blue-600" />
-                        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white font-heading">
                           Grant Cart Summary
                         </h3>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
-                        {contentType === "course" ? selectedCourseIds.length : selectedBookIds.length} Item(s)
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 tabular-nums">
+                        {totalCartItemsCount} Item(s)
                       </span>
                     </div>
 
-                    {/* Selected Items Roster */}
-                    <div className="space-y-2 max-h-44 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-                      {contentType === "course" && cartSelectedCourses.map((c) => (
+                    {/* Selected Curriculum Items List with 1-Click Remove */}
+                    <div className="space-y-2 max-h-40 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                      {cartSelectedCourses.map((c) => (
                         <div key={c.id} className="pt-2 first:pt-0 flex items-center justify-between text-xs">
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate pr-2">
-                            {c.title}
-                          </span>
-                          <span className="font-bold text-slate-700 dark:text-slate-300 tabular-nums">
-                            ₹{Math.round((c.pricePaise || 0) / 100)}
-                          </span>
+                          <div className="min-w-0 pr-2">
+                            <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">{c.title}</p>
+                            <span className="text-[10px] text-blue-600">Course</span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="font-bold text-slate-900 dark:text-white tabular-nums">
+                              ₹{Math.round((c.pricePaise || 0) / 100)}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCourseIds(selectedCourseIds.filter((id) => id !== c.id))}
+                              className="text-slate-400 hover:text-red-600 cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))}
-                      {contentType === "book" && cartSelectedBooks.map((b) => (
+                      {cartSelectedBooks.map((b) => (
                         <div key={b.id} className="pt-2 first:pt-0 flex items-center justify-between text-xs">
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate pr-2">
-                            {b.title}
-                          </span>
-                          <span className="font-bold text-slate-700 dark:text-slate-300 tabular-nums">
-                            ₹{Math.round((b.pricePaise || 0) / 100)}
-                          </span>
+                          <div className="min-w-0 pr-2">
+                            <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">{b.title}</p>
+                            <span className="text-[10px] text-purple-600">Digital Book</span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="font-bold text-slate-900 dark:text-white tabular-nums">
+                              ₹{Math.round((b.pricePaise || 0) / 100)}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedBookIds(selectedBookIds.filter((id) => id !== b.id))}
+                              className="text-slate-400 hover:text-red-600 cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))}
-                      {((contentType === "course" && cartSelectedCourses.length === 0) ||
-                        (contentType === "book" && cartSelectedBooks.length === 0)) && (
-                        <p className="text-xs text-slate-400 py-2 text-center">
-                          No curriculum items selected yet.
+                      {totalCartItemsCount === 0 && (
+                        <p className="text-xs text-slate-400 py-3 text-center italic">
+                          No curriculum items selected yet. Choose items in Step 2.
                         </p>
                       )}
                     </div>
 
-                    {/* Validity Duration Selector */}
+                    {/* Grant Pricing & Fee Reconciliation Mode */}
+                    <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <DollarSign className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Grant Pricing &amp; Fee Mode</span>
+                      </label>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setGrantPricingMode("scholarship")}
+                          className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition text-center cursor-pointer ${
+                            grantPricingMode === "scholarship"
+                              ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                              : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                          }`}
+                        >
+                          100% Free
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setGrantPricingMode("discounted")}
+                          className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition text-center cursor-pointer ${
+                            grantPricingMode === "discounted"
+                              ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                              : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                          }`}
+                        >
+                          Discounted
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setGrantPricingMode("offline_fee")}
+                          className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition text-center cursor-pointer ${
+                            grantPricingMode === "offline_fee"
+                              ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                              : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                          }`}
+                        >
+                          Offline Fee
+                        </button>
+                      </div>
+
+                      {/* Offline Cash / UPI Options */}
+                      {grantPricingMode === "offline_fee" && (
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-2 mt-2">
+                          <div className="flex gap-2 text-xs">
+                            <button
+                              type="button"
+                              onClick={() => setOfflinePaymentType("cash")}
+                              className={`flex-1 py-1 rounded-lg font-bold border text-center transition ${
+                                offlinePaymentType === "cash"
+                                  ? "bg-emerald-600 text-white border-emerald-600"
+                                  : "border-slate-200 dark:border-slate-700"
+                              }`}
+                            >
+                              Cash In Hand
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setOfflinePaymentType("upi")}
+                              className={`flex-1 py-1 rounded-lg font-bold border text-center transition ${
+                                offlinePaymentType === "upi"
+                                  ? "bg-blue-600 text-white border-blue-600"
+                                  : "border-slate-200 dark:border-slate-700"
+                              }`}
+                            >
+                              Direct UPI / QR
+                            </button>
+                          </div>
+                          {offlinePaymentType === "upi" && (
+                            <input
+                              type="text"
+                              value={offlineUpiRef}
+                              onChange={(e) => setOfflineUpiRef(e.target.value)}
+                              placeholder="Enter 12-digit UPI Reference (UTR)..."
+                              className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono outline-none"
+                            />
+                          )}
+                        </div>
+                      )}
+
+                      {/* Custom Amount for Discounted Mode */}
+                      {grantPricingMode === "discounted" && (
+                        <div className="pt-1">
+                          <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                            Net Amount Collected (₹):
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={customCollectedRupees}
+                            onChange={(e) => setCustomCollectedRupees(e.target.value === "" ? "" : Number(e.target.value))}
+                            placeholder="e.g. 500"
+                            className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white tabular-nums outline-none"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Relative Validity Duration Selector */}
                     <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-blue-600" />
-                          <span>Student Access Duration</span>
+                          <span>Per-Student Relative Validity</span>
                         </label>
-                        <span className="text-[11px] font-bold text-blue-600">
-                          {effectiveValidityDays} Days ({Math.round(effectiveValidityDays / 30)} Months)
+                        <span className="text-[11px] font-bold text-blue-600 tabular-nums">
+                          {effectiveValidityDays} Days
                         </span>
                       </div>
 
+                      {/* Presets Grid */}
                       <div className="grid grid-cols-4 gap-1.5">
                         {[
+                          { label: "7 Days Demo", days: 7 },
                           { label: "15 Days", days: 15 },
                           { label: "1 Month", days: 30 },
                           { label: "3 Months", days: 90 },
                           { label: "6 Months", days: 180 },
-                          { label: "1 Year", days: 365 },
-                          { label: "2 Years", days: 730 },
-                          { label: "Custom", days: -1 },
+                          { label: "12M (1 Year)", days: 365 },
+                          { label: "24M (2 Years)", days: 730 },
+                          { label: "Lifetime", days: 3650 },
+                          { label: "Custom Days", days: -1 },
                           { label: "Exam Date", days: -2 },
                         ].map((btn) => {
                           const isActive =
-                            (btn.days > 0 && validityMode === "preset" && validityPresetDays === btn.days) ||
+                            (btn.days > 0 && validityMode === "preset" && validityPreset === btn.days) ||
                             (btn.days === -1 && validityMode === "custom_days") ||
-                            (btn.days === -2 && validityMode === "fixed_date");
+                            (btn.days === -2 && validityMode === "exam_date");
 
                           return (
                             <button
@@ -1116,17 +1338,17 @@ export default function GrantsManagerPage() {
                               onClick={() => {
                                 if (btn.days > 0) {
                                   setValidityMode("preset");
-                                  setValidityPresetDays(btn.days);
+                                  setValidityPreset(btn.days);
                                 } else if (btn.days === -1) {
                                   setValidityMode("custom_days");
                                 } else {
-                                  setValidityMode("fixed_date");
+                                  setValidityMode("exam_date");
                                 }
                               }}
-                              className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition text-center cursor-pointer ${
+                              className={`py-1.5 px-1.5 rounded-xl text-[10px] font-bold border transition text-center cursor-pointer ${
                                 isActive
-                                  ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                                  : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-500"
+                                  ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                                  : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400"
                               }`}
                             >
                               {btn.label}
@@ -1141,203 +1363,113 @@ export default function GrantsManagerPage() {
                             type="number"
                             min={1}
                             max={3650}
-                            value={validityCustomDays}
-                            onChange={(e) => setValidityCustomDays(Math.max(1, Number(e.target.value)))}
+                            value={customDaysInput}
+                            onChange={(e) => setCustomDaysInput(Math.max(1, Number(e.target.value)))}
                             placeholder="Enter days (e.g. 45)"
-                            className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
+                            className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white tabular-nums outline-none"
                           />
-                          <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Days from Grant</span>
+                          <span className="text-[11px] font-bold text-slate-500 whitespace-nowrap">Days from Grant</span>
                         </div>
                       )}
 
-                      {validityMode === "fixed_date" && (
+                      {validityMode === "exam_date" && (
                         <div className="pt-1">
                           <input
                             type="date"
-                            min={new Date().toISOString().slice(0, 10)}
-                            value={validityFixedDate}
-                            onChange={(e) => setValidityFixedDate(e.target.value)}
+                            value={fixedExamDate}
+                            onChange={(e) => setFixedExamDate(e.target.value)}
                             className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
                           />
                         </div>
                       )}
 
-                      <p className="text-[11px] text-slate-500">
-                        Access Expires: <strong className="text-slate-800 dark:text-slate-200">{previewExpiryIST}</strong>
-                      </p>
+                      {/* Live Relative Expiry Preview */}
+                      <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Student Expiry Preview:</span>
+                        <p className="font-bold text-blue-600 dark:text-blue-400 tabular-nums">
+                          {relativeExpiryPreviewText}
+                        </p>
+                        <p className="text-[9px] text-slate-400 leading-tight">
+                          *Timer starts strictly from each student&apos;s individual grant timestamp.
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Grant Type / Payment Mode */}
-                    <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                      <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                        <Banknote className="w-3.5 h-3.5 text-blue-600" />
-                        <span>Admission Type & Settlement</span>
+                    {/* Official Administrative Remark */}
+                    <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+                        Admin Remark &amp; Approval Justification:
                       </label>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { id: "scholarship", label: "100% Free Scholarship", icon: Gift },
-                          { id: "cash", label: "Offline Cash Fee", icon: Banknote },
-                          { id: "upi", label: "Direct UPI Transfer", icon: Smartphone },
-                          { id: "institutional", label: "School Batch Grant", icon: Building },
-                        ].map((m) => {
-                          const IconComp = m.icon;
-                          const isSel = paymentMode === m.id;
-                          return (
-                            <button
-                              key={m.id}
-                              type="button"
-                              onClick={() => {
-                                setPaymentMode(m.id as any);
-                                if (m.id === "scholarship") setCustomAmountCollected(0);
-                                else if (customAmountCollected === 0 || customAmountCollected === "") setCustomAmountCollected(cartSubtotalRupees);
-                              }}
-                              className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition cursor-pointer ${
-                                isSel
-                                  ? "bg-blue-50 dark:bg-blue-950/40 border-blue-600 text-blue-900 dark:text-blue-100"
-                                  : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
-                              }`}
-                            >
-                              <IconComp className="w-4 h-4 text-blue-600 shrink-0" />
-                              <span className="text-[11px] font-bold leading-tight">{m.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Sub-Admin Free Scholarship Alert */}
-                      {!isMainAdmin && paymentMode === "scholarship" && (
-                        <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2">
-                          <ShieldAlert className="w-4 h-4 shrink-0 text-amber-600" />
-                          <span>
-                            Notice: Sub-Admins cannot issue ₹0 Free Scholarships directly. Please record as Cash/UPI fee or route to Main Admin.
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Cash / Partial Fee Collection Input */}
-                      {paymentMode === "cash" && (
-                        <div className="space-y-1.5 pt-1">
-                          <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                            Cash Fee Collected from Student (₹):
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-2 text-xs font-bold text-slate-400">₹</span>
-                            <input
-                              type="number"
-                              min={0}
-                              value={customAmountCollected}
-                              onChange={(e) => setCustomAmountCollected(e.target.value === "" ? "" : Number(e.target.value))}
-                              placeholder={String(cartSubtotalRupees)}
-                              className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white tabular-nums outline-none"
-                            />
-                          </div>
-                          <p className="text-[10px] text-slate-500">
-                            This amount will be added to your unsettled cash tally until settled with Main Admin.
-                          </p>
-                        </div>
-                      )}
-
-                      {/* UPI Reference Input */}
-                      {paymentMode === "upi" && (
-                        <div className="space-y-1.5 pt-1">
-                          <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                            UPI Reference Number / UTR (Required):
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={upiRef}
-                            onChange={(e) => setUpiRef(e.target.value)}
-                            placeholder="e.g. 429381749281 (Google Pay / PhonePe)"
-                            className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Cart Financial Summary */}
-                    <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5 text-xs">
-                      <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                        <span>Curriculum Subtotal:</span>
-                        <span className="font-semibold tabular-nums">₹{cartSubtotalRupees.toLocaleString("en-IN")}</span>
-                      </div>
-                      <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
-                        <span>Grant Waiver / Subsidy:</span>
-                        <span className="tabular-nums">- ₹{waivedScholarshipRupees.toLocaleString("en-IN")}</span>
-                      </div>
-                      <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700 flex justify-between font-extrabold text-sm text-slate-900 dark:text-white">
-                        <span>Net Fee Collected:</span>
-                        <span className="text-blue-600 tabular-nums">₹{netCollectedRupees.toLocaleString("en-IN")}</span>
-                      </div>
-                    </div>
-
-                    {/* Official Reason / Remark */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        Administrative Note / Receipt Remarks <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={officialRemark}
-                        onChange={(e) => setOfficialRemark(e.target.value)}
-                        placeholder="e.g. Merit admission approved by Prashant Sir. Paid in Satara branch."
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:border-blue-600"
+                      <input
+                        type="text"
+                        value={grantRemarks}
+                        onChange={(e) => setGrantRemarks(e.target.value)}
+                        placeholder="e.g. Merit scholarship / Offline Satara Center admission"
+                        className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none"
                       />
                     </div>
 
-                    {/* Error Notice */}
-                    {issueError && (
-                      <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-300 text-xs flex items-center gap-2">
+                    {/* Financial Summary & Receipt Box */}
+                    <div className="p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl space-y-2 border border-slate-200/80 dark:border-slate-700/80">
+                      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                        <span>Original Value:</span>
+                        <span className="font-bold tabular-nums">₹{cartSubtotalRupees.toLocaleString("en-IN")}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-emerald-600 font-bold">
+                        <span>Grant Waiver / Subsidy:</span>
+                        <span className="tabular-nums">- ₹{waiverScholarshipRupees.toLocaleString("en-IN")}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-200 dark:border-slate-700">
+                        <span className="font-extrabold text-slate-900 dark:text-white">Net Amount Collected:</span>
+                        <span className="font-black text-sm text-blue-600 dark:text-blue-400 tabular-nums">
+                          ₹{netCollectedRupees.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                        <span>Total Recipients:</span>
+                        <span className="font-bold tabular-nums">{totalRecipientsCount} Student(s)</span>
+                      </div>
+                    </div>
+
+                    {/* Validation Error Message */}
+                    {formValidationError && (
+                      <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-600 text-xs font-semibold flex items-center gap-2">
                         <AlertCircle className="w-4 h-4 shrink-0" />
-                        <span>{issueError}</span>
+                        <span>{formValidationError}</span>
                       </div>
                     )}
 
-                    {/* Action Buttons */}
-                    <div className="space-y-2 pt-2">
-                      <button
-                        type="button"
-                        disabled={isSubmittingGrant}
-                        onClick={handleConfirmIssueGrant}
-                        className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        {isSubmittingGrant ? (
-                          <>
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                            Provisioning Access...
-                          </>
-                        ) : (
-                          <>
-                            <Check className="w-4 h-4" />
-                            Confirm & Issue Access
-                          </>
-                        )}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setViewMode("list")}
-                        className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition text-center"
-                      >
-                        Cancel & Return
-                      </button>
-                    </div>
-
+                    {/* Primary Issue Grant Button */}
+                    <button
+                      type="button"
+                      disabled={isSubmittingGrant || totalCartItemsCount === 0}
+                      onClick={handleConfirmIssueGrant}
+                      className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl font-extrabold text-xs shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isSubmittingGrant ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Authorizing Grant...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Confirm &amp; Issue Grant</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
-
               </div>
             </div>
           )}
 
           {/* ==================================================================== */}
-          {/* VIEW: BULK PROVISIONING ENGINE (INLINE WORKSPACE) */}
+          {/* VIEW 2: BULK PROVISIONING ENGINE (COHORT WORKSPACE) */}
           {/* ==================================================================== */}
           {viewMode === "bulk" && (
-            <div className="space-y-6">
-              {/* Header with Breadcrumb */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs">
                 <div>
                   <button
                     type="button"
@@ -1345,59 +1477,52 @@ export default function GrantsManagerPage() {
                     className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline mb-1 cursor-pointer"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    Back to Grants Directory
+                    <span>Back to Grants List</span>
                   </button>
-                  <h1 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 font-heading">
                     <Layers className="w-6 h-6 text-blue-600" />
-                    Bulk Curriculum Provisioning Engine
+                    <span>Bulk Curriculum Provisioning Engine</span>
                   </h1>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Mass-provision access across entire districts, talukas, schools, or custom cohorts with dry-run verification.
+                    Mass-provision access across entire districts, talukas, or schools with pre-flight dry run checks.
                   </p>
                 </div>
               </div>
 
               {/* 2-Column Bulk Configuration */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <div className="lg:col-span-7 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <div className="lg:col-span-8 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
                   <h2 className="font-bold text-sm text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
                     <Filter className="w-4 h-4 text-blue-600" />
-                    Target Cohort Definition
+                    <span>Target Cohort Definition</span>
                   </h2>
 
-                  {/* Scope Type */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Provisioning Scope
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {[
-                        { id: "district", label: "District-Wide" },
-                        { id: "taluka", label: "Taluka-Wide" },
-                        { id: "school", label: "School Cohort" },
-                        { id: "all_students", label: "All Students" },
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setBulkScopeType(item.id as any)}
-                          className={`py-2 px-3 rounded-xl text-xs font-bold border transition text-center cursor-pointer ${
-                            bulkScopeType === item.id
-                              ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                              : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { id: "district", label: "District-Wide" },
+                      { id: "taluka", label: "Taluka-Wide" },
+                      { id: "school", label: "School Cohort" },
+                      { id: "all_students", label: "All Students" },
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setBulkScopeType(item.id as any)}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition text-center cursor-pointer ${
+                          bulkScopeType === item.id
+                            ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                            : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
                   </div>
 
-                  {/* Dependent Location Cascade */}
                   {(bulkScopeType === "district" || bulkScopeType === "taluka") && (
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                        Target Geography ({bulkScopeType === "district" ? "District" : "District & Taluka"}):
+                        Target Geography ({bulkScopeType === "district" ? "District" : "District &amp; Taluka"}):
                       </label>
                       <LocationCascadeSelect
                         selectedState={bulkState}
@@ -1414,19 +1539,18 @@ export default function GrantsManagerPage() {
                   {bulkScopeType === "school" && (
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        School / College Name (Exact or Partial match):
+                        School / College Name (Exact or Partial Match):
                       </label>
                       <input
                         type="text"
                         value={bulkSchoolName}
                         onChange={(e) => setBulkSchoolName(e.target.value)}
                         placeholder="e.g. Shivaji High School, Satara"
-                        className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white outline-none"
+                        className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none"
                       />
                     </div>
                   )}
 
-                  {/* Course Scope */}
                   <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       Curriculum Scope
@@ -1460,7 +1584,7 @@ export default function GrantsManagerPage() {
                       <select
                         value={bulkSelectedCourseId}
                         onChange={(e) => setBulkSelectedCourseId(e.target.value)}
-                        className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white outline-none mt-2"
+                        className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none mt-2"
                       >
                         {courses.map((c) => (
                           <option key={c.id} value={c.id}>
@@ -1471,7 +1595,6 @@ export default function GrantsManagerPage() {
                     )}
                   </div>
 
-                  {/* Validity Days */}
                   <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       Access Validity Duration (Days):
@@ -1482,94 +1605,72 @@ export default function GrantsManagerPage() {
                       max={3650}
                       value={bulkValidityDays}
                       onChange={(e) => setBulkValidityDays(Math.max(1, Number(e.target.value)))}
-                      className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white tabular-nums outline-none"
+                      className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white tabular-nums outline-none"
                     />
                   </div>
 
-                  {/* Approval Note */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Approval Note & Administrative Justification <span className="text-red-500">*</span>
+                      Approval Note &amp; Administrative Justification <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       rows={2}
                       required
                       value={bulkReason}
                       onChange={(e) => setBulkReason(e.target.value)}
-                      placeholder="e.g. Satara District CSR Free Education Drive sanctioned by Prashant Sir"
+                      placeholder="e.g. CSR Free Education Drive sanctioned by Prashant Sir"
                       className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none"
                     />
                   </div>
                 </div>
 
-                {/* Right Column: Pre-Validation Dry-Run Card */}
-                <div className="lg:col-span-5 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                    <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                    Pre-Validation Dry-Run Summary
+                {/* Right Column: Pre-Flight Verification */}
+                <div className="lg:col-span-4 sticky top-20 bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white font-heading border-b border-slate-100 dark:border-slate-800 pb-3">
+                    Bulk Pre-Flight Summary
                   </h3>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
-                      <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-300 block">
-                        Matching Students
-                      </span>
-                      <span className="text-xl font-extrabold text-blue-900 dark:text-blue-100 tabular-nums">
-                        {bulkMatchingCount}
-                      </span>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Target Cohort:</span>
+                      <span className="font-bold text-slate-900 dark:text-white capitalize">{bulkScopeType}</span>
                     </div>
-
-                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                      <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 block">
-                        Waived Value (₹)
-                      </span>
-                      <span className="text-xl font-extrabold text-emerald-900 dark:text-emerald-100 tabular-nums">
-                        ₹{bulkWaivedEstimateRupees.toLocaleString("en-IN")}
-                      </span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Matching Students:</span>
+                      <span className="font-bold text-blue-600 tabular-nums">{totalRecipientsCount} Students</span>
                     </div>
-                  </div>
-
-                  {/* Conflict Policy Toggle */}
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                      Conflict Resolution Policy:
-                    </span>
-                    <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={bulkSkipActive}
-                        onChange={(e) => setBulkSkipActive(e.target.checked)}
-                        className="rounded text-blue-600"
-                      />
-                      <span>Skip students who already have this course active</span>
-                    </label>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Validity Window:</span>
+                      <span className="font-bold text-slate-900 dark:text-white tabular-nums">{bulkValidityDays} Days</span>
+                    </div>
                   </div>
 
                   <button
                     type="button"
-                    disabled={isExecutingBulk || bulkMatchingCount === 0}
-                    onClick={handleExecuteBulkGrant}
-                    className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                    disabled={isExecutingBulk || !bulkReason.trim()}
+                    onClick={async () => {
+                      setIsExecutingBulk(true);
+                      try {
+                        createGrant({
+                          scopeType: bulkScopeType,
+                          scopeValue: bulkScopeType === "district" ? bulkDistrict : bulkScopeType === "taluka" ? bulkTaluka : bulkScopeType === "school" ? bulkSchoolName : "all",
+                          courseScope: bulkCourseScope,
+                          courseId: bulkCourseScope === "one" ? bulkSelectedCourseId : undefined,
+                          months: Math.max(1, Math.round(bulkValidityDays / 30)),
+                          validityDays: bulkValidityDays,
+                          reason: bulkReason.trim(),
+                        });
+                        toast.success("Bulk grant provisioned successfully!");
+                        setViewMode("list");
+                        await loadData();
+                      } catch (err: any) {
+                        toast.error(err.message || "Failed to execute bulk grant.");
+                      } finally {
+                        setIsExecutingBulk(false);
+                      }
+                    }}
+                    className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold text-xs shadow-xs transition cursor-pointer"
                   >
-                    {isExecutingBulk ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        Executing Bulk Grant...
-                      </>
-                    ) : (
-                      <>
-                        <Check className="w-4 h-4" />
-                        Execute Bulk Provisioning
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("list")}
-                    className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition text-center"
-                  >
-                    Cancel & Return
+                    {isExecutingBulk ? "Executing Bulk Grant..." : "Authorize Bulk Provisioning"}
                   </button>
                 </div>
               </div>
@@ -1577,445 +1678,275 @@ export default function GrantsManagerPage() {
           )}
 
           {/* ==================================================================== */}
-          {/* VIEW: GRANTS DIRECTORY & ANALYTICS (MAIN WORKSPACE) */}
+          {/* VIEW 3: GRANTS DIRECTORY & ANALYTICS (MAIN WORKSPACE) */}
           {/* ==================================================================== */}
           {viewMode === "list" && (
-            <div className="space-y-6">
-
+            <div className="space-y-6 animate-in fade-in duration-200">
               {/* Top Action Bar */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 font-heading">
                     <Gift className="w-7 h-7 text-blue-600" />
-                    Course Grants & Provisioning Studio
+                    <span>Course Grants &amp; Provisioning Studio</span>
                   </h1>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Manage direct student admissions, scholarships, offline cash settlements, and cohort provisioning.
+                    Manage direct student admissions, scholarships, offline fee settlements, and cohort provisioning.
                   </p>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={() => setViewMode("bulk")}
-                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl font-bold text-xs flex items-center gap-2 transition cursor-pointer"
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl font-bold text-xs flex items-center gap-2 transition cursor-pointer active:scale-95"
                   >
                     <Layers className="w-4 h-4 text-blue-600" />
-                    Bulk Provisioning
+                    <span>Bulk Cohort</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      setViewMode("issue");
-                      setStudentMode("existing");
-                      setSelectedStudent(null);
+                      setViewMode("create");
+                      setTargetScopeType("student");
+                      setStudentSubMode("search");
+                      setSelectedStudents([]);
                     }}
-                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-extrabold text-xs shadow-md flex items-center gap-2 transition cursor-pointer"
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-extrabold text-xs shadow-md flex items-center gap-2 transition cursor-pointer active:scale-95"
                   >
                     <Plus className="w-4 h-4" />
-                    Issue New Grant
+                    <span>+ Issue New Grant</span>
                   </button>
                 </div>
               </div>
 
-              {/* Architectural KPI Summary Cards */}
+              {/* KPI Summary Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                  <div className="flex items-center justify-between text-slate-400 text-xs font-semibold mb-1">
                     <span>Active Grants</span>
                     <Gift className="w-4 h-4 text-blue-600" />
                   </div>
-                  <div className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums">
                     {grants.filter((g) => g.status === "active").length}
                   </div>
                   <span className="text-[10px] text-emerald-600 font-bold">100% Verified Access</span>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                  <div className="flex items-center justify-between text-slate-400 text-xs font-semibold mb-1">
                     <span>Students Impacted</span>
                     <Users className="w-4 h-4 text-indigo-600" />
                   </div>
-                  <div className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums">
                     {revenueStats.totalUniqueStudents}
                   </div>
                   <span className="text-[10px] text-slate-400">Across All Batches</span>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                  <div className="flex items-center justify-between text-slate-400 text-xs font-semibold mb-1">
                     <span>Waived Scholarship</span>
                     <DollarSign className="w-4 h-4 text-emerald-600" />
                   </div>
-                  <div className="text-2xl font-black text-emerald-600 tabular-nums">
+                  <div className="text-2xl sm:text-3xl font-black text-emerald-600 tabular-nums">
                     ₹{revenueStats.totalWaivedRupees.toLocaleString("en-IN")}
                   </div>
                   <span className="text-[10px] text-slate-400">Academic Subsidies</span>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                  <div className="flex items-center justify-between text-slate-400 text-xs font-semibold mb-1">
                     <span>Pending Approvals</span>
                     <ShieldAlert className="w-4 h-4 text-amber-600" />
                   </div>
-                  <div className="text-2xl font-black text-amber-600 tabular-nums">
+                  <div className="text-2xl sm:text-3xl font-black text-amber-600 tabular-nums">
                     {pendingApprovals.length}
                   </div>
-                  <span className="text-[10px] text-slate-400">Maker-Checker Queue</span>
+                  <span className="text-[10px] text-amber-600 font-bold">Maker-Checker Queue</span>
                 </div>
               </div>
 
-              {/* Maker-Checker Pending Queue Banner (Main Admin) */}
-              {isMainAdmin && pendingApprovals.length > 0 && (
-                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ShieldAlert className="w-5 h-5 text-amber-600" />
-                      <h3 className="font-bold text-sm text-amber-900 dark:text-amber-100">
-                        Maker-Checker Action Required ({pendingApprovals.length} Pending Grant Approval Requests)
-                      </h3>
-                    </div>
-                  </div>
-                  <div className="divide-y divide-amber-200/60 dark:divide-amber-800/60">
-                    {pendingApprovals.map((grant) => (
-                      <div key={grant.id} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div>
-                          <p className="font-bold text-xs text-slate-900 dark:text-white">
-                            {grant.student_name || grant.scope_value} • Course: {grant.courseTitle || "All"}
-                          </p>
-                          <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                            Submitted by: {grant.createdByName} • Mode: {grant.payment_mode || "Scholarship"} (₹{grant.amount_paid || 0}) • Note: {grant.reason}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleApprove(grant.id)}
-                            className="px-3 py-1 bg-emerald-600 text-white font-bold text-xs rounded-lg hover:bg-emerald-700 transition cursor-pointer"
-                          >
-                            Approve Access
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRejectModalGrant(grant);
-                              setRejectReason("");
-                            }}
-                            className="px-3 py-1 bg-red-100 text-red-700 font-bold text-xs rounded-lg hover:bg-red-200 transition cursor-pointer"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Sub-Admin Cash Settlements Banner (Main Admin) */}
-              {isMainAdmin && cashSettlements.some((s) => s.unsettledCash > 0) && (
-                <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Banknote className="w-5 h-5 text-emerald-600" />
-                      <h3 className="font-bold text-sm text-emerald-900 dark:text-emerald-100">
-                        Sub-Admin Cash Collections Awaiting Settlement
-                      </h3>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                    {cashSettlements
-                      .filter((s) => s.unsettledCash > 0)
-                      .map((summary) => (
-                        <div
-                          key={summary.staffId}
-                          className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center justify-between"
-                        >
-                          <div>
-                            <p className="font-bold text-xs text-slate-900 dark:text-white">{summary.staffName}</p>
-                            <p className="text-xs text-emerald-700 font-extrabold tabular-nums">
-                              ₹{summary.unsettledCash.toLocaleString("en-IN")} Unsettled
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleSettleSubAdmin(summary.staffId)}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded-lg transition cursor-pointer"
-                          >
-                            Settle Now
-                          </button>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Multi-Dimension Cascading Filter Bar */}
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                  <div className="sm:col-span-4 relative">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              {/* Filter Bar with Standardized Cascading Location */}
+              <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search student, mobile, grant ID..."
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600"
+                      placeholder="Search grants by Student Name, Phone (10 digits), Course Title, or Reason..."
+                      className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600 transition"
                     />
                   </div>
-
-                  <div className="sm:col-span-8 flex flex-wrap items-center gap-2">
-                    <LocationCascadeSelect
-                      selectedState={filterState}
-                      selectedDistrict={filterDistrict}
-                      selectedTaluka={filterTaluka}
-                      onStateChange={(id, name) => setFilterState(id)}
-                      onDistrictChange={(id, name) => setFilterDistrict(name)}
-                      onTalukaChange={(id, name) => setFilterTaluka(name)}
-                      allowAll
-                      size="sm"
-                      layout="inline"
-                    />
-
-                    {/* Course Filter */}
-                    <select
-                      value={courseFilter}
-                      onChange={(e) => setCourseFilter(e.target.value)}
-                      className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-900 dark:text-white outline-none"
-                    >
-                      <option value="all">All Courses</option>
-                      {courses.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.title}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* Payment Mode Filter */}
+                  <div className="flex flex-wrap items-center gap-2">
                     <select
                       value={paymentModeFilter}
                       onChange={(e) => setPaymentModeFilter(e.target.value)}
-                      className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-900 dark:text-white outline-none"
+                      className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 outline-none"
                     >
                       <option value="all">All Payment Types</option>
-                      <option value="scholarship">100% Scholarship</option>
+                      <option value="scholarship">Free Scholarship</option>
                       <option value="cash">Offline Cash</option>
                       <option value="upi">Direct UPI</option>
                     </select>
 
-                    {/* Status Filter */}
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-900 dark:text-white outline-none"
+                      className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 outline-none"
                     >
                       <option value="all">All Statuses</option>
-                      <option value="active">Active</option>
+                      <option value="active">Active Access</option>
+                      <option value="expired">Expired</option>
                       <option value="pending_approval">Pending Approval</option>
                       <option value="revoked">Revoked</option>
-                      <option value="rejected">Rejected</option>
                     </select>
                   </div>
                 </div>
+
+                {/* Location Filter Cascade */}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <LocationCascadeSelect
+                    selectedState={filterState}
+                    selectedDistrict={filterDistrict}
+                    selectedTaluka={filterTaluka}
+                    onStateChange={(id, name) => setFilterState(id)}
+                    onDistrictChange={(id, name) => setFilterDistrict(name)}
+                    onTalukaChange={(id, name) => setFilterTaluka(name)}
+                    includeAllOption={true}
+                    layout="inline"
+                  />
+                </div>
               </div>
 
-              {/* Grants Data Table (YouTube Studio / Stripe Style) */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+              {/* Grants Data Table */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
+                  <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold">
-                        <th className="py-3 px-4">Student & Scope</th>
-                        <th className="py-3 px-4">Curriculum Assigned</th>
-                        <th className="py-3 px-4">Commercial Mode</th>
-                        <th className="py-3 px-4">Validity Window</th>
+                      <tr className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-800 font-bold">
+                        <th className="py-3 px-4">Student &amp; Phone</th>
+                        <th className="py-3 px-4">Curriculum</th>
+                        <th className="py-3 px-4">Target Scope</th>
+                        <th className="py-3 px-4">Fee Reconciliation</th>
+                        <th className="py-3 px-4">Access Validity</th>
                         <th className="py-3 px-4">Granted By</th>
-                        <th className="py-3 px-4">Status</th>
                         <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {paginatedGrants.map((grant) => {
-                        const isExpired = isExpiredIST(grant.ends_at || grant.endsAt);
-                        return (
-                          <tr key={grant.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
-                            {/* Student / Scope Column */}
-                            <td className="py-3 px-4">
-                              <p className="font-bold text-slate-900 dark:text-white">
-                                {grant.student_name || grant.scope_value}
-                              </p>
-                              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
-                                {grant.student_phone && (
-                                  <span className="tabular-nums flex items-center gap-1">
-                                    <Phone className="w-3 h-3 text-slate-400" />
-                                    {grant.student_phone}
-                                  </span>
-                                )}
-                                <span className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-medium capitalize">
-                                  {grant.scope_type}: {grant.scope_value}
+                      {paginatedGrants.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-12 text-center text-slate-400">
+                            No grant records matching your search and filter criteria.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedGrants.map((grant) => {
+                          const phone = grant.student_phone || grant.studentPhone || grant.scope_value || grant.scopeValue || "-";
+                          const name = grant.student_name || grant.studentName || `Student ${phone.slice(-4)}`;
+                          const isExpired = grant.ends_at ? isExpiredIST(grant.ends_at) : false;
+
+                          return (
+                            <tr key={grant.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                              <td className="py-3 px-4">
+                                <p className="font-bold text-slate-900 dark:text-white">{name}</p>
+                                <p className="text-[11px] text-slate-500 font-mono tabular-nums">{phone}</p>
+                              </td>
+                              <td className="py-3 px-4">
+                                <p className="font-bold text-slate-800 dark:text-slate-200">
+                                  {grant.courseTitle || grant.bookTitle || "Academy Curriculum"}
+                                </p>
+                                <span className="text-[10px] text-slate-400 capitalize">
+                                  {grant.item_type || "Course"}
                                 </span>
-                              </div>
-                            </td>
-
-                            {/* Curriculum Assigned */}
-                            <td className="py-3 px-4">
-                              <p className="font-bold text-slate-800 dark:text-slate-200">
-                                {grant.courseTitle || grant.bookTitle || (grant.course_scope === "all" ? "All Courses" : "Curriculum")}
-                              </p>
-                              <span className="text-[10px] text-slate-400 capitalize">
-                                {grant.item_type || "Course Batch"}
-                              </span>
-                            </td>
-
-                            {/* Commercial Mode */}
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-1.5">
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              </td>
+                              <td className="py-3 px-4">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 uppercase">
+                                  {grant.scope_type || grant.scopeType || "Individual"}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4">
+                                <span className={`inline-flex items-center gap-1 font-bold ${
                                   grant.payment_mode === "cash"
-                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                                    ? "text-emerald-600"
                                     : grant.payment_mode === "upi"
-                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200"
-                                    : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
+                                    ? "text-blue-600"
+                                    : "text-purple-600"
                                 }`}>
-                                  {grant.payment_mode === "cash"
-                                    ? `Cash (₹${grant.amount_paid || 0})`
-                                    : grant.payment_mode === "upi"
-                                    ? `UPI (₹${grant.amount_paid || 0})`
-                                    : "100% Scholarship"}
+                                  ₹{grant.amount_paid !== undefined ? grant.amount_paid : 0} ({grant.payment_mode || "Scholarship"})
                                 </span>
-
-                                {grant.payment_mode === "cash" && (
-                                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                                    grant.settlement_status === "settled"
-                                      ? "bg-emerald-50 text-emerald-700"
-                                      : "bg-red-50 text-red-600"
-                                  }`}>
-                                    {grant.settlement_status === "settled" ? "Settled" : "Unsettled"}
-                                  </span>
-                                )}
-                              </div>
-                              {grant.upi_ref && (
-                                <span className="text-[10px] text-slate-400 block mt-0.5">
-                                  UTR: {grant.upi_ref}
+                              </td>
+                              <td className="py-3 px-4">
+                                <p className={`font-bold tabular-nums ${isExpired ? "text-red-500" : "text-slate-900 dark:text-white"}`}>
+                                  {grant.ends_at ? formatIST(grant.ends_at, { dateOnly: true }) : "Permanent"}
+                                </p>
+                                <span className="text-[10px] text-slate-400">
+                                  {isExpired ? "Expired" : "Active"}
                                 </span>
-                              )}
-                            </td>
-
-                            {/* Validity Window */}
-                            <td className="py-3 px-4">
-                              <p className="font-bold text-slate-700 dark:text-slate-300 tabular-nums">
-                                {grant.ends_at ? grant.ends_at.slice(0, 10) : "Lifetime"}
-                              </p>
-                              <span className={`text-[10px] font-bold ${isExpired ? "text-red-500" : "text-emerald-600"}`}>
-                                {isExpired ? "Expired" : "Active Access"}
-                              </span>
-                            </td>
-
-                            {/* Granted By */}
-                            <td className="py-3 px-4">
-                              <p className="font-semibold text-slate-800 dark:text-slate-200">
-                                {grant.createdByName || "Admin"}
-                              </p>
-                              <span className="text-[10px] text-slate-400">
-                                {grant.created_at ? grant.created_at.slice(0, 10) : ""}
-                              </span>
-                            </td>
-
-                            {/* Status */}
-                            <td className="py-3 px-4">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                grant.status === "active"
-                                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
-                                  : grant.status === "pending_approval"
-                                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
-                                  : "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200"
-                              }`}>
-                                {grant.status.replace("_", " ")}
-                              </span>
-                            </td>
-
-                            {/* Row Actions */}
-                            <td className="py-3 px-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                {/* WhatsApp Trigger */}
-                                <button
-                                  type="button"
-                                  onClick={() => handleSendWhatsApp(grant)}
-                                  title="Send 1-Click WhatsApp Receipt"
-                                  className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950 hover:bg-emerald-100 text-emerald-600 transition cursor-pointer"
-                                >
-                                  <Send className="w-3.5 h-3.5" />
-                                </button>
-
-                                {/* Extend Validity */}
-                                {grant.status === "active" && (
+                              </td>
+                              <td className="py-3 px-4 text-slate-500">
+                                <p className="font-medium text-slate-700 dark:text-slate-300">{grant.granted_by || "Admin"}</p>
+                                <span className="text-[10px]">{formatIST(grant.created_at, { dateOnly: true })}</span>
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      setExtendModalGrant(grant);
-                                      setExtendDays(30);
-                                    }}
+                                    onClick={() => handleSendWhatsApp(grant)}
+                                    title="Send WhatsApp Receipt"
+                                    className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 cursor-pointer"
+                                  >
+                                    <Send className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setActionModal({ type: "extend", grant })}
                                     title="Extend Access Validity"
-                                    className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 text-blue-600 transition cursor-pointer"
+                                    className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 border border-blue-200 dark:border-blue-800 cursor-pointer"
                                   >
                                     <Clock className="w-3.5 h-3.5" />
                                   </button>
-                                )}
-
-                                {/* Revoke Access */}
-                                {grant.status === "active" && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setRevokeModalGrant(grant);
-                                      setRevokeReason("");
-                                    }}
-                                    title="Revoke Student Access"
-                                    className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950 hover:bg-red-100 text-red-600 transition cursor-pointer"
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-
-                      {paginatedGrants.length === 0 && (
-                        <tr>
-                          <td colSpan={7} className="py-10 text-center text-slate-400">
-                            No grant or admission records matched your filter criteria.
-                          </td>
-                        </tr>
+                                  {isMainAdmin && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setActionModal({ type: "revoke", grant })}
+                                      title="Revoke Access"
+                                      className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100 border border-red-200 dark:border-red-800 cursor-pointer"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
                 </div>
 
-                {/* Pagination */}
+                {/* Pagination Bar */}
                 {totalPages > 1 && (
-                  <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-                    <span>
-                      Showing {(currentPage - 1) * pageSize + 1} to{" "}
-                      {Math.min(currentPage * pageSize, filteredGrants.length)} of {filteredGrants.length} grants
+                  <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                    <span className="text-slate-500 tabular-nums">
+                      Page {currentPage} of {totalPages} ({filteredGrants.length} total records)
                     </span>
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40"
+                        className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 text-slate-700 dark:text-slate-300 font-bold"
                       >
                         Previous
                       </button>
-                      <span className="px-2 font-bold text-slate-900 dark:text-white">
-                        {currentPage} / {totalPages}
-                      </span>
                       <button
                         type="button"
                         disabled={currentPage === totalPages}
                         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40"
+                        className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 text-slate-700 dark:text-slate-300 font-bold"
                       >
                         Next
                       </button>
@@ -2027,174 +1958,88 @@ export default function GrantsManagerPage() {
           )}
 
           {/* ==================================================================== */}
-          {/* IN-PAGE EXTEND VALIDITY MODAL */}
+          {/* INLINE ACTION CONFIRMATION CARD (NO HEAVY BLURRED DRAWERS) */}
           {/* ==================================================================== */}
-          {extendModalGrant && (
-            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-slate-900 max-w-md w-full p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
+          {actionModal.type && actionModal.grant && (
+            <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 animate-in fade-in duration-150">
+              <div className="bg-white dark:bg-slate-900 max-w-md w-full p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                   <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-blue-600" />
-                    Extend Access Validity
+                    {actionModal.type === "extend" && <Clock className="w-5 h-5 text-blue-600" />}
+                    {actionModal.type === "revoke" && <AlertCircle className="w-5 h-5 text-red-600" />}
+                    {actionModal.type === "reject" && <X className="w-5 h-5 text-red-600" />}
+                    <span>
+                      {actionModal.type === "extend" && "Extend Access Validity"}
+                      {actionModal.type === "revoke" && "Revoke Student Access"}
+                      {actionModal.type === "reject" && "Reject Grant Request"}
+                    </span>
                   </h3>
-                  <button onClick={() => setExtendModalGrant(null)} className="text-slate-400 hover:text-slate-600">
-                    ✕
+                  <button onClick={() => setActionModal({ type: null, grant: null })} className="text-slate-400 hover:text-slate-600">
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Extending access for student <strong className="text-slate-900 dark:text-white">{extendModalGrant.student_name || extendModalGrant.scope_value}</strong> on curriculum: <strong className="text-blue-600">{extendModalGrant.courseTitle || "Course"}</strong>.
+
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Target Student: <strong className="text-slate-900 dark:text-white">{actionModal.grant.student_name || actionModal.grant.scope_value}</strong>
+                  <br />Curriculum: <strong className="text-blue-600">{actionModal.grant.courseTitle || actionModal.grant.bookTitle || "Curriculum"}</strong>
                 </p>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Days to Add to Expiry:
-                  </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[15, 30, 60, 90].map((d) => (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => setExtendDays(d)}
-                        className={`py-1.5 text-xs font-bold rounded-xl border transition ${
-                          extendDays === d
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
-                        }`}
-                      >
-                        +{d} Days
-                      </button>
-                    ))}
+                {actionModal.type === "extend" && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Days to add to access validity:
+                    </label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[15, 30, 60, 90].map((d) => (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => setActionExtendDays(d)}
+                          className={`py-1.5 text-xs font-bold rounded-xl border transition ${
+                            actionExtendDays === d
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                          }`}
+                        >
+                          +{d} Days
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <input
-                    type="number"
-                    min={1}
-                    value={extendDays}
-                    onChange={(e) => setExtendDays(Math.max(1, Number(e.target.value)))}
-                    className="w-full mt-2 px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
-                  />
-                </div>
+                )}
 
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                {(actionModal.type === "revoke" || actionModal.type === "reject") && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Mandatory Reason / Note <span className="text-red-500">*</span>:
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={actionReason}
+                      onChange={(e) => setActionReason(e.target.value)}
+                      placeholder="e.g. Admission cancelled / Course swapped / Refund requested"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none"
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
-                    onClick={() => setExtendModalGrant(null)}
-                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+                    onClick={() => setActionModal({ type: null, grant: null })}
+                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     disabled={isActionLoading}
-                    onClick={handleConfirmExtend}
-                    className="px-4 py-2 text-xs font-extrabold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition disabled:opacity-50"
+                    onClick={handleExecuteActionModal}
+                    className={`px-4 py-2 text-xs font-bold rounded-xl text-white shadow-xs transition ${
+                      actionModal.type === "extend" ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"
+                    }`}
                   >
-                    Confirm Extension
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ==================================================================== */}
-          {/* IN-PAGE REVOKE ACCESS MODAL */}
-          {/* ==================================================================== */}
-          {revokeModalGrant && (
-            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-slate-900 max-w-md w-full p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                  <h3 className="font-bold text-base text-red-600 flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-red-600" />
-                    Revoke Curriculum Access
-                  </h3>
-                  <button onClick={() => setRevokeModalGrant(null)} className="text-slate-400 hover:text-slate-600">
-                    ✕
-                  </button>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Are you sure you want to revoke access for <strong className="text-slate-900 dark:text-white">{revokeModalGrant.student_name || revokeModalGrant.scope_value}</strong>? The student will immediately lose access to this curriculum.
-                </p>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Mandatory Reason for Revocation <span className="text-red-500">*</span>:
-                  </label>
-                  <textarea
-                    rows={2}
-                    required
-                    value={revokeReason}
-                    onChange={(e) => setRevokeReason(e.target.value)}
-                    placeholder="e.g. Fee refund requested / Course swap / Admission cancelled"
-                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:border-red-500"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => setRevokeModalGrant(null)}
-                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isActionLoading || !revokeReason.trim()}
-                    onClick={handleConfirmRevoke}
-                    className="px-4 py-2 text-xs font-extrabold bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-xs transition disabled:opacity-50"
-                  >
-                    Confirm Revocation
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ==================================================================== */}
-          {/* IN-PAGE REJECT PENDING GRANT MODAL */}
-          {/* ==================================================================== */}
-          {rejectModalGrant && (
-            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-slate-900 max-w-md w-full p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                  <h3 className="font-bold text-base text-red-600 flex items-center gap-2">
-                    <X className="w-5 h-5 text-red-600" />
-                    Reject Pending Grant
-                  </h3>
-                  <button onClick={() => setRejectModalGrant(null)} className="text-slate-400 hover:text-slate-600">
-                    ✕
-                  </button>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Rejecting grant request submitted by <strong className="text-slate-900 dark:text-white">{rejectModalGrant.createdByName}</strong> for student <strong className="text-blue-600">{rejectModalGrant.student_name || rejectModalGrant.scope_value}</strong>.
-                </p>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Rejection Reason / Note:
-                  </label>
-                  <input
-                    type="text"
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder="e.g. Unverified payment receipt / Incomplete student details"
-                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => setRejectModalGrant(null)}
-                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleConfirmReject}
-                    className="px-4 py-2 text-xs font-extrabold bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-xs transition"
-                  >
-                    Confirm Rejection
+                    {isActionLoading ? "Processing..." : "Confirm Action"}
                   </button>
                 </div>
               </div>
