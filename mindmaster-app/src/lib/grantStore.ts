@@ -1241,7 +1241,7 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
     try {
       addStudentNotification({
         userId: student.id,
-        title: "🎉 Course Admission Confirmed!",
+        title: " Course Admission Confirmed!",
         body: `Prashant Sir has granted you full access to "${itemTitle}". Start learning now!`,
         type: "course",
         actionUrl: isBook ? "/books" : isAllCourses ? "/courses" : `/watch/${course?.id || ""}`,
@@ -1253,9 +1253,9 @@ export function grantCashAdmission(params: CashAdmissionParams): CashAdmissionRe
 
   // 7. Generate Pre-filled WhatsApp Share Message
   const approvalNotice = requiresApproval ? "\n⏳ Status: Verification Pending by HQ (Will activate shortly)" : "";
-  const installmentNotice = params.installmentDue ? `\n💳 Balance Due: ₹${params.installmentDue}${params.installmentDueDate ? ` (Due by ${params.installmentDueDate})` : ""}` : "";
+  const installmentNotice = params.installmentDue ? `\n Balance Due: ₹${params.installmentDue}${params.installmentDueDate ? ` (Due by ${params.installmentDueDate})` : ""}` : "";
   const istExpiryFormatted = formatIST(endsAt, { dateOnly: true });
-  const receiptText = `Hello ${studentName}!\n\nYour admission to "${itemTitle}" at MindMaster Academy is recorded. ✅\n\n💵 Fee Paid: ₹${params.amountPaid} (${modeLabel})${installmentNotice}${approvalNotice}\n⏱️ Validity: ${validityText} (Expires: ${istExpiryFormatted})\n📱 Login Mobile: ${cleanPhone}\n\n📲 Access portal in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! 🌟\n— MindMaster Academy`;
+  const receiptText = `Hello ${studentName}!\n\nYour admission to "${itemTitle}" at MindMaster Academy is recorded. \n\n Fee Paid: ₹${params.amountPaid} (${modeLabel})${installmentNotice}${approvalNotice}\n⏱️ Validity: ${validityText} (Expires: ${istExpiryFormatted})\n Login Mobile: ${cleanPhone}\n\n Access portal in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! \n— MindMaster Academy`;
   const whatsappUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(receiptText)}`;
 
   return {
@@ -2489,7 +2489,7 @@ export function grantMultiCourseAdmission(params: MultiCourseAdmissionParams): M
       ? `Direct UPI (${params.upiRef?.trim() || "Verified"})`
       : "Free Grant / Scholarship";
 
-  const receiptText = `Hello ${studentName}!\n\nYour admission to ${results.length} curriculum program(s) at MindMaster Academy is confirmed. ✅\n\n📚 Enrolled:\n${results.map((r, i) => `${i + 1}. ${r.grant.courseTitle} (Expires: ${formatIST(r.expiresAt, { dateOnly: true })})`).join("\n")}\n\n💵 Total Fee Paid: ₹${params.totalAmountPaid} (${modeLabel})${params.installmentDue ? `\n💳 Balance Due: ₹${params.installmentDue}${params.installmentDueDate ? ` (Due by ${params.installmentDueDate})` : ""}` : ""}${params.remarks ? `\n📝 Note: ${params.remarks}` : ""}\n📱 Login Mobile: ${cleanPhone}\n\n📲 Start learning in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! 🌟\n— MindMaster Academy`;
+  const receiptText = `Hello ${studentName}!\n\nYour admission to ${results.length} curriculum program(s) at MindMaster Academy is confirmed. \n\n Enrolled:\n${results.map((r, i) => `${i + 1}. ${r.grant.courseTitle} (Expires: ${formatIST(r.expiresAt, { dateOnly: true })})`).join("\n")}\n\n Total Fee Paid: ₹${params.totalAmountPaid} (${modeLabel})${params.installmentDue ? `\n Balance Due: ₹${params.installmentDue}${params.installmentDueDate ? ` (Due by ${params.installmentDueDate})` : ""}` : ""}${params.remarks ? `\n Note: ${params.remarks}` : ""}\n Login Mobile: ${cleanPhone}\n\n Start learning in the app:\nhttps://mindmaster.academy/login\n\nAll the best for your studies! \n— MindMaster Academy`;
 
   const whatsappUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(receiptText)}`;
 

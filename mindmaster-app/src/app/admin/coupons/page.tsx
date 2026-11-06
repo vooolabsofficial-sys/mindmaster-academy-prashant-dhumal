@@ -1462,12 +1462,12 @@ export default function CouponManagerPage() {
                               <div className="flex flex-wrap gap-1">
                                 {coupon.target_district && (
                                   <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                                    📍 {coupon.target_district}
+                                     {coupon.target_district}
                                   </span>
                                 )}
                                 {coupon.school && (
                                   <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-800 border border-indigo-200">
-                                    🏫 {coupon.school}
+                                     {coupon.school}
                                   </span>
                                 )}
                                 {coupon.applies_all ? (

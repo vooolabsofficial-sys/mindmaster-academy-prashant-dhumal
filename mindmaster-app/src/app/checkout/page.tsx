@@ -327,7 +327,7 @@ function CheckoutContent() {
       <div className="max-w-xl mx-auto py-16 px-4 text-center select-none">
         <div className="bg-white rounded-3xl p-8 border border-[#E4E8F8] shadow-xs">
           <div className="w-16 h-16 bg-[#EBF3FE] text-[#0B57D0] rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-            📖
+            
           </div>
           <h2 className="text-xl font-black text-[#0E1B3D]">Book Currently Unavailable</h2>
           <p className="text-xs text-[#5A6478] mt-2 mb-6">Please browse our other publications or try again later.</p>
@@ -344,7 +344,7 @@ function CheckoutContent() {
       <div className="max-w-xl mx-auto py-16 px-4 text-center select-none">
         <div className="bg-white rounded-3xl p-8 border border-[#E4E8F8] shadow-xs">
           <div className="w-16 h-16 bg-[#EBF3FE] text-[#0B57D0] rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-            🎓
+            
           </div>
           <h2 className="text-xl font-black text-[#0E1B3D]">Course Currently Unavailable</h2>
           <p className="text-xs text-[#5A6478] mt-2 mb-6">Please check our catalog of available courses.</p>
@@ -649,12 +649,12 @@ function CheckoutContent() {
 
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#0A8554] bg-[#E8F8F2] px-3.5 py-1 rounded-full mb-3">
             {finalPriceRupees === 0
-              ? "🎉 100% Scholarship Enrollment Approved • Instant Access Unlocked"
+              ? " 100% Scholarship Enrollment Approved • Instant Access Unlocked"
               : "Payment Successful • Instant Access Unlocked"}
           </span>
 
           <h1 className="text-2xl md:text-3xl font-black text-[#0E1B3D]">
-            Congratulations, {studentName || "Student"}! 🎉
+            Congratulations, {studentName || "Student"}! 
           </h1>
 
           <p className="text-xs md:text-sm text-[#5A6478] mt-2 max-w-md leading-relaxed">
@@ -730,7 +730,7 @@ function CheckoutContent() {
             className="w-full mt-6 py-3 px-6 rounded-2xl bg-[#E8F8F2] hover:bg-[#D5F2E6] text-[#0A8554] border border-[#C6ECD9] text-xs font-black transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-2xs"
           >
             <FileText className="w-4 h-4" />
-            <span>📄 Download Official Fee Receipt (PDF)</span>
+            <span> Download Official Fee Receipt (PDF)</span>
           </button>
 
           {/* Action CTAs */}
@@ -823,7 +823,7 @@ function CheckoutContent() {
               rel="noopener noreferrer"
               className="w-full mt-1 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-xs font-black transition inline-flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
             >
-              <span className="text-base">📲</span>
+              <span className="text-base"></span>
               <span>पैसे कट झाले असल्यास WhatsApp वर स्क्रीनशॉट पाठवा (Contact Support Desk)</span>
             </a>
           </div>
@@ -1066,7 +1066,7 @@ function CheckoutContent() {
             {/* Item Mini Card */}
             <div className="flex items-center gap-3">
               <div className="w-14 h-14 rounded-2xl bg-[#E8F1FD] border border-[#C7DEFB] text-[#0B57D0] flex items-center justify-center shrink-0 shadow-2xs font-extrabold text-sm">
-                {isBookCheckout ? "📚" : "MM"}
+                {isBookCheckout ? "" : "MM"}
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-extrabold text-[#0E1B3D] truncate">
@@ -1079,8 +1079,8 @@ function CheckoutContent() {
                 </span>
                 <span className="text-[10px] font-bold text-[#0A8554]">
                   {isBookCheckout
-                    ? "✓ In-App Secure Reader + Encrypted Offline Vault"
-                    : "✓ All Video Lessons + Notes + Certificate"}
+                    ? " In-App Secure Reader + Encrypted Offline Vault"
+                    : " All Video Lessons + Notes + Certificate"}
                 </span>
               </div>
             </div>

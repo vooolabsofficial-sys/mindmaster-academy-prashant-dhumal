@@ -43,7 +43,7 @@ export default function MaintenanceBanner() {
   return (
     <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 px-4 py-2.5 text-xs font-bold flex items-center justify-center border-b border-amber-600 shadow-md sticky top-0 z-50 transition-all">
       <div className="flex items-center gap-2.5 max-w-7xl mx-auto text-center flex-wrap justify-center">
-        <span className="text-base animate-pulse">⚠️</span>
+        <span className="text-base animate-pulse">️</span>
         <span className="bg-slate-950 text-amber-400 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
           Maintenance Mode Active
         </span>

@@ -49,43 +49,43 @@ const ALL_PERMISSIONS: { key: StaffPermission; label: string; desc: string; icon
     key: "students.view",
     label: "1. Student Finder & Profile • विद्यार्थी शोध व प्रोफाईल",
     desc: "Lookup enrolled students, inspect courses, and manage device session locks.",
-    icon: "🎓",
+    icon: "GraduationCap",
   },
   {
     key: "messages.manage",
     label: "2. Support Messages & Tickets • सपोर्ट टिकट्स व मेसेज",
     desc: "Respond to student inquiries, resolve help tickets, and provide guidance.",
-    icon: "💬",
+    icon: "MessageSquare",
   },
   {
     key: "courses.manage",
     label: "3. Courses Studio • कोर्सेस व्यवस्थापन",
     desc: "Create and update courses, pricing, duration, and catalogue metadata.",
-    icon: "📚",
+    icon: "BookOpen",
   },
   {
     key: "videos.manage",
     label: "4. Video Lectures & Chapters • व्हिडिओ व लेक्चर्स",
     desc: "Link YouTube/Vimeo video IDs, arrange lesson sequences, and curriculum.",
-    icon: "🎥",
+    icon: "Video",
   },
   {
     key: "notes.books.manage",
     label: "5. PDF Books Studio • ई-बुक्स व PDF नोट्स",
     desc: "Upload Vedic Maths and memory textbooks and attach to course packages.",
-    icon: "📖",
+    icon: "BookOpen",
   },
   {
     key: "coupons.manage",
     label: "6. Coupons & Offers • सवलत कूपन कोड्स",
     desc: "Generate discount codes, festival promotions, and usage quotas.",
-    icon: "🏷️",
+    icon: "Tag",
   },
   {
     key: "reports.view",
     label: "7. Reports & Analytics • ॲनालिटिक्स व रिपोर्ट्स",
     desc: "Access student growth stats, revenue summaries, and CSV data exports.",
-    icon: "📊",
+    icon: "BarChart3",
   },
 ];
 
@@ -292,7 +292,7 @@ export default function SubAdminManagerPage() {
   };
 
   const handleFreezeAll = () => {
-    if (!confirm("⚠️ Emergency Bulk Freeze: Are you sure you want to suspend ALL Sub-Admins immediately? This will instantly terminate their active sessions.")) {
+    if (!confirm(" Emergency Bulk Freeze: Are you sure you want to suspend ALL Sub-Admins immediately? This will instantly terminate their active sessions.")) {
       return;
     }
     const count = freezeAllSubAdmins();
@@ -431,7 +431,7 @@ export default function SubAdminManagerPage() {
                   </button>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">👥</span>
+                      <span className="text-xl"></span>
                       <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#0B57D0] dark:text-blue-400 font-mono text-xs font-black">
                         {editingStaff ? (editingStaff.staffId || editingStaff.id) : getNextStaffId()}
                       </span>
@@ -476,7 +476,7 @@ export default function SubAdminManagerPage() {
                   <div className="lg:col-span-6 space-y-6">
                     <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
                       <h3 className="font-bold text-sm text-[#0E1B3D] dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                        <span>👤</span>
+                        <span></span>
                         <span>ओळख व संपर्क तपशील (Identity & Contact)</span>
                       </h3>
 
@@ -541,7 +541,7 @@ export default function SubAdminManagerPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                            📍 नियुक्त जिल्हा (District) *
+                             नियुक्त जिल्हा (District) *
                           </label>
                           <select
                             value={formDistrict}
@@ -557,7 +557,7 @@ export default function SubAdminManagerPage() {
                         </div>
                         <div>
                           <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200 mb-1">
-                            🏢 शाखा / सेंटरचे नाव (Branch / Centre)
+                             शाखा / सेंटरचे नाव (Branch / Centre)
                           </label>
                           <input
                             type="text"
@@ -615,7 +615,7 @@ export default function SubAdminManagerPage() {
                     <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm space-y-4">
                       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                         <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200">
-                          🔑 परवानग्या निवडा ({formPermissions.length} / {ALL_PERMISSIONS.length}) *
+                           परवानग्या निवडा ({formPermissions.length} / {ALL_PERMISSIONS.length}) *
                         </label>
                         <button
                           type="button"
@@ -635,7 +635,7 @@ export default function SubAdminManagerPage() {
                       {/* 1-Click Role Presets */}
                       <div className="p-3 bg-blue-50/60 dark:bg-slate-800/80 rounded-2xl border border-blue-200/80 dark:border-slate-700 space-y-2">
                         <span className="text-[11px] font-extrabold text-[#0B57D0] dark:text-blue-400 flex items-center gap-1.5">
-                          <span>⚡ १-क्लिक रोल प्रीसेट्स (Quick Role Presets):</span>
+                          <span> १-क्लिक रोल प्रीसेट्स (Quick Role Presets):</span>
                         </span>
                         <div className="grid grid-cols-3 gap-2">
                           <button
@@ -646,7 +646,7 @@ export default function SubAdminManagerPage() {
                             }}
                             className="p-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-[10px] font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer"
                           >
-                            📞 समुपदेशक
+                             समुपदेशक
                           </button>
                           <button
                             type="button"
@@ -656,7 +656,7 @@ export default function SubAdminManagerPage() {
                             }}
                             className="p-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-[10px] font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer"
                           >
-                            🏢 शाखा व्यवस्थापक
+                             शाखा व्यवस्थापक
                           </button>
                           <button
                             type="button"
@@ -666,7 +666,7 @@ export default function SubAdminManagerPage() {
                             }}
                             className="p-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-[10px] font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer"
                           >
-                            📝 प्रवेश कक्ष
+                             प्रवेश कक्ष
                           </button>
                         </div>
                       </div>
@@ -712,7 +712,7 @@ export default function SubAdminManagerPage() {
 
                       {/* Strict Admin Security Notice */}
                       <div className="p-3.5 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 rounded-2xl text-[11px] text-amber-900 dark:text-amber-200 flex items-start gap-2">
-                        <span className="text-sm">🔒</span>
+                        <span className="text-sm"></span>
                         <div>
                           <p className="font-bold">Strict Main Admin Security Locks:</p>
                           <p className="text-[10px] text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">
@@ -758,7 +758,7 @@ export default function SubAdminManagerPage() {
 
                 {/* Counter Chip: x / max_sub_admins from settings */}
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#EEF4FF] dark:bg-blue-950/40 border border-[#D0E2FF] dark:border-blue-800 rounded-full text-xs font-bold text-[#0B57D0] dark:text-blue-300">
-                  <span className="text-xs">👥</span>
+                  <span className="text-xs"></span>
                   <span>{subAdminCount} / {maxSubAdmins} Sub-Admins Provisioned</span>
                 </div>
               </div>
@@ -775,7 +775,7 @@ export default function SubAdminManagerPage() {
                 className="px-3.5 py-2 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 title="Emergency Freeze: Immediately suspend all Sub-Admins and kill active sessions"
               >
-                <span>❄️</span> Freeze All
+                <span>️</span> Freeze All
               </button>
               <button
                 type="button"
@@ -795,7 +795,7 @@ export default function SubAdminManagerPage() {
                     : "bg-[#0B57D0] hover:bg-[#0842A0] text-white hover:shadow-lg cursor-pointer"
                 }`}
               >
-                <span className="text-base leading-none">➕</span> Add New Sub-Admin
+                <Plus className="w-4 h-4 inline" /> Add New Sub-Admin
               </button>
             </div>
           </div>
@@ -804,9 +804,9 @@ export default function SubAdminManagerPage() {
           {actionFeedback && (
             <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between shadow-xs animate-fadeIn">
               <span className="flex items-center gap-2">
-                <span>✅</span> {actionFeedback}
+                <span></span> {actionFeedback}
               </span>
-              <button onClick={() => setActionFeedback(null)} className="text-emerald-700 hover:text-emerald-950 font-bold">✕</button>
+              <button onClick={() => setActionFeedback(null)} className="text-emerald-700 hover:text-emerald-950 font-bold"></button>
             </div>
           )}
 
@@ -816,7 +816,7 @@ export default function SubAdminManagerPage() {
               {/* Search Bar */}
               <div className="relative w-full md:w-80">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#8A94A6]">
-                  🔍
+                  
                 </span>
                 <input
                   type="text"
@@ -830,7 +830,7 @@ export default function SubAdminManagerPage() {
                     onClick={() => setSearchQuery("")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8A94A6] hover:text-[#0E1B3D]"
                   >
-                    ✕
+                    
                   </button>
                 )}
               </div>
@@ -842,7 +842,7 @@ export default function SubAdminManagerPage() {
                   onChange={(e) => setDistrictFilter(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 rounded-full text-xs font-bold text-[#0E1B3D] dark:text-white focus:outline-none"
                 >
-                  <option value="all">📍 All Districts ({MAHARASHTRA_DISTRICTS.length})</option>
+                  <option value="all">All Districts ({MAHARASHTRA_DISTRICTS.length})</option>
                   {MAHARASHTRA_DISTRICTS.map((d) => (
                     <option key={d} value={d}>
                       {d}
@@ -862,7 +862,7 @@ export default function SubAdminManagerPage() {
                   { key: "suspended", label: "Suspended" },
                   {
                     key: "has_cash",
-                    label: `💰 Has Cash (${cashSettlements.filter((cs) => cs.unsettledCash > 0).length})`,
+                    label: `Unsettled Cash (${cashSettlements.filter((cs) => cs.unsettledCash > 0).length})`,
                   },
                 ].map((chip) => {
                   const isActive = statusFilter === chip.key;
@@ -977,11 +977,11 @@ export default function SubAdminManagerPage() {
                               {!isRoot && (
                                 <div className="flex items-center gap-1.5 mt-1">
                                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
-                                    📍 {staff.district || "Pune"}
+                                     {staff.district || "Pune"}
                                   </span>
                                   {staff.centre && (
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
-                                      🏢 {staff.centre}
+                                       {staff.centre}
                                     </span>
                                   )}
                                 </div>
@@ -994,7 +994,7 @@ export default function SubAdminManagerPage() {
                         <td className="py-4 max-w-sm">
                           {isRoot ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold">
-                              <span>⚡</span> Full Unrestricted Permissions
+                              <span></span> Full Unrestricted Permissions
                             </span>
                           ) : staff.permissions.length === 0 ? (
                             <span className="text-slate-400 italic text-[11px]">No permissions assigned</span>
@@ -1022,7 +1022,7 @@ export default function SubAdminManagerPage() {
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                              ⚡ Direct Mode
+                              Direct Mode
                             </span>
                           )}
                         </td>
@@ -1034,7 +1034,7 @@ export default function SubAdminManagerPage() {
                           ) : unsettledCash > 0 ? (
                             <div>
                               <span className="font-extrabold text-amber-950 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full text-[10px]">
-                                💰 ₹{unsettledCash.toLocaleString("en-IN")}
+                                 ₹{unsettledCash.toLocaleString("en-IN")}
                               </span>
                               <button
                                 type="button"
@@ -1046,7 +1046,7 @@ export default function SubAdminManagerPage() {
                             </div>
                           ) : (
                             <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                              ✅ Settled
+                              Settled
                             </span>
                           )}
                         </td>
@@ -1123,7 +1123,7 @@ export default function SubAdminManagerPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">📜</span>
+                  <span className="text-xl"></span>
                   <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     System Audit Trail (`audit_log`)
                   </h2>
@@ -1260,11 +1260,11 @@ export default function SubAdminManagerPage() {
           {/* CREDENTIALS GENERATED MODAL (SHOWN ONCE ON CREATE) */}
           {/* ========================================================= */}
           {createdCredentials && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+            <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 animate-fadeIn">
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#D0E2FF] dark:border-slate-800 max-w-lg w-full p-6 md:p-8 shadow-2xl space-y-5">
                 <div className="flex items-center gap-3 pb-3 border-b border-[#E4E8F8] dark:border-slate-800">
                   <div className="w-12 h-12 rounded-2xl bg-[#EEF4FF] text-[#0B57D0] flex items-center justify-center text-2xl font-bold">
-                    🔑
+                    
                   </div>
                   <div>
                     <h3 className="text-lg font-extrabold text-[#0E1B3D] dark:text-white font-heading">
@@ -1308,7 +1308,7 @@ export default function SubAdminManagerPage() {
 
                 {/* Security Warning Alert */}
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
-                  <span className="text-sm">⚠️</span>
+                  <span className="text-sm"></span>
                   <p className="text-[11px] leading-relaxed">
                     The staff member will be prompted to set a permanent private password on their first login via SMS OTP verification.
                   </p>
@@ -1319,7 +1319,7 @@ export default function SubAdminManagerPage() {
                     onClick={handleCopyCredentials}
                     className="px-4 py-2 bg-[#EEF4FF] hover:bg-[#DDEBFF] text-[#0B57D0] rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-[#D0E2FF]"
                   >
-                    <span>{copiedNotification ? "✅ Copied!" : "📋 Copy All Credentials"}</span>
+                    <span>{copiedNotification ? "Copied!" : "Copy All Credentials"}</span>
                   </button>
 
                   <button
@@ -1337,10 +1337,10 @@ export default function SubAdminManagerPage() {
           {/* DELETE CONFIRMATION MODAL (ADMIN ONLY) */}
           {/* ========================================================= */}
           {deleteModalStaff && (
-            <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 max-w-md w-full p-6 shadow-2xl space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold">
-                  🗑️
+                  
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-[#0E1B3D] dark:text-white">

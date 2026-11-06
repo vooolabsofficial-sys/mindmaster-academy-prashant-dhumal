@@ -106,8 +106,8 @@ export default function StudentNotificationsPage() {
             { key: "all", label: `All Alerts (${notifications.length})` },
             { key: "unread", label: `Unread (${unreadCount})` },
             { key: "renewal", label: "⏳ Expiring & Renewals" },
-            { key: "reminder", label: "🧠 Study Routine" },
-            { key: "announcement", label: "📢 Announcements" },
+            { key: "reminder", label: " Study Routine" },
+            { key: "announcement", label: " Announcements" },
           ].map((item) => {
             const isActive = filter === item.key;
             return (
@@ -163,7 +163,7 @@ export default function StudentNotificationsPage() {
                             : "bg-emerald-100 text-emerald-800"
                         }`}
                       >
-                        {isRenewal ? "⏳" : notif.type === "reminder" ? "🧠" : "📢"}
+                        {isRenewal ? "⏳" : notif.type === "reminder" ? "" : ""}
                       </div>
 
                       <div className="space-y-1">
@@ -191,7 +191,7 @@ export default function StudentNotificationsPage() {
                           <div className="mt-3 p-3.5 bg-white border border-purple-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                             <div className="flex items-center gap-2">
                               <span className="w-7 h-7 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold">
-                                🏷️
+                                ️
                               </span>
                               <div>
                                 <p className="text-[11px] font-bold text-[#0E1B3D]">

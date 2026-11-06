@@ -141,7 +141,7 @@ export default function SidebarNav() {
 
       {/* Backdrop Scrim on Rail Hover */}
       <div 
-        className="hidden lg:block fixed inset-0 bg-slate-900/20 dark:bg-black/50 backdrop-blur-xs z-40 pointer-events-none opacity-0 group-hover/rail:opacity-100 transition-opacity duration-300"
+        className="hidden lg:block fixed inset-0 bg-slate-900/20 dark:bg-black/50 z-40 pointer-events-none opacity-0 group-hover/rail:opacity-100 transition-opacity duration-300"
         aria-hidden="true"
       />
     </>

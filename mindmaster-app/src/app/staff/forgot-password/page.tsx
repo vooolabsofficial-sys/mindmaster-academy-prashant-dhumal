@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-[#F5F7FF] flex flex-col justify-between items-center p-4">
       <div className="w-full max-w-md pt-8 text-center">
         <div className="w-12 h-12 mx-auto rounded-2xl bg-[#0B57D0] flex items-center justify-center text-white text-2xl shadow-md mb-3">
-          📲
+          
         </div>
         <h1 className="text-2xl font-extrabold text-[#0E1B3D] font-heading">
           Password Recovery
@@ -122,13 +122,13 @@ export default function ForgotPasswordPage() {
 
         {error && (
           <div className="mb-4 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
-            <span>⚠️</span> {error}
+            <span>️</span> {error}
           </div>
         )}
 
         {success && (
           <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2 font-medium">
-            <span>✅</span> {success}
+            <span></span> {success}
           </div>
         )}
 

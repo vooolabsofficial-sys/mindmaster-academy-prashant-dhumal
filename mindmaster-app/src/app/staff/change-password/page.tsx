@@ -90,7 +90,7 @@ export default function StaffChangePasswordPage() {
     <div className="min-h-screen bg-[#F5F7FF] flex flex-col justify-between items-center p-4">
       <div className="w-full max-w-md pt-8 text-center">
         <div className="w-12 h-12 mx-auto rounded-2xl bg-[#095ABA] flex items-center justify-center text-white text-2xl shadow-md mb-3">
-          🔑
+          
         </div>
         <h1 className="text-2xl font-extrabold text-[#0E1B3D] font-heading">
           Security Verification
@@ -103,7 +103,7 @@ export default function StaffChangePasswordPage() {
       <div className="w-full max-w-md bg-white border border-[#E4E8F8] rounded-3xl p-8 shadow-sm my-8">
         <div className="mb-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold mb-2">
-            <span>🔒</span> Mandatory First-Time Reset
+            <span></span> Mandatory First-Time Reset
           </div>
           <h2 className="text-xl font-bold text-[#0E1B3D]">
             Set Personal Secure Password
@@ -115,13 +115,13 @@ export default function StaffChangePasswordPage() {
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
-            <span>⚠️</span> {error}
+            <span>️</span> {error}
           </div>
         )}
 
         {success && (
           <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-xl flex items-center gap-2">
-            <span>✅</span> Password securely updated with Argon2! Entering workspace...
+            <span></span> Password securely updated with Argon2! Entering workspace...
           </div>
         )}
 
@@ -188,25 +188,25 @@ export default function StaffChangePasswordPage() {
               Argon2 Password Standards:
             </p>
             <div className="flex items-center gap-2 text-[11px]">
-              <span>{hasLength ? "✅" : "⚪"}</span>
+              <span>{hasLength ? "" : ""}</span>
               <span className={hasLength ? "text-emerald-700 font-medium" : "text-[#5A6478]"}>
                 Minimum 8 characters
               </span>
             </div>
             <div className="flex items-center gap-2 text-[11px]">
-              <span>{hasNumber ? "✅" : "⚪"}</span>
+              <span>{hasNumber ? "" : ""}</span>
               <span className={hasNumber ? "text-emerald-700 font-medium" : "text-[#5A6478]"}>
                 At least 1 number (0-9)
               </span>
             </div>
             <div className="flex items-center gap-2 text-[11px]">
-              <span>{hasSpecial ? "✅" : "⚪"}</span>
+              <span>{hasSpecial ? "" : ""}</span>
               <span className={hasSpecial ? "text-emerald-700 font-medium" : "text-[#5A6478]"}>
                 At least 1 special character (!@#$...)
               </span>
             </div>
             <div className="flex items-center gap-2 text-[11px]">
-              <span>{passwordsMatch ? "✅" : "⚪"}</span>
+              <span>{passwordsMatch ? "" : ""}</span>
               <span className={passwordsMatch ? "text-emerald-700 font-medium" : "text-[#5A6478]"}>
                 Both passwords match exactly
               </span>

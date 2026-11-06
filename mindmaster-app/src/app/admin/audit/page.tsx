@@ -19,6 +19,7 @@ import {
   BookOpen,
   ShieldCheck,
   AlertTriangle,
+  ArrowLeft,
 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 
@@ -173,7 +174,129 @@ export default function AuditLogPage() {
   return (
     <PermissionGuard adminOnly={true}>
       <AdminShell>
-        <div className="space-y-6">
+        {selectedLog ? (
+          /* INLINE FORENSIC EVENT INSPECTOR WORKSPACE */
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Header Card */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-[#E4E8F8] dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedLog(null)}
+                  className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl transition cursor-pointer"
+                  title="Back to Audit Log List"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#0B57D0] dark:text-blue-400 font-mono text-xs font-black">
+                      EVENT #{selectedLog.id}
+                    </span>
+                    <span className="text-xs text-[#5A6478] dark:text-slate-400">• {selectedLog.recorded_at_ist || selectedLog.timestamp}</span>
+                  </div>
+                  <h1 className="text-2xl font-black text-[#0E1B3D] dark:text-white font-heading">
+                    Forensic Event Inspector
+                  </h1>
+                  <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
+                    Operator: <span className="font-bold text-[#0E1B3D] dark:text-white">{selectedLog.staffName}</span> ({selectedLog.staffRole}) • Action: <span className="font-mono font-bold text-[#0B57D0]">{selectedLog.action}</span>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedLog(null)}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition cursor-pointer"
+              >
+                ← Back to Logs List
+              </button>
+            </div>
+
+            {/* Inspector Content Card */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6">
+              {/* Core Attributes */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs bg-[#F5F7FF] dark:bg-slate-800/70 p-5 rounded-2xl">
+                <div>
+                  <p className="text-[#8A94A6]">Exact IST Timestamp</p>
+                  <p className="font-bold text-[#0E1B3D] dark:text-white font-mono mt-0.5">{selectedLog.recorded_at_ist || selectedLog.timestamp}</p>
+                </div>
+                <div>
+                  <p className="text-[#8A94A6]">Action Key</p>
+                  <p className="font-bold text-[#0B57D0] font-mono mt-0.5">{selectedLog.action}</p>
+                </div>
+                <div>
+                  <p className="text-[#8A94A6]">Operator</p>
+                  <p className="font-bold text-[#0E1B3D] dark:text-white mt-0.5">{selectedLog.staffName} ({selectedLog.staffId})</p>
+                </div>
+                <div>
+                  <p className="text-[#8A94A6]">Operator Role</p>
+                  <p className="font-bold uppercase text-[#0E1B3D] dark:text-white mt-0.5">{selectedLog.staffRole}</p>
+                </div>
+                {selectedLog.targetStudentPhone && (
+                  <div>
+                    <p className="text-[#8A94A6]">Target Student Phone</p>
+                    <p className="font-mono font-bold text-[#0E1B3D] dark:text-white mt-0.5">{selectedLog.targetStudentPhone}</p>
+                  </div>
+                )}
+                {selectedLog.targetStudentName && (
+                  <div>
+                    <p className="text-[#8A94A6]">Target Student Name</p>
+                    <p className="font-bold text-[#0E1B3D] dark:text-white mt-0.5">{selectedLog.targetStudentName}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Before vs After Diff Section */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold uppercase text-[#8A94A6] tracking-wider">
+                  Before → After Diff Tracking
+                </h3>
+
+                {selectedLog.diff ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-rose-50/70 border border-rose-200 dark:border-rose-900/50 p-4 rounded-2xl text-xs">
+                      <p className="font-bold text-rose-800 dark:text-rose-400 mb-2">Previous Value (Before)</p>
+                      <pre className="font-mono text-[11px] text-rose-950 dark:text-rose-200 overflow-x-auto whitespace-pre-wrap">
+                        {JSON.stringify(selectedLog.diff.previous_value, null, 2) || "None (Created)"}
+                      </pre>
+                    </div>
+
+                    <div className="bg-emerald-50/70 border border-emerald-200 dark:border-emerald-900/50 p-4 rounded-2xl text-xs">
+                      <p className="font-bold text-emerald-800 dark:text-emerald-400 mb-2">New Value (After)</p>
+                      <pre className="font-mono text-[11px] text-emerald-950 dark:text-emerald-200 overflow-x-auto whitespace-pre-wrap">
+                        {JSON.stringify(selectedLog.diff.new_value, null, 2) || "None"}
+                      </pre>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 p-4 rounded-2xl text-xs">
+                    <p className="font-semibold text-[#0E1B3D] dark:text-white mb-1">Mutation Details</p>
+                    <pre className="font-mono text-[11px] text-[#5A6478] dark:text-slate-300 overflow-x-auto whitespace-pre-wrap">
+                      {selectedLog.details}
+                    </pre>
+                  </div>
+                )}
+              </div>
+
+              {/* Device & Security Meta */}
+              {selectedLog.meta && (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold uppercase text-[#8A94A6] tracking-wider">
+                    Network & Device Telemetry
+                  </h3>
+                  <div className="bg-[#F5F7FF] dark:bg-slate-800 p-4 rounded-2xl text-xs font-mono text-[#5A6478] dark:text-slate-300 space-y-1.5 border border-[#E4E8F8] dark:border-slate-700">
+                    <p>IP Address: {selectedLog.meta.ip || "127.0.0.1"}</p>
+                    <p>User Agent: {selectedLog.meta.userAgent || "MindMaster Staff Agent"}</p>
+                    <p>Method: {selectedLog.meta.method || "MUTATION"}</p>
+                    <p>Path: {selectedLog.meta.path || selectedLog.entityType}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
           {/* Header Banner */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
             <div>
@@ -471,107 +594,7 @@ export default function AuditLogPage() {
               </div>
             )}
           </div>
-
-          {/* Slide-over Before / After Forensic Drawer */}
-          {selectedLog && (
-            <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40 backdrop-blur-sm animate-fade-in">
-              <div className="w-full max-w-xl h-full bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-y-auto space-y-6 border-l dark:border-slate-800">
-                <div className="flex items-center justify-between border-b border-[#E4E8F8] dark:border-slate-800 pb-4">
-                  <div>
-                    <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white">Forensic Event Details</h2>
-                    <p className="text-xs text-[#5A6478] font-mono">Event ID: {selectedLog.id}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedLog(null)}
-                    className="p-1.5 text-[#5A6478] hover:bg-[#F5F7FF] rounded-full cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Core Attributes */}
-                <div className="grid grid-cols-2 gap-3 text-xs bg-[#F5F7FF] dark:bg-slate-800/70 p-4 rounded-2xl">
-                  <div>
-                    <p className="text-[#8A94A6]">Exact IST Timestamp</p>
-                    <p className="font-bold text-[#0E1B3D] font-mono">{selectedLog.recorded_at_ist || selectedLog.timestamp}</p>
-                  </div>
-                  <div>
-                    <p className="text-[#8A94A6]">Action Key</p>
-                    <p className="font-bold text-[#0B57D0] font-mono">{selectedLog.action}</p>
-                  </div>
-                  <div>
-                    <p className="text-[#8A94A6]">Operator</p>
-                    <p className="font-bold text-[#0E1B3D] dark:text-white">{selectedLog.staffName} ({selectedLog.staffId})</p>
-                  </div>
-                  <div>
-                    <p className="text-[#8A94A6]">Operator Role</p>
-                    <p className="font-bold uppercase text-[#0E1B3D] dark:text-white">{selectedLog.staffRole}</p>
-                  </div>
-                  {selectedLog.targetStudentPhone && (
-                    <div>
-                      <p className="text-[#8A94A6]">Target Student Phone</p>
-                      <p className="font-mono font-bold text-[#0E1B3D] dark:text-white">{selectedLog.targetStudentPhone}</p>
-                    </div>
-                  )}
-                  {selectedLog.targetStudentName && (
-                    <div>
-                      <p className="text-[#8A94A6]">Target Student Name</p>
-                      <p className="font-bold text-[#0E1B3D] dark:text-white">{selectedLog.targetStudentName}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Before vs After Diff Section */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-bold uppercase text-[#8A94A6] tracking-wider">
-                    Before → After Diff Tracking
-                  </h3>
-
-                  {selectedLog.diff ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="bg-rose-50/70 border border-rose-200 p-3 rounded-xl text-xs">
-                        <p className="font-bold text-rose-800 mb-1">Previous Value (Before)</p>
-                        <pre className="font-mono text-[11px] text-rose-950 overflow-x-auto whitespace-pre-wrap">
-                          {JSON.stringify(selectedLog.diff.previous_value, null, 2) || "None (Created)"}
-                        </pre>
-                      </div>
-
-                      <div className="bg-emerald-50/70 border border-emerald-200 p-3 rounded-xl text-xs">
-                        <p className="font-bold text-emerald-800 mb-1">New Value (After)</p>
-                        <pre className="font-mono text-[11px] text-emerald-950 overflow-x-auto whitespace-pre-wrap">
-                          {JSON.stringify(selectedLog.diff.new_value, null, 2) || "None"}
-                        </pre>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-[#F5F7FF] dark:bg-slate-800 border border-[#E4E8F8] dark:border-slate-700 p-3 rounded-xl text-xs">
-                      <p className="font-semibold text-[#0E1B3D] mb-1">Mutation Details</p>
-                      <pre className="font-mono text-[11px] text-[#5A6478] overflow-x-auto whitespace-pre-wrap">
-                        {selectedLog.details}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-
-                {/* Device & Security Meta */}
-                {selectedLog.meta && (
-                  <div className="space-y-2">
-                    <h3 className="text-xs font-bold uppercase text-[#8A94A6] tracking-wider">
-                      Network & Device Telemetry
-                    </h3>
-                    <div className="bg-[#F5F7FF] dark:bg-slate-800 p-3 rounded-xl text-xs font-mono text-[#5A6478] dark:text-slate-300 space-y-1">
-                      <p>IP Address: {selectedLog.meta.ip || "127.0.0.1"}</p>
-                      <p>User Agent: {selectedLog.meta.userAgent || "MindMaster Staff Agent"}</p>
-                      <p>Method: {selectedLog.meta.method || "MUTATION"}</p>
-                      <p>Path: {selectedLog.meta.path || selectedLog.entityType}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </AdminShell>
     </PermissionGuard>
   );

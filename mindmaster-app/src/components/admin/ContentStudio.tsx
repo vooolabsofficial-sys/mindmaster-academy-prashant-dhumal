@@ -449,8 +449,8 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
         setFetchedPlaylistVideos(itemsWithSelection);
         setYtFetchSuccess(
           isMarathi
-            ? `✓ ${data.items.length} व्हिडिओ सापडले! खालील लेक्चर्स तपासा.`
-            : `✓ Found ${data.items.length} videos from YouTube Playlist!`
+            ? `${data.items.length} व्हिडिओ सापडले! खालील लेक्चर्स तपासा.`
+            : `Found ${data.items.length} videos from YouTube Playlist!`
         );
       } else if (data.type === "video") {
         if (!formTitle) setFormTitle(data.title);
@@ -472,8 +472,8 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
 
         setYtFetchSuccess(
           isMarathi
-            ? `✓ YouTube व्हिडिओ सापडला: "${data.title}"`
-            : `✓ Fetched video: "${data.title}"`
+            ? `YouTube व्हिडिओ सापडला: "${data.title}"`
+            : `Fetched video: "${data.title}"`
         );
       }
     } catch (err: any) {
@@ -566,8 +566,8 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
 
       toast.success(
         isMarathi
-          ? `✓ कोर्स "${newCourse.title}" यशस्वीपणे सेव्ह केला!`
-          : `✓ Course "${newCourse.title}" saved successfully!`
+          ? `कोर्स "${newCourse.title}" यशस्वीपणे सेव्ह केला!`
+          : `Course "${newCourse.title}" saved successfully!`
       );
       setStudioMode("list");
       loadData();
@@ -609,8 +609,8 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
         }
         toast.success(
           isMarathi
-            ? `✓ व्हिडिओ माहिती प्राप्त झाली: "${item.title}"`
-            : `✓ Video details fetched: "${item.title}"`
+            ? `व्हिडिओ माहिती प्राप्त झाली: "${item.title}"`
+            : `Video details fetched: "${item.title}"`
         );
       }
     } catch (err: any) {
@@ -667,8 +667,8 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
 
       toast.success(
         isMarathi
-          ? `✓ व्हिडिओ "${lessonRow.title}" यशस्वीपणे सेव्ह केला!`
-          : `✓ Video "${lessonRow.title}" saved successfully!`
+          ? `व्हिडिओ "${lessonRow.title}" यशस्वीपणे सेव्ह केला!`
+          : `Video "${lessonRow.title}" saved successfully!`
       );
       setStudioMode("list");
       loadData();
@@ -724,8 +724,8 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
 
       toast.success(
         isMarathi
-          ? `🗑️ "${deleteModalItem.title}" रीसायकल बिनमध्ये हलवले.`
-          : `🗑️ "${deleteModalItem.title}" moved to Recycle Bin.`
+          ? `"${deleteModalItem.title}" रीसायकल बिनमध्ये हलवले.`
+          : `"${deleteModalItem.title}" moved to Recycle Bin.`
       );
 
       setDeleteModalItem(null);
@@ -789,8 +789,8 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
 
         toast.success(
           isMarathi
-            ? `✓ प्लेलिस्ट सापडली! ${mapped.length} व्हिडिओ प्राप्त झाले.`
-            : `✓ Playlist found! Retrieved ${mapped.length} lessons.`
+            ? `प्लेलिस्ट सापडली! ${mapped.length} व्हिडिओ प्राप्त झाले.`
+            : `Playlist found! Retrieved ${mapped.length} lessons.`
         );
       } else {
         throw new Error(isMarathi ? "या प्लेलिस्टमध्ये कोणतेही व्हिडिओ सापडले नाहीत." : "No videos found in this playlist.");
@@ -825,8 +825,8 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
 
     toast.success(
       isMarathi
-        ? `✓ ${parsed.length} व्हिडिओ यशस्वीपणे एक्सट्रॅक्ट केले!`
-        : `✓ Extracted ${parsed.length} lessons from text!`
+        ? `${parsed.length} व्हिडिओ यशस्वीपणे एक्सट्रॅक्ट केले!`
+        : `Extracted ${parsed.length} lessons from text!`
     );
   };
 
@@ -950,8 +950,8 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
 
       toast.success(
         isMarathi
-          ? `✓ अभिनंदन! ${selected.length} लेक्चर्स "${targetCourseTitle}" मध्ये यशस्वीपणे सिंक झाले!`
-          : `✓ Success! Synced ${selected.length} lessons into "${targetCourseTitle}"!`
+          ? `अभिनंदन! ${selected.length} लेक्चर्स "${targetCourseTitle}" मध्ये यशस्वीपणे सिंक झाले!`
+          : `Success! Synced ${selected.length} lessons into "${targetCourseTitle}"!`
       );
 
       setSyncFetchedVideos([]);
@@ -1087,7 +1087,7 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
                 className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isSavingCourse ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                <span>{isMarathi ? "💾 कोर्स सेव्ह करा" : "Save Course"}</span>
+                <span>{isMarathi ? "कोर्स सेव्ह करा" : "Save Course"}</span>
               </button>
             </div>
           </div>
@@ -1306,9 +1306,9 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { key: "live", label: isMarathi ? "🟢 Public" : "🟢 Published" },
-                      { key: "unlisted", label: isMarathi ? "⚪ Unlisted" : "⚪ Unlisted" },
-                      { key: "draft", label: isMarathi ? "🟡 Draft" : "🟡 Draft" },
+                      { key: "live", label: isMarathi ? "Public" : "Published" },
+                      { key: "unlisted", label: isMarathi ? "Unlisted" : "Unlisted" },
+                      { key: "draft", label: isMarathi ? "Draft" : "Draft" },
                     ].map((status) => (
                       <button
                         key={status.key}
@@ -2221,7 +2221,7 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
             <div className="p-5 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white shadow-md relative overflow-hidden">
               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1 max-w-2xl">
-                  <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-xs text-[11px] font-bold tracking-wide">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/20 text-[11px] font-bold tracking-wide">
                     <YoutubeIcon className="w-3.5 h-3.5 fill-current" />
                     <span>YouTube Studio Content Sync Hub</span>
                   </div>
@@ -2236,11 +2236,11 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                  <div className="bg-black/20 backdrop-blur-xs rounded-xl px-4 py-2.5 text-center border border-white/10">
+                  <div className="bg-black/20 rounded-xl px-4 py-2.5 text-center border border-white/10">
                     <div className="text-lg font-black">{courses.length}</div>
                     <div className="text-[10px] text-white/80 font-bold uppercase">{isMarathi ? "उपलब्ध कोर्सेस" : "Course Batches"}</div>
                   </div>
-                  <div className="bg-black/20 backdrop-blur-xs rounded-xl px-4 py-2.5 text-center border border-white/10">
+                  <div className="bg-black/20 rounded-xl px-4 py-2.5 text-center border border-white/10">
                     <div className="text-lg font-black">{videos.length}</div>
                     <div className="text-[10px] text-white/80 font-bold uppercase">{isMarathi ? "एकूण व्हिडिओ" : "Synced Videos"}</div>
                   </div>
@@ -2528,8 +2528,8 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
                         <CheckCircle2 className="w-4 h-4" />
                         <span>
                           {isMarathi
-                            ? `✓ सिंक पूर्ण करा (${syncFetchedVideos.filter((v) => v.selected).length} लेक्चर्स जोडा)`
-                            : `✓ Ingest & Sync ${syncFetchedVideos.filter((v) => v.selected).length} Lessons`}
+                            ? `सिंक पूर्ण करा (${syncFetchedVideos.filter((v) => v.selected).length} लेक्चर्स जोडा)`
+                            : `Ingest & Sync ${syncFetchedVideos.filter((v) => v.selected).length} Lessons`}
                         </span>
                       </>
                     )}
@@ -2711,7 +2711,7 @@ function ContentStudioContent({ initialTab = "courses" }: { initialTab?: "course
 
         {/* Delete Confirmation Modal */}
         {deleteModalItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 font-sans">
             <div className="bg-white dark:bg-[#1E293B] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white space-y-4">
               <h3 className="font-extrabold text-base flex items-center gap-2 text-red-600">
                 <Trash2 className="w-5 h-5" />

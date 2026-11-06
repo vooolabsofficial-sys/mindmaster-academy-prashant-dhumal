@@ -291,7 +291,7 @@ export default function PiracyShield({
           </h3>
 
           <p className="mt-2 max-w-md text-xs sm:text-sm text-slate-300 leading-relaxed">
-            🔒 Screen recording and screenshots are not permitted. All MindMaster Academy course materials are copyright protected.
+             Screen recording and screenshots are not permitted. All MindMaster Academy course materials are copyright protected.
           </p>
 
           <p className="mt-1 text-[11px] text-slate-400">

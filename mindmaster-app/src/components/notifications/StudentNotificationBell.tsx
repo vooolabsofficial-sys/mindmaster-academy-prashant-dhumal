@@ -125,7 +125,7 @@ export default function StudentNotificationBell() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="text-sm">
-                          {isRenewal ? "⏳" : notif.type === "reminder" ? "🧠" : "📢"}
+                          {isRenewal ? "⏳" : notif.type === "reminder" ? "" : ""}
                         </span>
                         <h4 className="text-xs font-bold text-[#0E1B3D] dark:text-slate-100 leading-tight line-clamp-1">
                           {notif.title}

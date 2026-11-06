@@ -79,8 +79,8 @@ export default function CategoryManagerModal({
     onCategoriesChanged?.();
     setToastMessage(
       isMarathi
-        ? `✓ "${editLabel}" प्रवर्ग यशस्वीपणे अद्ययावत केला.`
-        : `✓ Category "${editLabel}" updated successfully.`
+        ? `"${editLabel}" प्रवर्ग यशस्वीपणे अद्ययावत केला.`
+        : `Category "${editLabel}" updated successfully.`
     );
     setTimeout(() => setToastMessage(null), 4000);
   };
@@ -105,8 +105,8 @@ export default function CategoryManagerModal({
     onCategoriesChanged?.();
     setToastMessage(
       isMarathi
-        ? `🎉 नवीन प्रवर्ग "${newLabel}" जोडला गेला!`
-        : `🎉 New category "${newLabel}" created successfully!`
+        ? `नवीन प्रवर्ग "${newLabel}" जोडला गेला!`
+        : `New category "${newLabel}" created successfully!`
     );
     setTimeout(() => setToastMessage(null), 4000);
   };
@@ -119,8 +119,8 @@ export default function CategoryManagerModal({
       setLastDeletedCategory(cat);
       setToastMessage(
         isMarathi
-          ? `🗑️ "${cat.label}" हटवला आणि रीसायकल बिनमध्ये हलवला.`
-          : `🗑️ "${cat.label}" moved to Recycle Bin.`
+          ? `"${cat.label}" हटवला आणि रीसायकल बिनमध्ये हलवला.`
+          : `"${cat.label}" moved to Recycle Bin.`
       );
       setTimeout(() => {
         setLastDeletedCategory((prev) => (prev?.id === cat.id ? null : prev));
@@ -137,8 +137,8 @@ export default function CategoryManagerModal({
     onCategoriesChanged?.();
     setToastMessage(
       isMarathi
-        ? `✓ "${restoredName}" प्रवर्ग पूर्ववत पुनर्संचयित केला!`
-        : `✓ Category "${restoredName}" restored successfully!`
+        ? `"${restoredName}" प्रवर्ग पूर्ववत पुनर्संचयित केला!`
+        : `Category "${restoredName}" restored successfully!`
     );
     setTimeout(() => setToastMessage(null), 4000);
   };
@@ -150,7 +150,7 @@ export default function CategoryManagerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 font-sans">
       <div className="bg-white dark:bg-[#1E293B] rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[88vh] overflow-hidden text-slate-800 dark:text-slate-100">
         {/* Header */}
         <div className="p-6 bg-[#0E1B3D] text-white flex items-center justify-between shrink-0">
@@ -173,7 +173,7 @@ export default function CategoryManagerModal({
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center font-bold text-sm cursor-pointer"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -481,8 +481,8 @@ export default function CategoryManagerModal({
         <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
           <span className="text-[11px] text-slate-500 dark:text-slate-400">
             {isMarathi
-              ? "💡 टीप: हटवलेले प्रवर्ग रीसायकल बिनमधून कधीही पूर्ववत करता येतात."
-              : "💡 Tip: Deleted categories are kept safe in the Recycle Bin and can be restored anytime."}
+              ? " टीप: हटवलेले प्रवर्ग रीसायकल बिनमधून कधीही पूर्ववत करता येतात."
+              : "Tip: Deleted categories are kept safe in the Recycle Bin and can be restored anytime."}
           </span>
           <button
             type="button"

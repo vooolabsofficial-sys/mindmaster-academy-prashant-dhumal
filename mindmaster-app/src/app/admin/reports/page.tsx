@@ -1,5 +1,20 @@
 "use client";
 
+import {
+  Download,
+  MapPin,
+  Calendar,
+  BarChart3,
+  IndianRupee,
+  GraduationCap,
+  TrendingUp,
+  Gift,
+  Building2,
+  Users,
+  Video,
+  Crown,
+  FileSpreadsheet,
+} from "lucide-react";
 import React, { useState, useEffect, useTransition } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
@@ -259,7 +274,7 @@ export default function AdminReportsPage() {
             <div className="flex flex-wrap items-center gap-3">
               {/* District Filter Dropdown */}
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-[#5A6478]">📍 District:</span>
+                <span className="text-xs font-bold text-[#5A6478] flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-blue-600 inline" /> District:</span>
                 <select
                   value={selectedDistrict}
                   onChange={(e) => setSelectedDistrict(e.target.value)}
@@ -301,7 +316,7 @@ export default function AdminReportsPage() {
                   onClick={handleExportRevenueExcel}
                   className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-full shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95 ml-auto sm:ml-0"
                 >
-                  <span>📊</span>
+                  <BarChart3 className="w-4 h-4 inline" />
                   <span>Export Excel (.xlsx)</span>
                 </button>
               </div>
@@ -311,7 +326,7 @@ export default function AdminReportsPage() {
           {/* Custom Date Range Picker Bar (Shown when "custom" is active) */}
           {dateRange === "custom" && (
             <div className="flex flex-wrap items-center gap-3 bg-[#EEF4FF] dark:bg-blue-950/30 border border-[#D0E2FF] dark:border-blue-900/50 p-4 rounded-2xl animate-in fade-in duration-200">
-              <span className="text-xs font-bold text-[#0B57D0]">📅 Custom Window:</span>
+              <span className="text-xs font-bold text-[#0B57D0] flex items-center gap-1"><Calendar className="w-3.5 h-3.5 inline" /> Custom Window:</span>
               <div className="flex items-center gap-2 text-xs">
                 <label className="text-[#5A6478] font-bold">From:</label>
                 <input
@@ -364,7 +379,7 @@ export default function AdminReportsPage() {
             <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between text-[#8A94A6]">
                 <span className="text-[11px] font-bold uppercase tracking-wider">Gross Paid Revenue</span>
-                <span>💰</span>
+                <IndianRupee className="w-4 h-4 inline" />
               </div>
               <p className="text-2xl font-black text-[#0E1B3D] dark:text-white font-heading mt-1">
                 ₹{data.kpis.totalGrossSalesRupees.toLocaleString("en-IN")}
@@ -377,7 +392,7 @@ export default function AdminReportsPage() {
             <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between text-[#8A94A6]">
                 <span className="text-[11px] font-bold uppercase tracking-wider">Paid Enrollments</span>
-                <span>🎓</span>
+                <GraduationCap className="w-4 h-4 inline" />
               </div>
               <p className="text-2xl font-black text-[#0B57D0] font-heading mt-1">
                 {data.kpis.totalPaidEnrollments.toLocaleString("en-IN")}
@@ -390,7 +405,7 @@ export default function AdminReportsPage() {
             <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between text-[#8A94A6]">
                 <span className="text-[11px] font-bold uppercase tracking-wider">Video Completion Ratio</span>
-                <span>📈</span>
+                <TrendingUp className="w-4 h-4 inline" />
               </div>
               <p className="text-2xl font-black text-purple-700 font-heading mt-1">
                 {data.kpis.avgCompletionRatePct}%
@@ -403,7 +418,7 @@ export default function AdminReportsPage() {
             <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between text-[#8A94A6]">
                 <span className="text-[11px] font-bold uppercase tracking-wider">Subsidized Grant Value</span>
-                <span>🎁</span>
+                <Gift className="w-4 h-4 inline" />
               </div>
               <p className="text-2xl font-black text-amber-600 font-heading mt-1">
                 ₹{data.kpis.totalWaivedRevenueRupees.toLocaleString("en-IN")}
@@ -421,7 +436,7 @@ export default function AdminReportsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">🗺️</span>
+                  <MapPin className="w-5 h-5 text-blue-600 inline" />
                   <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Students by District (Profiles Group By)
                   </h2>
@@ -435,7 +450,7 @@ export default function AdminReportsPage() {
                 onClick={() => handleExportCardCsv("students-by-district")}
                 className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
-                <span>📥</span> Export District CSV
+                <Download className="w-4 h-4 inline" /> Export District CSV
               </button>
             </div>
 
@@ -469,7 +484,7 @@ export default function AdminReportsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">💳</span>
+                  <IndianRupee className="w-5 h-5 text-emerald-600 inline" />
                   <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Course Sales (Purchases: Source Payment)
                   </h2>
@@ -483,7 +498,7 @@ export default function AdminReportsPage() {
                 onClick={() => handleExportCardCsv("course-sales")}
                 className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
-                <span>📥</span> Export Sales CSV
+                <Download className="w-4 h-4 inline" /> Export Sales CSV
               </button>
             </div>
 
@@ -528,7 +543,7 @@ export default function AdminReportsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">📊</span>
+                  <BarChart3 className="w-5 h-5 text-blue-600 inline" />
                   <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Video Completion (Progress Completed Ratio per Course)
                   </h2>
@@ -542,7 +557,7 @@ export default function AdminReportsPage() {
                 onClick={() => handleExportCardCsv("video-completion")}
                 className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
-                <span>📥</span> Export Completion CSV
+                <Download className="w-4 h-4 inline" /> Export Completion CSV
               </button>
             </div>
 
@@ -594,7 +609,7 @@ export default function AdminReportsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">🎟️</span>
+                  <Gift className="w-5 h-5 text-indigo-600 inline" />
                   <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Coupon Performance (Redemptions Joined to Purchases)
                   </h2>
@@ -608,7 +623,7 @@ export default function AdminReportsPage() {
                 onClick={() => handleExportCardCsv("coupon-performance")}
                 className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
-                <span>📥</span> Export Coupon CSV
+                <Download className="w-4 h-4 inline" /> Export Coupon CSV
               </button>
             </div>
 
@@ -696,7 +711,7 @@ export default function AdminReportsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">🎁</span>
+                  <Gift className="w-5 h-5 text-amber-600 inline" />
                   <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Free Grants Impact (Grants, Students Covered, Waived ₹)
                   </h2>
@@ -710,7 +725,7 @@ export default function AdminReportsPage() {
                 onClick={() => handleExportCardCsv("free-grants-impact")}
                 className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
-                <span>📥</span> Export Grants CSV
+                <Download className="w-4 h-4 inline" /> Export Grants CSV
               </button>
             </div>
 
@@ -762,19 +777,19 @@ export default function AdminReportsPage() {
               <span className="text-xs font-bold text-[#5A6478]">Coverage Breakdown by Scope:</span>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-[#EEF4FF] text-[#0B57D0] border border-[#D0E2FF]">
-                  👤 Single Student: {data.freeGrantsImpact.byScope.student}
+                  Single Student: {data.freeGrantsImpact.byScope.student}
                 </span>
                 <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  🗺️ District-Wide: {data.freeGrantsImpact.byScope.district}
+                  District-Wide: {data.freeGrantsImpact.byScope.district}
                 </span>
                 <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200">
-                  🏫 School-Wide: {data.freeGrantsImpact.byScope.school}
+                  School-Wide: {data.freeGrantsImpact.byScope.school}
                 </span>
                 <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                  📍 Taluka-Wide: {data.freeGrantsImpact.byScope.taluka}
+                  Taluka-Wide: {data.freeGrantsImpact.byScope.taluka}
                 </span>
                 <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
-                  🌐 All Students: {data.freeGrantsImpact.byScope.all_students}
+                  All Students: {data.freeGrantsImpact.byScope.all_students}
                 </span>
               </div>
             </div>
@@ -787,7 +802,7 @@ export default function AdminReportsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">📈</span>
+                  <TrendingUp className="w-5 h-5 text-emerald-600 inline" />
                   <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                     Growth Line (New Profiles Registered per Week)
                   </h2>
@@ -801,7 +816,7 @@ export default function AdminReportsPage() {
                 onClick={() => handleExportCardCsv("growth-line")}
                 className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
-                <span>📥</span> Export Growth CSV
+                <Download className="w-4 h-4 inline" /> Export Growth CSV
               </button>
             </div>
 
@@ -840,12 +855,12 @@ export default function AdminReportsPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E4E8F8] dark:border-slate-800">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">🎬</span>
+                    <Video className="w-5 h-5 text-purple-600 inline" />
                     <h2 className="text-lg font-bold text-[#0E1B3D] dark:text-white font-heading">
                       Watch Statistics (Views & Avg Watched % per Video from Progress)
                     </h2>
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                      👑 Main Admin Exclusive
+                      Main Admin Exclusive
                     </span>
                   </div>
                   <p className="text-xs text-[#5A6478] dark:text-slate-400 mt-0.5">
@@ -857,7 +872,7 @@ export default function AdminReportsPage() {
                   onClick={() => handleExportCardCsv("watch-statistics")}
                   className="px-4 py-2 bg-[#F5F7FF] dark:bg-slate-800 hover:bg-[#EEF4FF] dark:hover:bg-slate-700 border border-[#E4E8F8] dark:border-slate-700 text-[#0B57D0] dark:text-blue-400 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
                 >
-                  <span>📥</span> Export Watch Stats CSV
+                  <Download className="w-4 h-4 inline" /> Export Watch Stats CSV
                 </button>
               </div>
 

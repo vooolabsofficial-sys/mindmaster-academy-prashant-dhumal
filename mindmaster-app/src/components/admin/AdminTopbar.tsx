@@ -492,7 +492,7 @@ export default function AdminTopbar() {
           role="dialog"
           aria-modal="true"
           onClick={() => setIsMobileMenuOpen(false)}
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/50  flex md:hidden animate-in fade-in duration-200"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -586,7 +586,7 @@ export default function AdminTopbar() {
 
       {/* Staff Sign Out Confirmation Modal */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-black/50  flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">

@@ -244,7 +244,7 @@ function VerifyCertificateContent() {
 
               {/* Legal Tamper Note */}
               <div className="text-[11px] text-slate-400 text-center border-t border-slate-100 pt-4">
-                🔒 Cryptographic Checksum Validated. This record is immutably stored in the MindMaster Academy Certification Ledger.
+                 Cryptographic Checksum Validated. This record is immutably stored in the MindMaster Academy Certification Ledger.
               </div>
             </div>
           </div>

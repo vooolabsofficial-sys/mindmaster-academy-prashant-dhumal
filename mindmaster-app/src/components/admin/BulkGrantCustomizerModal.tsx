@@ -303,13 +303,13 @@ export default function BulkGrantCustomizerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
       <div className="bg-white rounded-3xl border border-slate-200 w-full max-w-5xl p-5 md:p-7 shadow-2xl space-y-4 my-6 animate-fadeIn">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl border border-amber-200">
-              📋
+              
             </div>
             <div>
               <h2 className="text-lg font-extrabold text-[#0E1B3D]">
@@ -324,7 +324,7 @@ export default function BulkGrantCustomizerModal({
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold"
           >
-            ✕
+            <X className="w-4 h-4 inline" />
           </button>
         </div>
 
@@ -332,7 +332,7 @@ export default function BulkGrantCustomizerModal({
         {processResult ? (
           <div className="py-6 text-center space-y-4">
             <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 text-3xl flex items-center justify-center mx-auto border border-emerald-200 shadow-sm">
-              ✅
+              
             </div>
             <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
               Batch Activation Complete!
@@ -365,7 +365,7 @@ export default function BulkGrantCustomizerModal({
 
             {processResult.failedRows.length > 0 && (
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl max-w-lg mx-auto text-left text-xs text-rose-800">
-                <span className="font-bold">⚠️ {processResult.failedRows.length} Rows Skipped:</span>
+                <span className="font-bold"> {processResult.failedRows.length} Rows Skipped:</span>
                 <ul className="list-disc pl-5 mt-1 space-y-0.5">
                   {processResult.failedRows.map((f, i) => (
                     <li key={i}>
@@ -414,7 +414,7 @@ export default function BulkGrantCustomizerModal({
                     : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                <span>📝 Paste Lines</span>
+                <span>Paste Lines</span>
               </button>
 
               <button
@@ -426,7 +426,7 @@ export default function BulkGrantCustomizerModal({
                     : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                <span>📁 Upload CSV</span>
+                <span>Upload CSV</span>
               </button>
             </div>
 
@@ -462,7 +462,7 @@ export default function BulkGrantCustomizerModal({
             {/* TAB 2: UPLOAD CSV */}
             {activeTab === "csv" && (
               <div className="p-6 border-2 border-dashed border-slate-200 rounded-3xl text-center space-y-3">
-                <div className="text-3xl">📂</div>
+                <UploadCloud className="w-10 h-10 text-blue-600 mx-auto" />
                 <div>
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white">Upload CSV or Excel Export</h4>
                   <p className="text-xs text-slate-500 mt-0.5">
@@ -493,15 +493,15 @@ export default function BulkGrantCustomizerModal({
                         onChange={(e) => setBulkCourseId(e.target.value)}
                         className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl font-bold text-xs"
                       >
-                        <option value="all">🌟 All Courses Bundle</option>
+                        <option value="all">All Courses Bundle</option>
                         {courses.map((c) => (
                           <option key={c.id} value={c.id}>
-                            🎓 {c.title}
+                             {c.title}
                           </option>
                         ))}
                         {books.map((b) => (
                           <option key={b.id} value={b.id}>
-                            📚 {b.title}
+                             {b.title}
                           </option>
                         ))}
                       </select>
@@ -523,9 +523,9 @@ export default function BulkGrantCustomizerModal({
                         onChange={(e) => setBulkPaymentMode(e.target.value as any)}
                         className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl font-bold text-xs"
                       >
-                        <option value="cash">💵 Cash</option>
-                        <option value="upi">📱 UPI</option>
-                        {isMainAdmin && <option value="scholarship">🎓 Free (₹0)</option>}
+                        <option value="cash">Cash</option>
+                        <option value="upi">UPI</option>
+                        {isMainAdmin && <option value="scholarship">Free Waiver (₹0) (₹0)</option>}
                       </select>
 
                       <input
@@ -653,8 +653,8 @@ export default function BulkGrantCustomizerModal({
                                   onChange={(e) => updateRow(row.id, { courseId: e.target.value })}
                                   className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-[#0E1B3D]"
                                 >
-                                  <option value="all">🌟 All Courses Bundle</option>
-                                  <optgroup label="🎓 Courses">
+                                  <option value="all">All Courses Bundle</option>
+                                  <optgroup label=" Courses">
                                     {courses.map((c) => (
                                       <option key={c.id} value={c.id}>
                                         {c.code}: {c.title}
@@ -662,7 +662,7 @@ export default function BulkGrantCustomizerModal({
                                     ))}
                                   </optgroup>
                                   {books.length > 0 && (
-                                    <optgroup label="📚 Books">
+                                    <optgroup label=" Books">
                                       {books.map((b) => (
                                         <option key={b.id} value={b.id}>
                                           {b.code || "BK"}: {b.title}
@@ -703,9 +703,9 @@ export default function BulkGrantCustomizerModal({
                                   }}
                                   className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold"
                                 >
-                                  <option value="cash">💵 Cash</option>
-                                  <option value="upi">📱 UPI</option>
-                                  {isMainAdmin && <option value="scholarship">🎓 Free</option>}
+                                  <option value="cash">Cash</option>
+                                  <option value="upi">UPI</option>
+                                  {isMainAdmin && <option value="scholarship">Free Waiver (₹0)</option>}
                                 </select>
                               </td>
 
@@ -746,7 +746,7 @@ export default function BulkGrantCustomizerModal({
                                   className="text-slate-400 hover:text-rose-600 p-1 font-bold text-sm"
                                   title="Remove row"
                                 >
-                                  🗑️
+                                  <Trash2 className="w-4 h-4 inline" />
                                 </button>
                               </td>
                             </tr>
@@ -796,7 +796,7 @@ export default function BulkGrantCustomizerModal({
                         <span>
                           {isProcessing
                             ? "Activating..."
-                            : `✅ Confirm & Activate All (${rows.length} Students)`}
+                            : `Confirm & Activate All (${rows.length} Students)`}
                         </span>
                       </button>
                     </div>

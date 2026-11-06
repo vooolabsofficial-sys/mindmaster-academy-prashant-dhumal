@@ -42,7 +42,7 @@ export default function PermissionGuard({ permission, adminOnly, children }: Pro
     return (
       <div className="max-w-2xl mx-auto my-12 p-8 bg-white border border-[#E4E8F8] rounded-2xl shadow-sm text-center">
         <div className="w-16 h-16 mx-auto mb-4 bg-red-50 text-red-600 rounded-full flex items-center justify-center text-2xl font-bold">
-          🔒
+          
         </div>
         <h2 className="text-2xl font-bold text-[#0E1B3D] mb-2 font-heading">
           Main Admin Access Only
@@ -78,7 +78,7 @@ export default function PermissionGuard({ permission, adminOnly, children }: Pro
     return (
       <div className="max-w-2xl mx-auto my-12 p-8 bg-white border border-[#E4E8F8] rounded-2xl shadow-sm text-center">
         <div className="w-16 h-16 mx-auto mb-4 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center text-2xl">
-          ⚠️
+          ️
         </div>
         <h2 className="text-2xl font-bold text-[#0E1B3D] mb-2 font-heading">
           Permission Required: <code className="text-[#0B57D0]">{permission}</code>

@@ -17,7 +17,7 @@ export default function ReportsError({
     <div className="min-h-[60vh] flex items-center justify-center p-6 bg-[#F5F7FF]">
       <div className="bg-white border border-rose-200 shadow-xl rounded-3xl p-8 max-w-md w-full text-center space-y-4">
         <div className="w-14 h-14 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-2xl mx-auto">
-          📊
+          
         </div>
         <h2 className="text-lg font-bold text-[#0E1B3D]">
           Analytics Hub Error

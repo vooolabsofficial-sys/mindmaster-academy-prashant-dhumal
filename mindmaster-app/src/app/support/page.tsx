@@ -280,16 +280,16 @@ export default function StudentSupportPage() {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-sm text-slate-900">MindMaster Academy</h3>
-              <p className="text-[11px] text-blue-600 font-semibold">📌 Pinned — General support &amp; queries</p>
+              <p className="text-[11px] text-blue-600 font-semibold"> Pinned — General support &amp; queries</p>
               <div className="flex flex-wrap items-center gap-3 mt-1 text-[11px] text-slate-600 font-medium">
                 <a
                   href={`tel:${supportSettings.supportPhone.replace(/\s+/g, "")}`}
                   className="text-blue-700 font-bold hover:underline flex items-center gap-1"
                 >
-                  📞 {supportSettings.supportPhone}
+                   {supportSettings.supportPhone}
                 </a>
                 <span>•</span>
-                <span>📍 {supportSettings.centreAddress}</span>
+                <span> {supportSettings.centreAddress}</span>
               </div>
             </div>
             <span className="text-[10px] text-blue-500 font-bold px-2 py-1 bg-white rounded-full border border-blue-200">

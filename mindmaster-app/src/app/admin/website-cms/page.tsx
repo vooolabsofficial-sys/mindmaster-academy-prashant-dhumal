@@ -99,14 +99,14 @@ export default function WebsiteCmsPage() {
         const json = await res.json();
         if (json.success) {
           setCmsData(json.data);
-          showToast("✅ Website CMS changes published live successfully!");
+          showToast(" Website CMS changes published live successfully!");
           if (typeof window !== "undefined") window.dispatchEvent(new Event("mma_website_cms_updated"));
           return;
         }
       }
-      showToast("⚠️ Could not sync to server, saved locally.");
+      showToast("️ Could not sync to server, saved locally.");
     } catch {
-      showToast("⚠️ Error saving changes to server.");
+      showToast("️ Error saving changes to server.");
     } finally {
       setSaving(false);
     }
@@ -127,12 +127,12 @@ export default function WebsiteCmsPage() {
         const json = await res.json();
         if (json.success) {
           setCmsData(json.data);
-          showToast("🔄 Reset to default English CMS settings!");
+          showToast(" Reset to default English CMS settings!");
         }
       }
     } catch {
       setCmsData(DEFAULT_WEBSITE_CMS);
-      showToast("🔄 Reset locally to defaults.");
+      showToast(" Reset locally to defaults.");
     } finally {
       setSaving(false);
     }
@@ -206,7 +206,7 @@ export default function WebsiteCmsPage() {
     return (
       <div className="p-8 max-w-4xl mx-auto text-center space-y-4">
         <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto text-2xl font-bold">
-          🔒
+          
         </div>
         <h2 className="text-xl font-extrabold text-[#0E1B3D]">
           Main Admin Access Only
@@ -240,7 +240,7 @@ export default function WebsiteCmsPage() {
       <div className="bg-white dark:bg-slate-900 border border-[#E4E8F8] dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl">🌐</span>
+            <Globe className="w-5 h-5 text-blue-600 inline" />
             <span className="text-[11px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-full bg-[#E8F0FE] text-[#0B57D0]">
               Enterprise CMS Studio
             </span>
@@ -259,7 +259,7 @@ export default function WebsiteCmsPage() {
             onClick={() => setIsPreviewOpen(true)}
             className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-[#0B57D0] text-[#0B57D0] dark:text-blue-400 hover:bg-[#F5F8FF] dark:hover:bg-slate-700 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-2xs"
           >
-            <span>👁️</span>
+            <Eye className="w-4 h-4 inline" />
             <span>Live Website Preview</span>
           </button>
 
@@ -280,7 +280,7 @@ export default function WebsiteCmsPage() {
               <span>Saving...</span>
             ) : (
               <>
-                <span>💾</span>
+                <Save className="w-4 h-4 inline" />
                 <span>Publish Changes Live</span>
               </>
             )}
@@ -291,14 +291,14 @@ export default function WebsiteCmsPage() {
       {/* 8 Management Tabs Navigation */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
         {[
-          { id: "announcement", label: "१. घोषणा पट्टी (Offer Strip)", icon: "📢" },
-          { id: "hero", label: "२. मुख्य बॅनर (Hero)", icon: "🚀" },
-          { id: "popup_leads", label: "३. पॉपअप व चौकशी CRM", icon: "🎯", badge: `${cmsData.leads.filter(l => l.status === "New").length} New` },
-          { id: "toppers", label: "४. टॉपर यशोगाथा", icon: "🏆", badge: `${cmsData.toppers.length}` },
-          { id: "faculty_stats", label: "५. शिक्षक व आकडेवारी", icon: "👨‍🏫" },
-          { id: "centres", label: "६. ऑफलाईन सेंटर्स", icon: "📍", badge: `${cmsData.centres.length}` },
-          { id: "faqs_visibility", label: "७. प्रश्नोत्तरे व विभाग", icon: "⚙️" },
-          { id: "seo_footer", label: "८. सोशल मीडिया व SEO", icon: "🔍" },
+          { id: "announcement", label: "१. घोषणा पट्टी (Offer Strip)", icon: "" },
+          { id: "hero", label: "2. Main Hero Banner", icon: "" },
+          { id: "popup_leads", label: "३. पॉपअप व चौकशी CRM", icon: "", badge: `${cmsData.leads.filter(l => l.status === "New").length} New` },
+          { id: "toppers", label: "४. टॉपर यशोगाथा", icon: "", badge: `${cmsData.toppers.length}` },
+          { id: "faculty_stats", label: "5. Faculty & Academy Stats", icon: "‍" },
+          { id: "centres", label: "६. ऑफलाईन सेंटर्स", icon: "", badge: `${cmsData.centres.length}` },
+          { id: "faqs_visibility", label: "7. FAQs & Section Visibility", icon: "️" },
+          { id: "seo_footer", label: "८. सोशल मीडिया व SEO", icon: "" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -332,7 +332,7 @@ export default function WebsiteCmsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E4E8F8] dark:border-slate-800 pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl">📢</span>
+                <Megaphone className="w-5 h-5 text-blue-600 inline" />
                 <h2 className="text-base font-extrabold text-[#0E1B3D] dark:text-white font-heading">
                   वेबसाईट मुख्य घोषणा पट्टी (Top Announcement Bar & Ticker)
                 </h2>
@@ -343,7 +343,7 @@ export default function WebsiteCmsPage() {
             </div>
             <label className="flex items-center gap-2.5 cursor-pointer select-none bg-slate-50 dark:bg-slate-800 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700">
               <span className={`text-xs font-bold ${cmsData.announcement.enabled ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
-                {cmsData.announcement.enabled ? "🟢 पट्टी चालू आहे (Active ON)" : "⚪ पट्टी बंद आहे (Hidden OFF)"}
+                {cmsData.announcement.enabled ? " पट्टी चालू आहे (Active ON)" : " पट्टी बंद आहे (Hidden OFF)"}
               </span>
               <input
                 type="checkbox"
@@ -359,7 +359,7 @@ export default function WebsiteCmsPage() {
             </label>
           </div>
 
-          {/* ⚡ 1-CLICK READYMADE MARATHI TEMPLATES */}
+          {/*  1-CLICK READYMADE MARATHI TEMPLATES */}
           <div className="space-y-3 p-4 sm:p-5 bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-purple-50/70 dark:from-slate-800/80 dark:to-slate-800/40 rounded-2xl border border-blue-200/80 dark:border-slate-700">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <span className="text-xs font-extrabold text-[#0E1B3D] dark:text-white flex items-center gap-1.5">
@@ -393,7 +393,7 @@ export default function WebsiteCmsPage() {
                         animation: "none",
                       },
                     });
-                    toast.success(`🎉 "${tmpl.title}" टेम्पलेट यशस्वीपणे लोड झाले!`);
+                    toast.success(` "${tmpl.title}" टेम्पलेट यशस्वीपणे लोड झाले!`);
                   }}
                   className="p-3.5 bg-white dark:bg-slate-800 hover:bg-blue-50/50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-400 rounded-2xl text-left transition-all shadow-2xs group flex flex-col justify-between space-y-2.5 cursor-pointer active:scale-98"
                 >
@@ -421,7 +421,7 @@ export default function WebsiteCmsPage() {
           {/* COLOR THEME SWITCHER */}
           <div className="space-y-2">
             <label className="block text-xs font-bold text-[#0E1B3D] dark:text-slate-200">
-              🎨 पट्टीचा रंग (Strip Color Theme)
+              Announcement Color Theme
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
               {[
@@ -498,7 +498,7 @@ export default function WebsiteCmsPage() {
                   {cmsData.announcement.ctaText || "प्रवेश घ्या →"}
                 </span>
                 <span className="w-5 h-5 rounded-full bg-black/30 flex items-center justify-center text-[10px] text-white/80">
-                  ✕
+                  <X className="w-4 h-4 inline" />
                 </span>
               </div>
             </div>
@@ -519,7 +519,7 @@ export default function WebsiteCmsPage() {
                     announcement: { ...cmsData.announcement, tagText: e.target.value },
                   })
                 }
-                placeholder="उदा. ⚡ नवीन बॅच किंवा 🚩 सण ऑफर"
+                placeholder="उदा.  नवीन बॅच किंवा  सण ऑफर"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5D9EB] dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0] text-xs font-semibold text-[#0E1B3D] dark:text-white"
               />
               <p className="text-[10px] text-[#5A6478] dark:text-slate-400 mt-1">पट्टीच्या डाव्या बाजूला दिसणारा लहान बॅज.</p>
@@ -984,7 +984,7 @@ export default function WebsiteCmsPage() {
                   onClick={exportLeadsCsv}
                   className="px-3.5 py-2 bg-white border border-[#D5D9EB] hover:bg-[#F5F7FF] text-[#0E1B3D] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs"
                 >
-                  <span>📥</span>
+                  <Download className="w-4 h-4 inline" />
                   <span>Export CSV</span>
                 </button>
               </div>
@@ -1000,7 +1000,7 @@ export default function WebsiteCmsPage() {
                   placeholder="Search by student name, phone, course..."
                   className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#D5D9EB] text-xs text-[#0E1B3D] focus:ring-2 focus:ring-[#0B57D0]/20 focus:border-[#0B57D0]"
                 />
-                <span className="absolute left-3 top-2.5 text-xs text-[#5A6478]">🔍</span>
+                <span className="absolute left-3 top-2.5 text-xs text-[#5A6478]"></span>
               </div>
 
               <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
@@ -1086,9 +1086,9 @@ export default function WebsiteCmsPage() {
                                 : "bg-emerald-50 text-emerald-800 border-emerald-200"
                             }`}
                           >
-                            <option value="New">🟡 New</option>
-                            <option value="Contacted">🔵 Contacted</option>
-                            <option value="Enrolled">🟢 Enrolled</option>
+                            <option value="New">New</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="Enrolled">Enrolled</option>
                           </select>
                         </td>
                         <td className="py-3 px-4 text-right whitespace-nowrap">
@@ -1101,7 +1101,7 @@ export default function WebsiteCmsPage() {
                               rel="noreferrer"
                               className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold inline-flex items-center gap-1 shadow-2xs"
                             >
-                              <span>💬</span> WhatsApp
+                              <MessageSquare className="w-4 h-4 inline text-emerald-600" /> WhatsApp
                             </a>
                             <button
                               type="button"
@@ -1109,7 +1109,7 @@ export default function WebsiteCmsPage() {
                               className="p-1 hover:bg-red-50 text-red-600 rounded"
                               title="Delete inquiry"
                             >
-                              🗑️
+                              <Trash2 className="w-4 h-4 inline" />
                             </button>
                           </div>
                         </td>
@@ -1219,7 +1219,7 @@ export default function WebsiteCmsPage() {
                       }}
                       className="p-1 hover:bg-red-50 text-red-600 rounded"
                     >
-                      🗑️
+                      <Trash2 className="w-4 h-4 inline" />
                     </button>
                   </div>
                 </div>
@@ -1376,7 +1376,7 @@ export default function WebsiteCmsPage() {
                         }}
                         className="p-1 hover:bg-red-50 text-red-600 rounded text-xs"
                       >
-                        🗑️
+                        <Trash2 className="w-4 h-4 inline" />
                       </button>
                     </div>
                   </div>
@@ -1443,17 +1443,17 @@ export default function WebsiteCmsPage() {
                     {centre.name}
                   </h3>
                   <p className="text-xs text-[#5A6478] mt-1 leading-relaxed">
-                    📍 {centre.address}
+                    {centre.address}
                   </p>
                   <p className="text-xs text-[#0B57D0] font-bold mt-1">
-                    📞 {centre.phone}
+                    {centre.phone}
                   </p>
                   <div className="mt-2.5 p-2.5 bg-white rounded-lg border border-[#E4E8F8] space-y-1">
                     <div className="text-[11px] text-[#5A6478]">
                       <span className="font-bold text-[#0E1B3D]">Timings:</span> {centre.timings}
                     </div>
                     <div className="text-[11px] text-[#0052FF] font-bold">
-                      <span>🚀 Next Batch:</span> {centre.nextBatchDate}
+                      <span>Next Batch:</span> {centre.nextBatchDate}
                     </div>
                   </div>
                 </div>
@@ -1492,7 +1492,7 @@ export default function WebsiteCmsPage() {
                       }}
                       className="p-1 hover:bg-red-50 text-red-600 rounded text-xs"
                     >
-                      🗑️
+                      <Trash2 className="w-4 h-4 inline" />
                     </button>
                   </div>
                 </div>
@@ -1518,15 +1518,15 @@ export default function WebsiteCmsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {[
-                { key: "announcement", label: "Top Announcement Bar", icon: "📢" },
-                { key: "heroStats", label: "Hero Impact Counters", icon: "📊" },
-                { key: "featuredCourses", label: "Featured Courses Grid", icon: "📚" },
-                { key: "resultsShowcase", label: "Toppers & Results Showcase", icon: "🏆" },
-                { key: "facultySection", label: "Faculty & Mentor Section", icon: "👨‍🏫" },
-                { key: "testimonials", label: "Student Testimonials", icon: "💬" },
-                { key: "faqSection", label: "Frequently Asked Questions", icon: "❓" },
-                { key: "floatingWhatsapp", label: "Floating WhatsApp Button", icon: "🟢" },
-                { key: "promoPopup", label: "Admissions Entry Popup", icon: "🎯" },
+                { key: "announcement", label: "Top Announcement Bar", icon: "" },
+                { key: "heroStats", label: "Hero Impact Counters", icon: "" },
+                { key: "featuredCourses", label: "Featured Courses Grid", icon: "" },
+                { key: "resultsShowcase", label: "Toppers & Results Showcase", icon: "" },
+                { key: "facultySection", label: "Faculty & Mentor Section", icon: "‍" },
+                { key: "testimonials", label: "Student Testimonials", icon: "" },
+                { key: "faqSection", label: "Frequently Asked Questions", icon: "" },
+                { key: "floatingWhatsapp", label: "Floating WhatsApp Button", icon: "" },
+                { key: "promoPopup", label: "Admissions Entry Popup", icon: "" },
               ].map((sec) => {
                 const isEnabled = (cmsData.sectionVisibility as any)[sec.key];
                 return (
@@ -1632,7 +1632,7 @@ export default function WebsiteCmsPage() {
                       }}
                       className="p-1 hover:bg-red-50 text-red-600 rounded text-xs"
                     >
-                      🗑️
+                      <Trash2 className="w-4 h-4 inline" />
                     </button>
                   </div>
                 </div>
@@ -1797,7 +1797,7 @@ export default function WebsiteCmsPage() {
 
       {/* TOPPER EDIT/CREATE MODAL */}
       {topperModalOpen && editingTopper && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E4E8F8]">
             <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-3">
               <h3 className="font-extrabold text-base text-[#0E1B3D]">
@@ -1808,7 +1808,7 @@ export default function WebsiteCmsPage() {
                 onClick={() => setTopperModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600 font-bold"
               >
-                ✕
+                <X className="w-4 h-4 inline" />
               </button>
             </div>
 
@@ -1945,7 +1945,7 @@ export default function WebsiteCmsPage() {
 
       {/* FACULTY EDIT/CREATE MODAL */}
       {facultyModalOpen && editingFaculty && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E4E8F8]">
             <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-3">
               <h3 className="font-extrabold text-base text-[#0E1B3D]">
@@ -1956,7 +1956,7 @@ export default function WebsiteCmsPage() {
                 onClick={() => setFacultyModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600 font-bold"
               >
-                ✕
+                <X className="w-4 h-4 inline" />
               </button>
             </div>
 
@@ -2069,7 +2069,7 @@ export default function WebsiteCmsPage() {
 
       {/* CENTRE EDIT/CREATE MODAL */}
       {centreModalOpen && editingCentre && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E4E8F8]">
             <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-3">
               <h3 className="font-extrabold text-base text-[#0E1B3D]">
@@ -2080,7 +2080,7 @@ export default function WebsiteCmsPage() {
                 onClick={() => setCentreModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600 font-bold"
               >
-                ✕
+                <X className="w-4 h-4 inline" />
               </button>
             </div>
 
@@ -2211,7 +2211,7 @@ export default function WebsiteCmsPage() {
 
       {/* FAQ EDIT/CREATE MODAL */}
       {faqModalOpen && editingFaq && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E4E8F8]">
             <div className="flex items-center justify-between border-b border-[#E4E8F8] pb-3">
               <h3 className="font-extrabold text-base text-[#0E1B3D]">
@@ -2222,7 +2222,7 @@ export default function WebsiteCmsPage() {
                 onClick={() => setFaqModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600 font-bold"
               >
-                ✕
+                <X className="w-4 h-4 inline" />
               </button>
             </div>
 
@@ -2301,7 +2301,7 @@ export default function WebsiteCmsPage() {
           {/* Preview Navigation Header */}
           <div className="bg-[#0E1B3D] text-white px-6 py-3.5 flex items-center justify-between border-b border-white/10 shrink-0">
             <div className="flex items-center gap-3">
-              <span className="text-lg">🌐</span>
+              <span className="text-lg"></span>
               <div>
                 <h3 className="text-sm font-extrabold text-white">Live Website Preview</h3>
                 <p className="text-[10px] text-white/60">
@@ -2319,7 +2319,7 @@ export default function WebsiteCmsPage() {
                   previewViewport === "desktop" ? "bg-white text-[#0E1B3D]" : "text-white/70 hover:text-white"
                 }`}
               >
-                <span>🖥️</span> Desktop
+                <Monitor className="w-4 h-4 inline" /> Desktop
               </button>
               <button
                 type="button"
@@ -2328,7 +2328,7 @@ export default function WebsiteCmsPage() {
                   previewViewport === "tablet" ? "bg-white text-[#0E1B3D]" : "text-white/70 hover:text-white"
                 }`}
               >
-                <span>📱</span> Tablet
+                <Tablet className="w-4 h-4 inline" /> Tablet
               </button>
               <button
                 type="button"
@@ -2337,7 +2337,7 @@ export default function WebsiteCmsPage() {
                   previewViewport === "mobile" ? "bg-white text-[#0E1B3D]" : "text-white/70 hover:text-white"
                 }`}
               >
-                <span>📲</span> Mobile
+                <Smartphone className="w-4 h-4 inline" /> Mobile
               </button>
             </div>
 
@@ -2355,7 +2355,7 @@ export default function WebsiteCmsPage() {
                 onClick={() => setIsPreviewOpen(false)}
                 className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center font-bold text-sm"
               >
-                ✕
+                <X className="w-4 h-4 inline" />
               </button>
             </div>
           </div>

@@ -621,7 +621,7 @@ export default function StudentHomePage() {
                   className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition-colors cursor-pointer"
                   aria-label="Close"
                 >
-                  ✕
+                  
                 </button>
               </div>
               <div className="relative aspect-video w-full bg-black">

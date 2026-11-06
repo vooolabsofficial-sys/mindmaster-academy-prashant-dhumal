@@ -730,7 +730,7 @@ export default function AdminSettingsPage() {
                         ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                         : "bg-amber-50 text-amber-700 border-amber-200"
                     }`}>
-                      {razorpayMode === "live" ? "🟢 LIVE GATEWAY" : "🟡 TEST SANDBOX"}
+                      {razorpayMode === "live" ? " LIVE GATEWAY" : " TEST SANDBOX"}
                     </span>
                   </div>
                 </div>
@@ -1069,7 +1069,7 @@ export default function AdminSettingsPage() {
                   <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border ${
                     isMaintenanceMode ? "bg-red-50 text-red-700 border-red-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
                   }`}>
-                    {isMaintenanceMode ? "⚠️ MAINTENANCE ACTIVE" : "🟢 SYSTEM NORMAL"}
+                    {isMaintenanceMode ? "️ MAINTENANCE ACTIVE" : " SYSTEM NORMAL"}
                   </span>
                 </div>
 
@@ -1190,9 +1190,9 @@ export default function AdminSettingsPage() {
           </form>
         </div>
 
-        {/* 🚨 CRITICAL SAFETY CONFIRMATION MODAL FOR MAINTENANCE MODE */}
+        {/*  CRITICAL SAFETY CONFIRMATION MODAL FOR MAINTENANCE MODE */}
         {showMaintenanceModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-slate-900 border-2 border-red-500 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-4">
               <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
                 <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/60 flex items-center justify-center shrink-0">
@@ -1200,7 +1200,7 @@ export default function AdminSettingsPage() {
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">
-                    🚨 मेन्टेनन्स मोड सुरू करायचा आहे का?
+                     मेन्टेनन्स मोड सुरू करायचा आहे का?
                   </h3>
                   <p className="text-[11px] font-bold text-red-600 dark:text-red-400">
                     विद्यार्थ्यांचे लेक्चर्स व कोर्सेस तात्काळ थांबतील!

@@ -392,7 +392,7 @@ export default function GrantsManagerPage() {
     const amt = grant.amount_paid !== undefined ? `₹${grant.amount_paid}` : "100% Free Grant";
     const expiry = grant.ends_at ? grant.ends_at.slice(0, 10) : "Active";
 
-    const msg = `Dear ${studentName},\n\nYour admission to "${courseTitle}" at MindMaster Academy is confirmed! ✅\n\n📋 Enrollment Details:\n• Fee Status: ${amt} (${mode})\n• Valid Until: ${expiry}\n• Student Mobile: ${cleanPhone}\n\n📲 Access your lectures and study materials:\nhttps://mindmaster.academy/login\n\nWishing you all the very best in your academic journey!\n— Prashant Dhumal Sir, MindMaster Academy`;
+    const msg = `Dear ${studentName},\n\nYour admission to "${courseTitle}" at MindMaster Academy is confirmed! \n\n Enrollment Details:\n• Fee Status: ${amt} (${mode})\n• Valid Until: ${expiry}\n• Student Mobile: ${cleanPhone}\n\n Access your lectures and study materials:\nhttps://mindmaster.academy/login\n\nWishing you all the very best in your academic journey!\n— Prashant Dhumal Sir, MindMaster Academy`;
 
     setGrantWhatsappSent(grant.id);
     loadData();

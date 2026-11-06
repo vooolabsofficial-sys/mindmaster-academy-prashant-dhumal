@@ -954,7 +954,7 @@ function WatchLessonContent({
                 {/* Subtle Dynamic Floating Watermark */}
                 <div 
                   style={{ top: watermarkPos.top, left: watermarkPos.left }}
-                  className="absolute z-20 pointer-events-none transition-all duration-1000 ease-in-out opacity-25 select-none text-xs font-mono text-white/90 bg-black/40 backdrop-blur-xs px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm"
+                  className="absolute z-20 pointer-events-none transition-all duration-1000 ease-in-out opacity-25 select-none text-xs font-mono text-white/90 bg-black/40 px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm"
                 >
                   {studentWatermark}
                 </div>

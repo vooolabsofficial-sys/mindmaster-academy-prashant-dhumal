@@ -9,27 +9,27 @@ import { getCurrentStaff, getAuditLogs, fetchDbAuditLogs } from "@/lib/staffStor
 function getActionBadge(action: string) {
   const a = action.toUpperCase();
   if (a.includes("STUDENT") || a.includes("360")) {
-    return { icon: "🎓", bg: "bg-blue-50 text-blue-700 border-blue-200" };
+    return { icon: "", bg: "bg-blue-50 text-blue-700 border-blue-200" };
   }
   if (a.includes("COURSE")) {
-    return { icon: "📚", bg: "bg-indigo-50 text-indigo-700 border-indigo-200" };
+    return { icon: "", bg: "bg-indigo-50 text-indigo-700 border-indigo-200" };
   }
   if (a.includes("VIDEO") || a.includes("LESSON")) {
-    return { icon: "🎬", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+    return { icon: "", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" };
   }
   if (a.includes("COUPON")) {
-    return { icon: "🏷️", bg: "bg-purple-50 text-purple-700 border-purple-200" };
+    return { icon: "️", bg: "bg-purple-50 text-purple-700 border-purple-200" };
   }
   if (a.includes("SUBADMIN") || a.includes("STAFF")) {
-    return { icon: "👥", bg: "bg-amber-50 text-amber-700 border-amber-200" };
+    return { icon: "", bg: "bg-amber-50 text-amber-700 border-amber-200" };
   }
   if (a.includes("DELETE")) {
-    return { icon: "🗑️", bg: "bg-rose-50 text-rose-700 border-rose-200" };
+    return { icon: "️", bg: "bg-rose-50 text-rose-700 border-rose-200" };
   }
   if (a.includes("SETTING") || a.includes("CONFIG")) {
-    return { icon: "⚙️", bg: "bg-slate-100 text-slate-800 border-slate-200" };
+    return { icon: "️", bg: "bg-slate-100 text-slate-800 border-slate-200" };
   }
-  return { icon: "⚡", bg: "bg-[#EEF4FF] text-[#0B57D0] border-[#D0E2FF]" };
+  return { icon: "", bg: "bg-[#EEF4FF] text-[#0B57D0] border-[#D0E2FF]" };
 }
 
 export default function MyActivityPage() {
@@ -122,10 +122,10 @@ export default function MyActivityPage() {
           <span className="text-xs font-bold text-[#5A6478] mr-2">Filter By Entity:</span>
           {[
             { key: "all", label: "All Activity" },
-            { key: "student", label: "🎓 Students & 360" },
-            { key: "course", label: "📚 Courses" },
-            { key: "video", label: "🎬 Lessons & Videos" },
-            { key: "coupon", label: "🏷️ Coupons" },
+            { key: "student", label: "Students & 360" },
+            { key: "course", label: "Courses" },
+            { key: "video", label: "Lessons & Videos" },
+            { key: "coupon", label: "Coupons" },
           ].map((item) => {
             const isActive = filterType === item.key;
             return (
@@ -156,7 +156,7 @@ export default function MyActivityPage() {
           {displayedLogs.length === 0 ? (
             <div className="text-center py-16 px-4">
               <div className="w-12 h-12 rounded-full bg-[#F5F7FF] flex items-center justify-center text-xl mx-auto mb-3">
-                📜
+                
               </div>
               <p className="text-sm font-bold text-[#0E1B3D]">No activity recorded</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">

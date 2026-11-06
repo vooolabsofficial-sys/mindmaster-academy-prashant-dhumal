@@ -56,7 +56,7 @@ export default function RecycleBinModal({
       if (res.success) {
         loadData();
         onRestored?.(item);
-        setToastMessage(`✓ "${item.title}" पूर्ववत पुनर्संचयित (Restored) करण्यात आला!`);
+        setToastMessage(`"${item.title}" पूर्ववत पुनर्संचयित (Restored) करण्यात आला!`);
         setTimeout(() => setToastMessage(null), 4000);
       }
     } finally {
@@ -65,7 +65,7 @@ export default function RecycleBinModal({
   };
 
   const handlePermanentDelete = async (item: RecycleBinItem) => {
-    if (!confirm(`⚠️ "${item.title}" कायमचा हटवायचा आहे का? ही कृती पूर्ववत करता येणार नाही.`)) {
+    if (!confirm(`"${item.title}" कायमचा हटवायचा आहे का? ही कृती पूर्ववत करता येणार नाही.`)) {
       return;
     }
     setProcessingId(item.id);
@@ -73,7 +73,7 @@ export default function RecycleBinModal({
       const ok = await permanentlyDeleteFromRecycleBin(item.id);
       if (ok) {
         loadData();
-        setToastMessage(`🗑️ "${item.title}" डेटाबेसमधून कायमचा हटवण्यात आला.`);
+        setToastMessage(`"${item.title}" डेटाबेसमधून कायमचा हटवण्यात आला.`);
         setTimeout(() => setToastMessage(null), 4000);
       }
     } finally {
@@ -82,7 +82,7 @@ export default function RecycleBinModal({
   };
 
   const handleClearAll = () => {
-    if (!confirm("⚠️ रीसायकल बिनमधील सर्व वस्तू कायमच्या हटवायच्या आहेत का?")) {
+    if (!confirm("रीसायकल बिनमधील सर्व वस्तू कायमच्या हटवायच्या आहेत का?")) {
       return;
     }
     clearRecycleBin();
@@ -101,7 +101,7 @@ export default function RecycleBinModal({
   const catCount = items.filter((i) => i.itemType === "category").length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 font-sans">
       <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 flex flex-col max-h-[88vh] overflow-hidden">
         {/* Header */}
         <div className="p-6 bg-[#0E1B3D] text-white flex items-center justify-between shrink-0">
@@ -122,7 +122,7 @@ export default function RecycleBinModal({
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center font-bold text-sm"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -177,7 +177,7 @@ export default function RecycleBinModal({
           {filteredItems.length === 0 ? (
             <div className="p-12 text-center flex flex-col items-center justify-center">
               <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mb-3">
-                ✓
+                
               </div>
               <h4 className="font-extrabold text-sm text-[#0E1B3D]">
                 रीसायकल बिन रिकामी आहे (No Items in Trash)
@@ -256,7 +256,7 @@ export default function RecycleBinModal({
         {/* Footer */}
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
           <span className="text-[11px] text-slate-500">
-            💡 Undo केल्यावर आयटम लगेच मूळ जागी पूर्ववत सक्रिय होतो.
+            Undo केल्यावर आयटम लगेच मूळ जागी पूर्ववत सक्रिय होतो.
           </span>
           <button
             type="button"

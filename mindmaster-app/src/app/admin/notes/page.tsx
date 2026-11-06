@@ -37,6 +37,8 @@ import {
   Loader2,
   AlertCircle,
   HardDrive,
+  ArrowLeft,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -409,6 +411,7 @@ export default function DigitalBooksManagerPage() {
   return (
     <PermissionGuard permission="notes.books.manage">
       <AdminShell>
+        {!isModalOpen ? (
         <div className="space-y-6 font-sans">
           {/* Header Banner */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E4E8F8] shadow-sm">
@@ -721,38 +724,51 @@ export default function DigitalBooksManagerPage() {
               </button>
             </div>
           )}
+        </div>
+        ) : (
 
-          {/* ========================================================================= */}
-          {/* CREATE / EDIT BOOK PROPER WINDOW MODAL (Clean, Fast & Focused) */}
-          {/* ========================================================================= */}
-          {isModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-              <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-[#E4E8F8] my-8 max-h-[92vh] overflow-y-auto font-sans">
-                {/* Modal Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
-                  <div className="flex items-center gap-2.5">
-                    <span className="p-2.5 rounded-2xl bg-blue-50 text-[#0B57D0]">
-                      <BookOpen className="w-5 h-5" />
-                    </span>
-                    <div>
-                      <h3 className="text-lg font-extrabold text-[#0E1B3D]">
-                        {editingBook ? "Edit Digital Book" : "Publish New Digital Book"}
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        Upload PDF, cover thumbnail, and configure access pricing.
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  <div className="space-y-6 font-sans animate-in fade-in duration-200">
+          {/* Header Card */}
+          <div className="bg-white rounded-3xl p-6 border border-[#E4E8F8] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition cursor-pointer"
+                title="Back to Books Library"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-[#0B57D0] border border-blue-200">
+                    {editingBook ? "EDIT BOOK" : "NEW DIGITAL BOOK STUDIO"}
+                  </span>
+                  <span className="text-xs text-slate-400 font-semibold">• PDF Publishing & DRM Access</span>
                 </div>
+                <h2 className="text-2xl font-black text-[#0E1B3D] font-heading">
+                  {editingBook ? `Edit: ${formTitle || editingBook.title}` : "Publish New Digital Book"}
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Upload PDF, cover artwork, and configure student pricing and access permissions.
+                </p>
+              </div>
+            </div>
 
-                <form onSubmit={handleSaveBook} className="space-y-5 text-xs">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+
+          {/* Form Content in Inline Studio */}
+          <div className="bg-white rounded-3xl border border-[#E4E8F8] p-6 sm:p-8 shadow-sm">
+            <form onSubmit={handleSaveBook} className="space-y-5 text-xs">
                   {/* 1. ACCESS MODE SELECTOR */}
                   <div>
                     <label className="block font-bold text-[#0E1B3D] mb-2 text-xs">
@@ -1130,7 +1146,7 @@ export default function DigitalBooksManagerPage() {
                             : "bg-white text-slate-600 border border-slate-200"
                         }`}
                       >
-                        ✓ Live
+                         Live
                       </button>
                       <button
                         type="button"
@@ -1159,24 +1175,25 @@ export default function DigitalBooksManagerPage() {
                     <SubmitButton
                       type="submit"
                       loading={isSaving}
-                      loadingText="सेव्ह करत आहे... (Saving Book)"
+                      loadingText="Saving Digital Book..."
                       disabled={isUploadingPdf || isUploadingCover}
                       className="px-6 py-2.5 rounded-xl text-xs"
                     >
                       <span className="flex items-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>{editingBook ? "बदल सेव्ह करा" : "पुस्तक प्रकाशित करा"}</span>
+                        <span>{editingBook ? "Save Book Changes" : "Publish Digital Book"}</span>
                       </span>
                     </SubmitButton>
                   </div>
                 </form>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* Delete Confirmation Modal */}
           {deleteModalBook && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs font-sans">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 font-sans">
               <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-red-200 space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
                   <Trash2 className="w-6 h-6" />
@@ -1210,7 +1227,6 @@ export default function DigitalBooksManagerPage() {
               </div>
             </div>
           )}
-        </div>
       </AdminShell>
     </PermissionGuard>
   );

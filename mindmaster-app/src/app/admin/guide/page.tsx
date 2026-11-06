@@ -67,13 +67,13 @@ const SOP_REGISTRY: SopItem[] = [
     stepsEn: [
       "Navigate to Messages (admin/messages or sub/messages) to view the live ticket queue.",
       "Inspect the student's category: 'Payment / Course Access', 'Request Device Reset', or 'Technical Query'.",
-      "Click the green '📞 Call Student' button to initiate a verified phone call to the student's registered mobile number.",
+      "Click the green ' Call Student' button to initiate a verified phone call to the student's registered mobile number.",
       "Type a concise administrative reply explaining the resolution or advice, then click 'Submit Reply & Resolve'.",
     ],
     stepsMr: [
       "मेसेजेस विभागात (admin/messages किंवा sub/messages) जाऊन प्रलंबित तिकिटे पहा.",
       "तिकीट कॅटेगरी तपासा: 'Payment / Course Access', 'Request Device Reset' किंवा 'Technical Query'.",
-      "हिरव्या रंगाच्या '📞 Call Student' बटनावर क्लिक करून थेट विद्यार्थ्याला फोन करा.",
+      "हिरव्या रंगाच्या ' Call Student' बटनावर क्लिक करून थेट विद्यार्थ्याला फोन करा.",
       "समस्या सुटल्यानंतर उत्तराच्या रकान्यात माहिती लिहा आणि 'Submit Reply & Resolve' वर क्लिक करा.",
     ],
     rulesEn: [
@@ -662,7 +662,7 @@ export default function AdminGuidePage() {
                 {/* Direct Action Link */}
                 <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 font-mono">
-                    ⚡ {sop.actionHref}
+                     {sop.actionHref}
                   </span>
                   <Link
                     href={sop.actionHref}

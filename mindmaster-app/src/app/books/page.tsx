@@ -451,7 +451,7 @@ function BooksLibraryContent() {
           <div className="bg-white p-5 md:p-6 rounded-3xl border border-[#E4E8F8] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-13 h-13 rounded-2xl bg-[#EBF3FE] border border-[#CBE0FD] text-[#0B57D0] flex items-center justify-center shrink-0 shadow-2xs text-2xl">
-                📚
+                
               </div>
               <div>
                 <h2 className="text-base md:text-lg font-black text-[#0E1B3D]">
@@ -720,7 +720,7 @@ function BooksLibraryContent() {
           ) : (
             <div className="text-center py-16 bg-white rounded-3xl border border-[#E4E8F8] p-8 shadow-xs">
               <div className="w-16 h-16 bg-[#EBF3FE] text-[#0B57D0] rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-                📖
+                
               </div>
               <h3 className="text-base font-extrabold text-[#0E1B3D]">
                 No books found matching this filter
@@ -835,7 +835,7 @@ function BooksLibraryContent() {
                     <div className="my-6 space-y-5 text-xs text-[#0E1B3D] leading-relaxed">
                       <div className="p-4 rounded-2xl bg-[#F5F7FF] border border-[#E4E8F8]">
                         <h4 className="font-extrabold text-sm text-[#0B57D0] mb-1.5 flex items-center gap-1.5">
-                          <span>📌</span> Chapter 1: Natural Laws of Memory
+                          <span></span> Chapter 1: Natural Laws of Memory
                         </h4>
                         <p className="text-[#5A6478] leading-relaxed">
                           The human brain processes and retains vivid 3D visual associations far faster than abstract numbers or plain text. Use structured visual landmark techniques to permanently retain complex formulas and exam definitions.
@@ -844,7 +844,7 @@ function BooksLibraryContent() {
 
                       <div className="p-4 rounded-2xl bg-[#E8F8F2] border border-[#C6ECD9]">
                         <h4 className="font-extrabold text-sm text-[#0A8554] mb-1.5 flex items-center gap-1.5">
-                          <span>⚡</span> Vedic Math Speed Drills
+                          <span></span> Vedic Math Speed Drills
                         </h4>
                         <p className="text-[#5A6478] leading-relaxed">
                           Using the Ekadhikena Purvena formula, mentally calculate the square of any number ending in 5 within 2 seconds:
@@ -854,7 +854,7 @@ function BooksLibraryContent() {
 
                       <div className="p-4 rounded-2xl bg-[#FFF4ED] border border-[#FFDEC9]">
                         <h4 className="font-extrabold text-sm text-[#D95D00] mb-1.5 flex items-center gap-1.5">
-                          <span>💡</span> 24-Hour Review Technique
+                          <span></span> 24-Hour Review Technique
                         </h4>
                         <p className="text-[#5A6478] leading-relaxed">
                           Reviewing study material for 10 minutes within the first 24 hours transfers key conceptual information directly into your brain's Long-Term Memory (LTM).

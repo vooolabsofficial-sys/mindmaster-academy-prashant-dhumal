@@ -1,5 +1,48 @@
 "use client";
 
+import {
+  Search,
+  Users,
+  GraduationCap,
+  BookOpen,
+  Banknote,
+  FileSpreadsheet,
+  Megaphone,
+  ClipboardList,
+  ArrowLeft,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  Clock,
+  Smartphone,
+  Phone,
+  MessageSquare,
+  KeyRound,
+  Edit3,
+  Shield,
+  ShieldCheck,
+  RefreshCw,
+  Trash2,
+  Building2,
+  MapPin,
+  Calendar,
+  Lock,
+  Unlock,
+  Award,
+  ChevronDown,
+  Filter,
+  Eye,
+  Check,
+  ExternalLink,
+  Plus,
+  Sparkles,
+  Ban,
+  BarChart3,
+  CreditCard,
+  Receipt,
+  UserCheck,
+} from "lucide-react";
 import React, { useState, useEffect } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import PermissionGuard from "@/components/admin/PermissionGuard";
@@ -457,7 +500,7 @@ export default function StudentFinderPage() {
       `Staff (${currentStaff.role} - ${currentStaff.name}) reset password for ${resetPasswordModalStudent.name} (${clean}).`
     );
 
-    const waMsg = `Namaskar ${resetPasswordModalStudent.name.split(" ")[0]}!\n\nYour MindMaster Academy login password has been reset by Admin.\n\n📱 Mobile: ${clean}\n🔑 New Password: ${pass}\n\n📲 Login now:\nhttps://mindmaster.academy/login\n\n— Prashant Dhumal Sir, MindMaster Academy`;
+    const waMsg = `Namaskar ${resetPasswordModalStudent.name.split(" ")[0]}!\n\nYour MindMaster Academy login password has been reset by Admin.\n\n Mobile: ${clean}\n New Password: ${pass}\n\n Login now:\nhttps://mindmaster.academy/login\n\n— Prashant Dhumal Sir, MindMaster Academy`;
     const waUrl = `https://wa.me/91${clean}?text=${encodeURIComponent(waMsg)}`;
 
     setPasswordResetSuccess({
@@ -790,6 +833,7 @@ export default function StudentFinderPage() {
   return (
     <PermissionGuard permission="students.view">
       <AdminShell>
+        {!drawerStudent && !isCashModalOpen && (
         <div className="space-y-6">
           {/* Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[#E4E8F8] dark:border-slate-800 shadow-sm">
@@ -814,7 +858,7 @@ export default function StudentFinderPage() {
                 onClick={() => handleOpenCashModal()}
                 className="px-4 py-2 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
-                <span>💵</span>
+                <Banknote className="w-4 h-4" />
                 <span>Grant Admission / Offline Access</span>
               </button>
 
@@ -823,7 +867,7 @@ export default function StudentFinderPage() {
                 onClick={handleExportExcel}
                 className="px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
-                <span>📊</span>
+                <FileSpreadsheet className="w-4 h-4" />
                 <span>Export Excel (.xlsx)</span>
               </button>
 
@@ -832,7 +876,7 @@ export default function StudentFinderPage() {
                 onClick={() => setIsBulkCustomizerOpen(true)}
                 className="px-4 py-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
-                <span>📋</span>
+                <ClipboardList className="w-4 h-4" />
                 <span>Bulk Customizer</span>
               </button>
 
@@ -844,7 +888,7 @@ export default function StudentFinderPage() {
                 }}
                 className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
-                <span>📢</span>
+                <Megaphone className="w-4 h-4" />
                 <span>Broadcast Alert</span>
               </button>
             </div>
@@ -856,7 +900,7 @@ export default function StudentFinderPage() {
               {/* Search Bar */}
               <div className="relative w-full md:w-80">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#8A94A6]">
-                  🔍
+                  
                 </span>
                 <input
                   type="text"
@@ -870,7 +914,7 @@ export default function StudentFinderPage() {
                     onClick={() => setSearchQuery("")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8A94A6] hover:text-[#0E1B3D]"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
@@ -975,7 +1019,7 @@ export default function StudentFinderPage() {
                     : "bg-[#EEF4FF] text-[#0B57D0] hover:bg-[#DDEBFF] border border-[#D0E2FF]"
                 }`}
               >
-                <span>🆕</span>
+                <Sparkles className="w-4 h-4 text-blue-500" />
                 <span>Recent Signups / New Students</span>
               </button>
 
@@ -989,7 +1033,7 @@ export default function StudentFinderPage() {
                     : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200"
                 }`}
               >
-                <span>⚠️</span>
+                <AlertCircle className="w-4 h-4 text-amber-500" />
                 <span>Expiring in 7 Days</span>
                 <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-200/80 font-black">
                   {expiring7DaysCount}
@@ -1006,7 +1050,7 @@ export default function StudentFinderPage() {
                     { key: "0-25", label: "0-25% Starter" },
                     { key: "26-75", label: "26-75% In Progress" },
                     { key: "76-99", label: "76-99% Advanced" },
-                    { key: "100", label: "🏆 100% Completed" },
+                    { key: "100", label: " 100% Completed" },
                   ].map((chip) => {
                     const isActive = progressFilter === chip.key;
                     return (
@@ -1048,7 +1092,7 @@ export default function StudentFinderPage() {
               </div>
             ) : filteredStudents.length === 0 ? (
               <div className="py-14 text-center">
-                <span className="text-4xl">🎓</span>
+                <span className="text-4xl"></span>
                 <h3 className="text-base font-bold text-[#0E1B3D] mt-2">No students match your criteria</h3>
                 <p className="text-xs text-[#5A6478] mt-1">
                   Try adjusting the district, taluka, school, or progress filters.
@@ -1212,7 +1256,7 @@ export default function StudentFinderPage() {
                                     className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-[11px] font-extrabold transition-colors cursor-pointer flex items-center gap-1 shadow-2xs animate-pulse"
                                     title="1-Click WhatsApp Renewal Reminder using Platform Settings Template"
                                   >
-                                    <span>⚠️</span>
+                                    <AlertCircle className="w-4 h-4 text-amber-500" />
                                     <span>{expiringItem.daysLeft}d: Remind</span>
                                   </button>
                                 );
@@ -1226,7 +1270,7 @@ export default function StudentFinderPage() {
                                 className="px-2.5 py-1.5 bg-[#E8F8F2] hover:bg-[#D5F2E6] border border-[#C6ECD9] text-[#0A8554] rounded-xl text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
                                 title="Chat on WhatsApp"
                               >
-                                <span>💬</span> WhatsApp
+                                <MessageSquare className="w-4 h-4 text-emerald-600" /> WhatsApp
                               </a>
 
                               {/* 360 Profile Drawer Button */}
@@ -1234,7 +1278,7 @@ export default function StudentFinderPage() {
                                 onClick={() => handleOpen360Drawer(s)}
                                 className="px-3 py-1.5 bg-[#EEF4FF] hover:bg-[#DDEBFF] border border-[#D0E2FF] text-[#0B57D0] rounded-xl text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
                               >
-                                <span>🔍</span> 360 View
+                                <Search className="w-4 h-4 text-slate-400" /> 360 View
                               </button>
 
                               {/* Direct Alert */}
@@ -1243,7 +1287,7 @@ export default function StudentFinderPage() {
                                 className="px-3 py-1.5 bg-[#F5F7FF] hover:bg-[#EEF4FF] border border-[#E4E8F8] text-[#5A6478] hover:text-[#0E1B3D] rounded-xl text-[11px] font-bold transition-colors cursor-pointer"
                                 title="Send in-app notification"
                               >
-                                <span>🔔</span> Alert
+                                <Bell className="w-4 h-4 text-blue-600" /> Alert
                               </button>
 
                               {/* Grant Course to this Student */}
@@ -1252,7 +1296,7 @@ export default function StudentFinderPage() {
                                 className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 rounded-xl text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
                                 title="Grant course to this student"
                               >
-                                <span>💵</span> Grant Access
+                                <Banknote className="w-4 h-4 text-amber-600" /> Grant Access
                               </button>
                             </div>
                           </td>
@@ -1354,7 +1398,7 @@ export default function StudentFinderPage() {
                   onClick={() => setIsBulkCustomizerOpen(true)}
                   className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-full shadow transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  <span>📋</span>
+                  <span></span>
                   <span>Bulk Activate Courses</span>
                 </button>
                 <button
@@ -1367,22 +1411,94 @@ export default function StudentFinderPage() {
               </div>
             )}
           </div>
+        )}
 
           {/* ========================================================= */}
           {/* 360 STUDENT TELEMETRICS DRAWER */}
           {/* ========================================================= */}
           {drawerStudent && (
-            <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fadeIn">
-              {/* Backdrop */}
-              <div
-                className="fixed inset-0"
-                onClick={() => setDrawerStudent(null)}
-              />
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Workspace Header Bar */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <button
+                    type="button"
+                    onClick={() => setDrawerStudent(null)}
+                    className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl transition cursor-pointer"
+                    title="Back to Students Directory"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-mono text-xs font-black">
+                        STUDENT 360° TELEMETRICS
+                      </span>
+                      <span className="text-xs text-slate-400 font-semibold">• Enrolled {drawerStudent.joinedAt}</span>
+                    </div>
+                    <h1 className="text-2xl font-black text-slate-900 dark:text-white font-heading">
+                      {drawerStudent.name}
+                    </h1>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      +91 {drawerStudent.phone} • {drawerStudent.school || "MindMaster Open School"} • {drawerStudent.district || "Maharashtra"}
+                    </p>
+                  </div>
+                </div>
 
-              <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] overflow-y-auto z-10">
-                  {/* Drawer Header */}
-                  <div className="p-6 border-b border-[#E4E8F8] flex items-center justify-between bg-[#FAFBFD]">
-                    <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <a
+                    href={`https://wa.me/91${drawerStudent.phone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(`Namaskar ${drawerStudent.name}, MindMaster Academy:`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition shadow-xs"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>WhatsApp</span>
+                  </a>
+
+                  <a
+                    href={`tel:${drawerStudent.phone}`}
+                    className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition shadow-xs"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span>Call</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => handleResetDeviceLock(drawerStudent)}
+                    className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                    <span>Reset Device Lock</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const st = drawerStudent;
+                      setDrawerStudent(null);
+                      handleOpenCashModal(st);
+                    }}
+                    className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-extrabold inline-flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                  >
+                    <Banknote className="w-4 h-4" />
+                    <span>Collect Cash Fee</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDrawerStudent(null)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition cursor-pointer"
+                  >
+                    Close Studio
+                  </button>
+                </div>
+              </div>
+
+              <div className="w-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden p-6 sm:p-8 space-y-6">
+                <div className="p-4 border-b border-[#E4E8F8] dark:border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-2xl bg-[#EEF4FF] text-[#0B57D0] font-black flex items-center justify-center text-base border border-[#D0E2FF]">
                         {drawerStudent.name.slice(0, 2).toUpperCase()}
                       </div>
@@ -1407,7 +1523,7 @@ export default function StudentFinderPage() {
                         rel="noopener noreferrer"
                         className="px-3.5 py-1.5 bg-[#E8F8F2] hover:bg-[#D5F2E6] border border-[#C6ECD9] text-[#0A8554] rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
                       >
-                        <span>💬</span> WhatsApp
+                        <MessageSquare className="w-4 h-4 text-emerald-600" /> WhatsApp
                       </a>
 
                       {/* CALL CHIP */}
@@ -1415,7 +1531,7 @@ export default function StudentFinderPage() {
                         href={`tel:${drawerStudent.phone}`}
                         className="px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
                       >
-                        <span>📞</span> Call Student
+                        <Phone className="w-4 h-4 text-blue-600" /> Call Student
                       </a>
 
                       {/* EDIT PROFILE */}
@@ -1426,7 +1542,7 @@ export default function StudentFinderPage() {
                           className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
                           title="Edit Student Profile & Phone"
                         >
-                          <span>✏️</span> Edit Profile
+                          <Edit3 className="w-4 h-4" /> Edit Profile
                         </button>
                       )}
 
@@ -1438,7 +1554,7 @@ export default function StudentFinderPage() {
                           className="px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
                           title="Reset student password / PIN"
                         >
-                          <span>🔑</span> Reset Password
+                          <KeyRound className="w-4 h-4 text-amber-600" /> Reset Password
                         </button>
                       )}
 
@@ -1449,7 +1565,7 @@ export default function StudentFinderPage() {
                           onClick={() => {
                             if (
                               window.confirm(
-                                `⚠️ ${drawerStudent.name} (${drawerStudent.phone}) या विद्यार्थ्याचा डिव्हाइस लॉक रिसेट करायचा आहे का?\n\nयानंतर विद्यार्थी नवीन फोनवरून लॉगिन करू शकेल.`
+                                ` ${drawerStudent.name} (${drawerStudent.phone}) या विद्यार्थ्याचा डिव्हाइस लॉक रिसेट करायचा आहे का?\n\nयानंतर विद्यार्थी नवीन फोनवरून लॉगिन करू शकेल.`
                               )
                             ) {
                               handleResetSessionLock(drawerStudent);
@@ -1458,7 +1574,7 @@ export default function StudentFinderPage() {
                           className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
                           title="Clear active device session token"
                         >
-                          <span>🔓</span> Reset Device Lock
+                          <Unlock className="w-4 h-4 text-emerald-600" /> Reset Device Lock
                         </button>
                       )}
 
@@ -1466,7 +1582,7 @@ export default function StudentFinderPage() {
                         onClick={() => setDrawerStudent(null)}
                         className="w-8 h-8 rounded-full bg-white border border-[#E4E8F8] flex items-center justify-center text-sm text-[#5A6478] hover:bg-slate-100 cursor-pointer"
                       >
-                        ✕
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -1476,7 +1592,7 @@ export default function StudentFinderPage() {
                     {/* 1. Registration Details Card */}
                     <div className="bg-[#FAFBFD] border border-[#E4E8F8] rounded-2xl p-4 space-y-3">
                       <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#0E1B3D] flex items-center gap-1.5">
-                        <span>📋</span> Registration & Institutional Profile
+                        <span></span> Registration & Institutional Profile
                       </h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                         <div>
@@ -1505,7 +1621,7 @@ export default function StudentFinderPage() {
                     {/* 2. Courses Taken with Expiry Chips & Progress Bars */}
                     <div className="space-y-3">
                       <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#0E1B3D] flex items-center gap-1.5">
-                        <span>📚</span> Enrolled Courses & 3-Month Access Status
+                        <BookOpen className="w-4 h-4 text-indigo-600" /> Enrolled Courses & 3-Month Access Status
                       </h3>
 
                       {(!drawerStudent.coursesTaken || drawerStudent.coursesTaken.length === 0) ? (
@@ -1533,11 +1649,11 @@ export default function StudentFinderPage() {
                                 <div className="flex flex-wrap items-center gap-1.5 justify-end">
                                   {course.isExpired ? (
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
-                                      ❌ Access Expired
+                                      <X className="w-4 h-4" /> Access Expired
                                     </span>
                                   ) : course.daysLeft <= 7 ? (
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
-                                      ⚠️ Expires in {course.daysLeft} days
+                                       Expires in {course.daysLeft} days
                                     </span>
                                   ) : (
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -1553,7 +1669,7 @@ export default function StudentFinderPage() {
                                       className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E8F8F2] text-[#0A8554] border border-[#C6ECD9] hover:bg-[#D5F2E6] transition cursor-pointer"
                                       title="Send WhatsApp renewal reminder"
                                     >
-                                      💬 WA
+                                       WA
                                     </button>
                                   )}
 
@@ -1574,7 +1690,7 @@ export default function StudentFinderPage() {
                                       className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition cursor-pointer"
                                       title="Swap to Another Course"
                                     >
-                                      🔄 Swap
+                                       Swap
                                     </button>
                                   )}
 
@@ -1616,7 +1732,7 @@ export default function StudentFinderPage() {
                                       className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
                                       title="Revoke Course Access"
                                     >
-                                      🚫 Revoke
+                                       Revoke
                                     </button>
                                   )}
                                 </div>
@@ -1646,7 +1762,7 @@ export default function StudentFinderPage() {
                     {/* 2B. Enrolled Paid / Course-Linked Books */}
                     <div className="space-y-3 pt-2 border-t border-[#E4E8F8]">
                       <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#0E1B3D] flex items-center gap-1.5">
-                        <span>📖</span> Enrolled Paid & Course-Linked Books
+                        <BookOpen className="w-4 h-4 text-indigo-600" /> Enrolled Paid & Course-Linked Books
                       </h3>
 
                       {(!drawerStudent.enrolledBooks || drawerStudent.enrolledBooks.length === 0) ? (
@@ -1678,11 +1794,11 @@ export default function StudentFinderPage() {
                                 <div className="flex flex-wrap items-center gap-1.5 justify-end">
                                   {book.isExpired ? (
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
-                                      ❌ Expired
+                                      <X className="w-4 h-4" /> Expired
                                     </span>
                                   ) : book.daysLeft <= 7 ? (
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
-                                      ⚠️ {book.daysLeft}d left
+                                       {book.daysLeft}d left
                                     </span>
                                   ) : (
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -1697,7 +1813,7 @@ export default function StudentFinderPage() {
                                       className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E8F8F2] text-[#0A8554] border border-[#C6ECD9] hover:bg-[#D5F2E6] transition cursor-pointer"
                                       title="Send WhatsApp renewal reminder"
                                     >
-                                      💬 WA
+                                       WA
                                     </button>
                                   )}
 
@@ -1719,7 +1835,7 @@ export default function StudentFinderPage() {
                                         className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition cursor-pointer"
                                         title="Swap Book"
                                       >
-                                        🔄 Swap
+                                         Swap
                                       </button>
                                       <button
                                         type="button"
@@ -1758,7 +1874,7 @@ export default function StudentFinderPage() {
                                         className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
                                         title="Revoke Book Access"
                                       >
-                                        🚫 Revoke
+                                         Revoke
                                       </button>
                                     </>
                                   )}
@@ -1778,7 +1894,7 @@ export default function StudentFinderPage() {
                             <span>⏱️</span> Per-Lesson Watch Telemetry (Admin Only)
                           </h3>
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                            ⚡ Founder Clearance
+                             Founder Clearance
                           </span>
                         </div>
 
@@ -1819,7 +1935,7 @@ export default function StudentFinderPage() {
                       </div>
                     ) : (
                       <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-500 flex items-center gap-2">
-                        <span>🔒</span>
+                        <Lock className="w-4 h-4 text-slate-500" />
                         <span>Individual lecture-level telemetric playback history is restricted to Main Admin.</span>
                       </div>
                     )}
@@ -1827,7 +1943,7 @@ export default function StudentFinderPage() {
                     {/* 4. Activity Rows */}
                     <div className="space-y-3 pt-2 border-t border-[#E4E8F8]">
                       <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#0E1B3D] flex items-center gap-1.5">
-                        <span>⚡</span> Recent Learning & Portal Activity
+                        <Zap className="w-4 h-4 text-amber-500" /> Recent Learning & Portal Activity
                       </h3>
 
                       {(!drawerStudent.recentActivity || drawerStudent.recentActivity.length === 0) ? (
@@ -1876,12 +1992,12 @@ export default function StudentFinderPage() {
           {/* SEND IN-APP NOTIFICATION MODAL (NO WHATSAPP) */}
           {/* ========================================================= */}
           {notifyStudent && (
-            <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
               <div className="bg-white rounded-3xl border border-[#E4E8F8] max-w-lg w-full p-6 md:p-8 shadow-2xl animate-fadeIn space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-[#E4E8F8]">
                   <div>
                     <h3 className="text-lg font-bold text-[#0E1B3D] font-heading flex items-center gap-2">
-                      <span>🔔</span> Send In-App Notification
+                      <Bell className="w-5 h-5 text-blue-600" /> Send In-App Notification
                     </h3>
                     <p className="text-xs text-[#5A6478] mt-0.5">
                       Target: <span className="font-bold text-[#0E1B3D] dark:text-white">{notifyStudent.name}</span> ({notifyStudent.phone})
@@ -1891,13 +2007,13 @@ export default function StudentFinderPage() {
                     onClick={() => setNotifyStudent(null)}
                     className="w-8 h-8 rounded-full bg-[#F5F7FF] hover:bg-[#EEF4FF] text-[#5A6478] flex items-center justify-center text-sm font-bold cursor-pointer"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
                 {notifySuccess ? (
                   <div className="py-8 text-center space-y-2 animate-fadeIn">
-                    <span className="text-4xl">✅</span>
+                    <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
                     <h4 className="text-base font-bold text-[#0E1B3D]">Notification Dispatched!</h4>
                     <p className="text-xs text-[#5A6478]">
                       Delivered directly to {notifyStudent.name}'s in-app notification center.
@@ -1934,7 +2050,7 @@ export default function StudentFinderPage() {
                     </div>
 
                     <div className="p-3 bg-[#FAFBFD] border border-[#E4E8F8] rounded-xl text-[11px] text-[#5A6478]">
-                      🔒 In-App push notifications deliver directly to the student portal on next app open without WhatsApp or third-party SMS costs.
+                       In-App push notifications deliver directly to the student portal on next app open without WhatsApp or third-party SMS costs.
                     </div>
 
                     <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E4E8F8]">
@@ -1962,13 +2078,47 @@ export default function StudentFinderPage() {
           {/* OFFLINE CASH ADMISSION / DIRECT COURSE GRANT MODAL */}
           {/* ========================================================= */}
           {isCashModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-              <div className="bg-white rounded-3xl border border-amber-200 max-w-2xl w-full p-5 md:p-7 shadow-2xl space-y-4 my-6">
-                {/* Modal Header */}
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Workspace Header Bar */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsCashModalOpen(false)}
+                    className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl transition cursor-pointer"
+                    title="Back to Students Directory"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono text-xs font-black">
+                        OFFLINE ADMISSION STUDIO
+                      </span>
+                    </div>
+                    <h1 className="text-2xl font-black text-slate-900 dark:text-white font-heading">
+                      Grant Offline Admission & Multi-Course Access
+                    </h1>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Assign one or multiple courses, record Cash or UPI fee collections, and issue instant curriculum access.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsCashModalOpen(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  Cancel & Return
+                </button>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 w-full p-6 sm:p-8 shadow-sm space-y-6">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2.5">
                     <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center text-lg border border-amber-200">
-                      💵
+                      
                     </div>
                     <div>
                       <h3 className="text-base font-extrabold text-[#0E1B3D] font-heading">
@@ -1983,7 +2133,7 @@ export default function StudentFinderPage() {
                     onClick={() => setIsCashModalOpen(false)}
                     className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -1991,7 +2141,7 @@ export default function StudentFinderPage() {
                 {cashSuccessReceipt ? (
                   <div className="py-4 space-y-4 text-center">
                     <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 text-2xl flex items-center justify-center mx-auto border border-emerald-200 shadow-sm">
-                      ✅
+                      
                     </div>
                     <div>
                       <h4 className="text-base font-extrabold text-slate-900 dark:text-white">
@@ -2043,7 +2193,7 @@ export default function StudentFinderPage() {
                         rel="noopener noreferrer"
                         className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-full shadow flex items-center justify-center gap-2 transition cursor-pointer"
                       >
-                        <span>📲 Share Receipt on WhatsApp</span>
+                        <span> Share Receipt on WhatsApp</span>
                       </a>
                     )}
 
@@ -2111,7 +2261,7 @@ export default function StudentFinderPage() {
                       <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-2xl space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-extrabold text-emerald-950 text-xs flex items-center gap-1.5">
-                            <span>✅</span> Currently Owned Courses &amp; Books ({existingStudentAccess.length})
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Currently Owned Courses &amp; Books ({existingStudentAccess.length})
                           </span>
                           <span className="text-[10px] text-emerald-700 font-bold">Active Subscriptions</span>
                         </div>
@@ -2179,7 +2329,7 @@ export default function StudentFinderPage() {
                               : "bg-slate-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                           }`}
                         >
-                          🌟 Select All Academy Courses Bundle
+                           Select All Academy Courses Bundle
                         </button>
                       </div>
 
@@ -2245,7 +2395,7 @@ export default function StudentFinderPage() {
                                     className="rounded cursor-pointer"
                                   />
                                   <span className="font-bold text-slate-900">
-                                    🎓 {c.title}
+                                     {c.title}
                                   </span>
                                   <span className="text-[10px] text-slate-400 font-mono">
                                     ({c.code})
@@ -2289,7 +2439,7 @@ export default function StudentFinderPage() {
                                     className="rounded cursor-pointer"
                                   />
                                   <span className="font-bold text-slate-900">
-                                    📚 {b.title}
+                                     {b.title}
                                   </span>
                                   <span className="text-[10px] text-slate-400 font-mono">
                                     ({b.code || "BOOK"})
@@ -2429,15 +2579,15 @@ export default function StudentFinderPage() {
                           }}
                           className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none"
                         >
-                          <option value="cash">💵 Cash Collected</option>
-                          <option value="upi">📱 Direct UPI (PhonePe/GPay)</option>
+                          <option value="cash"> Cash Collected</option>
+                          <option value="upi"> Direct UPI (PhonePe/GPay)</option>
                           {currentStaff.role === "main_admin" && (
-                            <option value="scholarship">🎓 Free Grant / Scholarship (₹0)</option>
+                            <option value="scholarship"> Free Grant / Scholarship (₹0)</option>
                           )}
                         </select>
                         {currentStaff.role === "sub_admin" && (
                           <p className="text-[10px] text-amber-700 font-semibold mt-1">
-                            🔒 No-Free Lock: Sub-Admins cannot issue ₹0 scholarships.
+                             No-Free Lock: Sub-Admins cannot issue ₹0 scholarships.
                           </p>
                         )}
                       </div>
@@ -2447,7 +2597,7 @@ export default function StudentFinderPage() {
                     {cashPaymentMode === "upi" && (
                       <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-2xl space-y-1">
                         <label className="block text-xs font-bold text-blue-950">
-                          📱 Mandatory UPI Reference / UTR Number *
+                           Mandatory UPI Reference / UTR Number *
                         </label>
                         <input
                           type="text"
@@ -2600,7 +2750,7 @@ export default function StudentFinderPage() {
           {/* POWER ACTION: EXTEND VALIDITY MODAL */}
           {/* ========================================================= */}
           {extendModalItem && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
               <div className="bg-white rounded-3xl border border-amber-200 max-w-md w-full p-6 shadow-2xl space-y-4 animate-fadeIn">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
@@ -2617,7 +2767,7 @@ export default function StudentFinderPage() {
                     onClick={() => setExtendModalItem(null)}
                     className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -2663,7 +2813,7 @@ export default function StudentFinderPage() {
                           : "bg-[#FAFBFD] text-[#5A6478] border-[#E4E8F8] hover:border-slate-300"
                       }`}
                     >
-                      <span>📅 Or Select Custom Expiry Date</span>
+                      <span> Or Select Custom Expiry Date</span>
                       <span className="text-[10px] uppercase font-bold">{extendOption === "custom" ? "Selected" : "Pick"}</span>
                     </button>
 
@@ -2707,11 +2857,11 @@ export default function StudentFinderPage() {
           {/* POWER ACTION: COURSE SWAP / CHANGE MODAL */}
           {/* ========================================================= */}
           {swapModalItem && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
               <div className="bg-white rounded-3xl border border-blue-200 max-w-md w-full p-6 shadow-2xl space-y-4 animate-fadeIn">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">🔄</span>
+                    <span className="text-xl"></span>
                     <div>
                       <h3 className="text-base font-bold text-[#0E1B3D]">Swap Student Course</h3>
                       <p className="text-[11px] text-[#5A6478]">
@@ -2723,7 +2873,7 @@ export default function StudentFinderPage() {
                     onClick={() => setSwapModalItem(null)}
                     className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -2742,14 +2892,14 @@ export default function StudentFinderPage() {
                       className="w-full px-3 py-2 bg-[#F5F7FF] border border-slate-300 rounded-xl text-xs font-bold text-[#0E1B3D] focus:outline-none focus:border-blue-600"
                     >
                       <option value="">-- Choose Program to Swap To --</option>
-                      <optgroup label="🎓 Courses">
+                      <optgroup label=" Courses">
                         {courses.filter((c) => c.id !== swapModalItem.itemId).map((c) => (
                           <option key={c.id} value={c.id}>
                             {c.code}: {c.title}
                           </option>
                         ))}
                       </optgroup>
-                      <optgroup label="📚 Handbooks">
+                      <optgroup label=" Handbooks">
                         {books.filter((b) => b.id !== swapModalItem.itemId).map((b) => (
                           <option key={b.id} value={b.id}>
                             {b.code || "BK"}: {b.title}
@@ -2803,11 +2953,11 @@ export default function StudentFinderPage() {
           {/* POWER ACTION: REVOKE ACCESS MODAL */}
           {/* ========================================================= */}
           {revokeModalItem && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
               <div className="bg-white rounded-3xl border border-rose-200 max-w-md w-full p-6 shadow-2xl space-y-4 animate-fadeIn">
                 <div className="flex items-center justify-between pb-3 border-b border-rose-100">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">🚫</span>
+                    <span className="text-xl"></span>
                     <div>
                       <h3 className="text-base font-bold text-rose-800">Revoke Student Access</h3>
                       <p className="text-[11px] text-slate-500">
@@ -2820,12 +2970,12 @@ export default function StudentFinderPage() {
                     onClick={() => setRevokeModalItem(null)}
                     className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
                 <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 space-y-1">
-                  <p className="font-bold">⚠️ Irreversible Access Termination</p>
+                  <p className="font-bold"> Irreversible Access Termination</p>
                   <p className="text-[11px] text-rose-700">
                     This will immediately revoke access for <span className="font-bold">{revokeModalItem.student.name}</span> ({revokeModalItem.student.phone}). All revocation events are logged in the security audit trail.
                   </p>
@@ -2866,7 +3016,7 @@ export default function StudentFinderPage() {
                     onClick={handleConfirmRevokeAccess}
                     className="px-5 py-2 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
                   >
-                    {isRevoking ? "Revoking..." : "Revoke Access Now 🚫"}
+                    {isRevoking ? "Revoking..." : "Revoke Access Now "}
                   </button>
                 </div>
               </div>
@@ -2877,11 +3027,11 @@ export default function StudentFinderPage() {
           {/* POWER ACTION: EDIT STUDENT PROFILE MODAL */}
           {/* ========================================================= */}
           {editStudentModal && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
               <div className="bg-white rounded-3xl border border-slate-200 max-w-lg w-full p-6 shadow-2xl space-y-4 my-8 animate-fadeIn">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">✏️</span>
+                    <span className="text-xl"></span>
                     <div>
                       <h3 className="text-base font-bold text-[#0E1B3D]">Edit Student Profile & Phone</h3>
                       <p className="text-[11px] text-[#5A6478]">
@@ -2893,7 +3043,7 @@ export default function StudentFinderPage() {
                     onClick={() => setEditStudentModal(null)}
                     className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -3000,11 +3150,11 @@ export default function StudentFinderPage() {
           {/* POWER ACTION: RESET PASSWORD MODAL */}
           {/* ========================================================= */}
           {resetPasswordModalStudent && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
               <div className="bg-white rounded-3xl border border-amber-200 max-w-md w-full p-6 shadow-2xl space-y-4 animate-fadeIn">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">🔑</span>
+                    <span className="text-xl"></span>
                     <div>
                       <h3 className="text-base font-bold text-[#0E1B3D]">Reset Student Password</h3>
                       <p className="text-[11px] text-[#5A6478]">
@@ -3016,7 +3166,7 @@ export default function StudentFinderPage() {
                     onClick={() => setResetPasswordModalStudent(null)}
                     className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -3027,7 +3177,7 @@ export default function StudentFinderPage() {
 
                 {passwordResetSuccess ? (
                   <div className="py-3 space-y-3 text-center">
-                    <span className="text-3xl">✅</span>
+                    <span className="text-3xl"></span>
                     <h4 className="text-sm font-bold text-slate-900 dark:text-white">Password Updated Successfully!</h4>
                     <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 text-left text-xs font-mono space-y-1">
                       <p><span className="text-slate-500 dark:text-slate-400 font-sans">Mobile:</span> <span className="dark:text-slate-200">+91 {passwordResetSuccess.phone}</span></p>
@@ -3039,7 +3189,7 @@ export default function StudentFinderPage() {
                       rel="noopener noreferrer"
                       className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-full shadow flex items-center justify-center gap-2 transition"
                     >
-                      <span>📲 Send New Password on WhatsApp</span>
+                      <span> Send New Password on WhatsApp</span>
                     </a>
                     <button
                       type="button"
@@ -3067,7 +3217,7 @@ export default function StudentFinderPage() {
                           onClick={() => setNewPasswordInput(`Mind@${Math.floor(1000 + Math.random() * 9000)}`)}
                           className="text-[10px] font-bold text-[#0B57D0] hover:underline cursor-pointer"
                         >
-                          ⚡ Generate Easy Password
+                           Generate Easy Password
                         </button>
                       </div>
                       <input
@@ -3099,7 +3249,7 @@ export default function StudentFinderPage() {
                         loadingText="Updating Hash..."
                         className="px-5 py-2 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold shadow-xs"
                       >
-                        <span>Set New Password 🔑</span>
+                        <span>Set New Password </span>
                       </SubmitButton>
                     </div>
                   </form>
@@ -3142,7 +3292,7 @@ export default function StudentFinderPage() {
                   : "bg-rose-900 text-white border-rose-700"
               }`}
             >
-              <span>{actionFeedbackToast.type === "success" ? "✅" : "⚠️"}</span>
+              <span>{actionFeedbackToast.type === "success" ? "" : ""}</span>
               <span>{actionFeedbackToast.message}</span>
             </div>
           )}

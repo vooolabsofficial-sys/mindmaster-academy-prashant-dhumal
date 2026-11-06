@@ -28,7 +28,7 @@ export const ANNOUNCEMENT_TEMPLATES: AnnouncementTemplate[] = [
   {
     id: "police_bharti",
     title: "पोलीस भरती विशेष बॅच",
-    icon: "⚡",
+    icon: "",
     tagText: "नवीन बॅच",
     message: "नवीन पोलीस भरती व सरळसेवा १००% परिपूर्ण तयारी बॅच सुरू! मर्यादित जागा उपलब्ध.",
     couponBadge: "POLICE50",
@@ -39,7 +39,7 @@ export const ANNOUNCEMENT_TEMPLATES: AnnouncementTemplate[] = [
   {
     id: "free_webinar",
     title: "मोफत मेमरी वेबिनार",
-    icon: "🎯",
+    icon: "",
     tagText: "मोफत क्लास",
     message: "या रविवारी संध्या. ७ वा. प्रशांत सरांचा लाईव्ह मेमरी व एकाग्रता सायन्स क्लास!",
     couponBadge: "FREECLASS",
@@ -50,7 +50,7 @@ export const ANNOUNCEMENT_TEMPLATES: AnnouncementTemplate[] = [
   {
     id: "festival_offer",
     title: "सण / गुढीपाडवा ५०% सवलत",
-    icon: "🚩",
+    icon: "",
     tagText: "महा-ऑफर",
     message: "गुढीपाडवा विशेष महा-सवलत: सर्व डिजिटल कोर्सेसवर ५०% थेट सूट!",
     couponBadge: "GUDHI50",
@@ -72,7 +72,7 @@ export const ANNOUNCEMENT_TEMPLATES: AnnouncementTemplate[] = [
   {
     id: "offline_centres",
     title: "सातारा व पुणे ऑफलाईन",
-    icon: "🏢",
+    icon: "",
     tagText: "क्लासरूम प्रवेश",
     message: "सातारा मुख्यालय व पुणे सेंटरवर ऑफलाईन बॅचेस सुरू! थेट क्लासरूम प्रवेशासाठी संपर्क.",
     couponBadge: "OFFLINE2026",

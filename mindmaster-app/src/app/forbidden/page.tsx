@@ -29,7 +29,7 @@ function ForbiddenContent() {
       <div className="w-full max-w-md bg-white rounded-3xl border border-[#E4E8F8] p-8 shadow-xl text-center">
         {/* Shield Icon */}
         <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-3xl shadow-inner text-red-600">
-          🛡️
+          ️
         </div>
 
         {/* 403 Badge */}
@@ -54,7 +54,7 @@ function ForbiddenContent() {
             <>
               Your account lacks the mandatory permission:{" "}
               <span className="block mt-1.5 font-mono text-xs font-bold px-2 py-1 bg-red-50 text-red-700 border border-red-200 rounded">
-                🔑 {requiredPerm}
+                 {requiredPerm}
               </span>
             </>
           ) : (

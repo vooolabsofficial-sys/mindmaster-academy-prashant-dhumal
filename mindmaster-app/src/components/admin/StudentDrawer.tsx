@@ -165,13 +165,13 @@ export default function StudentDrawer({
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs transition-opacity duration-200"
+        className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 transition-opacity duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Slide-Over Drawer */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs font-sans overflow-y-auto">
+      {/* Modern Centered Student 360 Inspection Card */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 font-sans overflow-y-auto">
         <aside
           role="dialog"
           aria-modal="true"
