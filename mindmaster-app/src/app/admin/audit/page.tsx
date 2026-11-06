@@ -594,7 +594,8 @@ export default function AuditLogPage() {
               </div>
             )}
           </div>
-        )}
+        </div>
+      )}
       </AdminShell>
     </PermissionGuard>
   );

@@ -19,7 +19,7 @@ import {
 } from "@/lib/staffStore";
 import { getSubAdminCashSettlements, settleSubAdminCash, SubAdminCashSummary } from "@/lib/grantStore";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Plus } from "lucide-react";
 
 const MAHARASHTRA_DISTRICTS = [
   "Pune",

@@ -42,6 +42,8 @@ import {
   CreditCard,
   Receipt,
   UserCheck,
+  Bell,
+  Zap,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import AdminShell from "@/components/admin/AdminShell";
@@ -1411,6 +1413,7 @@ export default function StudentFinderPage() {
               </div>
             )}
           </div>
+        </div>
         )}
 
           {/* ========================================================= */}
@@ -1466,7 +1469,7 @@ export default function StudentFinderPage() {
 
                   <button
                     type="button"
-                    onClick={() => handleResetDeviceLock(drawerStudent)}
+                    onClick={() => handleResetSessionLock(drawerStudent)}
                     className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition shadow-xs cursor-pointer"
                   >
                     <KeyRound className="w-4 h-4" />
@@ -3296,7 +3299,6 @@ export default function StudentFinderPage() {
               <span>{actionFeedbackToast.message}</span>
             </div>
           )}
-        </div>
       </AdminShell>
     </PermissionGuard>
   );

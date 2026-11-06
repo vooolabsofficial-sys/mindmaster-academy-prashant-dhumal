@@ -5,6 +5,7 @@ import { StudentRecord } from "@/lib/types";
 import { addStudentNotification } from "@/lib/studentNotificationStore";
 import { StaffCourse, getStaffStudents, logStaffAction, getCurrentStaff } from "@/lib/staffStore";
 import { normalizePhone } from "@/lib/phoneUtils";
+import { X } from "lucide-react";
 
 interface BroadcastModalProps {
   isOpen: boolean;

@@ -510,8 +510,8 @@ export default function CouponManagerPage() {
   }, [coupons]);
 
   return (
-    <AdminShell currentSection="coupons">
-      <PermissionGuard requiredRole={["main_admin", "sub_admin"]}>
+    <PermissionGuard permission="coupons.manage">
+      <AdminShell>
         <div className="space-y-6">
 
           {/* ==================================================================== */}
@@ -1616,7 +1616,7 @@ export default function CouponManagerPage() {
           )}
 
         </div>
-      </PermissionGuard>
-    </AdminShell>
+      </AdminShell>
+    </PermissionGuard>
   );
 }

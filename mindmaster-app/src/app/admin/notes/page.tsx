@@ -1188,7 +1188,6 @@ export default function DigitalBooksManagerPage() {
                 </form>
               </div>
             </div>
-          </div>
         )}
 
           {/* Delete Confirmation Modal */}

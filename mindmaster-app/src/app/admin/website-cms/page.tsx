@@ -15,7 +15,20 @@ import {
   FAQItem,
   ANNOUNCEMENT_TEMPLATES,
 } from "@/lib/websiteCmsStore";
-import { Sparkles } from "lucide-react";
+import {
+  Sparkles,
+  Globe,
+  Eye,
+  Save,
+  Megaphone,
+  X,
+  Download,
+  MessageSquare,
+  Trash2,
+  Monitor,
+  Tablet,
+  Smartphone,
+} from "lucide-react";
 
 export default function WebsiteCmsPage() {
   const [staff, setStaff] = useState<StaffUser>(getCurrentStaff());

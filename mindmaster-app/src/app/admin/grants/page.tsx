@@ -333,15 +333,15 @@ export default function GrantsManagerPage() {
         }
       }
       if (filterDistrict !== "all") {
-        const dist = (g.district || "").toLowerCase();
+        const dist = ((g as any).district || "").toLowerCase();
         if (dist !== filterDistrict.toLowerCase()) return false;
       }
       if (filterTaluka !== "all") {
-        const tal = (g.taluka || "").toLowerCase();
+        const tal = ((g as any).taluka || "").toLowerCase();
         if (tal !== filterTaluka.toLowerCase()) return false;
       }
       if (courseFilter !== "all") {
-        if (g.courseId !== courseFilter && g.itemId !== courseFilter) return false;
+        if (g.courseId !== courseFilter && (g as any).itemId !== courseFilter) return false;
       }
       if (paymentModeFilter !== "all") {
         if (g.payment_mode !== paymentModeFilter) return false;
@@ -457,13 +457,19 @@ export default function GrantsManagerPage() {
             id: `std-${Date.now()}`,
             name: newStudentName.trim(),
             phone: clean,
-            email: newStudentEmail.trim() || undefined,
+            email: newStudentEmail.trim() || "",
             district: newStudentDistrict,
             taluka: newStudentTaluka,
             school: newStudentSchool.trim() || undefined,
+            standard: newStudentStandard.trim() || undefined,
             totalPaidPaise: netCollectedRupees * 100,
-            joinedDate: new Date().toISOString(),
+            joinedAt: new Date().toISOString(),
+            lastActiveAt: new Date().toISOString(),
             status: "active",
+            enrolledCourseCodes: [],
+            enrolledCourseTitles: [],
+            totalWatchSec: 0,
+            completedLessonsCount: 0,
             coursesTaken: [],
           };
           saveStaffStudent(newRecord);
@@ -537,7 +543,7 @@ export default function GrantsManagerPage() {
 
         for (const courseId of selectedCourseIds) {
           createGrant({
-            scopeType: targetScopeType === "all" ? "all" : targetScopeType,
+            scopeType: targetScopeType === "all" ? "all_students" : (targetScopeType as any),
             scopeValue: scopeVal,
             courseScope: "one",
             courseId,
@@ -567,7 +573,13 @@ export default function GrantsManagerPage() {
 
     try {
       if (actionModal.type === "extend") {
-        extendStudentAccess(actionModal.grant.id, actionExtendDays);
+        await extendStudentAccess({
+          studentPhone: actionModal.grant.student_phone || actionModal.grant.studentPhone || "",
+          itemType: "course",
+          itemId: actionModal.grant.course_id || actionModal.grant.courseId || "",
+          daysToAdd: actionExtendDays,
+          grantId: actionModal.grant.id,
+        });
         toast.success(`Extended access by +${actionExtendDays} days!`);
       } else if (actionModal.type === "revoke") {
         if (!actionReason.trim()) {
@@ -575,7 +587,13 @@ export default function GrantsManagerPage() {
           setIsActionLoading(false);
           return;
         }
-        revokeStudentAccess(actionModal.grant.id, actionReason.trim());
+        await revokeStudentAccess({
+          studentPhone: actionModal.grant.student_phone || actionModal.grant.studentPhone || "",
+          itemType: "course",
+          itemId: actionModal.grant.course_id || actionModal.grant.courseId || "",
+          grantId: actionModal.grant.id,
+          reason: actionReason.trim(),
+        });
         toast.success("Curriculum access revoked.");
       } else if (actionModal.type === "reject") {
         rejectGrant(actionModal.grant.id, actionReason.trim() || undefined);
@@ -1737,7 +1755,7 @@ export default function GrantsManagerPage() {
                     <Users className="w-4 h-4 text-indigo-600" />
                   </div>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums">
-                    {revenueStats.totalUniqueStudents}
+                    {revenueStats.totalStudentsCovered}
                   </div>
                   <span className="text-[10px] text-slate-400">Across All Batches</span>
                 </div>
@@ -1748,7 +1766,7 @@ export default function GrantsManagerPage() {
                     <DollarSign className="w-4 h-4 text-emerald-600" />
                   </div>
                   <div className="text-2xl sm:text-3xl font-black text-emerald-600 tabular-nums">
-                    ₹{revenueStats.totalWaivedRupees.toLocaleString("en-IN")}
+                    ₹{revenueStats.totalRupees.toLocaleString("en-IN")}
                   </div>
                   <span className="text-[10px] text-slate-400">Academic Subsidies</span>
                 </div>
@@ -1813,7 +1831,7 @@ export default function GrantsManagerPage() {
                     onStateChange={(id, name) => setFilterState(id)}
                     onDistrictChange={(id, name) => setFilterDistrict(name)}
                     onTalukaChange={(id, name) => setFilterTaluka(name)}
-                    includeAllOption={true}
+                    allowAll={true}
                     layout="inline"
                   />
                 </div>
@@ -1886,7 +1904,7 @@ export default function GrantsManagerPage() {
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-slate-500">
-                                <p className="font-medium text-slate-700 dark:text-slate-300">{grant.granted_by || "Admin"}</p>
+                                <p className="font-medium text-slate-700 dark:text-slate-300">{(grant as any).granted_by || grant.created_by || "Admin"}</p>
                                 <span className="text-[10px]">{formatIST(grant.created_at, { dateOnly: true })}</span>
                               </td>
                               <td className="py-3 px-4 text-right">

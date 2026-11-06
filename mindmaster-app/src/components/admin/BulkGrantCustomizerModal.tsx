@@ -10,6 +10,7 @@ import {
 } from "@/lib/grantStore";
 import { StaffCourse, getCurrentStaff, logStaffAction } from "@/lib/staffStore";
 import { formatIST } from "@/lib/istTime";
+import { X, UploadCloud, Trash2 } from "lucide-react";
 
 export interface BulkStudentRow {
   id: string;
